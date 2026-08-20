@@ -1,0 +1,27 @@
+// TechLab Fisio — schema Prisma.
+//
+// Estado: SCAFFOLD de `E-03` (docs/08 §13). Contém apenas `datasource` e
+// `generator`. Nenhum modelo, enum, índice, relação ou constraint pertence a
+// esta etapa — eles entram a partir de `E-05`/`E-06`.
+//
+// Conexão: no Prisma 7, `url`, `directUrl` e `shadowDatabaseUrl` NÃO ficam neste
+// arquivo. Eles vivem em `prisma.config.ts`, na raiz do repositório, o que
+// mantém este arquivo livre de qualquer credencial.
+
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client"
+
+  // Obrigatório no Prisma 7 e deliberadamente FORA de `node_modules`
+  // (docs/08 §13 `E-03`). Caminho relativo a este arquivo:
+  // packages/database/generated/prisma
+  output = "../generated/prisma"
+
+  runtime      = "nodejs"
+  moduleFormat = "esm"
+
+  // Nenhuma `previewFeatures` — regra de exclusão de docs/08 §3.
+}

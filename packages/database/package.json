@@ -1,0 +1,18 @@
+{
+  "name": "@techlab-fisio/database",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Workspace de persistência do TechLab Fisio — schema Prisma, migrations e Prisma Client gerado.",
+  "license": "UNLICENSED",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "7.9.1",
+    "@prisma/client": "7.9.1"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3"
+  }
+}

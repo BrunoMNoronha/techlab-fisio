@@ -1,0 +1,7 @@
+# Normalização de fim de linha. Necessária porque o desenvolvimento ocorre em
+# Windows (TLF-BASE-V1 §2) e os scripts de inicialização do PostgreSQL rodam
+# dentro de um container Linux: um CRLF em 01-roles.sh quebraria o entrypoint.
+* text=auto eol=lf
+
+*.sh text eol=lf
+*.sql text eol=lf

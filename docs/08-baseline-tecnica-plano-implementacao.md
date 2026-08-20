@@ -3,7 +3,8 @@
 > **Documento:** `docs/08-baseline-tecnica-plano-implementacao.md`
 > **Projeto:** TechLab Fisio
 > **Fase:** 2 — Modelagem — **Transição Etapa 2.2 → implementação física**
-> **Status:** **HOMOLOGADO — REV. 2 — BASELINE TÉCNICA E PLANO DE IMPLEMENTAÇÃO FÍSICA APROVADOS**
+> **Status:** **HOMOLOGADO (ato de homologação: REV. 2) — BASELINE TÉCNICA E PLANO DE IMPLEMENTAÇÃO FÍSICA APROVADOS — REVISÃO VIGENTE: REV. 4**
+> **Nota sobre a numeração:** a **REV. 2** é a revisão homologada por Bruno em 20/08/2026 (§0). As **REV. 3** e **REV. 4** são correções posteriores de **sequenciamento e de registro de execução**, expressamente autorizadas, que **não alteram baseline, arquitetura, requisito ou decisão homologada**.
 > **Homologação:** baseline técnica (§6), as seis decisões da Categoria C (§7), a política de migrations e de introspection (§10, §10.2), o plano `E-01`..`E-18` (§13) e a decisão **`D-ESM-01`** (§16) aprovados por **Bruno Menezes Noronha** em **20 de agosto de 2026**
 > **Natureza:** documento **MUTÁVEL**. Registra versões, verificações técnicas e plano de execução. Não altera regra de negócio, não altera `docs/07` e não altera a Base Imutável.
 > **Data:** 20 de agosto de 2026
@@ -18,6 +19,8 @@
 | **1** | **20/08/2026** | Correção e consolidação para homologação final. (a) `D-PEND-01` **resolvida** — ESM desde a criação; passa a `D-ESM-01`, decisão consolidada (§16). (b) Justificativa do TypeScript 6.0 reescrita com descrição tecnicamente correta do TypeScript 7.0 (§6, `R-BL-03`). (c) `R-BL-01` reclassificado: a declaração oficial de suporte é citada literalmente e **nenhuma data de EOL é afirmada**; a revisão de janeiro/2027 é declarada **decisão interna de governança** (§15). (d) Conclusão sobre `R2.2-03` reestruturada em **fato documentado / hipótese técnica forte / verificação empírica**, permanecendo **condicionada a `V-04`** (§9.2). (e) Política de `prisma db pull` reescrita e endurecida com base no comportamento oficial vigente, incluindo a indução automática da Preview `partialIndexes` (§10.2). (f) Baseline revalidada em fontes oficiais na data desta revisão (§4, §5, §6, §18). Nenhuma linha da baseline foi alterada. |
 
 | **2** | **20/08/2026** | **HOMOLOGAÇÃO FORMAL.** Registro do ato de homologação (§0). Correção editorial de precisão em §4.3 e na linha do Node.js em §6 — a formulação "único ponto de interseção" foi substituída por formulação exata que **preserva a existência da linha Node 22** como LTS suportada e elegível, preterida por estar em fase de manutenção. **A escolha por Node 24 não foi reaberta.** Nenhuma outra alteração técnica. |
+| **3** | **20/08/2026** | **CORREÇÃO DE INCONSISTÊNCIA DE SEQUENCIAMENTO DO PLANO — sem alteração de baseline, arquitetura, requisito ou decisão homologada.** `V-06` era declarada critério de `E-01`, mas exigia `tsc --noEmit` sobre o **Prisma Client gerado**, que só passa a existir em `E-03` (`E-02` depende de `E-01`; `E-03` depende de `E-01` e `E-02`) — ciclo impossível de satisfazer. A verificação **não muda de significado**: sua **execução** passa a ocorrer em dois subchecks, `V-06.a` (em `E-01`) e `V-06.b` (em `E-03`), e `V-06` só é **APROVADA** quando ambos passarem. Nenhuma verificação foi renumerada, criada ou removida; `V-01`..`V-06` permanecem seis. Trechos alterados: tabela de §12, especificação de `V-06` em §12.2, `E-01` e `E-03` em §13, e a linha correspondente de §19. |
+| **4** | **20/08/2026** | **CONSOLIDAÇÃO PRÉ-COMMIT DA FUNDAÇÃO `E-01`..`E-03` — sem alteração de baseline, arquitetura, requisito ou decisão homologada.** (a) **`V-06` deixa de ser declarada integralmente aprovada.** A verificação sempre mediu o teto do TypeScript 6.0 contra **Prisma 7 *e* Next.js 16**; a implementação da fundação não cria frontend, logo a metade Next **não foi medida**. Registra-se o subcheck **`V-06.c`** (TypeScript 6.0.x × Next.js 16), **PENDENTE**, e `V-06` passa a **PARCIALMENTE APROVADA** (§12.2). `V-06.c` **não bloqueia `E-04`..`E-07`** e **não autoriza criar `apps/web`**. (b) §12.1 deixa de ser uma declaração estática de "nenhuma verificação executada" e passa a ser o **registro vivo do estado de execução** das seis verificações. (c) `E-01`, `E-02` e `E-03` passam a **EXECUTADAS**, com `V-01` **APROVADA**. (d) Novo risco **`R-BL-09`** — vulnerabilidade transitiva no *tooling* do Prisma (§15, §15.2), em **aceitação temporária monitorada**. (e) `E-04` recebe pré-condição de volume local limpo. **Nenhuma versão da baseline de §6 foi alterada.** |
 
 **Escopo destas revisões.** Somente `docs/08` foi alterado. Nenhuma decisão homologada de `docs/02`..`docs/07` foi reaberta, alterada ou reinterpretada. Nenhuma implementação foi iniciada.
 
@@ -51,6 +54,8 @@ Permanecem **PENDENTES por escopo**, conforme já declarado: Tailwind CSS, Playw
 ### 0.2 O que a homologação não altera
 
 As **verificações `V-01` a `V-06` permanecem pendentes por desenho** (§12.1). Elas medem comportamento que só existe quando o ambiente existe, e pertencem às etapas que as consomem.
+
+> **Nota da REV. 4.** O parágrafo acima registra o estado **no ato da homologação (20/08/2026)** e é mantido como registro histórico. O **estado de execução corrente** das seis verificações passou a ser mantido em **§12.1**, que é a fonte a consultar.
 
 > **Pendências experimentais não anulam a homologação documental.** A homologação aprova **as decisões, a baseline e o plano**. Ela **não** declara verificado o que não foi executado, e **não** encerra riscos condicionados a verificação.
 
@@ -319,6 +324,8 @@ A matriz oficial de bancos suportados ([Supported databases](https://www.prisma.
 
 **Condição `H2.2-06`: atendida em 6 dos 7 pontos por evidência documental; o ponto 4 é fechado por `V-01` antes de `E-04`.**
 
+> **Atualização da REV. 4.** **`V-01` foi executada e APROVADA** em 20/08/2026, durante `E-02` (§12.1). O ponto 4 deixa de ser "alta confiança" e passa a **fato verificado**: a imagem `postgres:18-bookworm` contém `btree_gist`, e a extensão foi instalada por `tlf_migrator`, role **não superusuária**, seguida da criação efetiva de uma `EXCLUDE` com `uuid WITH =` e `tstzrange WITH &&`. **`H2.2-06` fica atendida nos 7 pontos.** O fallback com `postgresql-contrib` não foi necessário.
+
 ### 5.6 Estratégia de imagem e política de minor releases
 
 | Ambiente | Estratégia | Motivo |
@@ -343,7 +350,7 @@ Escopo: as tecnologias de **TLF-BASE-V1 §9**. Nada foi acrescentado por popular
 | **PostgreSQL** | 19 (beta), 18, 17, 16, 15, 14 | **18** | Suportada até 14/11/2030 | Maior janela entre as estáveis; suportada pelo Prisma; cobre 100% de `docs/07` §5.4 | Prisma (matriz oficial) ✔; `btree_gist` ✔; exclusion constraints ✔; colunas geradas ✔ | **Baixo** |
 | **Prisma ORM** | 8 (Early Access), **7.x** (estável) | **7.x** (fixar minor no scaffold) | Estável e **declarada pelo fornecedor como versão recomendada para produção**. Sem data de EOL publicada — ver `R-BL-01` | Única linha estável; Prisma 8 é Early Access e proibido por §3 | PostgreSQL 18 ✔; Node 24 ✔; TS ≥5.4 ✔ | **Médio** — `R-BL-01` (governança da baseline) |
 | **`@prisma/adapter-pg`** | acompanha o Prisma 7 | **mesma minor do `prisma`/`@prisma/client`** | Estável | **Obrigatório**: driver adapter é mandatório no Prisma 7 | Prisma 7 ✔; PostgreSQL 18 ✔ | **Baixo** |
-| **TypeScript** | 7.0 (08/07/2026), 6.0 (23/03/2026), 5.x | **6.0.x** | Estável | Ver §6.3 — maturidade, previsibilidade do ecossistema e menor risco de partida. **Decisão mutável de baseline**, não restrição da Base Imutável | Prisma ≥5.4 ✔; Next ≥5.1 ✔; Jest 30 ≥5.4 ✔ — todos por limite **mínimo**; teto a validar em `V-06` | **Médio** — `R-BL-03` |
+| **TypeScript** | 7.0 (08/07/2026), 6.0 (23/03/2026), 5.x | **6.0.x** | Estável | Ver §6.3 — maturidade, previsibilidade do ecossistema e menor risco de partida. **Decisão mutável de baseline**, não restrição da Base Imutável | Prisma ≥5.4 ✔; Next ≥5.1 ✔; Jest 30 ≥5.4 ✔ — todos por limite **mínimo**. Teto: **medido e aprovado contra o Prisma 7** (`V-06.b`); **não medido** contra Next 16 (`V-06.c`, pendente) nem contra Jest 30 (`V-05`, pendente) | **Médio** — `R-BL-03` |
 | **Next.js** | 16.3 | **16.x** | Active LTS declarado pelo projeto | Linha estável corrente; Node 24 atende com folga | Node ≥20.9 ✔; React 19 ✔; TS ≥5.1 ✔; Tailwind ✔ | **Baixo** |
 | **React** | 19 (embutido no App Router do Next 16) | **19.x** | Estável | Determinado pelo Next.js 16 | Next 16 ✔ | **Baixo** |
 | **NestJS** | 11.2.x (v12 com PR de release aberto, **não lançada**) | **11.x** | Estável | v12 não existe como release; baseline não adota não lançado. **Não se aguarda a v12** — ver `D-ESM-01` (§16) | Node ≥20 ✔; TS ✔; **ESM: configuração deliberada exigida — `R-BL-02`** | **Médio** — `R-BL-02` |
@@ -367,8 +374,8 @@ Quatro itens ficam `PENDENTE` **por escopo, não por falta de pesquisa**. Fixar 
 | Node 24 ↔ NestJS 11 | ✔ `engines.node >= 20` |
 | Node 24 ↔ Jest 30 | ✔ mínimo 18 |
 | Prisma 7 ↔ PostgreSQL 18 | ✔ matriz oficial de bancos suportados |
-| Prisma 7 ↔ TypeScript 6.0 | ✔ por mínimo (≥5.4); teto a confirmar em `V-06` |
-| Next 16 ↔ TypeScript 6.0 | ✔ por mínimo (≥5.1); teto a confirmar em `V-06` |
+| Prisma 7 ↔ TypeScript 6.0 | ✔ por mínimo (≥5.4). **Teto CONFIRMADO por execução** — `V-06.b` aprovada em `E-03`: `tsc --noEmit` limpo sobre o Prisma Client 7 gerado, em ESM |
+| Next 16 ↔ TypeScript 6.0 | ✔ por mínimo (≥5.1); **teto ainda NÃO medido** — `V-06.c`, pendente até o scaffold do frontend (§12.2) |
 | Prisma 7 ↔ NestJS 11 | ⚠ **ESM** — **decisão tomada** (`D-ESM-01`, §16): o backend nasce ESM. A **compatibilidade concreta** (decorators, build, testes) é validada na etapa de implementação do backend, fora deste plano. Ver `R-BL-02` |
 
 A baseline é internamente consistente e cada par foi verificado contra documentação oficial, não por inferência. O único par com ressalva não é uma incompatibilidade declarada pelos fornecedores, e sim uma **exigência de configuração deliberada** já decidida em §16.
@@ -390,7 +397,7 @@ A baseline é internamente consistente e cada par foi verificado contra document
 **Razão central para permanecer em 6.0**, na ordem de peso aplicada:
 
 1. **Maturidade.** A 6.0 encerra uma linhagem de implementação com anos de exposição a ecossistema real.
-2. **Compatibilidade previsível do ecossistema.** Os limites **mínimos** de Prisma 7 (≥5.4), Next 16 (≥5.1) e Jest 30 (≥5.4) estão satisfeitos por ambas as linhas; o que não está estabelecido é o **teto** — nenhum dos três declara oficialmente a 7.0 como versão suportada. `V-06` mede exatamente isso.
+2. **Compatibilidade previsível do ecossistema.** Os limites **mínimos** de Prisma 7 (≥5.4), Next 16 (≥5.1) e Jest 30 (≥5.4) estão satisfeitos por ambas as linhas; o que não está estabelecido é o **teto** — nenhum dos três declara oficialmente a 7.0 como versão suportada. `V-06` mede exatamente isso, consumidor a consumidor: **Prisma 7 já medido e aprovado** (`V-06.b`); **Next 16 pendente** (`V-06.c`); Jest 30 coberto por `V-05`, também pendente.
 3. **Menor risco no início do projeto.** A partida do TechLab Fisio ocorre sem uma linha de código de aplicação (§2.1); atrito de toolchain nesse momento consome o orçamento de risco que pertence ao modelo de dados.
 4. **Ausência de benefício necessário ao MVP.** O ganho da 7.0 é de **velocidade de compilação**. Nenhum requisito de `docs/02`..`docs/07` depende disso, e o MVP não tem volume de código que torne o tempo de `tsc` um problema.
 
@@ -765,15 +772,24 @@ Cada uma é fechável **por teste local**, sem consulta a Bruno.
 | **V-03** | **Forma exata do erro** em quatro violações: unique parcial, CHECK, exclusion, FK — sob `@prisma/adapter-pg` | Provocar cada violação; capturar o objeto de erro completo (código Prisma, `meta`, e `code`/`constraint` do driver); publicar tabela normativa de mapeamento | **C-6** | **`E-12`** |
 | **V-04** | **Sobrevivência dos objetos SQL customizados ao workflow real de migrations do projeto** | Após criar todos os objetos, alterar uma tabela **não relacionada**, rodar `migrate dev --create-only` e inspecionar o SQL gerado em busca de qualquer `DROP` de objeto protegido — com atenção especial aos índices parciais; mais o teste negativo de §12.2 | **C-3 / `R2.2-03`** — reduz, **não encerra sem execução** | **`E-16`** |
 | **V-05** | Jest 30 executando testes de integração em pacote ESM que importa o Prisma Client ESM | Suíte mínima com um `import` do Client gerado, rodando contra o Postgres do compose | `R-BL-04` | `E-13` |
-| **V-06** | TypeScript 6.0 aceito por Prisma 7 e Next 16 como **teto** (não só como mínimo); e valor efetivo do npm da linha Node 24 | `tsc --noEmit` sobre o Client gerado; `npm -v` na máquina alvo | `R-BL-03`; `packageManager` | `E-01` |
+| **V-06** | TypeScript 6.0 aceito por Prisma 7 e Next 16 como **teto** (não só como mínimo); e valor efetivo do npm da linha Node 24 | Executada em **três subchecks** (§12.2): **`V-06.a`** — `node -v`/`npm -v` na máquina alvo, `packageManager` registrado do valor real, TypeScript 6.0.x resolvido no workspace e configuração ESM/strict válida; **`V-06.b`** — `tsc --noEmit` sobre o Prisma Client **gerado**; **`V-06.c`** — TypeScript 6.0.x sobre **Next.js 16** efetivamente instalado. `V-06` só é **integralmente APROVADA** com os três | `R-BL-03`; `packageManager` | **`V-06.a` → `E-01`; `V-06.b` → `E-03`; `V-06.c` → scaffold do frontend (fora deste plano)** |
 
 **`V-01`, `V-03` e `V-04` são bloqueantes.** As três fecham condições homologadas ou riscos críticos.
 
-### 12.1 Estado de execução — declaração explícita
+### 12.1 Estado de execução — registro vivo
 
-> **Nenhuma verificação `V-01`..`V-06` foi executada.** Todas as seis estão **PENDENTES**. Nenhuma delas pode ser marcada como concluída sem evidência de execução registrada em `E-18`.
+> **Esta seção é atualizada a cada etapa executada.** Ela substitui, como fonte corrente, a declaração estática que vigorou até a REV. 3 ("nenhuma verificação foi executada"), verdadeira enquanto nenhuma etapa física existia e **superada pelos fatos** a partir de `E-01`. Nenhuma verificação pode ser marcada como concluída sem evidência de execução; a consolidação documental final continua pertencendo a `E-18`.
 
-Executá-las exigiria criar workspace, instalar dependências e subir banco — atividades expressamente **fora do escopo** desta fase documental. As verificações pertencem às etapas que as consomem e permanecem lá.
+| ID | Estado | Onde foi executada | Observação |
+| --- | --- | --- | --- |
+| **`V-01`** | **APROVADA** — 20/08/2026 | `E-02` | `btree_gist` instalada por `tlf_migrator` (**não superusuário**) na imagem `postgres:18-bookworm`; `EXCLUDE USING gist (uuid WITH =, tstzrange WITH &&)` criada, exercitada nos dois sentidos e derrubada. **Fallback `postgresql-contrib` não foi necessário.** Fecha também o ponto 4 de §5.5 |
+| `V-02` | **PENDENTE** | `E-08` | — |
+| `V-03` | **PENDENTE** | `E-12` | — |
+| `V-04` | **PENDENTE** | `E-16` | Enquanto pendente, `R2.2-03` e `R-BL-05` **não** podem ser declarados fechados |
+| `V-05` | **PENDENTE** | `E-13` | — |
+| **`V-06`** | **PARCIALMENTE APROVADA** | `E-01` + `E-03` | `V-06.a` **APROVADA** em `E-01`; `V-06.b` **APROVADA** em `E-03`; **`V-06.c` PENDENTE** — ver §12.2 |
+
+**Consequência sobre `R-BL-03`:** o risco fica **reduzido, não encerrado**. O teto do TypeScript 6.0 está medido contra o Prisma 7 e **não** contra o Next.js 16.
 
 ### 12.2 Especificação completa de cada verificação
 
@@ -822,10 +838,44 @@ Para cada verificação: **o que mede**, **quando é executada**, **qual etapa b
 #### `V-06` — TypeScript 6.0 como **teto**, e valor efetivo do npm
 
 - **O que mede.** Duas coisas: (i) se Prisma 7 e Next 16 aceitam TypeScript **6.0** — os três consumidores declaram apenas limites **mínimos**, nunca um teto; (ii) o valor real do npm distribuído com a linha Node 24 na máquina alvo, para preencher `packageManager` sem presunção.
+
+##### Correção de sequenciamento (REV. 3) — por que a execução é dividida
+
+A REV. 2 declarava `V-06` integralmente como critério de `E-01`. Isso é **impossível de satisfazer**: a parte (i) exige `tsc --noEmit` sobre o **Prisma Client gerado**, e o Client só existe após `E-03`, que depende de `E-01` e de `E-02`. Exigir a verificação completa em `E-01` cria um ciclo.
+
+A correção **não altera o que `V-06` mede, nem seu critério de sucesso, nem o risco que fecha**. Altera apenas **quando cada metade é executável**. `V-06.a` e `V-06.b` **não são verificações novas**: são subchecks de `V-06`, que continua sendo uma das seis verificações do plano.
+
+##### `V-06.a` — executada em `E-01`
+
+- **O que mede.** O Node efetivamente em uso e sua pertinência à linha 24.x; o valor real de `npm -v`; o registro de `packageManager` **a partir desse valor real**; a resolução de TypeScript **6.0.x** no workspace (`tsc --version`); e a validade da configuração TypeScript ESM/strict sobre o workspace ainda vazio.
 - **Quando.** Durante `E-01`, no scaffold.
-- **Bloqueia.** `E-01`.
-- **Sucesso.** `tsc --noEmit` limpo sobre o Client gerado; `npm -v` lido e registrado literalmente no `package.json`.
-- **Falha.** Se o teto não se sustentar, recuar para a maior 5.x aceita por todos os consumidores — **mudança de baseline**, sujeita ao rito de §15 e registrada como tal. Não recuar silenciosamente.
+- **Bloqueia.** `E-01`. É **critério de aceite** dele. Falhando, **não se avança para `E-02`**.
+- **Sucesso.** `node -v` na faixa 24.x; `npm -v` lido e registrado literalmente em `packageManager`; `tsc --version` reportando 6.0.x; configuração TypeScript resolvida sem erro.
+
+##### `V-06.b` — executada em `E-03`
+
+- **O que mede.** Se o Prisma Client **efetivamente gerado** pela versão 7.x selecionada é aceito pelo TypeScript 6.0.x — isto é, a metade **Prisma** do teto que a parte (i) pretende medir.
+- **Quando.** Durante `E-03`, após `prisma generate`.
+- **Bloqueia.** `E-03`.
+- **Sucesso.** `tsc --noEmit` termina limpo sobre o pacote de banco **incluindo/importando** o Client gerado, em ESM.
+
+##### `V-06.c` — a executar no scaffold do frontend
+
+- **Por que existe (REV. 4).** A parte (i) de `V-06` nomeia **dois** consumidores: Prisma 7 **e** Next.js 16. `V-06.b` mede apenas o primeiro. Declarar `V-06` aprovada com base nele estenderia a evidência a um consumidor **que sequer foi instalado**. `V-06.c` é o subcheck que faltava — **não é uma verificação nova**, é a metade não medida da mesma `V-06`.
+- **O que mede.** A compatibilidade real do **TypeScript 6.0.x** com a linha **Next.js 16** efetivamente utilizada no futuro `apps/web`.
+- **Quando.** Durante o **scaffold inicial do frontend**. Essa etapa **não pertence a este plano**, que termina na persistência.
+- **Bloqueia.** Apenas a etapa de scaffold do frontend. **Não bloqueia `E-04`..`E-07`**, nem qualquer outra etapa deste plano: nenhuma delas compila código Next.js.
+- **Não autoriza.** Criar `apps/web` para executá-la antecipadamente. Ela ocorre quando o frontend for legitimamente criado, não antes.
+- **Sucesso.** Next.js 16 instalado; **TypeScript 6.0.x mantido** — e não substituído pelo que o scaffold sugerir; configuração oficial do Next gerada/ajustada; `tsc --noEmit` ou a verificação de tipos oficial equivalente do Next verde; build mínimo verde.
+- **Falha.** **Não alterar silenciosamente** a versão do TypeScript nem a do Next.js para fazer o check passar. Registrar comando, erro, versões e causa provável, e **reabrir a baseline correspondente** pelo rito de §15/TLF-BASE-V1 §14.
+
+##### Resultado de `V-06`
+
+> **`V-06` só é considerada integralmente APROVADA quando `V-06.a`, `V-06.b` e `V-06.c` estiverem as três aprovadas.** Aprovar parte dos subchecks **não** aprova `V-06` e **não** fecha `R-BL-03`.
+
+**Estado corrente (REV. 4):** `V-06.a` **APROVADA** · `V-06.b` **APROVADA** · `V-06.c` **PENDENTE** → **`V-06` = PARCIALMENTE APROVADA** (§12.1).
+
+- **Falha.** Se o teto não se sustentar em `V-06.b` ou em `V-06.c`, recuar para a maior 5.x aceita por todos os consumidores — **mudança de baseline**, sujeita ao rito de §15 e registrada como tal. Não recuar silenciosamente, e **não** confundir erro de configuração com incompatibilidade real.
 
 ---
 
@@ -847,8 +897,9 @@ Convenções: **Rev.** = reversibilidade. Todos os caminhos são relativos à ra
 - **Arquivos previstos.** `package.json` (raiz, `private: true`, `workspaces`, `engines.node`, `packageManager`, `type: "module"`), `.nvmrc`, `tsconfig.base.json`, `.gitignore`, `.editorconfig`, `packages/database/package.json`, `packages/database/tsconfig.json`.
 - **Dependências.** Nenhuma. É a primeira etapa.
 - **Ação.** Definir `packages/database` como **único** workspace inicial. Não criar `apps/api` nem `apps/web` — **por escopo**: nenhum dos dois é necessário para a persistência, e este plano termina nela. A raiz nasce com `"type": "module"`, conforme `D-ESM-01` (§16) e por exigência do próprio Prisma 7.
-- **Validação.** `npm ls --workspaces` resolve; `V-06`.
-- **Critério de aceite.** Workspace resolve; `engines.node` recusa Node fora de 24.x; `package-lock.json` gerado e versionado.
+- **Validação.** `npm ls --workspaces` resolve; **`V-06.a`** (§12.2). A parte da `V-06` que depende do Prisma Client gerado é **`V-06.b`** e pertence a `E-03` — ver a correção de sequenciamento da REV. 3.
+- **Critério de aceite.** Workspace resolve; `engines.node` recusa Node fora de 24.x; `package-lock.json` gerado e versionado; **`V-06.a` aprovada**.
+- **Estado (REV. 4). EXECUTADA.** Node 24.x e npm reais lidos da máquina e `packageManager` preenchido a partir do valor medido; TypeScript 6.0.x resolvido; `strict` e ESM/`nodenext` comprovados por casos positivos **e** negativos; `package-lock.json` gerado. A recusa de Node fora de 24.x exigiu um `.npmrc` local com `engine-strict=true` — sem ele o npm apenas emite *warning*, o que **não** satisfaz o critério de aceite. **`V-06.a` APROVADA.**
 - **Risco.** Baixo. **Rev.** Total.
 
 #### `E-02` — Ambiente PostgreSQL
@@ -859,7 +910,8 @@ Convenções: **Rev.** = reversibilidade. Todos os caminhos são relativos à ra
 - **Ação.** Serviço `postgres:18-bookworm` com volume nomeado e healthcheck. Criar **duas roles distintas, desde o início**: `tlf_migrator` (dono do schema; `CREATE` no banco; `CREATEDB` para o shadow) e `tlf_app` (runtime; sem DDL). A separação é **pré-requisito do `REVOKE`** de `E-11` — introduzi-la depois exigiria refazer objetos. `.env.example` sem segredo real (TLF-BASE-V1 §14).
 - **Validação.** **`V-01`.** Healthcheck verde; `SELECT 1`; `CREATE EXTENSION btree_gist` bem-sucedido com `tlf_migrator`; `EXCLUDE` de teste com `uuid WITH =` criada e derrubada.
 - **Critério de aceite.** **`V-01` aprovada.** Sem ela, `H2.2-06` não é implementável e o plano **para aqui**.
-- **Risco.** **Alto se `V-01` falhar** — mitigação: variante `bookworm` com `postgresql-contrib` explicitamente instalado. **Rev.** Total (`docker compose down -v`).
+- **Estado (REV. 4). EXECUTADA.** Container `postgres:18-bookworm` com volume nomeado e healthcheck **verde**; roles `tlf_migrator` (não superusuário, com `CREATEDB`) e `tlf_app` (sem DDL, sem ownership) criadas por script de inicialização versionado; ausência de DDL em `tlf_app` comprovada por tentativas reais rejeitadas; reprodutibilidade a partir de volume vazio comprovada por `down -v` + `up -d`. **`V-01` APROVADA, sem recurso ao fallback.** A extensão criada na prova foi **removida** ao final, para que `E-04` continue sendo a única responsável por instalá-la (§10).
+- **Risco.** **Alto se `V-01` falhar** — mitigação: variante `bookworm` com `postgresql-contrib` explicitamente instalado. **Risco realizado: não.** **Rev.** Total (`docker compose down -v`).
 
 #### `E-03` — Instalação do Prisma 7
 
@@ -867,8 +919,9 @@ Convenções: **Rev.** = reversibilidade. Todos os caminhos são relativos à ra
 - **Arquivos previstos.** `packages/database/package.json`, `prisma.config.ts`, `packages/database/prisma/schema.prisma` (vazio, só `datasource` e `generator`).
 - **Dependências.** `E-01`, `E-02`.
 - **Ação.** Instalar `prisma`, `@prisma/client`, `@prisma/adapter-pg` **na mesma minor**. `generator` com `provider = "prisma-client"` e **`output` obrigatório** (Prisma 7). `prisma.config.ts` com `url` (usado pelo CLI nas migrations) e `shadowDatabaseUrl`, carregando variáveis explicitamente — elas **não** são mais carregadas automaticamente.
-- **Validação.** `prisma validate`; `prisma migrate status` conecta.
-- **Critério de aceite.** CLI conecta com `tlf_migrator`; Client gerado no `output` configurado, **fora de `node_modules`**.
+- **Validação.** `prisma validate`; `prisma generate`; `prisma migrate status` conecta; **`V-06.b`** (§12.2).
+- **Critério de aceite.** CLI conecta com `tlf_migrator`; Client gerado no `output` configurado, **fora de `node_modules`**; **`V-06.b` aprovada**.
+- **Estado (REV. 4). EXECUTADA.** `prisma`, `@prisma/client` e `@prisma/adapter-pg` na **mesma minor 7.x**; `prisma validate` e `prisma generate` verdes; Client gerado em `packages/database/generated/prisma`, **fora de `node_modules`** e **não versionado**, por regra específica de `.gitignore` (é artefato derivável de `schema.prisma` + versão fixada do Prisma + `package-lock.json` + `prisma generate`; regeneração comprovada byte a byte); conexão do CLI como `tlf_migrator` comprovada no log do servidor. **`V-06.b` APROVADA.** Combinada com `V-06.a`, isso deixa `V-06` **PARCIALMENTE APROVADA** — **não** integralmente: falta `V-06.c` (§12.2). Nesta etapa foi identificado **`R-BL-09`** (§15.2).
 - **Risco.** Médio — `output` obrigatório e ESM são as duas fontes de atrito. **Rev.** Total.
 
 ### Bloco II — Schema declarativo (E-04 a E-07)
@@ -877,7 +930,8 @@ Convenções: **Rev.** = reversibilidade. Todos os caminhos são relativos à ra
 
 - **Objetivo.** Primeira migration do histórico, isolada e idempotente.
 - **Arquivos previstos.** `prisma/migrations/0001_extensao_btree_gist/migration.sql`.
-- **Dependências.** `E-03`; **`V-01` aprovada**.
+- **Dependências.** `E-03`; **`V-01` aprovada** — satisfeita em 20/08/2026 (§12.1).
+- **Pré-condição de ambiente (REV. 4).** `E-04` deve **começar a partir de ambiente PostgreSQL local reconstruído com volume limpo** (`docker compose down -v` seguido de `docker compose up -d`). Sem isso, uma extensão remanescente de qualquer prova anterior mascararia a falha de uma migration incompleta, e o critério de aceite abaixo — "sem nenhum passo manual" — seria verificado contra um banco contaminado. **Pré-condição de segurança da própria pré-condição:** destruir **somente** o volume local sintético do TechLab Fisio, e apenas **após confirmar que ele não contém dado a preservar**. O volume é de desenvolvimento e não deve conter dado real (TLF-BASE-V1 §10) — a confirmação é obrigatória mesmo assim.
 - **Ação.** `prisma migrate dev --create-only --name extensao_btree_gist` (produz migration vazia), acrescentar `CREATE EXTENSION IF NOT EXISTS btree_gist;`, aplicar.
 - **Validação.** `SELECT extname FROM pg_extension WHERE extname = 'btree_gist'` retorna linha; `migrate reset` recria; shadow database a recebe.
 - **Critério de aceite.** Extensão presente após `migrate reset` a partir de banco vazio — **sem nenhum passo manual**.
@@ -1117,12 +1171,13 @@ Cobertura obrigatória. **Nenhum dado real de paciente em nenhuma circunstância
 | --- | --- | --- | --- | --- |
 | **`R-BL-01`** | **Governança e manutenção da baseline Prisma.** Risco de **governança**, não de fim de vida anunciado — ver §15.1 | **Média** | Revisão técnica interna programada (§15.1). A tríade de guardas (§9.3) é o que tornará qualquer migração futura auditável | Médio — **inevitável**: não existe linha estável alternativa |
 | **`R-BL-02`** | **Custo de configuração do ESM.** Prisma 7 exige ESM; NestJS 11 é CommonJS por padrão. **A escolha está feita** (`D-ESM-01`, §16); o que resta é o esforço de configurar build, decorators e testes, e comprová-lo | **Média** | Backend nasce ESM, quando existir (`node16`/`nodenext`; decorators via SWC com `legacyDecorator` + `decoratorMetadata`). **Não bloqueia a persistência** — `packages/database` é ESM puro sem NestJS. Validação concreta ocorre na etapa de implementação do backend, fora deste plano | Médio até a validação prática — **não mais uma decisão em aberto** |
-| **`R-BL-03`** | **TypeScript 6.0 × 7.0.** A 7.0 é a nova implementação nativa (Go) do compilador; nenhum dos três consumidores (Prisma, Next, Jest) declara oficialmente suporte a ela | **Média** | Baseline em 6.0 por maturidade e previsibilidade (§6.3); `V-06` confirma o **teto**; reavaliar quando houver suporte oficial declarado | Baixo |
+| **`R-BL-03`** | **TypeScript 6.0 × 7.0.** A 7.0 é a nova implementação nativa (Go) do compilador; nenhum dos três consumidores (Prisma, Next, Jest) declara oficialmente suporte a ela | **Média** | Baseline em 6.0 por maturidade e previsibilidade (§6.3); `V-06` confirma o **teto**; reavaliar quando houver suporte oficial declarado | **Reduzido, não encerrado.** `V-06.b` mediu o teto contra o **Prisma 7** — aprovado. O teto contra o **Next.js 16** permanece **não medido** (`V-06.c`, §12.2) e contra o **Jest 30** depende de `V-05` |
 | **`R-BL-04`** | **Jest 30 + ESM + decorators.** Jest suporta ESM, mas exige configuração; a combinação com decorators do NestJS é o ponto sensível | **Média** | `V-05` fecha para o pacote de banco (que **não** usa decorators). Para o backend, decorre de `D-ESM-01` (§16) e é validado na etapa que criar `apps/api` | Baixo na persistência |
 | **`R-BL-05`** | **Índices parciais na zona cinzenta de C-3** — o Prisma modela índices e pode propor `DROP` | **Alta se não mitigada** | Tríade de §9.3 + `V-04` bloqueante em `E-16` | **Aberto até `V-04`**; Baixo somente após `E-16` |
 | **`R-BL-06`** | **`db pull` executado por engano** degrada o `schema.prisma` — perde objetos não representáveis **e** pode injetar a Preview `partialIndexes` na baseline | **Média** | Política normativa de **§10.2**: fora do fluxo normal; nenhum script no `package.json`; `--print` antes de qualquer materialização; `--force` proibido; snapshot golden e `migrate diff --exit-code` como backstop | Baixo |
 | **`R-BL-07`** | **Roles não separadas** tornariam o `REVOKE` de `E-11` inócuo | **Média** | Separação criada já em `E-02`, **antes** de qualquer objeto | Baixo |
 | **`R-BL-08`** | **`timeout` padrão de 5 s** do `$transaction` abortando transações sob contenção de lock | **Média** | Configurar `timeout`/`maxWait` explicitamente; cobrir em `T-PKG-CONCURRENCY` | Baixo |
+| **`R-BL-09`** | **Vulnerabilidade transitiva no *tooling* do Prisma.** `deepmerge-ts` em versão vulnerável, alcançada pela cadeia `prisma` → `@prisma/config` → `deepmerge-ts` — ver §15.2 | **Alta na publicação do advisory; exposição concreta do projeto reduzida pelo contexto de uso** | **Aceitação temporária monitorada** (§15.2). Não há correção disponível dentro da linha Prisma 7; a única remediação automática oferecida pelo npm é um recuo de major para Prisma 6, que **mudaria a baseline** | **ABERTO** — reavaliar a cada atualização do Prisma 7 e obrigatoriamente antes de CI de produção/deploy |
 
 **Riscos herdados de `docs/07` §26 que este documento move:** `R2.2-03` (perda silenciosa) é **reduzido** de "Crítico, aberto" para **"Médio, aberto"** pela evidência documental de §9.2.1, e torna-se **Baixo somente após `V-04` aprovada e a tríade ativa em `E-16`** — ver §9.2.4. **Este documento não fecha `R2.2-03`.** O que este documento fecha é **`P2.2-08`** (fixação de versões e verificação da Categoria C).
 
@@ -1153,6 +1208,75 @@ Esta seção existe porque a REV. 0 apresentava como **fato de EOL** algo que a 
 > **Essa data é uma decisão interna de governança do TechLab Fisio. Ela não representa EOL oficial do Prisma, nem qualquer prazo declarado pelo fornecedor.**
 
 A revisão deve consultar as fontes oficiais **na data em que ocorrer** — nunca reaproveitar as conclusões desta seção — e verificar: maturidade da linha 8, existência (ou não) de política de suporte publicada, e compatibilidade com Node, PostgreSQL e TypeScript vigentes. Migrar de linha major é mudança de baseline, sujeita ao rito de TLF-BASE-V1 §14. A tríade de guardas de §9.3 é o que tornará essa migração auditável.
+
+
+---
+
+### 15.2 `R-BL-09` — vulnerabilidade transitiva em *tooling* Prisma
+
+Registrada na **REV. 4**, a partir de medição executada na consolidação de `E-01`..`E-03`. Esta seção separa **fato medido**, **exposição** e **tratamento**, e não confunde as três coisas.
+
+#### 15.2.1 Fato
+
+Tudo abaixo foi **medido no repositório**, não presumido, e conferido contra o advisory oficial.
+
+| Item | Valor |
+| --- | --- |
+| Pacote afetado | **`deepmerge-ts`** (npm) |
+| Versão efetivamente instalada | **`7.1.5`** |
+| Cadeia de dependência | `prisma@7.9.1` → `@prisma/config@7.9.1` → `deepmerge-ts@7.1.5` — **transitiva de terceiro nível**, declarada como `dependencies` do `@prisma/config`, não escolhida por este projeto |
+| Advisory | **GHSA-ggr8-5vv4-36mx** — *"DeepmergeTS has stack exhaustion when merging recursive object graphs"* |
+| CVE | **CVE-2026-40345** |
+| Severidade publicada | **Alta (High)** — CVSS **8.2** |
+| Classe | **CWE-674** — *Uncontrolled Recursion* |
+| Faixa vulnerável | `< 8.0.0` |
+| Versão corrigida segundo o advisory | **`8.0.0`** (a linha 8 já está publicada: `8.0.0`, `8.0.1`) |
+| Natureza | A biblioteca não faz detecção de ciclo. Ao mesclar dois objetos com auto-referência no mesmo caminho de propriedade, a recursão não termina e a pilha estoura (`RangeError: Maximum call stack size exceeded`). É **negação de serviço**, não execução de código nem vazamento de dados |
+| Contagem do `npm audit` | **3 vulnerabilidades altas** — que são **a mesma cadeia contada três vezes** (`deepmerge-ts`, `@prisma/config` e `prisma`), e não três problemas distintos |
+
+**Não existe correção dentro da linha Prisma 7 na data desta revisão.** Verificado pacote a pacote: `@prisma/config` nas versões `7.8.0`, `7.9.0` e `7.9.1` — a mais recente publicada — depende de `deepmerge-ts@7.1.5`. A única remediação que o `npm audit` oferece automaticamente é `prisma@6.12.0`, marcada por ele próprio como `isSemVerMajor: true`.
+
+#### 15.2.2 Exposição do TechLab Fisio
+
+**Classificação: risco de *supply chain* / *tooling*, com exposição concreta atual reduzida pelo contexto de uso — não nula.**
+
+O que sustenta a redução:
+
+1. `@prisma/config` é a camada que **lê e mescla a configuração do CLI** (`prisma.config.ts` e padrões). Ela é exercitada em tempo de **desenvolvimento e de migrations**, não no caminho de requisição da aplicação.
+2. `@prisma/client` e `@prisma/adapter-pg` — os pacotes que efetivamente entram no runtime — **não** têm `deepmerge-ts` em sua cadeia.
+3. As entradas mescladas hoje são **autoria do próprio repositório** (o `prisma.config.ts` versionado) e não dados de usuário. Um grafo recursivo malicioso não tem por onde chegar.
+4. O impacto do defeito é **exaustão de pilha**, cujo pior efeito neste contexto é a queda de um comando de CLI executado por um desenvolvedor.
+
+O que **impede** declarar ausência de risco:
+
+1. **A dependência está instalada.** Ela existe na árvore do repositório e no `package-lock.json`, e é código de terceiro executado na máquina de quem desenvolve e, futuramente, no runner de CI.
+2. **A fronteira "tooling" não é garantida por contrato.** Ela decorre de como o Prisma organiza seus pacotes hoje, e pode mudar sem aviso em uma minor.
+3. **Superfície de *supply chain* permanece.** Um pacote vulnerável e desatualizado na cadeia é um indicador de manutenção que merece acompanhamento, independentemente do vetor específico.
+
+> **Este documento não afirma que `R-BL-09` é "sem risco".** Afirma que, no uso atual, a exposição é reduzida — e que essa redução é **circunstancial**, não estrutural.
+
+#### 15.2.3 Tratamento — aceitação temporária monitorada
+
+**Decisão:** manter **`prisma@7.9.1`** e aceitar o risco temporariamente, sob monitoramento.
+
+O que **não** se faz, e por quê:
+
+| Ação descartada | Motivo |
+| --- | --- |
+| `npm audit fix --force` | Instalaria **`prisma@6.12.0`** — recuo de **major** fora da baseline homologada de §6, revertendo por efeito colateral de um comando de conveniência uma decisão tomada por escrito. Exatamente o tipo de mudança que TLF-BASE-V1 §14 e §15 sujeitam a rito |
+| Recuar para Prisma 6 | Mudança de baseline. Além disso, o Prisma 6 não tem a arquitetura de driver adapter e `prisma.config.ts` sobre a qual `E-03` foi construída |
+| Avançar para Prisma 8 | **Early Access** — proibido pela regra de exclusão de §3 |
+| `overrides` forçando `deepmerge-ts@8` | Alteraria uma dependência transitiva **fora do contrato declarado pelo fornecedor**. O `@prisma/config` fixa `7.1.5` exatamente, não uma faixa; forçar a linha 8 (que é major) sem que o Prisma a tenha validado troca um risco conhecido e delimitado por um risco desconhecido de incompatibilidade silenciosa no caminho de migrations — o caminho de que depende toda a integridade do modelo físico |
+
+**Regime de monitoramento — vinculante:**
+
+1. **Reavaliar a cada atualização da linha Prisma 7.** Verificar se `@prisma/config` passou a depender de `deepmerge-ts >= 8.0.0`.
+2. **Se uma versão 7.x corrigir a cadeia sem quebrar a baseline, propor o upgrade** — atualização de patch/minor dentro da linha homologada, não mudança de baseline.
+3. **Verificar novamente antes de qualquer CI de produção ou deploy.** Aceitar o risco em desenvolvimento não o aceita em produção.
+4. **A aceitação deixa de ser suficiente** — e o risco deve ser reaberto imediatamente — se `deepmerge-ts` passar a participar de **caminho de runtime com entrada não confiável**, ou se o advisory for reclassificado.
+5. Insumo obrigatório da revisão de governança de §15.1, junto com `R-BL-01`.
+
+**Nenhuma versão da baseline de §6 foi alterada por este registro.**
 
 ---
 
@@ -1207,17 +1331,19 @@ Registrado como **fato verificado, sem impacto na baseline atual**: o roadmap p�
 | Baseline revalidada em fontes oficiais na data desta revisão | ✔ §3.1 — 11 itens reconsultados em 20/08/2026; nenhuma linha da baseline alterada |
 | Nenhuma decisão simultaneamente aprovada e pendente | ✔ `D-PEND-01` encerrada em §16 e removida de §19; `P2.2-08` encerrada e riscada em §19 |
 | Nenhum risco declarado encerrado com `V-*` pendente | ✔ `R2.2-03` e `R-BL-05` permanecem **abertos** até `V-04` (§9.2.4, §15) |
-| Nenhuma verificação marcada como executada | ✔ §12.1 — `V-01`..`V-06` declaradas **todas pendentes** |
+| Nenhuma verificação marcada como executada | ✔ **no ato da homologação** — `V-01`..`V-06` estavam então todas pendentes. **Estado corrente em §12.1**, atualizado pela REV. 4 |
 | Homologação registrada formalmente | ✔ §0 — autoridade, data, objeto, o que fica homologado e o que **não** é alterado por ela |
 | Status do documento coerente em todas as áreas | ✔ cabeçalho, histórico de revisões, §0, §1.3, §16.2, §17.3, §17.4, §19, §20.1 e encerramento sincronizados |
 | Compatibilidade Node ↔ Prisma ↔ Next ↔ Nest | ✔ §4.2 — cada uma contra requisito oficial |
 | Compatibilidade Prisma ↔ PostgreSQL | ✔ §5.2 — matriz oficial lista PostgreSQL 18 |
-| Estratégia de `btree_gist` | ✔ §5.5 — 7 pontos; 6 fechados por documentação, 1 por `V-01` |
+| Estratégia de `btree_gist` | ✔ §5.5 — 7 pontos; 6 fechados por documentação e o 7º (ponto 4) **fechado por `V-01`, aprovada em 20/08/2026** (REV. 4) |
 | Estratégia para objetos SQL customizados | ✔ §9 — comportamento por operação + tríade de guardas |
 | Nenhuma decisão homologada de `docs/07` perdida | ✔ §17.2 |
 | Nenhuma Base Imutável modificada | ✔ §17.3 |
 | `git diff` e `git status` executados | ✔ §17.4 |
 | Arquivos alterados listados | ✔ §17.4 |
+
+> **Nota da REV. 4.** O checklist acima registra a validação **do documento no ato da homologação**. Ele não é reescrito a cada etapa executada: o estado corrente das verificações vive em **§12.1**, e o dos riscos em **§15**.
 
 ### 17.2 Nenhuma decisão homologada foi perdida
 
@@ -1275,6 +1401,8 @@ Registrado como **fato verificado, sem impacto na baseline atual**: o roadmap p�
 **REV. 2 — versionamento autorizado.** Com a homologação de §0, Bruno autorizou o commit documental. Foi criado **um único commit**, na mesma branch de trabalho, contendo **exclusivamente** os três arquivos acima, e a branch foi publicada em `origin`. Detalhes e efeito sobre `R2.2-16` em **§20.1**.
 
 **Não realizados e não autorizados por este ato:** merge na `main`, pull request, rebase, force push, tag, release e deploy. A branch `main` **não foi tocada**.
+
+**REV. 4 — implementação da fundação, ainda não versionada.** `E-01`..`E-03` foram implementadas na branch de trabalho **`agent/fase2-implementacao-e01-e03`**, criada a partir do commit documental `d20b3b3`. **Nenhum commit, `git add`, push, PR, merge, rebase, tag ou deploy foi realizado**: `HEAD` permanece em `d20b3b3` e a área de stage permanece vazia. Os artefatos de fundação existem apenas como alterações da árvore de trabalho, deliberadamente, para permitir revisão do diff **antes** de qualquer publicação. O Prisma Client gerado **não é versionado** — é artefato derivável de `schema.prisma` + versão fixada do Prisma + `package-lock.json` + `prisma generate`, e está coberto por regra específica de `.gitignore`.
 
 ---
 
@@ -1377,10 +1505,12 @@ Consultadas em **20/08/2026**, todas **oficiais primárias**. Nenhuma fonte de t
 | --- | --- | --- | --- |
 | ~~`P2.2-08`~~ | Versões de PostgreSQL e Prisma; Categoria C | **ENCERRADA por este documento** (§6, §7) | — |
 | ~~`D-PEND-01`~~ | Formato de módulo do backend (ESM × CJS) | **ENCERRADA na REV. 1.** Consolidada como **`D-ESM-01`** (§16): ESM desde a criação; não se aguarda o NestJS 12 | — |
-| `V-01` | `btree_gist` — disponibilidade e permissão na imagem | Técnica — teste local — **PENDENTE** | **Bloqueia `E-04`** (critério de aceite de `E-02`) |
+| ~~`V-01`~~ | `btree_gist` — disponibilidade e permissão na imagem | **APROVADA em 20/08/2026**, durante `E-02` (§12.1). Fecha `H2.2-06` no ponto 4 de §5.5 | — |
 | `V-03` | Forma concreta do erro por constraint | Técnica — teste local — **PENDENTE** | **Bloqueia `E-12`** |
 | `V-04` | Sobrevivência dos objetos SQL ao workflow real de migrations | Técnica — teste local — **PENDENTE** | **Bloqueia `E-16`**; impede encerrar `R2.2-03` e `R-BL-05` |
-| `V-02`, `V-05`, `V-06` | Coluna gerada; Jest+ESM; teto do TS e npm efetivo | Técnica — teste local — **PENDENTES** | Bloqueiam `E-08`, `E-13` e `E-01`, respectivamente |
+| `V-02`, `V-05` | Coluna gerada; Jest + ESM | Técnica — teste local — **PENDENTES** | Bloqueiam `E-08` e `E-13`, respectivamente |
+| `V-06` | Teto do TypeScript 6.0 e npm efetivo | Técnica — teste local — **PARCIALMENTE APROVADA.** `V-06.a` **APROVADA** em `E-01`; `V-06.b` **APROVADA** em `E-03`; **`V-06.c` PENDENTE** (§12.2) | **Não bloqueia mais `E-01` nem `E-03`** — ambas executadas. `V-06.c` bloqueia apenas o scaffold do frontend e **não bloqueia `E-04`..`E-07`**. Impede declarar `R-BL-03` encerrado |
+| `R-BL-09` | Vulnerabilidade transitiva em `deepmerge-ts`, via `prisma` → `@prisma/config` | **Segurança de *supply chain* / tooling** (§15.2). **ABERTO — aceitação temporária monitorada** | Não bloqueia `E-04`..`E-18`. **Reavaliação obrigatória** a cada atualização do Prisma 7 e antes de CI de produção/deploy |
 | `R-BL-01` | Revisão de governança da baseline Prisma — janeiro de 2027 | **Governança interna** (§15.1). **Não é EOL do Prisma** | Não |
 | `R-BL-02` | Validação prática da configuração ESM do backend | Técnica — pertence à etapa que criar `apps/api` | Não bloqueia a persistência |
 | `P2.2-11` | Absorção das duas `PROP-RN` em `docs/03` | Governança documental | Não |
@@ -1417,4 +1547,4 @@ A Base Imutável entrou no repositório **exatamente como estava**, sem qualquer
 
 ---
 
-**Fim do documento — HOMOLOGADO — REV. 2 — `docs/08-baseline-tecnica-plano-implementacao.md` — FASE 2 DOCUMENTAL ENCERRADA.**
+**Fim do documento — HOMOLOGADO (ato: REV. 2) — revisão vigente REV. 4 — `docs/08-baseline-tecnica-plano-implementacao.md` — FASE 2 DOCUMENTAL ENCERRADA; FUNDAÇÃO `E-01`..`E-03` EXECUTADA E PENDENTE DE VERSIONAMENTO.**

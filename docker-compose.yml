@@ -1,0 +1,46 @@
+# TechLab Fisio — ambiente de desenvolvimento (docs/08 §5.6, §13 E-02).
+# Compose spec v2: sem campo `version:` (obsoleto).
+#
+# Uso:
+#   cp .env.example .env      # e ajuste os valores locais
+#   docker compose up -d
+#
+# Nenhuma credencial real pertence a este arquivo. Todos os valores sensíveis
+# vêm de `.env`, que é ignorado pelo Git (TLF-BASE-V1 §14).
+
+name: techlab-fisio
+
+services:
+  postgres:
+    image: postgres:18-bookworm
+    container_name: techlab-fisio-postgres
+    restart: unless-stopped
+    environment:
+      # Superusuário do container — usado somente pelo entrypoint e pela
+      # inicialização das roles. A aplicação e o CLI de migrations nunca o usam.
+      POSTGRES_USER: ${POSTGRES_SUPERUSER}
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      # Roles do projeto, criadas por infra/postgres/initdb/01-roles.sh
+      TLF_MIGRATOR_USER: ${TLF_MIGRATOR_USER}
+      TLF_MIGRATOR_PASSWORD: ${TLF_MIGRATOR_PASSWORD}
+      TLF_APP_USER: ${TLF_APP_USER}
+      TLF_APP_PASSWORD: ${TLF_APP_PASSWORD}
+      TLF_SHADOW_DB: ${TLF_SHADOW_DB}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      # PostgreSQL 18 alterou o PGDATA para caminho versionado
+      # (/var/lib/postgresql/18/docker); o volume deve mirar /var/lib/postgresql.
+      - postgres-data:/var/lib/postgresql
+      - ./infra/postgres/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+volumes:
+  postgres-data:
+    name: techlab-fisio-postgres-data

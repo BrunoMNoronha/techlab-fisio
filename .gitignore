@@ -1,0 +1,18 @@
+# Dependências
+node_modules/
+
+# Segredos e ambiente local — nunca versionados (TLF-BASE-V1 §14)
+.env
+.env.*
+!.env.example
+
+# Prisma Client gerado (output fora de node_modules, conforme docs/08 §13 E-03)
+packages/database/generated/
+
+# Artefatos de build e cache de ferramentas
+dist/
+*.tsbuildinfo
+
+# Sistema operacional / editor
+Thumbs.db
+.DS_Store
