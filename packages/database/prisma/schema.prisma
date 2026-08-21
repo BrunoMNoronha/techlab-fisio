@@ -1,8 +1,13 @@
 // TechLab Fisio — schema Prisma.
 //
-// Estado: SCAFFOLD de `E-03` (docs/08 §13). Contém apenas `datasource` e
-// `generator`. Nenhum modelo, enum, índice, relação ou constraint pertence a
-// esta etapa — eles entram a partir de `E-05`/`E-06`.
+// Estado: `E-04`..`E-07` executadas (docs/08 §13, Bloco II).
+//   `E-04` extensão `btree_gist` (vive só na migration — DIV-02/C-1);
+//   `E-05` enums homologados;
+//   `E-06` entidades e colunas da Categoria A;
+//   `E-07` relações, FKs, unicidades simples e índices simples.
+// NÃO contém — e não deve conter até que a etapa própria seja executada:
+//   coluna gerada `STORED` (`E-08`), CHECK constraints (`E-09`), índices
+//   parciais e exclusion constraints (`E-10`), triggers e `REVOKE` (`E-11`).
 //
 // Conexão: no Prisma 7, `url`, `directUrl` e `shadowDatabaseUrl` NÃO ficam neste
 // arquivo. Eles vivem em `prisma.config.ts`, na raiz do repositório, o que
@@ -24,4 +29,1042 @@ generator client {
   moduleFormat = "esm"
 
   // Nenhuma `previewFeatures` — regra de exclusão de docs/08 §3.
+}
+
+// ============================================================================
+// E-05 — ENUMS (docs/08 §13 `E-05`)
+//
+// Regra de disciplina de `docs/07` §5: "um conjunto de valores só vira ENUM se
+// estiver ENUMERADO em fonte homologada. Caso contrário é `text` com catálogo."
+// Cada enum abaixo cita a fonte que o enumera; a auditoria de invenções de
+// `docs/07` §11.1 declara os oito como Fundamentados.
+//
+// PROIBIDOS como enum (docs/07 §11.1, §22.3; docs/08 §13 `E-05`):
+//   - `evento_auditoria.resultado`  — AUD-003 não enumera valores -> text
+//   - `evento_auditoria.acao`       — catálogo documentado          -> text
+//   - `evento_auditoria.alvo_tipo`  — nome lógico do recurso        -> text
+//   - `historico_agendamento.operacao` — AGD-009 não enumera        -> text
+// NÃO são enum porque são estados DERIVADOS, não persistidos (docs/07 §6.1):
+//   - situação da Cobrança (docs/03 §5.4) e situação do Pacote (docs/03 §5.5)
+// ============================================================================
+
+/// Estado do Agendamento. Fonte: `docs/03` §5.1 (7 valores); `docs/07` §7.5, §11.1.
+enum EstadoAgendamento {
+  AGENDADO
+  CONFIRMADO
+  AGUARDANDO
+  EM_ATENDIMENTO
+  CONCLUIDO
+  FALTA
+  CANCELADO
+
+  @@map("estado_agendamento")
+}
+
+/// Modalidade do Agendamento. Fonte: AGD-001 ("modalidade avulsa/pacote"); `docs/07` §7.5, §11.1.
+enum ModalidadeAgendamento {
+  AVULSO
+  PACOTE
+
+  @@map("modalidade_agendamento")
+}
+
+/// Estado do Registro Clínico. Fonte: PRN-003, PRN-004, RN-023, `docs/03` §5.2; `docs/07` §11.1.
+enum EstadoRegistroClinico {
+  EM_ELABORACAO
+  FINALIZADO
+
+  @@map("estado_registro_clinico")
+}
+
+/// Estado da Retificação Clínica. Fonte: PRN-005, `docs/06` §6.6.
+/// Forma adotada `EM_ELABORACAO`/`EFETIVADA` por decisão explícita de
+/// `docs/07` §2.4 (documento homologado mais recente), confirmada por
+/// `docs/08` §13 `E-05`. `docs/03` §5.2 usa a forma prefixada
+/// `RETIFICACAO_*` — divergência apenas de forma, não de semântica.
+enum EstadoRetificacaoClinica {
+  EM_ELABORACAO
+  EFETIVADA
+
+  @@map("estado_retificacao_clinica")
+}
+
+/// Estado da Sessão de Autenticação. Fonte: `docs/03` §5.3, RN-004; `docs/07` §7.1, §11.1.
+enum EstadoSessaoAutenticacao {
+  ATIVA
+  EXPIRADA
+  REVOGADA
+
+  @@map("estado_sessao_autenticacao")
+}
+
+/// Tipo do Movimento de Sessão. Fonte: H2-02 — "exatamente os 3"
+/// (`docs/07` §14, §11.1). Conjunto fechado: `RESERVA`/`LIBERACAO_RESERVA`
+/// NÃO são tipos de movimento (reserva vive em tabela própria — `docs/07` §14).
+enum TipoMovimentoSessao {
+  CONSUMO
+  AJUSTE_POSITIVO
+  AJUSTE_NEGATIVO
+
+  @@map("tipo_movimento_sessao")
+}
+
+/// Motivo de encerramento da Reserva de Sessão.
+/// Fonte: PKG-004 ("cancelamento, falta ou desvinculação válida"; "conversão de
+/// reserva") e D-07; enumerado em `docs/07` §13.2 e fundamentado em §11.1.
+enum MotivoEncerramentoReserva {
+  CANCELAMENTO
+  FALTA
+  DESVINCULACAO
+  CONSUMO
+
+  @@map("motivo_encerramento_reserva")
+}
+
+/// Origem funcional da Cobrança. Fonte: `docs/06` §9 ("agendamento/atendimento
+/// avulso, Pacote, ou cobrança administrativa"); enumerado em `docs/07` §19.1 e
+/// fundamentado em §11.1.
+enum OrigemCobranca {
+  AGENDAMENTO_AVULSO
+  PACOTE
+  ADMINISTRATIVA
+
+  @@map("origem_cobranca")
+}
+
+// ============================================================================
+// E-06 — ENTIDADES E COLUNAS (Categoria A) — docs/08 §13 `E-06`
+// E-07 — RELAÇÕES, FKs, UNICIDADES SIMPLES E ÍNDICES SIMPLES — docs/08 §13 `E-07`
+//
+// Catálogo integral de `docs/07` §7, organizado por módulo M1..M10.
+//
+// Convenções físicas de `docs/07` §5 (H2.2-01):
+//   - tabelas/colunas em snake_case singular, via `@@map`/`@map`;
+//   - PK uuid em toda entidade; PK composta apenas nas junções puras (§9.1);
+//   - instantes em timestamptz; datas civis em date; horários recorrentes em
+//     time + `dia_semana`;
+//   - monetário em numeric(12,2) — NUNCA Float/Double (RN-042);
+//   - `criado_em timestamptz NOT NULL` em TODA tabela (RN-061). Onde `docs/07`
+//     nomeia a coluna de criação como `criada_em` (§7.1 sessao_autenticacao,
+//     §13.2 reserva_sessao), a forma da fonte é preservada e nenhuma coluna
+//     duplicada é criada;
+//   - `atualizado_em` SOMENTE onde `docs/07` §7 o enumera explicitamente —
+//     usuario, agendamento, pacote, cobranca. A convenção de §5 é restritiva
+//     ("somente em tabelas mutáveis"), não obrigatória; acrescentá-lo onde a
+//     fonte não o lista seria invenção de coluna;
+//   - `deleted_at` NÃO EXISTE em nenhuma tabela (§5, §23).
+//
+// Política de `ON DELETE` — `docs/07` §9.2, obrigatória e sem exceção:
+//   RESTRICT em TODAS as FKs. `Cascade` é PROIBIDO — seria destruição
+//   silenciosa incompatível com RN-007, RN-024, RN-044, RN-066 e
+//   TLF-BASE-V1 §4.4. Nas relações OPCIONAIS o `onDelete: Restrict` explícito é
+//   indispensável: o padrão do Prisma nelas seria `SetNull`.
+//
+// `ON UPDATE` — DECISÃO DE IMPLEMENTAÇÃO, não requisito homologado:
+//   NENHUMA fonte homologada fixa política de `ON UPDATE`. `docs/07` §9.2 tem
+//   título "Política de `ON DELETE`" e todo o seu racional trata de deleção.
+//   Não existe opção neutra: omitir `onUpdate` no Prisma produz `Cascade`, que
+//   também não é homologado. Entre as duas, adotou-se `Restrict` por ser a
+//   conservadora e a coerente com o racional explícito de §9.2 — um
+//   `ON UPDATE CASCADE` reescreveria silenciosamente valores de FK em todo o
+//   grafo a partir de uma alteração de PK, exatamente a classe de reescrita
+//   silenciosa que RN-007/RN-024/RN-044/RN-066 proíbem.
+//   NÃO se alega equivalência semântica com `Cascade` (só são equivalentes
+//   ENQUANTO nenhuma PK for alterada), NÃO se invoca a Guarda 1 de docs/08
+//   §9.3 (que varre `DROP INDEX/CONSTRAINT/TRIGGER/EXTENSION`, nunca `CASCADE`)
+//   e a ausência do token `CASCADE` no DDL NÃO é objetivo em si.
+//
+// NÃO PERTENCEM A `E-06`/`E-07` e NÃO estão neste arquivo:
+//   - `cobranca.valor_liquido` como coluna GERADA STORED     -> `E-08`;
+//   - CHECK constraints de `docs/07` §10.2                    -> `E-09`;
+//   - índices parciais IDX-M2/U-03, IDX-R2/U-04, IDX-R1,
+//     IDX-A4, IDX-P2, IDX-C2 e exclusion IDX-A1/IDX-A2        -> `E-10`;
+//   - triggers e `REVOKE` de append-only                      -> `E-11`;
+//   - restrição de clínica única (Categoria B, docs/08 §8)    -> etapa própria.
+// ============================================================================
+
+// ---------------------------------------------------------------------------
+// M1 — Identity & Access (docs/07 §7.1)
+// ---------------------------------------------------------------------------
+
+/// AUT-001, AUT-005, RN-001, RN-007.
+model Usuario {
+  id                    String    @id @default(uuid(7)) @db.Uuid
+  /// U-01 — AUT-001 (`docs/07` §10.1).
+  email                 String    @unique
+  senhaHash             String    @map("senha_hash")
+  nome                  String
+  ativo                 Boolean
+  inativadoEm           DateTime? @map("inativado_em") @db.Timestamptz(6)
+  inativadoPorUsuarioId String?   @map("inativado_por_usuario_id") @db.Uuid
+  criadoEm              DateTime  @default(now()) @map("criado_em") @db.Timestamptz(6)
+  atualizadoEm          DateTime  @updatedAt @map("atualizado_em") @db.Timestamptz(6)
+
+  inativadoPor              Usuario?                   @relation("UsuarioInativador", fields: [inativadoPorUsuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  usuariosInativados        Usuario[]                  @relation("UsuarioInativador")
+  papeis                    UsuarioPapel[]
+  sessoes                   SessaoAutenticacao[]       @relation("SessaoDoUsuario")
+  sessoesRevogadas          SessaoAutenticacao[]       @relation("SessaoRevogadaPor")
+  segredosRecuperacao       SegredoRecuperacaoSenha[]  @relation("SegredoDoUsuario")
+  segredosCriados           SegredoRecuperacaoSenha[]  @relation("SegredoCriadoPor")
+  profissional              Profissional?
+  consentimentosRegistrados Consentimento[]
+  observacoesAdministrativas ObservacaoAdministrativa[]
+  agendamentosCriados       Agendamento[]              @relation("AgendamentoCriadoPor")
+  agendamentosCancelados    Agendamento[]              @relation("AgendamentoCanceladoPor")
+  bloqueiosCriados          BloqueioAgenda[]
+  historicosAgendamento     HistoricoAgendamento[]
+  registrosClinicos         RegistroClinico[]
+  retificacoesClinicas      RetificacaoClinica[]
+  anexosEnviados            AnexoClinico[]
+  pacotesCriados            Pacote[]                   @relation("PacoteCriadoPor")
+  pacotesCancelados         Pacote[]                   @relation("PacoteCanceladoPor")
+  reservasCriadas           ReservaSessao[]
+  movimentosResponsavel     MovimentoSessao[]
+  cobrancasDesconto         Cobranca[]                 @relation("CobrancaDescontoPor")
+  cobrancasCanceladas       Cobranca[]                 @relation("CobrancaCanceladaPor")
+  cobrancasCriadas          Cobranca[]                 @relation("CobrancaCriadaPor")
+  pagamentosRegistrados     Pagamento[]
+  estornosRealizados        Estorno[]
+  eventosAuditoria          EventoAuditoria[]
+
+  @@map("usuario")
+}
+
+/// AUT-003; códigos conforme catálogo de `docs/04` §5.
+model Papel {
+  id       String   @id @default(uuid(7)) @db.Uuid
+  /// U-11 — `docs/04` §5 (`docs/07` §10.1).
+  codigo   String   @unique
+  nome     String
+  criadoEm DateTime @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  usuarios   UsuarioPapel[]
+  permissoes PapelPermissao[]
+
+  @@map("papel")
+}
+
+/// AUT-003; códigos conforme catálogo de `docs/04` §5.
+model Permissao {
+  id       String   @id @default(uuid(7)) @db.Uuid
+  /// U-11 — `docs/04` §5 (`docs/07` §10.1).
+  codigo   String   @unique
+  nome     String
+  criadoEm DateTime @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  papeis PapelPermissao[]
+
+  @@map("permissao")
+}
+
+/// Junção pura `* — *` (`docs/06` §9) — PK composta (`docs/07` §9.1).
+model UsuarioPapel {
+  usuarioId String   @map("usuario_id") @db.Uuid
+  papelId   String   @map("papel_id") @db.Uuid
+  criadoEm  DateTime @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  papel   Papel   @relation(fields: [papelId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([usuarioId, papelId])
+  @@map("usuario_papel")
+}
+
+/// Junção pura `* — *` (`docs/06` §9) — PK composta (`docs/07` §9.1).
+model PapelPermissao {
+  papelId     String   @map("papel_id") @db.Uuid
+  permissaoId String   @map("permissao_id") @db.Uuid
+  criadoEm    DateTime @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  papel     Papel     @relation(fields: [papelId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  permissao Permissao @relation(fields: [permissaoId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([papelId, permissaoId])
+  @@map("papel_permissao")
+}
+
+/// AUT-002, RN-004. Coluna de criação nomeada `criada_em` pela fonte (§7.1),
+/// que também é operando da CHECK `expira_em > criada_em` (§10.2, `E-09`).
+model SessaoAutenticacao {
+  id                   String                   @id @default(uuid(7)) @db.Uuid
+  usuarioId            String                   @map("usuario_id") @db.Uuid
+  estado               EstadoSessaoAutenticacao
+  criadaEm             DateTime                 @default(now()) @map("criada_em") @db.Timestamptz(6)
+  expiraEm             DateTime                 @map("expira_em") @db.Timestamptz(6)
+  encerradaEm          DateTime?                @map("encerrada_em") @db.Timestamptz(6)
+  revogadaPorUsuarioId String?                  @map("revogada_por_usuario_id") @db.Uuid
+
+  usuario     Usuario  @relation("SessaoDoUsuario", fields: [usuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  revogadaPor Usuario? @relation("SessaoRevogadaPor", fields: [revogadaPorUsuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  /// IDX-S1 — revogação em massa (AUT-002, RN-001/005, T-07) — `docs/07` §10-A.
+  @@index([usuarioId, estado])
+  @@map("sessao_autenticacao")
+}
+
+/// AUT-004, D-04, RN-005. O segredo em claro NUNCA é persistido
+/// (`docs/07` §7.1; TLF-BASE-V1 §10) — apenas o hash.
+model SegredoRecuperacaoSenha {
+  id                 String    @id @default(uuid(7)) @db.Uuid
+  usuarioId          String    @map("usuario_id") @db.Uuid
+  hashSegredo        String    @map("hash_segredo")
+  expiraEm           DateTime  @map("expira_em") @db.Timestamptz(6)
+  consumidoEm        DateTime? @map("consumido_em") @db.Timestamptz(6)
+  criadoPorUsuarioId String    @map("criado_por_usuario_id") @db.Uuid
+  criadoEm           DateTime  @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  usuario  Usuario @relation("SegredoDoUsuario", fields: [usuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  criadoPor Usuario @relation("SegredoCriadoPor", fields: [criadoPorUsuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("segredo_recuperacao_senha")
+}
+
+// ---------------------------------------------------------------------------
+// M2 — Clinic Configuration (docs/07 §7.2)
+// ---------------------------------------------------------------------------
+
+/// CFG-001, CFG-006, TLF-BASE-V1 §5.2. Clínica única.
+/// A restrição de linha única é Categoria B (docs/08 §8) e NÃO pertence a
+/// `E-06`/`E-07`.
+/// `endereco`/`telefone`/`email` materializam "endereço/contatos" de §7.2, que
+/// a fonte não decompõe; nenhuma decomposição adicional foi inventada.
+model Clinica {
+  id                          String   @id @default(uuid(7)) @db.Uuid
+  nomeCadastral               String   @map("nome_cadastral")
+  nomeOperacional             String?  @map("nome_operacional")
+  endereco                    String?
+  telefone                    String?
+  email                       String?
+  logotipoChave               String?  @map("logotipo_chave")
+  /// Identificador IANA de fuso (CFG-006, RN-060).
+  fusoHorario                 String   @map("fuso_horario")
+  duracaoPadraoAtendimentoMin Int?     @map("duracao_padrao_atendimento_min")
+  criadoEm                    DateTime @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  horariosFuncionamento HorarioFuncionamento[]
+  servicos              Servico[]
+  formasPagamento       FormaPagamento[]
+  motivosCancelamento   MotivoCancelamento[]
+
+  @@map("clinica")
+}
+
+/// CFG-002. `dia_semana` 0..6 e `hora_fim > hora_inicio` são CHECKs de `E-09`.
+model HorarioFuncionamento {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  clinicaId  String   @map("clinica_id") @db.Uuid
+  diaSemana  Int      @map("dia_semana") @db.SmallInt
+  horaInicio DateTime @map("hora_inicio") @db.Time(6)
+  horaFim    DateTime @map("hora_fim") @db.Time(6)
+  criadoEm   DateTime @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  clinica Clinica @relation(fields: [clinicaId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("horario_funcionamento")
+}
+
+/// CFG-003, RN-008. O preço de referência NUNCA reescreve cobrança histórica:
+/// `cobranca.valor_bruto` copia o valor na criação (`docs/07` §7.2, §19.1).
+model Servico {
+  id              String    @id @default(uuid(7)) @db.Uuid
+  clinicaId       String    @map("clinica_id") @db.Uuid
+  nome            String
+  duracaoMin      Int       @map("duracao_min")
+  precoReferencia Decimal   @map("preco_referencia") @db.Decimal(12, 2)
+  ativo           Boolean
+  inativadoEm     DateTime? @map("inativado_em") @db.Timestamptz(6)
+  criadoEm        DateTime  @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  clinica              Clinica               @relation(fields: [clinicaId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  profissionalServicos ProfissionalServico[]
+  agendamentos         Agendamento[]
+  pacotes              Pacote[]
+
+  @@map("servico")
+}
+
+/// CFG-004, RN-007.
+model FormaPagamento {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  clinicaId   String    @map("clinica_id") @db.Uuid
+  descricao   String
+  ativo       Boolean
+  inativadoEm DateTime? @map("inativado_em") @db.Timestamptz(6)
+  criadoEm    DateTime  @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  clinica    Clinica     @relation(fields: [clinicaId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  pagamentos Pagamento[]
+
+  @@map("forma_pagamento")
+}
+
+/// CFG-005, RN-007.
+model MotivoCancelamento {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  clinicaId   String    @map("clinica_id") @db.Uuid
+  descricao   String
+  ativo       Boolean
+  inativadoEm DateTime? @map("inativado_em") @db.Timestamptz(6)
+  criadoEm    DateTime  @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  clinica               Clinica                @relation(fields: [clinicaId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  agendamentos          Agendamento[]
+  historicosAgendamento HistoricoAgendamento[]
+
+  @@map("motivo_cancelamento")
+}
+
+// ---------------------------------------------------------------------------
+// M3 — Professionals (docs/07 §7.3)
+// ---------------------------------------------------------------------------
+
+/// PRO-001, PRO-005.
+model Profissional {
+  id                   String    @id @default(uuid(7)) @db.Uuid
+  /// U-08 — PRO-001; anulável (`docs/07` §10.1). NULLs não colidem.
+  usuarioId            String?   @unique @map("usuario_id") @db.Uuid
+  nome                 String
+  registroProfissional String?   @map("registro_profissional")
+  ativo                Boolean
+  inativadoEm          DateTime? @map("inativado_em") @db.Timestamptz(6)
+  criadoEm             DateTime  @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  usuario         Usuario?                      @relation(fields: [usuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  especialidades  ProfissionalEspecialidade[]
+  servicos        ProfissionalServico[]
+  disponibilidades DisponibilidadeProfissional[]
+  agendamentos    Agendamento[]
+  bloqueios       BloqueioAgenda[]
+
+  @@map("profissional")
+}
+
+/// `docs/07` §7.3; `docs/06` §7.3.
+model Especialidade {
+  id       String   @id @default(uuid(7)) @db.Uuid
+  nome     String
+  criadoEm DateTime @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  profissionais ProfissionalEspecialidade[]
+
+  @@map("especialidade")
+}
+
+/// Junção pura `* — *` — PK composta.
+model ProfissionalEspecialidade {
+  profissionalId  String   @map("profissional_id") @db.Uuid
+  especialidadeId String   @map("especialidade_id") @db.Uuid
+  criadoEm        DateTime @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  profissional  Profissional  @relation(fields: [profissionalId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  especialidade Especialidade @relation(fields: [especialidadeId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([profissionalId, especialidadeId])
+  @@map("profissional_especialidade")
+}
+
+/// Junção pura `* — *`. A EXISTÊNCIA da linha É a condição de elegibilidade
+/// de PRO-004/RN-013 (`docs/07` §7.3).
+model ProfissionalServico {
+  profissionalId String   @map("profissional_id") @db.Uuid
+  servicoId      String   @map("servico_id") @db.Uuid
+  criadoEm       DateTime @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  profissional Profissional @relation(fields: [profissionalId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  servico      Servico      @relation(fields: [servicoId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([profissionalId, servicoId])
+  @@map("profissional_servico")
+}
+
+/// PRO-003. Mudanças criam NOVAS vigências; não reescrevem atendimentos
+/// passados (`docs/07` §7.3).
+model DisponibilidadeProfissional {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  profissionalId String    @map("profissional_id") @db.Uuid
+  diaSemana      Int       @map("dia_semana") @db.SmallInt
+  horaInicio     DateTime  @map("hora_inicio") @db.Time(6)
+  horaFim        DateTime  @map("hora_fim") @db.Time(6)
+  vigenciaInicio DateTime? @map("vigencia_inicio") @db.Date
+  vigenciaFim    DateTime? @map("vigencia_fim") @db.Date
+  criadoEm       DateTime  @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  profissional Profissional @relation(fields: [profissionalId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("disponibilidade_profissional")
+}
+
+// ---------------------------------------------------------------------------
+// M4 — Patients (docs/07 §7.4)
+// ---------------------------------------------------------------------------
+
+/// PAC-001, PAC-003, PAC-006, RN-010; `H2.2-13` (§11.4).
+/// `cpf` é armazenado NORMALIZADO — somente os 11 dígitos, sem máscara
+/// (§11.4.1). A CHECK de forma pertence a `E-09`.
+/// `telefone`/`email` materializam "contatos" de §7.4, que a fonte não decompõe.
+model Paciente {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  nome           String
+  dataNascimento DateTime? @map("data_nascimento") @db.Date
+  /// U-07 — PAC-003, RN-010 (`docs/07` §10.1, §11.4). Anulável: NULLs são
+  /// tratados como distintos entre si pelo PostgreSQL, o que permite múltiplos
+  /// pacientes sem CPF. `NULLS NOT DISTINCT` NÃO deve ser usado aqui (§10.1).
+  /// Pacientes INATIVOS permanecem abrangidos: o CPF não é liberado (§11.4.2).
+  cpf            String?   @unique
+  telefone       String?
+  email          String?
+  ativo          Boolean
+  inativadoEm    DateTime? @map("inativado_em") @db.Timestamptz(6)
+  criadoEm       DateTime  @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  contatosEmergencia         ContatoEmergencia[]
+  responsavelLegal           ResponsavelLegal?
+  consentimentos             Consentimento[]
+  observacoesAdministrativas ObservacaoAdministrativa[]
+  agendamentos               Agendamento[]
+  atendimentos               Atendimento[]
+  registrosClinicos          RegistroClinico[]
+  anexosClinicos             AnexoClinico[]
+  pacotes                    Pacote[]
+  cobrancas                  Cobranca[]
+
+  @@map("paciente")
+}
+
+/// PAC-004; `docs/07` §7.4 (`1 — 0..*`). Minimização de dados: apenas os
+/// atributos necessários para acionar o contato.
+model ContatoEmergencia {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  pacienteId String   @map("paciente_id") @db.Uuid
+  nome       String
+  telefone   String
+  criadoEm   DateTime @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  paciente Paciente @relation(fields: [pacienteId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("contato_emergencia")
+}
+
+/// PAC-004; `docs/07` §7.4 — `Paciente — Responsável legal 1 — 0..1`.
+model ResponsavelLegal {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  /// U-06 — `docs/06` §9 (`docs/07` §10.1): materializa o `0..1`.
+  pacienteId String   @unique @map("paciente_id") @db.Uuid
+  nome       String
+  telefone   String?
+  criadoEm   DateTime @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  paciente Paciente @relation(fields: [pacienteId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("responsavel_legal")
+}
+
+/// PAC-005; `docs/07` §7.4 — EVIDÊNCIA OPERACIONAL apenas.
+/// O conteúdo jurídico (hipóteses legais, textos, prazos) é pendência
+/// declarada `D2.1-11`/PAC-005 e NÃO é modelado aqui.
+model Consentimento {
+  id                     String    @id @default(uuid(7)) @db.Uuid
+  pacienteId             String    @map("paciente_id") @db.Uuid
+  /// Catálogo documentado da aplicação (`docs/07` §5) — não é enum.
+  tipo                   String
+  concedidoEm            DateTime  @map("concedido_em") @db.Timestamptz(6)
+  revogadoEm             DateTime? @map("revogado_em") @db.Timestamptz(6)
+  registradoPorUsuarioId String    @map("registrado_por_usuario_id") @db.Uuid
+  criadoEm               DateTime  @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  paciente     Paciente @relation(fields: [pacienteId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  registradoPor Usuario @relation(fields: [registradoPorUsuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("consentimento")
+}
+
+/// PAC-007, RN-009; `docs/07` §7.4 — colunas exatamente como a fonte as lista.
+/// LIMITE RECONHECIDO (§7.4, risco R2.2-05): a segregação administrativo x
+/// clínico NÃO é enforçável por schema; é regra de aplicação e autorização.
+model ObservacaoAdministrativa {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  pacienteId     String   @map("paciente_id") @db.Uuid
+  texto          String
+  autorUsuarioId String   @map("autor_usuario_id") @db.Uuid
+  criadoEm       DateTime @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  paciente Paciente @relation(fields: [pacienteId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  autor    Usuario  @relation(fields: [autorUsuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("observacao_administrativa")
+}
+
+// ---------------------------------------------------------------------------
+// M5 — Scheduling (docs/07 §7.5)
+// ---------------------------------------------------------------------------
+
+/// AGD-001, AGD-003, AGD-009, RN-013.
+/// CHECKs `fim > inicio` e `(modalidade='PACOTE') = (pacote_id IS NOT NULL)`
+/// pertencem a `E-09`; as exclusion constraints IDX-A1/IDX-A2 a `E-10`;
+/// o índice PARCIAL IDX-A4 `(pacote_id) WHERE NOT NULL` a `E-10`.
+model Agendamento {
+  id                    String                @id @default(uuid(7)) @db.Uuid
+  pacienteId            String                @map("paciente_id") @db.Uuid
+  profissionalId        String                @map("profissional_id") @db.Uuid
+  servicoId             String                @map("servico_id") @db.Uuid
+  inicio                DateTime              @db.Timestamptz(6)
+  fim                   DateTime              @db.Timestamptz(6)
+  estado                EstadoAgendamento
+  modalidade            ModalidadeAgendamento
+  pacoteId              String?               @map("pacote_id") @db.Uuid
+  motivoCancelamentoId  String?               @map("motivo_cancelamento_id") @db.Uuid
+  canceladoEm           DateTime?             @map("cancelado_em") @db.Timestamptz(6)
+  canceladoPorUsuarioId String?               @map("cancelado_por_usuario_id") @db.Uuid
+  criadoPorUsuarioId    String                @map("criado_por_usuario_id") @db.Uuid
+  criadoEm              DateTime              @default(now()) @map("criado_em") @db.Timestamptz(6)
+  atualizadoEm          DateTime              @updatedAt @map("atualizado_em") @db.Timestamptz(6)
+
+  paciente           Paciente            @relation(fields: [pacienteId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  profissional       Profissional        @relation(fields: [profissionalId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  servico            Servico             @relation(fields: [servicoId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  pacote             Pacote?             @relation(fields: [pacoteId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  motivoCancelamento MotivoCancelamento? @relation(fields: [motivoCancelamentoId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  canceladoPor       Usuario?            @relation("AgendamentoCanceladoPor", fields: [canceladoPorUsuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  criadoPor          Usuario             @relation("AgendamentoCriadoPor", fields: [criadoPorUsuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  atendimento    Atendimento?
+  historicos     HistoricoAgendamento[]
+  reservas       ReservaSessao[]
+  cobrancasOrigem Cobranca[]
+
+  /// IDX-A3 — visão diária/semanal da clínica (AGD-001, IND-001/002) — §10-A.
+  @@index([inicio])
+  @@map("agendamento")
+}
+
+/// AGD-004. CHECK `fim > inicio` pertence a `E-09`.
+model BloqueioAgenda {
+  id                 String   @id @default(uuid(7)) @db.Uuid
+  profissionalId     String   @map("profissional_id") @db.Uuid
+  inicio             DateTime @db.Timestamptz(6)
+  fim                DateTime @db.Timestamptz(6)
+  motivo             String?
+  criadoPorUsuarioId String   @map("criado_por_usuario_id") @db.Uuid
+  criadoEm           DateTime @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  profissional Profissional @relation(fields: [profissionalId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  criadoPor    Usuario      @relation(fields: [criadoPorUsuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  /// IDX-A5 — detecção de sobreposição com bloqueio (RN-015.2, AGD-004) — §10-A.
+  @@index([profissionalId, inicio, fim])
+  @@map("bloqueio_agenda")
+}
+
+/// AGD-009, RN-017 — APPEND-ONLY (proteção por REVOKE em `E-11`).
+/// `operacao` é `text` + catálogo documentado, NÃO enum: AGD-009 não enumera
+/// operações (`docs/07` §7.5, §11.1).
+model HistoricoAgendamento {
+  id                   String             @id @default(uuid(7)) @db.Uuid
+  agendamentoId        String             @map("agendamento_id") @db.Uuid
+  operacao             String
+  estadoAnterior       EstadoAgendamento? @map("estado_anterior")
+  estadoNovo           EstadoAgendamento? @map("estado_novo")
+  inicioAnterior       DateTime?          @map("inicio_anterior") @db.Timestamptz(6)
+  fimAnterior          DateTime?          @map("fim_anterior") @db.Timestamptz(6)
+  inicioNovo           DateTime?          @map("inicio_novo") @db.Timestamptz(6)
+  fimNovo              DateTime?          @map("fim_novo") @db.Timestamptz(6)
+  atorUsuarioId        String             @map("ator_usuario_id") @db.Uuid
+  ocorridoEm           DateTime           @map("ocorrido_em") @db.Timestamptz(6)
+  motivoCancelamentoId String?            @map("motivo_cancelamento_id") @db.Uuid
+  criadoEm             DateTime           @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  agendamento        Agendamento         @relation(fields: [agendamentoId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  ator               Usuario             @relation(fields: [atorUsuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  motivoCancelamento MotivoCancelamento? @relation(fields: [motivoCancelamentoId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  /// IDX-A6 — reconstrução do histórico (AGD-009) — §10-A.
+  @@index([agendamentoId, ocorridoEm])
+  @@map("historico_agendamento")
+}
+
+// ---------------------------------------------------------------------------
+// M6 — Clinical Care & Records (docs/07 §7.6)
+// ---------------------------------------------------------------------------
+
+/// H2-01. SEM coluna de estado — a máquina operacional é exclusiva do
+/// Agendamento (§7.6, I-21b). SEM `pacote_id` (H2.2-12) e SEM
+/// `profissional_id` (removido na REV. 2 de `docs/07` §2.2).
+model Atendimento {
+  id            String   @id @default(uuid(7)) @db.Uuid
+  /// U-02 — H2-01 (`docs/07` §10.1): materializa `Agendamento 1 -> 0..1 Atendimento`.
+  agendamentoId String   @unique @map("agendamento_id") @db.Uuid
+  pacienteId    String   @map("paciente_id") @db.Uuid
+  iniciadoEm    DateTime @map("iniciado_em") @db.Timestamptz(6)
+  criadoEm      DateTime @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  agendamento Agendamento @relation(fields: [agendamentoId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  paciente    Paciente    @relation(fields: [pacienteId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  registroClinico RegistroClinico?
+  movimentos      MovimentoSessao[]
+
+  @@map("atendimento")
+}
+
+/// PRN-003, PRN-004, RN-024; P-CLIN Alternativa A HOMOLOGADA (`docs/07` §21).
+/// CHECK `(estado='FINALIZADO') = (finalizado_em IS NOT NULL)` -> `E-09`.
+/// Trigger de imutabilidade condicional (OLD.estado='FINALIZADO') -> `E-11`.
+///
+/// COMPONENTES CLÍNICOS NÃO SÃO CRIADOS NESTA ETAPA: `docs/07` §7.6 declara
+/// que "estrutura interna de campos permanece PENDENTE de definição clínica
+/// (`P2.2-07`)". Criar colunas de avaliação/plano/evolução agora congelaria
+/// uma estrutura explicitamente pendente — seria invenção. As colunas entram
+/// quando `P2.2-07` for resolvida, em etapa própria.
+model RegistroClinico {
+  id             String                @id @default(uuid(7)) @db.Uuid
+  /// U-13 / IDX-N2 — P-CLIN Alternativa A homologada (HOM-04, RN-070):
+  /// materializa `Atendimento 1 -> 0..1 Registro clínico` e torna a primeira
+  /// finalização válida única POR CONSTRUÇÃO (`docs/07` §10.1, §21, §10-A).
+  atendimentoId  String                @unique @map("atendimento_id") @db.Uuid
+  /// Denormalização assumida e justificada (`docs/07` §11.2), não acidental:
+  /// `docs/06` §9 fixa `Paciente — Registro clínico 1 — *` e PRN-001 exige
+  /// histórico cronológico do paciente.
+  pacienteId     String                @map("paciente_id") @db.Uuid
+  autorUsuarioId String                @map("autor_usuario_id") @db.Uuid
+  estado         EstadoRegistroClinico
+  finalizadoEm   DateTime?             @map("finalizado_em") @db.Timestamptz(6)
+  criadoEm       DateTime              @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  atendimento Atendimento @relation(fields: [atendimentoId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  paciente    Paciente    @relation(fields: [pacienteId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  autor       Usuario     @relation(fields: [autorUsuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  retificacoes RetificacaoClinica[]
+  anexos       AnexoClinico[]
+
+  /// IDX-N1 — histórico clínico cronológico (PRN-001) — §10-A.
+  @@index([pacienteId, criadoEm])
+  @@map("registro_clinico")
+}
+
+/// PRN-005, RN-025..028, D-01.
+/// CHECKs `(estado='EFETIVADA') = (efetivada_em IS NOT NULL)` e justificativa
+/// não-vazia -> `E-09`. Trigger (OLD.estado='EFETIVADA') -> `E-11`.
+/// CONTEÚDO RETIFICADOR não é criado nesta etapa: `docs/07` §7.6 o declara
+/// pendente de `P2.2-07`, espelhando `registro_clinico`.
+model RetificacaoClinica {
+  id                 String                   @id @default(uuid(7)) @db.Uuid
+  registroOriginalId String                   @map("registro_original_id") @db.Uuid
+  autorUsuarioId     String                   @map("autor_usuario_id") @db.Uuid
+  justificativa      String
+  estado             EstadoRetificacaoClinica
+  efetivadaEm        DateTime?                @map("efetivada_em") @db.Timestamptz(6)
+  criadoEm           DateTime                 @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  registroOriginal RegistroClinico @relation(fields: [registroOriginalId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  autor            Usuario         @relation(fields: [autorUsuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  /// IDX-N3 — cadeia de retificação (RN-025/026) — §10-A.
+  @@index([registroOriginalId])
+  @@map("retificacao_clinica")
+}
+
+/// PRN-006, RN-064; âncora resolvida por P-CLIN (`docs/07` §7.6).
+/// NENHUMA URL PÚBLICA É PERSISTIDA — apenas `chave_objeto` (§22.1).
+model AnexoClinico {
+  id                  String   @id @default(uuid(7)) @db.Uuid
+  registroClinicoId   String   @map("registro_clinico_id") @db.Uuid
+  pacienteId          String   @map("paciente_id") @db.Uuid
+  chaveObjeto         String   @map("chave_objeto")
+  nomeOriginal        String   @map("nome_original")
+  mimeType            String   @map("mime_type")
+  tamanhoBytes        Int      @map("tamanho_bytes")
+  enviadoPorUsuarioId String   @map("enviado_por_usuario_id") @db.Uuid
+  criadoEm            DateTime @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  registroClinico RegistroClinico @relation(fields: [registroClinicoId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  paciente        Paciente        @relation(fields: [pacienteId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  enviadoPor      Usuario         @relation(fields: [enviadoPorUsuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  /// IDX-N4 — anexos do registro (PRN-006) — §10-A.
+  @@index([registroClinicoId])
+  @@map("anexo_clinico")
+}
+
+// ---------------------------------------------------------------------------
+// M7 — Packages / Sessions (docs/07 §7.7, §13, §14)
+// ---------------------------------------------------------------------------
+
+/// PKG-001, H2-06, H2-07. Aggregate root.
+/// SEM coluna `situacao` (§6.2 — derivada por precedência H2-09) e SEM coluna
+/// de saldo (RN-030 — calculado de `movimento_sessao`).
+/// CHECKs `quantidade_contratada > 0` e coerência de cancelamento -> `E-09`.
+/// O índice PARCIAL IDX-P2 `(validade_ate) WHERE não cancelado` -> `E-10`.
+model Pacote {
+  id                    String    @id @default(uuid(7)) @db.Uuid
+  pacienteId            String    @map("paciente_id") @db.Uuid
+  servicoId             String    @map("servico_id") @db.Uuid
+  quantidadeContratada  Int       @map("quantidade_contratada")
+  /// Data civil; base de RN-068 para cobrança de origem PACOTE.
+  dataContratacao       DateTime  @map("data_contratacao") @db.Date
+  validadeAte           DateTime? @map("validade_ate") @db.Date
+  canceladoEm           DateTime? @map("cancelado_em") @db.Timestamptz(6)
+  /// FK para `usuario` — `docs/07` §5 (convenção `FKs <entidade>_id`), §9.2
+  /// ("RESTRICT em TODAS as FKs") e §28.2 Categoria A ("todas as FKs").
+  /// Simétrica a `agendamento.cancelado_por_usuario_id` (§7.5) e a
+  /// `cobranca.cancelada_por_usuario_id` (§19.1) — as três nascem de linhas de
+  /// `docs/07` formatadas de modo idêntico. Entrada da derivação H2-09 (§7.7):
+  /// sem a FK, quem cancelou o pacote seria irrastreável.
+  canceladoPorUsuarioId String?   @map("cancelado_por_usuario_id") @db.Uuid
+  /// Texto livre (`docs/07` §7.7) — NÃO é FK para `motivo_cancelamento`.
+  motivoCancelamento    String?   @map("motivo_cancelamento")
+  criadoPorUsuarioId    String    @map("criado_por_usuario_id") @db.Uuid
+  criadoEm              DateTime  @default(now()) @map("criado_em") @db.Timestamptz(6)
+  atualizadoEm          DateTime  @updatedAt @map("atualizado_em") @db.Timestamptz(6)
+
+  paciente     Paciente @relation(fields: [pacienteId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  servico      Servico  @relation(fields: [servicoId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  criadoPor    Usuario  @relation("PacoteCriadoPor", fields: [criadoPorUsuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  canceladoPor Usuario? @relation("PacoteCanceladoPor", fields: [canceladoPorUsuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  /// `Pacote -> Agendamentos 0..*` — inverso SEM unicidade (`docs/07` §8).
+  agendamentos    Agendamento[]
+  reservas        ReservaSessao[]
+  movimentos      MovimentoSessao[]
+  cobrancasOrigem Cobranca[]
+
+  /// IDX-P1 — pacotes elegíveis do paciente em T-01 (PKG-003) — §10-A.
+  @@index([pacienteId])
+  @@map("pacote")
+}
+
+/// H2.2-02/H2.2-03, D-07, PKG-004 (`docs/07` §13).
+/// SEM enum de situação: `encerrada_em IS NULL` DEFINE "reserva ativa" (§13.2);
+/// `motivo_encerramento` distingue COMO terminou. A combinação inválida
+/// "consumida mas não encerrada" é IRREPRESENTÁVEL, não apenas proibida.
+/// U-04 / IDX-R2 (único PARCIAL `(agendamento_id) WHERE encerrada_em IS NULL`)
+/// e IDX-R1 (parcial) pertencem a `E-10`. CHECKs -> `E-09`.
+/// NÃO recebe proteção append-only: o encerramento é UPDATE legítimo (§22.2).
+model ReservaSessao {
+  id                 String                     @id @default(uuid(7)) @db.Uuid
+  pacoteId           String                     @map("pacote_id") @db.Uuid
+  agendamentoId      String                     @map("agendamento_id") @db.Uuid
+  criadaEm           DateTime                   @default(now()) @map("criada_em") @db.Timestamptz(6)
+  criadaPorUsuarioId String                     @map("criada_por_usuario_id") @db.Uuid
+  /// NULL <=> reserva ativa (§13.2).
+  encerradaEm        DateTime?                  @map("encerrada_em") @db.Timestamptz(6)
+  motivoEncerramento MotivoEncerramentoReserva? @map("motivo_encerramento")
+  /// U-12 — um consumo resolve NO MÁXIMO uma reserva (PKG-006, `docs/07` §10.1).
+  /// Anulável: NULLs não colidem.
+  movimentoConsumoId String?                    @unique @map("movimento_consumo_id") @db.Uuid
+
+  pacote          Pacote           @relation(fields: [pacoteId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  agendamento     Agendamento      @relation(fields: [agendamentoId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  criadaPor       Usuario          @relation(fields: [criadaPorUsuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  movimentoConsumo MovimentoSessao? @relation(fields: [movimentoConsumoId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  /// IDX-R3 — encerramento em T-08; histórico (RN-036, RN-037) — `docs/07`
+  /// §10-A. Índice SIMPLES, não parcial. Incluído em `E-07` por `DIV-05`
+  /// (docs/08 §11), decidido por Bruno: `docs/07` §28.2 o omitiu das Categorias
+  /// A e B, e `docs/08` §13 herdou a omissão, mas §10-A — catálogo normativo de
+  /// índices — o define. NÃO é coberto por IDX-R2 (`E-10`), que é PARCIAL
+  /// (`WHERE encerrada_em IS NULL`) e portanto não atende consulta de
+  /// histórico, que inclui reservas encerradas.
+  @@index([agendamentoId])
+  @@map("reserva_sessao")
+}
+
+/// H2-02, RN-031, RN-033/034, RN-038, PKG-005/007/008 (`docs/07` §14).
+/// APPEND-ONLY: sem `atualizado_em`, sem `deleted_at`, sem UPDATE, sem DELETE
+/// (RN-039). Proteção por REVOKE em `E-11`.
+/// O SINAL vem do `tipo`, NUNCA do valor de `quantidade`.
+/// U-03 / IDX-M2 (único PARCIAL `(atendimento_id, pacote_id) WHERE
+/// tipo='CONSUMO'`) pertence a `E-10`.
+/// A FK `atendimento_id -> atendimento.id` é H2.2-11, mantida com RESTRICT
+/// (§15): integridade referencial física NÃO é dependência de domínio.
+model MovimentoSessao {
+  id                   String              @id @default(uuid(7)) @db.Uuid
+  pacoteId             String              @map("pacote_id") @db.Uuid
+  tipo                 TipoMovimentoSessao
+  quantidade           Int
+  /// Obrigatório sse `tipo='CONSUMO'` — CHECK em `E-09`.
+  atendimentoId        String?             @map("atendimento_id") @db.Uuid
+  usuarioResponsavelId String              @map("usuario_responsavel_id") @db.Uuid
+  /// Obrigatória sse ajuste (RN-038) — CHECK em `E-09`.
+  justificativa        String?
+  criadoEm             DateTime            @default(now()) @map("criado_em") @db.Timestamptz(6)
+  /// SEM unicidade — `DIV-04` (docs/08 §11), decidida por Bruno.
+  /// `docs/07` §14 marca esta coluna como "`text ∅ U`" citando C-06, mas cinco
+  /// seções do mesmo documento excluem a unicidade: §10.1 (U-09/U-10 nomeiam
+  /// apenas `pagamento` e `estorno`), §10-A (nenhum índice sobre a coluna;
+  /// declara que toda unicidade de §10.1 já cria índice), §18 (C-06 =
+  /// "`chave_idempotencia` única em `pagamento` e `estorno`"), §24.2 (T-06
+  /// lista "lock do pacote; verificação H2-10" e NÃO a chave) e §28.2
+  /// Categoria A (U-01..U-13, fechada). Além disso, `docs/06` §13 define
+  /// **C-06 como M8 — pagamento/estorno** — a citação de §14 está fora de
+  /// escopo. O ponto de concorrência de M7 para ajuste é C-09/H2-10, garantido
+  /// por transação; o de retry de consumo é C-04, garantido pelo índice único
+  /// PARCIAL IDX-M2/U-03 (`E-10`). A coluna PERMANECE (é homologada por §14);
+  /// apenas a unicidade não é criada. Correção editorial de §14 pendente —
+  /// nenhum `U-14` foi criado.
+  chaveIdempotencia    String?             @map("chave_idempotencia")
+
+  pacote      Pacote       @relation(fields: [pacoteId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  atendimento Atendimento? @relation(fields: [atendimentoId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  responsavel Usuario      @relation(fields: [usuarioResponsavelId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  reservaResolvida ReservaSessao?
+
+  /// IDX-M1 — cálculo de `saldo_de_direito` (RN-031, I-23) — §10-A.
+  @@index([pacoteId, tipo])
+  @@map("movimento_sessao")
+}
+
+// ---------------------------------------------------------------------------
+// M8 — Finance (docs/07 §7.8, §19, §20)
+// ---------------------------------------------------------------------------
+
+/// FIN-001..008, RN-042, RN-068, HOM-02 (`docs/07` §19.1, §20.2).
+/// SEM coluna `situacao` (§6.2 — derivada por §19.4).
+/// `origem_agendamento_id`/`origem_pacote_id` são mutuamente exclusivas por
+/// CHECK (`E-09`), junto com a coerência de `origem_tipo`.
+/// `Cobrança <- origem`: NENHUMA unicidade inversa — `docs/06` §9 adiou a
+/// inversa explicitamente e nenhum `1:1` foi inventado (`docs/07` §8, §11.2).
+/// O índice PARCIAL IDX-C2 `(data_referencia) WHERE não cancelada` -> `E-10`.
+model Cobranca {
+  id                    String         @id @default(uuid(7)) @db.Uuid
+  pacienteId            String         @map("paciente_id") @db.Uuid
+  origemTipo            OrigemCobranca @map("origem_tipo")
+  origemAgendamentoId   String?        @map("origem_agendamento_id") @db.Uuid
+  origemPacoteId        String?        @map("origem_pacote_id") @db.Uuid
+  /// Copiado do preço de referência na criação; catálogo posterior NÃO
+  /// reescreve (CFG-003). CHECK `>= 0` em `E-09`.
+  valorBruto            Decimal        @map("valor_bruto") @db.Decimal(12, 2)
+  /// FIN-003. CHECK `>= 0` em `E-09`.
+  valorDesconto         Decimal        @default(0) @map("valor_desconto") @db.Decimal(12, 2)
+  /// `E-06`: COLUNA COMUM, forma provisória homologada (`docs/07` §19.2 e
+  /// docs/08 §13 `E-06`). A conversão para
+  /// `GENERATED ALWAYS AS (valor_bruto - valor_desconto) STORED`
+  /// pertence EXCLUSIVAMENTE a `E-08` e NÃO foi feita nesta tarefa.
+  valorLiquido          Decimal        @map("valor_liquido") @db.Decimal(12, 2)
+  /// Data civil no fuso da clínica (RN-060, RN-068) — §20.2.
+  /// PROP-RN-2.2-01 homologada: acompanha a remarcação válida, recalculada
+  /// dentro de T-01 — regra de aplicação, não constraint.
+  dataReferencia        DateTime       @map("data_referencia") @db.Date
+  descontoPorUsuarioId  String?        @map("desconto_por_usuario_id") @db.Uuid
+  canceladaEm           DateTime?      @map("cancelada_em") @db.Timestamptz(6)
+  canceladaPorUsuarioId String?        @map("cancelada_por_usuario_id") @db.Uuid
+  motivoCancelamento    String?        @map("motivo_cancelamento")
+  criadoPorUsuarioId    String         @map("criado_por_usuario_id") @db.Uuid
+  criadoEm              DateTime       @default(now()) @map("criado_em") @db.Timestamptz(6)
+  atualizadoEm          DateTime       @updatedAt @map("atualizado_em") @db.Timestamptz(6)
+
+  paciente         Paciente     @relation(fields: [pacienteId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  origemAgendamento Agendamento? @relation(fields: [origemAgendamentoId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  origemPacote     Pacote?      @relation(fields: [origemPacoteId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  descontoPor      Usuario?     @relation("CobrancaDescontoPor", fields: [descontoPorUsuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  canceladaPor     Usuario?     @relation("CobrancaCanceladaPor", fields: [canceladaPorUsuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  criadoPor        Usuario      @relation("CobrancaCriadaPor", fields: [criadoPorUsuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  pagamentos Pagamento[]
+
+  /// IDX-C1 — cobranças do paciente (FIN-008) — §10-A.
+  @@index([pacienteId])
+  @@map("cobranca")
+}
+
+/// FIN-004, CFG-004, RN-007, C-06/RN-065 (`docs/07` §19.3) — APPEND-ONLY.
+/// A FK para `forma_pagamento` preserva pagamentos históricos com formas
+/// depois inativadas (RN-007). CHECK `valor > 0` em `E-09`. REVOKE em `E-11`.
+model Pagamento {
+  id                     String   @id @default(uuid(7)) @db.Uuid
+  cobrancaId             String   @map("cobranca_id") @db.Uuid
+  valor                  Decimal  @db.Decimal(12, 2)
+  formaPagamentoId       String   @map("forma_pagamento_id") @db.Uuid
+  recebidoEm             DateTime @map("recebido_em") @db.Timestamptz(6)
+  registradoPorUsuarioId String   @map("registrado_por_usuario_id") @db.Uuid
+  /// U-09 — C-06, RN-065 (`docs/07` §10.1). Anulável: NULLs não colidem.
+  chaveIdempotencia      String?  @unique @map("chave_idempotencia")
+  criadoEm               DateTime @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  cobranca       Cobranca       @relation(fields: [cobrancaId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  formaPagamento FormaPagamento @relation(fields: [formaPagamentoId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  registradoPor  Usuario        @relation(fields: [registradoPorUsuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  estorno Estorno?
+
+  /// IDX-F1 — derivação da situação; FK (RN-045) — §10-A.
+  @@index([cobrancaId])
+  /// IDX-F2 — receita recebida por período (IND-006, RN-056) — §10-A.
+  @@index([recebidoEm])
+  /// IDX-F3 — relatório por forma de pagamento (FIN-008) — §10-A.
+  @@index([formaPagamentoId])
+  @@map("pagamento")
+}
+
+/// HOM-03, RN-048, RN-069 (`docs/07` §19.3) — APPEND-ONLY.
+/// NÃO EXISTE coluna de valor: o valor É `pagamento.valor`, sempre integral.
+/// Estorno parcial torna-se IRREPRESENTÁVEL, não apenas proibido.
+/// REVOKE em `E-11`.
+model Estorno {
+  id                    String   @id @default(uuid(7)) @db.Uuid
+  /// U-05 / IDX-F4 — estorno integral e único (HOM-03, RN-048, RN-069):
+  /// estornar o mesmo pagamento duas vezes é FISICAMENTE IMPOSSÍVEL.
+  pagamentoId           String   @unique @map("pagamento_id") @db.Uuid
+  estornadoEm           DateTime @map("estornado_em") @db.Timestamptz(6)
+  estornadoPorUsuarioId String   @map("estornado_por_usuario_id") @db.Uuid
+  motivo                String
+  /// U-10 — C-06, RN-065 (`docs/07` §10.1). Anulável: NULLs não colidem.
+  chaveIdempotencia     String?  @unique @map("chave_idempotencia")
+  criadoEm              DateTime @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  pagamento    Pagamento @relation(fields: [pagamentoId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  estornadoPor Usuario   @relation(fields: [estornadoPorUsuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("estorno")
+}
+
+// ---------------------------------------------------------------------------
+// M9 — Reporting / Indicators
+// NENHUMA TABELA (`docs/07` §7.9; D2.1-03) — módulo somente de leitura.
+// Limiares de D-05 vivem em configuração documentada, não em tabela (IND-007).
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// M10 — Audit (docs/07 §7.9, §22.3)
+// ---------------------------------------------------------------------------
+
+/// H2.2-14, AUD-003, RN-061 — APPEND-ONLY (REVOKE em `E-11`).
+/// `acao`, `alvo_tipo` e `resultado` são `text` + catálogo documentado e
+/// NUNCA enum: AUD-003 cita os campos e NÃO enumera valores (§11.1, §22.3).
+///
+/// `alvo_id` permanece SEM FK — o alvo é POLIMÓRFICO (§22.3): FK polimórfica
+/// é impossível e FKs para todas as tabelas tornariam a trilha frágil. Como
+/// nada é apagado (§23), o risco de id inexistente é residual. NENHUMA FK deve
+/// ser criada sobre esta coluna por conveniência.
+///
+/// PROIBIDO armazenar aqui (RN-062/063, AUD-002/006, TLF-BASE-V1 §10): senha
+/// ou hash, token, cookie, segredo, conteúdo clínico, payload de prontuário,
+/// conteúdo de anexo, dado pessoal sem necessidade demonstrada.
+model EventoAuditoria {
+  id            String   @id @default(uuid(7)) @db.Uuid
+  ocorridoEm    DateTime @map("ocorrido_em") @db.Timestamptz(6)
+  /// NULL somente em ação de sistema (RN-061).
+  atorUsuarioId String?  @map("ator_usuario_id") @db.Uuid
+  acao          String
+  alvoTipo      String   @map("alvo_tipo")
+  /// SEM FK — alvo polimórfico (§22.3).
+  alvoId        String?  @map("alvo_id") @db.Uuid
+  resultado     String
+  justificativa String?
+  correlacaoId  String   @map("correlacao_id") @db.Uuid
+  /// LISTA BRANCA de chaves por `acao`, validada na aplicação (R2.2-04).
+  contexto      Json?    @db.JsonB
+  criadoEm      DateTime @default(now()) @map("criado_em") @db.Timestamptz(6)
+
+  ator Usuario? @relation(fields: [atorUsuarioId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  /// IDX-U1 — investigação por recurso (AUD-004) — §10-A.
+  @@index([alvoTipo, alvoId, ocorridoEm])
+  /// IDX-U2 — investigação por ator (AUD-004, RN-061) — §10-A.
+  @@index([atorUsuarioId, ocorridoEm])
+  /// IDX-U3 — reconstrução de uma operação (§22.3) — §10-A.
+  @@index([correlacaoId])
+  @@map("evento_auditoria")
 }
