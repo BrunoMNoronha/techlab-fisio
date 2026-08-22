@@ -3,8 +3,8 @@
 > **Documento:** `docs/08-baseline-tecnica-plano-implementacao.md`
 > **Projeto:** TechLab Fisio
 > **Fase:** 2 — Modelagem — **Transição Etapa 2.2 → implementação física**
-> **Status:** **HOMOLOGADO (ato de homologação: REV. 2) — BASELINE TÉCNICA E PLANO DE IMPLEMENTAÇÃO FÍSICA APROVADOS — REVISÃO VIGENTE: REV. 8**
-> **Nota sobre a numeração:** a **REV. 2** é a revisão homologada por Bruno em 20/08/2026 (§0). As **REV. 3**, **REV. 4**, **REV. 5**, **REV. 6**, **REV. 7** e **REV. 8** são correções posteriores de **sequenciamento e de registro de execução**, expressamente autorizadas, que **não alteram baseline, arquitetura, requisito ou decisão homologada**.
+> **Status:** **HOMOLOGADO (ato de homologação: REV. 2) — BASELINE TÉCNICA E PLANO DE IMPLEMENTAÇÃO FÍSICA APROVADOS — REVISÃO VIGENTE: REV. 9**
+> **Nota sobre a numeração:** a **REV. 2** é a revisão homologada por Bruno em 20/08/2026 (§0). As **REV. 3** a **REV. 9** são correções posteriores de **sequenciamento e de registro de execução**, expressamente autorizadas, que **não alteram baseline, arquitetura, requisito ou decisão homologada**.
 > **Homologação:** baseline técnica (§6), as seis decisões da Categoria C (§7), a política de migrations e de introspection (§10, §10.2), o plano `E-01`..`E-18` (§13) e a decisão **`D-ESM-01`** (§16) aprovados por **Bruno Menezes Noronha** em **20 de agosto de 2026**
 > **Natureza:** documento **MUTÁVEL**. Registra versões, verificações técnicas e plano de execução. Não altera regra de negócio, não altera `docs/07` e não altera a Base Imutável.
 > **Data:** 22 de agosto de 2026
@@ -29,6 +29,8 @@
 | **7** | **21/08/2026** | **REGISTRO DE EXECUÇÃO DE `E-08` E APROVAÇÃO DE `V-02` — sem alteração de baseline, arquitetura, requisito ou decisão homologada.** (a) `E-08` passa a **EXECUTADA**: migration `20260821232217_valor_liquido_gerado` converte `cobranca.valor_liquido` em `GENERATED ALWAYS AS (valor_bruto - valor_desconto) STORED` (§13 `E-08`). (b) **`V-02` passa a APROVADA** — primeira `V-*` a mudar de estado desde a REV. 4 (§12.1). A **estratégia principal da decisão `C-2` foi MANTIDA**; o **fallback de `docs/07` §19.2 (opção c) NÃO foi acionado**. (c) **Ajuste mínimo em `schema.prisma`: `valorLiquido` recebe `@default(dbgenerated())`.** Não é nova decisão: é o que a própria `C-2` exige ao mandar excluir o campo de todo `create`/`update`. Sem ele o campo é **obrigatório** na entrada do Client e `V-02` mediu um impasse — omitir produz `Argument valorLiquido is missing` e informar produz **SQLSTATE 428C9** do PostgreSQL, tornando a criação impossível. Com ele o campo fica opcional na entrada, **nenhum default é emitido em migration** e o `migrate diff` continua vazio (§13 `E-08`). (d) **Nota de ambiente, registrada sem correção nesta tarefa:** o `_prisma_migrations` do banco de desenvolvimento guarda, para `20260820121900_relacoes_fks_unicidades_indices`, o checksum **anterior** à regeneração da REV. 6 — resíduo daquela correção. `migrate dev` pede reset por causa disso; **o reset foi recusado**, e `E-08` seguiu pelo mesmo caminho não interativo já usado em `E-07`. A estrutura do banco **confere** com o arquivo versionado (70 FKs, 12 uniques, IDX-R3) e o replay do histórico do zero reproduz tudo. **Pendência de ambiente, não de repositório** (§13 `E-08`). (e) Nenhuma etapa de `E-09` em diante foi iniciada — **0** CHECKs `ck_*`, **0** exclusion constraints, **0** triggers e **0** índices parciais no catálogo. (f) `DIV-04` e `DIV-05` **não** foram reabertas; as pendências editoriais de `docs/07` remetidas a `E-18` **permanecem abertas**; `R2.2-03`, `R-BL-05` e `R-BL-09` **permanecem abertos**; `V-03`, `V-04`, `V-05` e `V-06.c` **permanecem PENDENTES**. Nenhuma versão da baseline de §6 foi alterada; nenhuma Preview Feature foi introduzida; `docs/02`..`docs/07` e a Base Imutável permanecem intactos. Nenhum commit, push, PR ou merge foi realizado. |
 
 | **8** | **22/08/2026** | **REGISTRO DE EXECUÇÃO DE `E-09` E ABSORÇÃO DE `A-02`/`A-04` — sem alteração de baseline, arquitetura, requisito ou decisão homologada.** (a) `E-09` passa a **EXECUTADA**: migration `20260822144354_check_constraints` implementa integralmente todas as **25 CHECK constraints** homologadas em `docs/07` §10.2, com nomes determinísticos `ck_<tabela>_<regra>` (§13 `E-09`). (b) **`T-CHK-ALL` executado e aprovado**: 25 inserções violadoras rejeitadas individualmente com `SQLSTATE 23514` e captura exata da constraint alvo; casos válidos de equivalência/coerência testados e aprovados; fixtures revertidas por rollback limpo (§14 `T-CHK-ALL`). (c) **Replay from-empty aprovado**: destruição e recriação do volume PostgreSQL reproduz todo o histórico de 6 migrations sem drift. (d) **Saneamento e probe do Shadow Database / `migrate dev` aprovados**: `migrate dev --create-only` reproduz o histórico no shadow database sem pedir reset, sem drift e gerando migration vazia de prova (removida). (e) **Absorção de `A-02` e `A-04`**: documenta-se que `@default(dbgenerated())` sem argumento em `cobranca.valorLiquido` é a representação deliberada do projeto para satisfazer `C-2`; explicita-se a proibição estrita de `prisma db pull` oportunista (§10.2), que induziria `dbgenerated("(valor_bruto - valor_desconto)")` e DEFAULT comum conflitante com `C-2`. (f) **Estado rigoroso das verificações**: `V-01` APROVADA, `V-02` APROVADA, `V-03` PENDENTE (para `E-12`), `V-04` PENDENTE (para `E-16`), `V-05` PENDENTE (para `E-13`), `V-06.a` APROVADA, `V-06.b` APROVADA, `V-06.c` PENDENTE (`V-06` PARCIALMENTE APROVADA). (g) Riscos `R2.2-03`, `R-BL-05` e `R-BL-09` permanecem abertos; pendências editoriais de `docs/07` permanecem remetidas a `E-18`. Nenhuma etapa de `E-10` em diante iniciada (0 índices parciais, 0 exclusion constraints, 0 triggers). |
+
+| **9** | **22/08/2026** | **REGISTRO DE EXECUÇÃO DE `E-10` (ÍNDICES PARCIAIS E EXCLUSION CONSTRAINTS) — sem alteração de baseline, arquitetura, requisito ou decisão homologada.** (a) `E-10` passa a **EXECUTADA**: migrations `20260822150238_indices_parciais` (6 índices parciais) e `20260822150506_exclusion_agenda` (2 exclusion constraints) implementadas e aplicadas separadamente (§13 `E-10`). (b) **Matriz de índices parciais e de exclusion constraints**: 6 índices parciais (`ux_movimento_sessao_consumo_atendimento_pacote`, `ux_reserva_sessao_ativa_agendamento`, `ix_reserva_sessao_ativa_pacote`, `ix_agendamento_pacote`, `ix_pacote_validade_ativa`, `ix_cobranca_data_referencia_ativa`) e 2 exclusion constraints (`ex_agendamento_profissional`, `ex_agendamento_paciente`) com intervalo semiaberto `[)` e 5 estados bloqueantes (`AGENDADO`, `CONFIRMADO`, `AGUARDANDO`, `EM_ATENDIMENTO`, `CONCLUIDO`). (c) **Testes funcionais e de invariantes executados e aprovados**: U-03 (consumo duplicado bloqueado com `SQLSTATE 23505`), U-04 (reserva ativa duplicada bloqueada com `SQLSTATE 23505`), utilizabilidade de IDX-R1, IDX-A4, IDX-P2, IDX-C2 comprovada por `EXPLAIN` (`enable_seqscan=off`), conflito de profissional (`23P01`), conflito de paciente (`23P01`), borda contígua 10:00/10:00 (`T-AGD-EDGE-NON-OVERLAP`), `CANCELADO` e `FALTA` livres, `CONCLUIDO` bloqueando (`T-AGD-CONCLUIDO`), identidades distintas em sobreposição permitidas. (d) **Probes anti-drift e replay from-empty aprovados**: criação de Migration B não gerou `DROP` dos índices parciais; probe pré-E-11 vazio e sem `DROP`; replay do zero a partir de volume vazio recriou 36 tabelas, 70 FKs, 25 CHECKs, 1 generated column, 6 índices parciais, 2 exclusion constraints, 0 triggers. (e) **Lista de objetos protegidos (Guarda 1)** registrada com os 8 objetos de `E-10` e suas migrations de origem. (f) **Estado rigoroso das verificações e riscos**: `V-01` e `V-02` APROVADAS; `V-03` (`E-12`), `V-04` (`E-16`) e `V-05` (`E-13`) PENDENTES; `V-06.a` e `V-06.b` APROVADAS, `V-06.c` PENDENTE (`V-06` PARCIALMENTE APROVADA). Riscos `R2.2-03`, `R-BL-05` e `R-BL-09` **permanecem expressamente ABERTOS**. Nenhuma etapa de `E-11` em diante iniciada (0 triggers customizados, 0 revogações `REVOKE`). |
 
 **Escopo destas revisões.** Somente `docs/08` foi alterado. Nenhuma decisão homologada de `docs/02`..`docs/07` foi reaberta, alterada ou reinterpretada. As revisões 0 a 4 não iniciaram implementação; a **REV. 5** registra a execução do Bloco II do plano (`E-04`..`E-07`) como **registro de execução, sem alteração da homologação técnica**.
 
@@ -830,6 +832,8 @@ Cada uma é fechável **por teste local**, sem consulta a Bruno.
 
 > **Atualização REV. 8.** A execução de `E-09` **não alterou o estado de nenhuma verificação**. Todas as 25 CHECK constraints de `docs/07` §10.2 foram implementadas e validadas via `T-CHK-ALL`. `V-03` (`E-12`), `V-04` (`E-16`) e `V-05` (`E-13`) permanecem **PENDENTES**, `V-06.c` permanece **PENDENTE** e `V-06` permanece **PARCIALMENTE APROVADA**. Enquanto `V-04` estiver pendente, `R2.2-03` e `R-BL-05` **continuam abertos**; `R-BL-09` continua aberto sob aceitação temporária monitorada. As validações de `E-09` (`T-CHK-ALL`, replay em banco vazio e probe do shadow database) comprovam a integridade do catálogo e a inexistência de drift, sem antecipar a medição de erros de `E-12` (`V-03`).
 
+> **Atualização REV. 9.** A execução de `E-10` **não alterou o estado de nenhuma verificação**. Os 6 índices parciais e as 2 exclusion constraints de `docs/07` §10-A foram implementados e validados integralmente. `V-03` (`E-12`), `V-04` (`E-16`) e `V-05` (`E-13`) permanecem **PENDENTES**, `V-06.c` permanece **PENDENTE** e `V-06` permanece **PARCIALMENTE APROVADA**. Enquanto `V-04` estiver pendente, `R2.2-03` e `R-BL-05` **continuam expressamente abertos**; a ausência de `DROP` na geração subsequente e no probe de `E-10` constitui evidência favorável e preliminar, sem encerrar os riscos cuja conclusão pertence normativamente a `E-16` (`V-04`). `R-BL-09` continua aberto sob aceitação temporária monitorada.
+
 ### 12.2 Especificação completa de cada verificação
 
 Para cada verificação: **o que mede**, **quando é executada**, **qual etapa bloqueia**, **o que constitui sucesso** e **o que fazer em caso de falha**.
@@ -1159,7 +1163,64 @@ Convenções: **Rev.** = reversibilidade. Todos os caminhos são relativos à ra
   - Registrar os nomes na **lista de objetos protegidos** da Guarda 1.
 - **Validação.** Sobreposição rejeitada; **`T-AGD-EDGE-NON-OVERLAP`** — agendamento que termina 10:00 e outro que começa 10:00 é **aceito** (intervalo semiaberto); agendamento `CANCELADO`/`FALTA` **não** bloqueia; `CONCLUIDO` **bloqueia**.
 - **Critério de aceite.** Todos os testes acima; nomes na lista protegida.
-- **Risco.** **Alto** — é o objeto mais crítico e o mais exposto a C-3. **Rev.** Total antes de dados.
+- **Estado (REV. 9). EXECUTADA.** Duas migrations dedicadas: `20260822150238_indices_parciais` (Migration A) e `20260822150506_exclusion_agenda` (Migration B).
+
+  **1. Procedimento de criação e isolamento de falhas.**
+  - Migration A criada com `npx prisma migrate dev --create-only --name indices_parciais`. O arquivo gerado foi inspecionado pré-edição (vazio, 0 DROPs), editado com os 6 índices parciais e aplicado com `npx prisma migrate deploy`.
+  - Migration B criada na sequência com `npx prisma migrate dev --create-only --name exclusion_agenda`. A inspeção pré-edição comprovou ausência de `DROP INDEX` dos índices parciais recém-criados. O arquivo foi editado com as 2 exclusion constraints e aplicado com `npx prisma migrate deploy`.
+  - Nenhuma Preview Feature (`partialIndexes`) foi adicionada; `schema.prisma` permanece inalterado; `db push` e `db pull` **não foram usados**.
+
+  **2. Matriz dos seis índices parciais implementados (Migration A):**
+
+  | ID lógico | Nome físico | Tabela | Colunas | Predicado | Unique? | Motivo / Requisito |
+  | --- | --- | --- | --- | --- | --- | --- |
+  | **IDX-M2** | `ux_movimento_sessao_consumo_atendimento_pacote` | `movimento_sessao` | `atendimento_id, pacote_id` | `tipo = 'CONSUMO'` | **SIM** | Consumo único por atendimento e pacote (U-03, H2-05, RN-034, I-26) |
+  | **IDX-R2** | `ux_reserva_sessao_ativa_agendamento` | `reserva_sessao` | `agendamento_id` | `encerrada_em IS NULL` | **SIM** | Reserva ativa única por agendamento (U-04, D-07, `docs/07` §13.4) |
+  | **IDX-R1** | `ix_reserva_sessao_ativa_pacote` | `reserva_sessao` | `pacote_id` | `encerrada_em IS NULL` | NÃO | Reservas ativas do pacote para disponibilidade (D-07, I-24, H2-10) |
+  | **IDX-A4** | `ix_agendamento_pacote` | `agendamento` | `pacote_id` | `pacote_id IS NOT NULL` | NÃO | Localizar agendamentos vinculados a pacote (HOM-05, RN-071) |
+  | **IDX-P2** | `ix_pacote_validade_ativa` | `pacote` | `validade_ate` | `cancelado_em IS NULL` | NÃO | Pacotes ativos por validade (IND-007, D-05, RN-058) |
+  | **IDX-C2** | `ix_cobranca_data_referencia_ativa` | `cobranca` | `data_referencia` | `cancelada_em IS NULL` | NÃO | Receita prevista por período (IND-005, RN-068, HOM-02) |
+
+  **3. Matriz das duas exclusion constraints implementadas (Migration B):**
+
+  | ID lógico | Nome físico | Tabela | Definição / Operadores | Estados bloqueantes | Intervalo | Requisito / Regra |
+  | --- | --- | --- | --- | --- | --- | --- |
+  | **IDX-A1** | `ex_agendamento_profissional` | `agendamento` | `EXCLUDE USING gist (profissional_id WITH =, tstzrange(inicio, fim, '[)') WITH &&)` | `AGENDADO`, `CONFIRMADO`, `AGUARDANDO`, `EM_ATENDIMENTO`, `CONCLUIDO` | Semiaberto `[)` | Conflito de agenda do profissional (AGD-005, RN-015.1, C-01) |
+  | **IDX-A2** | `ex_agendamento_paciente` | `agendamento` | `EXCLUDE USING gist (paciente_id WITH =, tstzrange(inicio, fim, '[)') WITH &&)` | `AGENDADO`, `CONFIRMADO`, `AGUARDANDO`, `EM_ATENDIMENTO`, `CONCLUIDO` | Semiaberto `[)` | Conflito de agenda do paciente (D-06, RN-015.3) |
+
+  **4. Validação e testes executados:**
+  - **U-03 (IDX-M2):** Primeiro `CONSUMO` para `(atendimento A, pacote P)` permitido; segundo `CONSUMO` para mesmo par rejeitado com `SQLSTATE 23505` (`ux_movimento_sessao_consumo_atendimento_pacote`); `CONSUMO` do mesmo atendimento em pacote diferente permitido; movimentos de `AJUSTE` não bloqueados pelo predicado.
+  - **U-04 (IDX-R2):** Primeira reserva ativa permitida; segunda reserva ativa para mesmo agendamento rejeitada com `SQLSTATE 23505` (`ux_reserva_sessao_ativa_agendamento`); reserva encerrada histórica + nova reserva ativa permitida; múltiplas reservas encerradas permitidas.
+  - **Utilizabilidade (IDX-R1, IDX-A4, IDX-P2, IDX-C2):** `EXPLAIN` sob `enable_seqscan = off` comprovou elegibilidade do planner em todos os quatro índices parciais quando as consultas satisfazem o predicado parcial, e recusa de uso indevido quando fora do predicado (`encerrada_em IS NOT NULL`, `pacote_id IS NULL`, `cancelado_em IS NOT NULL`, `cancelada_em IS NOT NULL`).
+  - **Exclusions da agenda:**
+    - `T-AGD-CONFLICT`: sobreposição de horários do mesmo profissional bloqueada com `SQLSTATE 23P01` (`ex_agendamento_profissional`).
+    - `T-AGD-PACIENTE`: sobreposição de horários do mesmo paciente com profissionais distintos bloqueada com `SQLSTATE 23P01` (`ex_agendamento_paciente`).
+    - `T-AGD-EDGE-NON-OVERLAP`: agendamentos contíguos (ex.: 16:00–17:00 e 17:00–18:00) aceitos pelo operador semiaberto `[)`.
+    - `CANCELADO` e `FALTA`: sobreposições contendo registros cancelados ou com falta permitidas (não bloqueantes).
+    - `T-AGD-CONCLUIDO`: agendamento em estado `CONCLUIDO` bloqueia nova sobreposição em ambas as constraints (`23P01`).
+    - Identidades distintas: pacientes e profissionais distintos em mesmo intervalo permitidos.
+
+  **5. Replay from-empty e Shadow Database Probes:**
+  - **Prova anti-drift inter-migration:** `migrate dev --create-only --name exclusion_agenda` gerou migration vazia, sem qualquer tentativa de `DROP INDEX` dos seis índices parciais.
+  - **Replay do zero:** volume destruído e recriado (`docker compose down -v && docker compose up -d`). `prisma migrate deploy` aplicou as 8 migrations com sucesso.
+  - **Probe pré-E-11:** `migrate dev --create-only --name pre_e11_environment_probe` executado contra shadow database sem erros, sem detecção de drift e gerando migration vazia (removida imediatamente).
+  - **Catálogo PostgreSQL pós-replay:** 36 tabelas de domínio, 70 FKs `RESTRICT`, 25 CHECK constraints, 1 coluna gerada `STORED`, 6 índices parciais, 2 exclusion constraints, 0 triggers customizados, extensão `btree_gist` ativa.
+
+  **6. Lista de objetos protegidos para a Guarda 1 (`E-16`):**
+
+  | # | Nome físico | Tipo | Tabela | Migration de origem |
+  | --- | --- | --- | --- | --- |
+  | 1 | `ux_movimento_sessao_consumo_atendimento_pacote` | Índice único parcial | `movimento_sessao` | `20260822150238_indices_parciais` |
+  | 2 | `ux_reserva_sessao_ativa_agendamento` | Índice único parcial | `reserva_sessao` | `20260822150238_indices_parciais` |
+  | 3 | `ix_reserva_sessao_ativa_pacote` | Índice parcial | `reserva_sessao` | `20260822150238_indices_parciais` |
+  | 4 | `ix_agendamento_pacote` | Índice parcial | `agendamento` | `20260822150238_indices_parciais` |
+  | 5 | `ix_pacote_validade_ativa` | Índice parcial | `pacote` | `20260822150238_indices_parciais` |
+  | 6 | `ix_cobranca_data_referencia_ativa` | Índice parcial | `cobranca` | `20260822150238_indices_parciais` |
+  | 7 | `ex_agendamento_profissional` | Exclusion constraint | `agendamento` | `20260822150506_exclusion_agenda` |
+  | 8 | `ex_agendamento_paciente` | Exclusion constraint | `agendamento` | `20260822150506_exclusion_agenda` |
+
+  **Nada de `E-11` em diante foi antecipado** — catálogo: **0** triggers customizados, **0** revogações de privilégio (`REVOKE`). Migrations `E-04`..`E-09` **bit a bit inalteradas**. Nenhuma Preview Feature. **Critério de aceite ATENDIDO.**
+- **Risco.** **Alto** — mitigado pelas evidências executadas; aberto até `V-04`/`E-16`. **Rev.** Total. **Risco realizado: não.**
 
 #### `E-11` — Triggers e privilégios (append-only)
 
