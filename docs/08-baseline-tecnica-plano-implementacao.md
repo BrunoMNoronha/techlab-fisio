@@ -3,8 +3,8 @@
 > **Documento:** `docs/08-baseline-tecnica-plano-implementacao.md`
 > **Projeto:** TechLab Fisio
 > **Fase:** 2 — Modelagem — **Transição Etapa 2.2 → implementação física**
-> **Status:** **HOMOLOGADO (ato de homologação: REV. 2) — BASELINE TÉCNICA E PLANO DE IMPLEMENTAÇÃO FÍSICA APROVADOS — REVISÃO VIGENTE: REV. 9**
-> **Nota sobre a numeração:** a **REV. 2** é a revisão homologada por Bruno em 20/08/2026 (§0). As **REV. 3** a **REV. 9** são correções posteriores de **sequenciamento e de registro de execução**, expressamente autorizadas, que **não alteram baseline, arquitetura, requisito ou decisão homologada**.
+> **Status:** **HOMOLOGADO (ato de homologação: REV. 2) — BASELINE TÉCNICA E PLANO DE IMPLEMENTAÇÃO FÍSICA APROVADOS — REVISÃO VIGENTE: REV. 10**
+> **Nota sobre a numeração:** a **REV. 2** é a revisão homologada por Bruno em 20/08/2026 (§0). As **REV. 3** a **REV. 10** são correções posteriores de **sequenciamento e de registro de execução**, expressamente autorizadas, que **não alteram baseline, arquitetura, requisito ou decisão homologada**.
 > **Homologação:** baseline técnica (§6), as seis decisões da Categoria C (§7), a política de migrations e de introspection (§10, §10.2), o plano `E-01`..`E-18` (§13) e a decisão **`D-ESM-01`** (§16) aprovados por **Bruno Menezes Noronha** em **20 de agosto de 2026**
 > **Natureza:** documento **MUTÁVEL**. Registra versões, verificações técnicas e plano de execução. Não altera regra de negócio, não altera `docs/07` e não altera a Base Imutável.
 > **Data:** 22 de agosto de 2026
@@ -31,6 +31,8 @@
 | **8** | **22/08/2026** | **REGISTRO DE EXECUÇÃO DE `E-09` E ABSORÇÃO DE `A-02`/`A-04` — sem alteração de baseline, arquitetura, requisito ou decisão homologada.** (a) `E-09` passa a **EXECUTADA**: migration `20260822144354_check_constraints` implementa integralmente todas as **25 CHECK constraints** homologadas em `docs/07` §10.2, com nomes determinísticos `ck_<tabela>_<regra>` (§13 `E-09`). (b) **`T-CHK-ALL` executado e aprovado**: 25 inserções violadoras rejeitadas individualmente com `SQLSTATE 23514` e captura exata da constraint alvo; casos válidos de equivalência/coerência testados e aprovados; fixtures revertidas por rollback limpo (§14 `T-CHK-ALL`). (c) **Replay from-empty aprovado**: destruição e recriação do volume PostgreSQL reproduz todo o histórico de 6 migrations sem drift. (d) **Saneamento e probe do Shadow Database / `migrate dev` aprovados**: `migrate dev --create-only` reproduz o histórico no shadow database sem pedir reset, sem drift e gerando migration vazia de prova (removida). (e) **Absorção de `A-02` e `A-04`**: documenta-se que `@default(dbgenerated())` sem argumento em `cobranca.valorLiquido` é a representação deliberada do projeto para satisfazer `C-2`; explicita-se a proibição estrita de `prisma db pull` oportunista (§10.2), que induziria `dbgenerated("(valor_bruto - valor_desconto)")` e DEFAULT comum conflitante com `C-2`. (f) **Estado rigoroso das verificações**: `V-01` APROVADA, `V-02` APROVADA, `V-03` PENDENTE (para `E-12`), `V-04` PENDENTE (para `E-16`), `V-05` PENDENTE (para `E-13`), `V-06.a` APROVADA, `V-06.b` APROVADA, `V-06.c` PENDENTE (`V-06` PARCIALMENTE APROVADA). (g) Riscos `R2.2-03`, `R-BL-05` e `R-BL-09` permanecem abertos; pendências editoriais de `docs/07` permanecem remetidas a `E-18`. Nenhuma etapa de `E-10` em diante iniciada (0 índices parciais, 0 exclusion constraints, 0 triggers). |
 
 | **9** | **22/08/2026** | **REGISTRO DE EXECUÇÃO DE `E-10` (ÍNDICES PARCIAIS E EXCLUSION CONSTRAINTS) — sem alteração de baseline, arquitetura, requisito ou decisão homologada.** (a) `E-10` passa a **EXECUTADA**: migrations `20260822150238_indices_parciais` (6 índices parciais) e `20260822150506_exclusion_agenda` (2 exclusion constraints) implementadas e aplicadas separadamente (§13 `E-10`). (b) **Matriz de índices parciais e de exclusion constraints**: 6 índices parciais (`ux_movimento_sessao_consumo_atendimento_pacote`, `ux_reserva_sessao_ativa_agendamento`, `ix_reserva_sessao_ativa_pacote`, `ix_agendamento_pacote`, `ix_pacote_validade_ativa`, `ix_cobranca_data_referencia_ativa`) e 2 exclusion constraints (`ex_agendamento_profissional`, `ex_agendamento_paciente`) com intervalo semiaberto `[)` e 5 estados bloqueantes (`AGENDADO`, `CONFIRMADO`, `AGUARDANDO`, `EM_ATENDIMENTO`, `CONCLUIDO`). (c) **Testes funcionais e de invariantes executados e aprovados**: U-03 (consumo duplicado bloqueado com `SQLSTATE 23505`), U-04 (reserva ativa duplicada bloqueada com `SQLSTATE 23505`), utilizabilidade de IDX-R1, IDX-A4, IDX-P2, IDX-C2 comprovada por `EXPLAIN` (`enable_seqscan=off`), conflito de profissional (`23P01`), conflito de paciente (`23P01`), borda contígua 10:00/10:00 (`T-AGD-EDGE-NON-OVERLAP`), `CANCELADO` e `FALTA` livres, `CONCLUIDO` bloqueando (`T-AGD-CONCLUIDO`), identidades distintas em sobreposição permitidas. (d) **Probes anti-drift e replay from-empty aprovados**: criação de Migration B não gerou `DROP` dos índices parciais; probe pré-E-11 vazio e sem `DROP`; replay do zero a partir de volume vazio recriou 36 tabelas, 70 FKs, 25 CHECKs, 1 generated column, 6 índices parciais, 2 exclusion constraints, 0 triggers. (e) **Lista de objetos protegidos (Guarda 1)** registrada com os 8 objetos de `E-10` e suas migrations de origem. (f) **Estado rigoroso das verificações e riscos**: `V-01` e `V-02` APROVADAS; `V-03` (`E-12`), `V-04` (`E-16`) e `V-05` (`E-13`) PENDENTES; `V-06.a` e `V-06.b` APROVADAS, `V-06.c` PENDENTE (`V-06` PARCIALMENTE APROVADA). Riscos `R2.2-03`, `R-BL-05` e `R-BL-09` **permanecem expressamente ABERTOS**. Nenhuma etapa de `E-11` em diante iniciada (0 triggers customizados, 0 revogações `REVOKE`). |
+
+| **10** | **22/08/2026** | **REGISTRO DE EXECUÇÃO DE `E-11` (APPEND-ONLY, TRIGGERS CONDICIONAIS E PRIVILÉGIOS) — sem alteração de baseline, arquitetura, requisito ou decisão homologada.** (a) `E-11` passa a **EXECUTADA**: migration `20260822151743_append_only` implementa os 5 comandos `REVOKE UPDATE, DELETE` para a role de runtime `tlf_app` (`evento_auditoria`, `movimento_sessao`, `pagamento`, `estorno`, `historico_agendamento`) e as 2 triggers condicionais (`trg_registro_clinico_imutavel_finalizado` e `trg_retificacao_clinica_imutavel_efetivada`) com suas funções de suporte (`fn_registro_clinico_bloquear_finalizado` e `fn_retificacao_clinica_bloquear_efetivada`) (§13 `E-11`). (b) **Matriz de privilégios de `tlf_app`**: comprovada antes (DML completo) e após `E-11` (`SELECT=t, INSERT=t, UPDATE=f, DELETE=f` nas 5 tabelas append-only; `SELECT=t, INSERT=t, UPDATE=t, DELETE=t` preservado em `registro_clinico`, `retificacao_clinica` e `reserva_sessao`). (c) **Testes funcionais e operacionais executados como `tlf_app` e aprovados**: mutações `UPDATE` e `DELETE` nas 5 tabelas append-only rejeitadas por falta de privilégio (`SQLSTATE 42501`); `SELECT` e `INSERT` preservados; draft de registro clínico atualizável e primeira finalização permitida; mutações posteriores à finalização rejeitadas pela trigger (`SQLSTATE P0001`); draft de retificação clínica atualizável e primeira efetivação permitida; mutações posteriores à efetivação rejeitadas pela trigger (`SQLSTATE P0001`); encerramento legítimo de `reserva_sessao` via `UPDATE` perfeitamente permitido e persistido. (d) **Replay from-empty e Shadow Database Probe aprovados**: replay do zero em volume vazio aplicou as 9 migrations com sucesso; probe pré-E-12 gerou migration vazia sem `DROP` de objetos protegidos (removida imediatamente). (e) **Lista de objetos protegidos (Guardas 1–3)** atualizada com triggers, funções e matriz normativa de privilégios revogados. (f) **Estado rigoroso das verificações e riscos**: `V-01` e `V-02` APROVADAS; `V-03` (`E-12`), `V-04` (`E-16`) e `V-05` (`E-13`) PENDENTES; `V-06.a` e `V-06.b` APROVADAS, `V-06.c` PENDENTE (`V-06` PARCIALMENTE APROVADA). Riscos `R2.2-03`, `R-BL-05` e `R-BL-09` **permanecem expressamente ABERTOS**. Nenhuma etapa de `E-12` em diante iniciada. |
 
 **Escopo destas revisões.** Somente `docs/08` foi alterado. Nenhuma decisão homologada de `docs/02`..`docs/07` foi reaberta, alterada ou reinterpretada. As revisões 0 a 4 não iniciaram implementação; a **REV. 5** registra a execução do Bloco II do plano (`E-04`..`E-07`) como **registro de execução, sem alteração da homologação técnica**.
 
@@ -834,6 +836,8 @@ Cada uma é fechável **por teste local**, sem consulta a Bruno.
 
 > **Atualização REV. 9.** A execução de `E-10` **não alterou o estado de nenhuma verificação**. Os 6 índices parciais e as 2 exclusion constraints de `docs/07` §10-A foram implementados e validados integralmente. `V-03` (`E-12`), `V-04` (`E-16`) e `V-05` (`E-13`) permanecem **PENDENTES**, `V-06.c` permanece **PENDENTE** e `V-06` permanece **PARCIALMENTE APROVADA**. Enquanto `V-04` estiver pendente, `R2.2-03` e `R-BL-05` **continuam expressamente abertos**; a ausência de `DROP` na geração subsequente e no probe de `E-10` constitui evidência favorável e preliminar, sem encerrar os riscos cuja conclusão pertence normativamente a `E-16` (`V-04`). `R-BL-09` continua aberto sob aceitação temporária monitorada.
 
+> **Atualização REV. 10.** A execução de `E-11` **não alterou o estado de nenhuma verificação**. Os 5 privilégios `REVOKE UPDATE, DELETE` e as 2 triggers condicionais de imutabilidade foram implementados e validados integralmente. `V-03` (`E-12`), `V-04` (`E-16`) e `V-05` (`E-13`) permanecem **PENDENTES**, `V-06.c` permanece **PENDENTE** e `V-06` permanece **PARCIALMENTE APROVADA**. Enquanto `V-04` estiver pendente, `R2.2-03` e `R-BL-05` **continuam expressamente abertos**; a ausência de `DROP` no probe de `E-11` constitui evidência favorável e preliminar, sem encerrar os riscos que pertencem normativamente a `E-16` (`V-04`). `R-BL-09` continua aberto sob aceitação temporária monitorada.
+
 ### 12.2 Especificação completa de cada verificação
 
 Para cada verificação: **o que mede**, **quando é executada**, **qual etapa bloqueia**, **o que constitui sucesso** e **o que fazer em caso de falha**.
@@ -1230,7 +1234,67 @@ Convenções: **Rev.** = reversibilidade. Todos os caminhos são relativos à ra
 - **Ação.** `REVOKE UPDATE, DELETE` de `tlf_app` em `evento_auditoria`, `movimento_sessao`, `pagamento`, `estorno`, `historico_agendamento`. **Trigger condicional** apenas nas duas tabelas clínicas: `registro_clinico` quando `OLD.estado = 'FINALIZADO'` e `retificacao_clinica` quando `OLD.estado = 'EFETIVADA'`. **`reserva_sessao` não recebe proteção adicional** — o encerramento é `UPDATE` legítimo (§22.2).
 - **Validação.** Como `tlf_app`, `UPDATE`/`DELETE` nas cinco tabelas **falha**; `UPDATE` em registro `FINALIZADO` **falha**; `UPDATE` em registro `EM_ELABORACAO` **é permitido**; `UPDATE` em `reserva_sessao` **é permitido**.
 - **Critério de aceite.** Todos acima. **O teste do caso permitido é tão obrigatório quanto o do proibido** — uma trigger boa demais quebra a finalização.
-- **Risco.** Médio. **Rev.** Total.
+- **Estado (REV. 10). EXECUTADA.** Migration dedicada: `20260822151743_append_only`.
+
+  **1. Procedimento de criação e inspeção.**
+  - Migration criada com `npx prisma migrate dev --create-only --name append_only`.
+  - Inspeção pré-edição comprovou arquivo vazio (`-- This is an empty migration.`), com 0 `DROP INDEX`, 0 `DROP CONSTRAINT`, 0 `DROP TRIGGER`, 0 `DROP FUNCTION`, 0 `DROP EXTENSION`, 0 `DROP TABLE`, 0 `ALTER COLUMN`, 0 `GRANT`, 0 `REVOKE`.
+  - Editada com os 5 comandos `REVOKE` e as 2 triggers condicionais + funções plpgsql, e aplicada com `npx prisma migrate deploy`.
+  - `schema.prisma` permanece inalterado; `db push` e `db pull` **não foram usados**; nenhuma Preview Feature.
+
+  **2. Matriz de privilégios de `tlf_app` antes e depois de `E-11`:**
+
+  | Tabela | SELECT (pré/pós) | INSERT (pré/pós) | UPDATE (pré/pós) | DELETE (pré/pós) | Tipo de proteção |
+  | --- | :---: | :---: | :---: | :---: | --- |
+  | `evento_auditoria` | `t` / `t` | `t` / `t` | `t` / **`f`** | `t` / **`f`** | Append-only puro por privilégio |
+  | `movimento_sessao` | `t` / `t` | `t` / `t` | `t` / **`f`** | `t` / **`f`** | Append-only puro por privilégio |
+  | `pagamento` | `t` / `t` | `t` / `t` | `t` / **`f`** | `t` / **`f`** | Append-only puro por privilégio |
+  | `estorno` | `t` / `t` | `t` / `t` | `t` / **`f`** | `t` / **`f`** | Append-only puro por privilégio |
+  | `historico_agendamento` | `t` / `t` | `t` / `t` | `t` / **`f`** | `t` / **`f`** | Append-only puro por privilégio |
+  | `registro_clinico` | `t` / `t` | `t` / `t` | `t` / `t` | `t` / `t` | Trigger condicional de estado |
+  | `retificacao_clinica` | `t` / `t` | `t` / `t` | `t` / `t` | `t` / `t` | Trigger condicional de estado |
+  | `reserva_sessao` | `t` / `t` | `t` / `t` | `t` / `t` | `t` / `t` | Nenhuma proteção adicional |
+
+  **3. Especificação das triggers e funções condicionais:**
+
+  * **Registro Clínico:**
+    * **Função:** `fn_registro_clinico_bloquear_finalizado()` (plpgsql, mensagem genérica: `'registro clinico finalizado e imutavel'`, sem PII/payload sensível).
+    * **Trigger:** `trg_registro_clinico_imutavel_finalizado` `BEFORE UPDATE OR DELETE ON registro_clinico FOR EACH ROW WHEN (OLD.estado = 'FINALIZADO')`.
+  * **Retificação Clínica:**
+    * **Função:** `fn_retificacao_clinica_bloquear_efetivada()` (plpgsql, mensagem genérica: `'retificacao clinica efetivada e imutavel'`, sem PII/payload sensível).
+    * **Trigger:** `trg_retificacao_clinica_imutavel_efetivada` `BEFORE UPDATE OR DELETE ON retificacao_clinica FOR EACH ROW WHEN (OLD.estado = 'EFETIVADA')`.
+
+  **4. Validação e testes executados como `tlf_app`:**
+  - **Tabelas append-only puras:** Execução real de `UPDATE` e `DELETE` nas 5 tabelas (`evento_auditoria`, `movimento_sessao`, `pagamento`, `estorno`, `historico_agendamento`) rejeitada com `SQLSTATE 42501` (`insufficient_privilege`). `SELECT` e `INSERT` operacionais e autorizados.
+  - **`registro_clinico`:**
+    * *Draft UPDATE:* `UPDATE` em registro `EM_ELABORACAO` **permitido**.
+    * *Primeira finalização:* Transição de `EM_ELABORACAO` para `FINALIZADO` com preenchimento de `finalizado_em` **permitida**.
+    * *UPDATE pós-finalização:* Rejeitado pela trigger com `SQLSTATE P0001` (`registro clinico finalizado e imutavel`).
+    * *DELETE pós-finalização:* Rejeitado pela trigger com `SQLSTATE P0001` (`registro clinico finalizado e imutavel`).
+  - **`retificacao_clinica`:**
+    * *Draft UPDATE:* `UPDATE` em retificação `EM_ELABORACAO` **permitido**.
+    * *Primeira efetivação:* Transição de `EM_ELABORACAO` para `EFETIVADA` com preenchimento de `efetivada_em` **permitida**.
+    * *UPDATE pós-efetivação:* Rejeitado pela trigger com `SQLSTATE P0001` (`retificacao clinica efetivada e imutavel`).
+    * *DELETE pós-efetivação:* Rejeitado pela trigger com `SQLSTATE P0001` (`retificacao clinica efetivada e imutavel`).
+  - **`reserva_sessao`:** Encerramento legítimo via `UPDATE` de `encerrada_em` e `motivo_encerramento` **permitido e persistido** com sucesso como `tlf_app`.
+
+  **5. Replay from-empty e Shadow Database Probe:**
+  - **Replay do zero:** Volume PostgreSQL destruído e recriado (`docker compose down -v && docker compose up -d`). `prisma migrate deploy` aplicou as 9 migrations com sucesso. Todos os testes de privilégios, triggers e encerramento de reserva foram reexecutados e revalidados pós-replay.
+  - **Probe pré-E-12:** `migrate dev --create-only --name pre_e12_environment_probe` executado contra shadow database sem erros, sem drift e gerando migration vazia (removida imediatamente).
+  - **Catálogo PostgreSQL pós-replay:** 36 tabelas de domínio, 70 FKs `RESTRICT`, 25 CHECK constraints, 1 coluna gerada `STORED`, 6 índices parciais, 2 exclusion constraints, 2 triggers customizados, 2 trigger functions, extensão `btree_gist` ativa.
+
+  **6. Lista de objetos e privilégios protegidos adicionados (Guardas 1–3 / `E-16`):**
+
+  | # | Nome do objeto / Alvo | Tipo | Tabela / Role | Migration de origem |
+  | --- | --- | --- | --- | --- |
+  | 9 | `trg_registro_clinico_imutavel_finalizado` | Trigger condicional | `registro_clinico` | `20260822151743_append_only` |
+  | 10 | `trg_retificacao_clinica_imutavel_efetivada` | Trigger condicional | `retificacao_clinica` | `20260822151743_append_only` |
+  | 11 | `fn_registro_clinico_bloquear_finalizado` | Função PL/pgSQL | `public` | `20260822151743_append_only` |
+  | 12 | `fn_retificacao_clinica_bloquear_efetivada` | Função PL/pgSQL | `public` | `20260822151743_append_only` |
+  | * | `REVOKE UPDATE, DELETE` (5 tabelas) | Matriz de privilégios | `tlf_app` | `20260822151743_append_only` |
+
+  **Nada de `E-12` em diante foi antecipado** — catálogo: **0** objetos TypeScript criados, **0** testes de mapeamento de erro antecipados. Migrations `E-04`..`E-10` **bit a bit inalteradas**. Nenhuma Preview Feature. **Critério de aceite ATENDIDO.**
+- **Risco.** Médio. **Rev.** Total. **Risco realizado: não.**
 
 #### `E-12` — Mapeamento de erro por constraint
 
