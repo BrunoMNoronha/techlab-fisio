@@ -175,7 +175,9 @@ enum OrigemCobranca {
 //   e a ausência do token `CASCADE` no DDL NÃO é objetivo em si.
 //
 // NÃO PERTENCEM A `E-06`/`E-07` e NÃO estão neste arquivo:
-//   - `cobranca.valor_liquido` como coluna GERADA STORED     -> `E-08`;
+//   - `cobranca.valor_liquido` como coluna GERADA STORED     -> `E-08`
+//     (EXECUTADA; a forma `GENERATED` vive só na migration — segue não
+//      representável aqui. Ver o campo em `Cobranca`);
 //   - CHECK constraints de `docs/07` §10.2                    -> `E-09`;
 //   - índices parciais IDX-M2/U-03, IDX-R2/U-04, IDX-R1,
 //     IDX-A4, IDX-P2, IDX-C2 e exclusion IDX-A1/IDX-A2        -> `E-10`;
@@ -938,11 +940,24 @@ model Cobranca {
   valorBruto            Decimal        @map("valor_bruto") @db.Decimal(12, 2)
   /// FIN-003. CHECK `>= 0` em `E-09`.
   valorDesconto         Decimal        @default(0) @map("valor_desconto") @db.Decimal(12, 2)
-  /// `E-06`: COLUNA COMUM, forma provisória homologada (`docs/07` §19.2 e
-  /// docs/08 §13 `E-06`). A conversão para
-  /// `GENERATED ALWAYS AS (valor_bruto - valor_desconto) STORED`
-  /// pertence EXCLUSIVAMENTE a `E-08` e NÃO foi feita nesta tarefa.
-  valorLiquido          Decimal        @map("valor_liquido") @db.Decimal(12, 2)
+  /// SOMENTE LEITURA — NÃO ESCREVER. Coluna GERADA pelo PostgreSQL desde
+  /// `E-08`: `GENERATED ALWAYS AS (valor_bruto - valor_desconto) STORED`
+  /// (`docs/07` §19.2 / `H2.2-18`; docs/08 §7 `C-2`, §13 `E-08`). A forma
+  /// `GENERATED` NÃO é representável na Prisma Schema Language e por isso vive
+  /// só na migration; aqui a coluna aparece como comum, o que a mantém fora do
+  /// alcance do diff (`migrate diff` retorna vazio — conferido em `V-02`).
+  ///
+  /// `@default(dbgenerated())` é o ajuste mínimo indispensável exigido pela
+  /// própria decisão `C-2` ("excluído de todo `create`/`update`"): sem ele o
+  /// campo é OBRIGATÓRIO no `create` do Client, e `V-02` mediu o impasse —
+  /// omitir dá "Argument `valorLiquido` is missing" e informar dá SQLSTATE
+  /// 428C9 do PostgreSQL, tornando o caminho de criação impossível. Com ele o
+  /// campo fica opcional na entrada e NENHUM default é emitido em migration
+  /// (drift zero, conferido). O valor NUNCA vem da aplicação: quem calcula é o
+  /// banco, e toda tentativa de escrita — `create`, `update` ou SQL cru — é
+  /// rejeitada com 428C9. A disciplina de código é a primeira barreira; o
+  /// PostgreSQL é a barreira que não depende de disciplina.
+  valorLiquido          Decimal        @default(dbgenerated()) @map("valor_liquido") @db.Decimal(12, 2)
   /// Data civil no fuso da clínica (RN-060, RN-068) — §20.2.
   /// PROP-RN-2.2-01 homologada: acompanha a remarcação válida, recalculada
   /// dentro de T-01 — regra de aplicação, não constraint.
