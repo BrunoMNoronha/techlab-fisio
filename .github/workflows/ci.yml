@@ -1,10 +1,17 @@
-# TechLab Fisio — CI mínimo da E-13 (docs/08 §13 `E-13`; verificação V-05).
+# TechLab Fisio — CI (docs/08 §13 `E-13` + `E-15`).
 #
-# ESCOPO DELIBERADAMENTE MÍNIMO: prova que o runner de integração funciona no
-# CI com a MESMA tag de PostgreSQL do desenvolvimento (`postgres:18-bookworm`,
-# via o próprio docker-compose.yml do projeto — nenhuma lógica de bootstrap
-# duplicada aqui). NÃO é a E-15 (reconstrução formal from-scratch) nem a E-16
-# (guardas anti-drift) — esses jobs serão acrescentados pelas etapas próprias.
+# A partir da E-15, a RECONSTRUÇÃO FROM-SCRATCH é a própria preparação da
+# suíte: `scripts/verify-from-scratch.mjs` sobe uma instância PostgreSQL 18
+# LIMPA (container + volume descartáveis, mesmo `postgres:18-bookworm` e mesmo
+# bootstrap initdb versionados do projeto), reconstrói o schema EXCLUSIVAMENTE
+# por `prisma migrate deploy`, verifica no catálogo os objetos das Categorias
+# B/C, executa a suíte INTEGRAL de integração (banco descartável; migrations
+# como tlf_migrator; testes como tlf_app — infraestrutura E-13 inalterada) e
+# destrói os recursos descartáveis. Nenhuma verificação da E-13 foi reduzida —
+# a mesma suíte roda, agora a partir do zero absoluto.
+#
+# NÃO é a E-16: nenhum golden schema, lint de migration, teste negativo de
+# guarda ou `migrate diff` — a tríade anti-drift/V-04 pertence à etapa própria.
 #
 # Credenciais: exclusivamente as sintéticas de `.env.example`. Nenhum segredo.
 
@@ -17,7 +24,7 @@ on:
 
 jobs:
   integracao:
-    name: E-13 — suíte de integração (Jest 30 + PostgreSQL 18)
+    name: E-15 — reconstrução from-scratch + suíte de integração (Jest 30 + PostgreSQL 18)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,9 +38,6 @@ jobs:
       - name: Ambiente sintético (.env a partir do modelo versionado)
         run: cp .env.example .env
 
-      - name: PostgreSQL 18 — mesma tag e mesmo bootstrap do desenvolvimento
-        run: docker compose up -d --wait
-
       - name: Instalação reproduzível pelo lockfile
         run: npm ci
 
@@ -43,9 +47,5 @@ jobs:
       - name: Typecheck (inclui os testes — tsconfig.test.json)
         run: npm run typecheck
 
-      - name: Suíte de integração (banco descartável; migrations como tlf_migrator; testes como tlf_app)
-        run: npm run test:integration
-
-      - name: Encerrar PostgreSQL
-        if: always()
-        run: docker compose down -v
+      - name: E-15 — PostgreSQL 18 limpo → migrate deploy → catálogo → suíte integral → limpeza
+        run: npm run verify:from-scratch
