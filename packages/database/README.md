@@ -36,4 +36,4 @@ Pré-requisitos, variáveis de ambiente e o passo a passo completo estão no [RE
 - **`cobranca.valor_liquido`** é coluna gerada `STORED` — nunca escrever nela (o PostgreSQL rejeita com `428C9`); no schema ela leva `@default(dbgenerated())` deliberadamente sem argumento.
 - **`db push` proibido; `db pull` fora do fluxo normal** — política completa em `docs/08` §10.2.
 - **Dados exclusivamente sintéticos** — nenhum dado real de paciente, em nenhuma circunstância.
-- `T-AUD-CONTEXTO` é o único `it.todo` da suíte: bloqueado até Bruno homologar o catálogo de `evento_auditoria.acao` e a whitelist de `contexto` (`P-E14-01` — `docs/08` §19). Não remover o `todo` nem inventar a política.
+- A validação do catálogo de `evento_auditoria.acao` e da whitelist fail-closed de `contexto` (homologados em `docs/09` §12) é **regra da camada de aplicação** (`docs/07` §22.3) — **não** existe, por desenho, teste dela nesta suíte. `T-AUD-CONTEXTO` está **RECLASSIFICADO** para a frente de `apps/api` (`docs/08` §19 `P-BACK-01`); não implementar validação, trigger, CHECK ou JSON Schema no banco para antecipá-la.

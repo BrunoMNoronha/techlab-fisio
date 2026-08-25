@@ -80,7 +80,7 @@ Regras vinculantes (detalhe em `docs/08` §9.3/§10/§10.2):
 npm test
 ```
 
-Suíte de integração (Jest 30, ESM real, sem mocks) contra PostgreSQL real. O globalSetup cria um **banco descartável por execução** (`techlab_fisio_it_<sufixo>`) na instância do compose, aplica as 9 migrations como `tlf_migrator` e executa os testes como `tlf_app`; o globalTeardown destrói o banco. Estado atual: **9 suites · 79 passed · 1 todo** — o único `todo` é `T-AUD-CONTEXTO`, bloqueado por pendência normativa (`P-E14-01`, ver `docs/08` §19).
+Suíte de integração (Jest 30, ESM real, sem mocks) contra PostgreSQL real. O globalSetup cria um **banco descartável por execução** (`techlab_fisio_it_<sufixo>`) na instância do compose, aplica as 9 migrations como `tlf_migrator` e executa os testes como `tlf_app`; o globalTeardown destrói o banco. Estado atual: **9 suites · 79 passed · 0 todo**. `T-AUD-CONTEXTO` **não** está na suíte: foi **RECLASSIFICADO** como teste de regra de aplicação/backend, a executar quando `apps/api` existir (`docs/09` §12.7; rastreado em `docs/08` §19 `P-BACK-01`) — ele não foi aprovado nem substituído por teste artificial.
 
 Dados **exclusivamente sintéticos** em desenvolvimento e testes — nunca dado real de paciente (TLF-BASE-V1 §10).
 

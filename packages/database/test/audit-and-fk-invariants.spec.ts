@@ -1,5 +1,4 @@
-// TechLab Fisio — E-14 — T-FK-RESTRICT — política referencial homologada; e
-// registro do bloqueio de T-AUD-CONTEXTO.
+// TechLab Fisio — E-14 — T-FK-RESTRICT — política referencial homologada.
 //
 // T-FK-RESTRICT (docs/07 §9.2; docs/08 §14): `ON DELETE RESTRICT` em TODAS as
 // FKs; cascata de exclusão é proibida. A prova integral vem do CATÁLOGO do
@@ -8,25 +7,20 @@
 // cruzado com `information_schema.referential_constraints`.
 //
 // ---------------------------------------------------------------------------
-// T-AUD-CONTEXTO — BLOQUEADO — fonte normativa insuficiente (ver `it.todo`).
+// T-AUD-CONTEXTO — RECLASSIFICADO (E-18B) — não pertence a esta suíte.
 //
-// docs/07 §22.3 determina que `evento_auditoria.contexto` (jsonb) use "lista
-// branca de chaves por `acao`, validada NA APLICAÇÃO e documentada junto ao
-// catálogo" (risco R2.2-04). Verificação executada nesta etapa:
-//   1. docs/02 (AUD-001..AUD-006): exigem os CAMPOS mínimos e as proibições,
-//      mas NÃO enumeram valores de `acao` nem chaves permitidas;
-//   2. docs/03..docs/06: nenhum catálogo de `acao` e nenhuma whitelist;
-//   3. docs/07 §22.3 e docs/08 §13 `E-18`: o catálogo de
-//      `evento_auditoria.acao`/`resultado` e a lista branca de `contexto` são
-//      ENTREGÁVEIS DOCUMENTAIS DE E-18, ainda não produzidos;
-//   4. código: não existe camada de aplicação (apps/api inexistente) nem
-//      validador implementado — `packages/database/src` contém apenas o
-//      mapeamento de erros da E-12.
-// Consequência: testar "chave fora da lista branca é rejeitada" exigiria
-// INVENTAR ações e whitelist — proibido (nenhuma regra normativa nova nesta
-// etapa). O item fica PENDENTE/BLOQUEADO até existir a política concreta
-// (E-18 ou decisão específica de Bruno); os demais itens da E-14 não dependem
-// dele. Registro formal em docs/08 §13 `E-14`.
+// O item viveu aqui como `it.todo` enquanto a política de whitelist de
+// `evento_auditoria.contexto` era indefinida (P-E14-01). Com a homologação de
+// docs/09 §12 (D-AUD-01..D-AUD-08, 25/08/2026), a decisão D-AUD-08 confirmou
+// docs/07 §22.3: a validação fail-closed do catálogo de `acao` e da whitelist
+// de `contexto` é regra da CAMADA DE APLICAÇÃO. O banco garante apenas a
+// forma (`jsonb`, colunas NN) — já coberta pela Guarda 2 e pelo golden — e
+// não existe comportamento de persistência legítimo que este item pudesse
+// medir sem inventar implementação sem consumidor.
+// T-AUD-CONTEXTO fica RECLASSIFICADO: teste de regra de aplicação/backend,
+// a executar quando `apps/api` existir (rastreado em docs/08 §19 P-BACK-01;
+// registro da reclassificação em docs/09 §12.7 e docs/08 §13 E-14/REV. 17).
+// Ele NÃO foi aprovado nem convertido em teste artificial nesta suíte.
 // ---------------------------------------------------------------------------
 
 import { afterAll, beforeAll, describe, expect, it } from "@jest/globals";
@@ -116,15 +110,4 @@ describe("T-FK-RESTRICT — nenhuma FK apaga em cascata (docs/07 §9.2)", () => 
       prisma.contatoEmergencia.findUniqueOrThrow({ where: { id: contato.id } }),
     ).resolves.toBeDefined();
   });
-});
-
-describe("T-AUD-CONTEXTO — lista branca de evento_auditoria.contexto", () => {
-  // BLOQUEADO — fonte normativa insuficiente: não existe catálogo autoritativo
-  // de `acao` nem whitelist de chaves por ação (entregável de E-18), e não
-  // existe camada de aplicação onde a validação homologada viveria. Inventar
-  // ações/whitelist para "passar" o teste violaria a disciplina desta etapa.
-  // Detalhamento completo no cabeçalho deste arquivo e em docs/08 §13 `E-14`.
-  it.todo(
-    "BLOQUEADO (fonte normativa insuficiente): chave fora da lista branca de `contexto` rejeitada — aguarda catálogo de `acao` + whitelist (E-18) e camada de aplicação",
-  );
 });
