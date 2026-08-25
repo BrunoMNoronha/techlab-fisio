@@ -174,17 +174,6 @@ async function main() {
     await provarBancoVazio(instancia.conexaoMigrador, cred.bancoApp, ROTULO);
     migrateDeploy(raizRepo, instancia.urlMigrador, cred.roleMigrador, ROTULO);
 
-    // CORRUPÇÃO TRANSITÓRIA — PROVA NEGATIVA DE CI DA E-16 (docs/08 §9.3 /
-    // V-04): remove deliberadamente um objeto protegido SOMENTE na instância
-    // descartável desta prova, para comprovar que a Guarda 3 torna a CI
-    // vermelha. Este commit é revertido em seguida; a linha NUNCA permanece
-    // no HEAD final.
-    docker([
-      "exec", instancia.container,
-      "psql", "-U", cred.roleMigrador, "-d", cred.bancoApp,
-      "-c", "DROP INDEX ix_cobranca_data_referencia_ativa",
-    ]);
-
     const dump = pgDumpNoContainer(instancia.container, cred);
     console.log(`${ROTULO} dump gerado: ${dump.length} bytes (restrict-key fixa "${RESTRICT_KEY}").`);
 
