@@ -6,13 +6,18 @@
   "description": "Workspace de persistência do TechLab Fisio — schema Prisma, migrations e Prisma Client gerado.",
   "license": "UNLICENSED",
   "scripts": {
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
+    "test:integration": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --config jest.config.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.9.1",
     "@prisma/client": "7.9.1"
   },
   "devDependencies": {
-    "@types/node": "24.13.3"
+    "@jest/globals": "30.4.1",
+    "@types/node": "24.13.3",
+    "jest": "30.4.2",
+    "pg": "8.23.0",
+    "ts-jest": "29.4.12"
   }
 }

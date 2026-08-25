@@ -14,6 +14,8 @@
   ],
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json && npm run typecheck --workspaces --if-present",
+    "test": "npm run test:integration",
+    "test:integration": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config packages/database/jest.config.mjs",
     "db:validate": "prisma validate",
     "db:generate": "prisma generate",
     "db:status": "prisma migrate status"

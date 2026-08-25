@@ -1,0 +1,51 @@
+# TechLab Fisio — CI mínimo da E-13 (docs/08 §13 `E-13`; verificação V-05).
+#
+# ESCOPO DELIBERADAMENTE MÍNIMO: prova que o runner de integração funciona no
+# CI com a MESMA tag de PostgreSQL do desenvolvimento (`postgres:18-bookworm`,
+# via o próprio docker-compose.yml do projeto — nenhuma lógica de bootstrap
+# duplicada aqui). NÃO é a E-15 (reconstrução formal from-scratch) nem a E-16
+# (guardas anti-drift) — esses jobs serão acrescentados pelas etapas próprias.
+#
+# Credenciais: exclusivamente as sintéticas de `.env.example`. Nenhum segredo.
+
+name: ci
+
+on:
+  push:
+    branches: ["agent/**"]
+  workflow_dispatch:
+
+jobs:
+  integracao:
+    name: E-13 — suíte de integração (Jest 30 + PostgreSQL 18)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Fonte única da versão de Node (docs/08 §4.4): linha 24.x.
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Ambiente sintético (.env a partir do modelo versionado)
+        run: cp .env.example .env
+
+      - name: PostgreSQL 18 — mesma tag e mesmo bootstrap do desenvolvimento
+        run: docker compose up -d --wait
+
+      - name: Instalação reproduzível pelo lockfile
+        run: npm ci
+
+      - name: Prisma Client
+        run: npx prisma generate
+
+      - name: Typecheck (inclui os testes — tsconfig.test.json)
+        run: npm run typecheck
+
+      - name: Suíte de integração (banco descartável; migrations como tlf_migrator; testes como tlf_app)
+        run: npm run test:integration
+
+      - name: Encerrar PostgreSQL
+        if: always()
+        run: docker compose down -v
