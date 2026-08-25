@@ -1,0 +1,118 @@
+{
+  "$comment": "TechLab Fisio — E-16 — inventário único dos objetos SQL protegidos (docs/08 §9.3, Guardas 1–3). FONTE ÚNICA: consumido por scripts/lint-migrations.mjs (Guarda 1), packages/database/test/guard-anti-drift.spec.ts (Guarda 2) e scripts/verify-from-scratch.mjs (verificação de catálogo da E-15). Derivado de docs/07 (§10.2, §10-A, §19.2, §22.2) e dos registros de execução E-08..E-11 em docs/08 REV. 7–10. Cada objeto carrega a migration de origem: a Guarda 1 só admite DROP na própria migration de origem ou sob anotação '-- INTENCIONAL:' com justificativa não vazia.",
+  "roleRuntime": "tlf_app",
+  "extensao": {
+    "nome": "btree_gist",
+    "origem": "20260820115547_extensao_btree_gist"
+  },
+  "exclusionConstraints": [
+    {
+      "nome": "ex_agendamento_profissional",
+      "tabela": "agendamento",
+      "origem": "20260822150506_exclusion_agenda"
+    },
+    {
+      "nome": "ex_agendamento_paciente",
+      "tabela": "agendamento",
+      "origem": "20260822150506_exclusion_agenda"
+    }
+  ],
+  "indicesParciaisUnicos": [
+    {
+      "nome": "ux_movimento_sessao_consumo_atendimento_pacote",
+      "tabela": "movimento_sessao",
+      "predicado": "tipo = 'CONSUMO'",
+      "origem": "20260822150238_indices_parciais"
+    },
+    {
+      "nome": "ux_reserva_sessao_ativa_agendamento",
+      "tabela": "reserva_sessao",
+      "predicado": "encerrada_em IS NULL",
+      "origem": "20260822150238_indices_parciais"
+    }
+  ],
+  "indicesParciaisSimples": [
+    {
+      "nome": "ix_reserva_sessao_ativa_pacote",
+      "tabela": "reserva_sessao",
+      "predicado": "encerrada_em IS NULL",
+      "origem": "20260822150238_indices_parciais"
+    },
+    {
+      "nome": "ix_agendamento_pacote",
+      "tabela": "agendamento",
+      "predicado": "pacote_id IS NOT NULL",
+      "origem": "20260822150238_indices_parciais"
+    },
+    {
+      "nome": "ix_pacote_validade_ativa",
+      "tabela": "pacote",
+      "predicado": "cancelado_em IS NULL",
+      "origem": "20260822150238_indices_parciais"
+    },
+    {
+      "nome": "ix_cobranca_data_referencia_ativa",
+      "tabela": "cobranca",
+      "predicado": "cancelada_em IS NULL",
+      "origem": "20260822150238_indices_parciais"
+    }
+  ],
+  "checkConstraints": [
+    { "nome": "ck_agendamento_intervalo", "tabela": "agendamento", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_agendamento_modalidade_pacote", "tabela": "agendamento", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_bloqueio_agenda_intervalo", "tabela": "bloqueio_agenda", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_movimento_sessao_quantidade_positiva", "tabela": "movimento_sessao", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_movimento_sessao_tipo_atendimento", "tabela": "movimento_sessao", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_movimento_sessao_consumo_unitario", "tabela": "movimento_sessao", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_movimento_sessao_justificativa_ajuste", "tabela": "movimento_sessao", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_reserva_sessao_encerramento", "tabela": "reserva_sessao", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_reserva_sessao_consumo_movimento", "tabela": "reserva_sessao", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_pacote_quantidade_positiva", "tabela": "pacote", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_pacote_cancelamento", "tabela": "pacote", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_cobranca_valor_bruto_nao_negativo", "tabela": "cobranca", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_cobranca_valor_desconto_nao_negativo", "tabela": "cobranca", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_cobranca_valor_liquido_nao_negativo", "tabela": "cobranca", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_cobranca_origem", "tabela": "cobranca", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_pagamento_valor_positivo", "tabela": "pagamento", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_paciente_cpf_formato", "tabela": "paciente", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_registro_clinico_finalizacao", "tabela": "registro_clinico", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_retificacao_clinica_efetivacao", "tabela": "retificacao_clinica", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_retificacao_clinica_justificativa", "tabela": "retificacao_clinica", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_horario_funcionamento_intervalo", "tabela": "horario_funcionamento", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_horario_funcionamento_dia_semana", "tabela": "horario_funcionamento", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_disponibilidade_profissional_intervalo", "tabela": "disponibilidade_profissional", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_disponibilidade_profissional_dia_semana", "tabela": "disponibilidade_profissional", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_sessao_autenticacao_expiracao", "tabela": "sessao_autenticacao", "origem": "20260822144354_check_constraints" }
+  ],
+  "triggers": [
+    {
+      "nome": "trg_registro_clinico_imutavel_finalizado",
+      "tabela": "registro_clinico",
+      "condicao": "OLD.estado = 'FINALIZADO'",
+      "origem": "20260822151743_append_only"
+    },
+    {
+      "nome": "trg_retificacao_clinica_imutavel_efetivada",
+      "tabela": "retificacao_clinica",
+      "condicao": "OLD.estado = 'EFETIVADA'",
+      "origem": "20260822151743_append_only"
+    }
+  ],
+  "funcoes": [
+    { "nome": "fn_registro_clinico_bloquear_finalizado", "origem": "20260822151743_append_only" },
+    { "nome": "fn_retificacao_clinica_bloquear_efetivada", "origem": "20260822151743_append_only" }
+  ],
+  "colunaGerada": {
+    "tabela": "cobranca",
+    "coluna": "valor_liquido",
+    "expressao": "(valor_bruto - valor_desconto)",
+    "origem": "20260821232217_valor_liquido_gerado"
+  },
+  "tabelasAppendOnly": [
+    { "tabela": "evento_auditoria", "origem": "20260822151743_append_only" },
+    { "tabela": "movimento_sessao", "origem": "20260822151743_append_only" },
+    { "tabela": "pagamento", "origem": "20260822151743_append_only" },
+    { "tabela": "estorno", "origem": "20260822151743_append_only" },
+    { "tabela": "historico_agendamento", "origem": "20260822151743_append_only" }
+  ]
+}

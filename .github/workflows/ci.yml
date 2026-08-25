@@ -1,17 +1,25 @@
-# TechLab Fisio — CI (docs/08 §13 `E-13` + `E-15`).
+# TechLab Fisio — CI (docs/08 §13 `E-13` + `E-15` + `E-16`).
 #
-# A partir da E-15, a RECONSTRUÇÃO FROM-SCRATCH é a própria preparação da
-# suíte: `scripts/verify-from-scratch.mjs` sobe uma instância PostgreSQL 18
-# LIMPA (container + volume descartáveis, mesmo `postgres:18-bookworm` e mesmo
-# bootstrap initdb versionados do projeto), reconstrói o schema EXCLUSIVAMENTE
-# por `prisma migrate deploy`, verifica no catálogo os objetos das Categorias
-# B/C, executa a suíte INTEGRAL de integração (banco descartável; migrations
-# como tlf_migrator; testes como tlf_app — infraestrutura E-13 inalterada) e
-# destrói os recursos descartáveis. Nenhuma verificação da E-13 foi reduzida —
-# a mesma suíte roda, agora a partir do zero absoluto.
+# A partir da E-16, o job executa PERMANENTEMENTE a tríade anti-drift de
+# docs/08 §9.3, na ordem barato → caro:
 #
-# NÃO é a E-16: nenhum golden schema, lint de migration, teste negativo de
-# guarda ou `migrate diff` — a tríade anti-drift/V-04 pertence à etapa própria.
+#   1. instalação reproduzível (lockfile) + Prisma generate/validate + typecheck;
+#   2. GUARDA 1 — lint de migrations sobre a lista única de objetos protegidos
+#      (packages/database/protected-objects.json) — análise de arquivos, sem SQL;
+#   3. E-15 — reconstrução from-scratch (instância PostgreSQL 18 limpa +
+#      `prisma migrate deploy` + catálogo B/C) que É a preparação da suíte
+#      integral de integração — a suíte inclui a GUARDA 2
+#      (test/guard-anti-drift.spec.ts: existência E efeito de todos os
+#      objetos protegidos, inclusive os REVOKEs que o golden não cobre);
+#   4. GUARDA 3 — golden schema: nova reconstrução limpa independente,
+#      `pg_dump --schema-only --no-owner --no-privileges --restrict-key=<fixa>`
+#      DENTRO do container, comparação BYTE A BYTE com o golden versionado
+#      (o CI NUNCA atualiza o golden; divergência => falha) + ALARME
+#      complementar `prisma migrate diff --from-migrations ... --to-schema ...
+#      --exit-code` (exit 2 = drift => falha).
+#
+# Nenhuma verificação da E-13/E-15 foi reduzida; a suíte roda UMA vez (dentro
+# da reconstrução from-scratch).
 #
 # Credenciais: exclusivamente as sintéticas de `.env.example`. Nenhum segredo.
 
@@ -24,7 +32,7 @@ on:
 
 jobs:
   integracao:
-    name: E-15 — reconstrução from-scratch + suíte de integração (Jest 30 + PostgreSQL 18)
+    name: E-16 — tríade anti-drift + reconstrução from-scratch + suíte integral
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,11 +49,19 @@ jobs:
       - name: Instalação reproduzível pelo lockfile
         run: npm ci
 
-      - name: Prisma Client
-        run: npx prisma generate
+      - name: Prisma Client + validação do schema
+        run: |
+          npx prisma generate
+          npx prisma validate
 
       - name: Typecheck (inclui os testes — tsconfig.test.json)
         run: npm run typecheck
 
-      - name: E-15 — PostgreSQL 18 limpo → migrate deploy → catálogo → suíte integral → limpeza
+      - name: "Guarda 1 — lint de migrations (objetos protegidos)"
+        run: npm run lint:migrations
+
+      - name: "E-15 + Guarda 2 — PostgreSQL 18 limpo → migrate deploy → catálogo → suíte integral → limpeza"
         run: npm run verify:from-scratch
+
+      - name: "Guarda 3 + alarme — golden schema byte a byte + prisma migrate diff --exit-code"
+        run: npm run schema:verify
