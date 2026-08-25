@@ -3,7 +3,7 @@
 > **Documento:** `docs/07-modelo-persistencia.md`
 > **Projeto:** TechLab Fisio
 > **Fase:** 2 — Modelagem — **Etapa 2.2: Modelo de Persistência, Integridade Transacional e Concorrência**
-> **Status:** **HOMOLOGADO — REV. 2 — ETAPA 2.2 CONCLUÍDA**
+> **Status:** **HOMOLOGADO — REV. 2 — ETAPA 2.2 CONCLUÍDA** *(correções editoriais `DIV-04`/`DIV-05` aplicadas na REV. 2.1, 25/08/2026 — ver §1.3; nenhuma decisão homologada alterada)*
 > **Homologação:** decisões **`H2.2-01` a `H2.2-18`**, **P-CLIN (Alternativa A)**, **`PROP-RN-2.2-01`** e **`PROP-RN-2.2-02`** aprovadas em conjunto por **Bruno Menezes Noronha** em **19 de agosto de 2026**
 > **Data:** 19 de agosto de 2026
 > **Idioma oficial:** Português do Brasil
@@ -32,7 +32,8 @@ O conteúdo desta revisão resulta de **revisão arquitetural independente e adv
 ### 1.3 Histórico de revisões
 
 - **REV. 1** — primeira proposta física da Etapa 2.2, com `H2.2-01`..`H2.2-18`.
-- **REV. 2 (esta) — CONSOLIDAÇÃO HOMOLOGADA** — revisão arquitetural independente seguida de homologação. Correções materiais em `H2.2-02`, `H2.2-04`, `H2.2-06`, `H2.2-10` e **substituição da recomendação de P-CLIN** (`H2.2-16`); remoção de três elementos sem sustentação nas fontes; resolução das lacunas `P2.2-03` e `P2.2-04` em regras formais; simulação de 12 cenários concorrentes (§25); matriz de homologação (§27). **Homologada em 19/08/2026** — P-CLIN resolvida pela Alternativa A e aplicada ao modelo físico; aggregate root de `Atendimento` mantido deliberadamente em aberto.
+- **REV. 2 — CONSOLIDAÇÃO HOMOLOGADA** — revisão arquitetural independente seguida de homologação. Correções materiais em `H2.2-02`, `H2.2-04`, `H2.2-06`, `H2.2-10` e **substituição da recomendação de P-CLIN** (`H2.2-16`); remoção de três elementos sem sustentação nas fontes; resolução das lacunas `P2.2-03` e `P2.2-04` em regras formais; simulação de 12 cenários concorrentes (§25); matriz de homologação (§27). **Homologada em 19/08/2026** — P-CLIN resolvida pela Alternativa A e aplicada ao modelo físico; aggregate root de `Atendimento` mantido deliberadamente em aberto.
+- **REV. 2.1 (editorial) — 25/08/2026 — E-18A.** Aplicação exclusivamente **editorial** das duas correções decididas por Bruno em 21/08/2026 e remetidas a `E-18` (`docs/08` §11): **(a) `DIV-04`** — em §14, removidas a marcação `U` e a citação indevida a C-06 de `movimento_sessao.chave_idempotencia` (a coluna permanece; a decisão física vigente é: existe, **sem unicidade própria**; C-06 pertence a M8 — U-09/U-10); **(b) `DIV-05`** — em §28.2, IDX-R3 (`reserva_sessao(agendamento_id)`, índice simples de §10-A) incluído na Categoria A, da qual fora omitido. **Nenhuma decisão homologada foi alterada, nenhum objeto físico mudou, nenhuma seção foi reinterpretada** — o texto passou a refletir o que §10.1/§10-A/§18/§24.2 já determinavam e o que está implementado desde `E-07` (correção pré-versionamento, `docs/08` REV. 6).
 
 ### 1.4 Registro de homologação e efeitos
 
@@ -637,7 +638,7 @@ O último caso é o que preserva HOM-05: liberar ou consumir automaticamente ser
 | `usuario_responsavel_id` | `FK usuario NN` | quem finalizou (CONSUMO) ou quem ajustou (PKG-008) |
 | `justificativa` | `text ∅` | **obrigatória sse ajuste** (RN-038) |
 | `criado_em` | `timestamptz NN` | |
-| `chave_idempotencia` | `text ∅ U` | comandos de ajuste repetidos (C-06) |
+| `chave_idempotencia` | `text ∅` | reservada à idempotência de comandos de ajuste na **camada de aplicação**; **sem unicidade própria** — correção editorial `DIV-04` (decisão de Bruno, 21/08/2026; `docs/08` §11). A citação anterior a C-06 era indevida: C-06 pertence a M8 (`pagamento`/`estorno` — U-09/U-10) |
 
 **Sem `atualizado_em`, sem `deleted_at`, sem `UPDATE`, sem `DELETE`** (RN-039, PKG-008).
 
@@ -1371,7 +1372,7 @@ Simulação obrigatória antes de recomendar homologação.
 
 Tabelas, colunas, obrigatoriedade, valores padrão; tipos nativos (`uuid`, `timestamptz`, `date`, `time`, `decimal(12,2)`); enums; FKs e ações referenciais; `@unique` / `@@unique` simples; `@@index` simples.
 
-Cobre: U-01, U-02, U-05, U-06, U-07, U-08, U-09, U-10, U-11, U-12, **U-13**; todas as FKs; IDX-A3, A5, A6, M1, P1, C1, F1, F2, F3, N1, **N2**, N3, **N4**, U1, U2, U3, S1.
+Cobre: U-01, U-02, U-05, U-06, U-07, U-08, U-09, U-10, U-11, U-12, **U-13**; todas as FKs; IDX-A3, A5, A6, **R3**, M1, P1, C1, F1, F2, F3, N1, **N2**, N3, **N4**, U1, U2, U3, S1. *(IDX-R3 — índice simples `reserva_sessao(agendamento_id)`, §10-A — incluído por correção editorial `DIV-05`: a enumeração original o omitia das Categorias A e B; decisão de Bruno, 21/08/2026 — `docs/08` §11.)*
 
 **Categoria B — exige migration SQL complementar (alta confiança; confirmar na versão fixada)**
 
