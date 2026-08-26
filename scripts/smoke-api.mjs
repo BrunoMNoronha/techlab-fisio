@@ -118,17 +118,25 @@ async function main() {
     }
     console.log(`${ROTULO} rota inexistente -> 404 sem stack.`);
 
-    // 4. Encerramento limpo por sinal (enableShutdownHooks + onModuleDestroy).
+    // 4. Encerramento limpo por sinal. Comportamento MEDIDO do Nest 11 com
+    // enableShutdownHooks: o handler executa os hooks de ciclo de vida
+    // (onModuleDestroy → desconexão do pool) e então RE-EMITE o sinal — o
+    // processo termina PELO SIGTERM (exit=null, signal=SIGTERM), não com
+    // exit 0. Desfecho limpo aceito: exit 0 OU término pelo próprio SIGTERM
+    // dentro do teto; qualquer outro código/sinal (ex.: crash, SIGKILL do
+    // cleanup) falha o smoke. A execução efetiva dos hooks é provada também
+    // pela suíte de integração (app.close() sem erro com pool aberto).
     api.kill("SIGTERM");
     const fim = await Promise.race([
       encerramento,
       aguardar(15_000).then(() => null),
     ]);
     if (fim === null) falhar("a API não encerrou em 15s após SIGTERM");
-    if (process.platform !== "win32" && fim.codigo !== 0) {
+    const limpo = fim.codigo === 0 || (fim.codigo === null && fim.sinal === "SIGTERM");
+    if (process.platform !== "win32" && !limpo) {
       falhar(`encerramento não foi limpo: exit=${fim.codigo} sinal=${fim.sinal}\n${saidaApi}`);
     }
-    console.log(`${ROTULO} encerramento limpo (exit ${fim.codigo ?? `sinal ${fim.sinal}`}).`);
+    console.log(`${ROTULO} encerramento limpo (${fim.codigo === null ? `sinal ${fim.sinal}` : `exit ${fim.codigo}`}).`);
     console.log(`${ROTULO} SMOKE CONCLUÍDO: bootstrap ESM real com banco descartável verde.`);
   } finally {
     // 5. Cleanup garantido — inclusive em falha.
