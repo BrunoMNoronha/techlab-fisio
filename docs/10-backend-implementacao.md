@@ -2,8 +2,8 @@
 
 > **Arquivo:** `docs/10-backend-implementacao.md`
 > **Natureza:** documento **MUTÁVEL** — registro vivo de implementação da frente de backend (`apps/api`)
-> **Status:** backend **INICIADO** — Etapa 2.3A **CONCLUÍDA, HOMOLOGADA e INTEGRADA NA `main`** (revisão independente com veredito A; integração via PR [#3](https://github.com/BrunoMNoronha/techlab-fisio/pull/3), merge commit `791e862`, CI da `main` integrada verde — REV. 2)
-> **Revisão vigente:** REV. 2 (26/08/2026)
+> **Status:** backend **EM CONSTRUÇÃO** — Etapa 2.3A **CONCLUÍDA/HOMOLOGADA/INTEGRADA** (REV. 2); Etapa 2.3B **IMPLEMENTADA E MEDIDA em branch `agent/**`** — provider de persistência + primeiro fluxo transacional real de auditoria (`profissional.situacao.alterada`, fatia técnica INTERNA, sem endpoint/RBAC) — **aguardando revisão independente e rito de integração** (REV. 3)
+> **Revisão vigente:** REV. 3 (26/08/2026)
 
 ---
 
@@ -67,7 +67,7 @@ apps/api/
   test/                          4 suites · 93 testes
 ```
 
-Ausências deliberadas (escopo 2.3B+): autenticação, sessão, RBAC, Prisma/Nest provider, CRUDs, fluxos emissores de auditoria, OpenAPI, frontend, repository genérico, event bus, CQRS, filas, cache.
+Ausências deliberadas (escopo 2.3B+): autenticação, sessão, RBAC, Prisma/Nest provider, CRUDs, fluxos emissores de auditoria, OpenAPI, frontend, repository genérico, event bus, CQRS, filas, cache. *(Nota da REV. 3: a 2.3B implementou o provider de persistência e o primeiro fluxo emissor INTERNO — §6-A; as demais ausências permanecem.)*
 
 ## 6. Decisões técnicas de implementação
 
@@ -80,6 +80,34 @@ Decisões **locais de implementação** — reversíveis, não normativas:
 5. **Hardening de escalares em `contexto`** — ver §7.3.
 6. A suíte da API mapeia `@techlab-fisio/database` para o mesmo entrypoint público em fonte (`moduleNameMapper`); o caminho runtime real (`exports.default`) é provado fora do Jest pela CI (F-01).
 
+## 6-A. Etapa 2.3B — Provider de persistência + primeiro fluxo transacional de auditoria
+
+**Estado: IMPLEMENTADA E MEDIDA (branch `agent/fase2-etapa2.3b-persistencia-provider`) — aguardando revisão independente e rito de integração.** Escopo executado conforme autorização própria da 2.3B; **zero mudança física de persistência** (schema, migrations, golden e `protected-objects.json` byte a byte idênticos à baseline `b84ae6a` — diff vazio medido).
+
+### 6-A.1 Fábrica pública de persistência (`packages/database`)
+
+`packages/database` é o **proprietário da instanciação do Prisma Client**: fábrica pública `criarClientePersistencia({ url })` (Prisma Client 7.9.1 + `@prisma/adapter-pg`, conexão lazy — o ciclo de vida é do chamador) e tipos `ClientePersistencia`/`TransacaoPersistencia` na API pública. `apps/api` **não importa** `@prisma/client`, `@prisma/adapter-pg` nem `generated/prisma` por caminho profundo (verificado mecanicamente no challenge pré-versionamento). Ajuste mínimo de build: o pacote passou a compilar também o client gerado (`rootDir: "."`; `exports.default` → `dist/src/index.js`); a prova **F-01** da CI cobre o novo caminho runtime e a presença da fábrica. Nenhum repository genérico, Unit of Work ou workspace novo.
+
+### 6-A.2 Provider Nest com ciclo de vida e guarda de postura de role
+
+`apps/api/src/database/` — `DatabaseModule` + `DatabaseService` (singleton; cliente privado; **nenhum caminho público fora de `transacao()`**): `onModuleInit` valida configuração **sem ecoar valor** (`DATABASE_URL` ausente/inválida → aborto com motivo estável), conecta **eager/fail-fast** e **prova a postura de privilégios** da role corrente sobre `evento_auditoria` (capability-based via `has_table_privilege`, sem hardcode de nome de role): `SELECT` e `INSERT` **permitidos**; `UPDATE`, `DELETE` e `TRUNCATE` **proibidos**. Role privilegiada (`tlf_migrator`/superuser) **aborta o bootstrap ruidosamente**; nenhuma mensagem registra connection string ou credencial. `onModuleDestroy` encerra o pool; segundo `onModuleInit` é recusado (prevenção de pool duplicado). Fato medido registrado: no Prisma 7.9.1 o proxy transacional remove `$connect`/`$disconnect` mas **mantém** `$transaction` (transações aninhadas) — o discriminador estrutural usa o par de conexão.
+
+### 6-A.3 AuditWriter transacional
+
+`AuditWriter` (AuditModule) separa **política** (`AuditContextValidator` — D-AUD-07/08, executado SEMPRE antes de escrever) de **escrita**: recebe `TransacaoPersistencia` explicitamente, mapeia **campo a campo** (nunca Request/Response/DTO, nunca spread do candidato), persiste **somente CREATE**, não sanitiza nada silenciosamente, não ecoa valores em erro e não oferece update/delete. A verificação estrutural de cliente transacional é defesa em profundidade; a prova de atomicidade é a suíte PostgreSQL real (6-A.5).
+
+### 6-A.4 Fluxo interno `profissional.situacao.alterada` — limite de autorização
+
+`ProfissionalService.alterarSituacao({ profissionalId, atorUsuarioId, ativo })` (PRO-005; ação homologada por D-AUD-01). **Fatia técnica interna**: **não** existe controller/endpoint/rota; a funcionalidade administrativa **não** está disponível ao usuário. Registro normativo desta REV.: **"ator existente/ativo" = INTEGRIDADE da operação** (o evento exige ator real e válido — RN-061); **"ator autorizado" = responsabilidade AINDA NÃO IMPLEMENTADA nesta fatia** — RBAC/`profissionais.gerenciar` continua obrigatório antes de qualquer exposição futura, e nenhum caminho utilizável externamente contorna essa distinção. Regras: profissional deve existir; a situação deve realmente mudar (mutação **condicional** — `updateMany` com o estado anterior no predicado; sem SELECT → decisão em memória → UPDATE incondicional); mutação + evento na **mesma transação**; whitelist **vazia** (sem `contexto` — nem `ativo_anterior`/`ativo_novo`); `justificativa` NULL; `resultado` `SUCESSO`; `correlacao_id` gerado uma vez por operação.
+
+### 6-A.5 Provas medidas (PostgreSQL 18 real, runtime `tlf_app`)
+
+Suíte de integração da API (`apps/api/test/integration/`, banco descartável E-13; runtime exclusivamente `tlf_app`, migrator só em setup/limpeza; execução serial como na E-13): **3 suites · 21 passed**. Cobertura: provider resolvido pelo container Nest real (AppModule), conexão eager, singleton, postura aceita para `tlf_app` e **rejeitada para `tlf_migrator`**; segundo init recusado; `UPDATE`/`DELETE` em `evento_auditoria` **negados na prática** à role de runtime (E-11); fluxo feliz de inativação e reativação (1 mutação + **exatamente 1 evento** com campos homologados, `contexto` NULL); rejeições de integridade (profissional inexistente, ator inexistente, ator inativo, estado já vigente, repetição) com **zero evento**; **concorrência**: duas solicitações para o mesmo novo estado → exatamente uma vence, nenhum evento duplicado (READ COMMITTED + update condicional foi suficiente — nenhum lock adicional necessário); **atomicidade real**: falha do AuditWriter (contexto proibido e ação desconhecida) → ROLLBACK integral da mutação; falha da mutação → zero evento; escrita válida commitada. Suíte unitária da API (sem banco): **5 suites · 108 passed** (validação de configuração do provider sem vazar segredo, contrato do AuditWriter, T-AUD-CONTEXTO preservado). Persistência: **9 suites · 79 passed** inalterados.
+
+### 6-A.6 CI da branch
+
+Guardas 1/2/3, from-scratch, golden byte a byte, `migrate diff --exit-code`, build ESM e F-01 **preservados** (F-01 atualizado para o novo caminho `dist/src/index.js` + fábrica). Passos **acrescentados**: `verify:api-integration` (instância PostgreSQL 18 descartável fail-closed → suíte de integração da API) e smoke **R-BL-02 adaptado** (`scripts/smoke-api.mjs`): como o provider conecta eager, o smoke provisiona banco descartável + `migrate deploy` antes de executar o **processo real** `node apps/api/dist/main.js`, preservando `/health` 200, 404 sem stack, encerramento limpo por SIGTERM e cleanup garantido mesmo em falha. A evidência da run verde da CI desta branch pertence ao relatório de execução; o registro pós-integração ocorrerá na REV. seguinte (mesmo rito da 2.3A).
+
 ## 7. Auditoria — `P-BACK-01`
 
 ### 7.1 Estado
@@ -88,17 +116,19 @@ Decisões **locais de implementação** — reversíveis, não normativas:
 P-BACK-01 — EM ANDAMENTO
 ```
 
-**Concluído nesta etapa:** catálogo tipado centralizado (24 ações de `D-AUD-01`, conferência mecânica contra `docs/09` §12.2 — iguais e na mesma ordem); catálogo `SUCESSO | NEGADO | FALHA` (`D-AUD-02`, sem enum SQL); representação da regra de `alvo_tipo` (`D-AUD-03` — metadado histórico; sem despacho dinâmico de SQL; não concede acesso; rename não reescreve histórico); whitelist fail-closed exaustiva (`D-AUD-07` — 3 ações com chaves, 21 vazias); enforcement runtime (`D-AUD-08` — ação desconhecida, chave fora da whitelist, contexto não vazio em whitelist vazia e valor não escalar → rejeição explícita; sem sanitização silenciosa; mensagens citam chaves, nunca valores); `T-AUD-CONTEXTO` (§8).
+**Concluído na 2.3A:** catálogo tipado centralizado (24 ações de `D-AUD-01`, conferência mecânica contra `docs/09` §12.2 — iguais e na mesma ordem); catálogo `SUCESSO | NEGADO | FALHA` (`D-AUD-02`, sem enum SQL); representação da regra de `alvo_tipo` (`D-AUD-03` — metadado histórico; sem despacho dinâmico de SQL; não concede acesso; rename não reescreve histórico); whitelist fail-closed exaustiva (`D-AUD-07` — 3 ações com chaves, 21 vazias); enforcement runtime (`D-AUD-08` — ação desconhecida, chave fora da whitelist, contexto não vazio em whitelist vazia e valor não escalar → rejeição explícita; sem sanitização silenciosa; mensagens citam chaves, nunca valores); `T-AUD-CONTEXTO` (§8).
 
-**Ainda aberto (nada disto foi decidido):** `L-05`, `L-06`, `L-07`, `L-08`; granularidade/abrangência de `configuracao.alterada`; alvo definitivo de `prontuario.exportado`; eventual `autor_original_usuario_id` (segue **rejeitada** pelo validator até decisão expressa); exercício ponta a ponta por fluxos emissores reais; encerramento de `R2.2-04`.
+**Concluído na 2.3B (medido; aguardando revisão/integração):** o **primeiro fluxo emissor real** existe — `operação → AuditContextValidator → AuditWriter → evento_auditoria` na **mesma transação** da mutação de negócio, exercitado ponta a ponta contra PostgreSQL real por `profissional.situacao.alterada` (§6-A). O validator está comprovadamente no caminho de escrita real (contexto proibido → rollback da operação inteira).
+
+**Ainda aberto (nada disto foi decidido):** `L-05`, `L-06`, `L-07`, `L-08`; granularidade/abrangência de `configuracao.alterada`; alvo definitivo de `prontuario.exportado`; eventual `autor_original_usuario_id` (segue **rejeitada** pelo validator até decisão expressa); fluxo real de ação com **whitelist POSITIVA**; encerramento de `R2.2-04`.
 
 ### 7.2 `R2.2-04`
 
 ```text
-R2.2-04 — ABERTO / TRANSFERIDO PARA O BACKEND
+R2.2-04 — ABERTO / PARCIALMENTE EXERCITADO POR PRIMEIRO FLUXO REAL
 ```
 
-A política de whitelist agora **existe**, e a enforcement está **implementada e testada**. Entretanto, **não existe fluxo funcional real** executando `operação → validator → gravação em evento_auditoria`; o risco não deve ser formalmente encerrado até que fluxos emissores reais o exercitem ponta a ponta.
+A política existe, a enforcement está implementada e testada e, desde a 2.3B, **um fluxo funcional real** executa `operação → validator → gravação em evento_auditoria` ponta a ponta (`profissional.situacao.alterada` — §6-A.5). Entretanto, esse primeiro fluxo prova apenas o caso de **whitelist VAZIA**. O risco **não é encerrado**: o encerramento só poderá ser proposto quando existir também prova ponta a ponta de uma ação com **whitelist POSITIVA** homologada. Candidato recomendado para essa futura fatia: `cobranca.desconto_aplicado` (par `valor_desconto_anterior`/`valor_desconto_novo` — D-AUD-07). **Esta recomendação não autoriza implementação**: a etapa correspondente (2.3C) exige autorização própria.
 
 ### 7.3 Hardening de valores escalares — decisão técnica local
 
@@ -132,16 +162,17 @@ Registrada no relatório de consolidação da 2.3A: `npm ci`; `db:generate`; `db
 
 | Item | Estado vivo (autoritativo aqui) |
 | --- | --- |
-| `P-BACK-01` | **EM ANDAMENTO** (§7.1) |
-| `R2.2-04` | **ABERTO / TRANSFERIDO PARA O BACKEND** (§7.2) |
-| `R-BL-02` | **ENCERRADO** (§8.2) |
+| `P-BACK-01` | **EM ANDAMENTO** (§7.1) — primeiro fluxo emissor real implementado e medido na 2.3B; RBAC e fluxo de whitelist positiva ainda ausentes |
+| `R2.2-04` | **ABERTO / PARCIALMENTE EXERCITADO POR PRIMEIRO FLUXO REAL** (§7.2) |
+| `R-BL-02` | **ENCERRADO** (§8.2) — smoke adaptado na 2.3B para banco descartável (provider eager), com todas as verificações preservadas (§6-A.6) |
 | `T-AUD-CONTEXTO` | **EXECUTADO / PASSED** (§8.1) |
+| RBAC / `profissionais.gerenciar` | **NÃO IMPLEMENTADO** — obrigatório antes de expor `profissional.situacao.alterada` (§6-A.4); "ator existente/ativo" ≠ "ator autorizado" |
 | `L-05`..`L-08` | **ADIADAS** — nenhuma decidida; exigem decisão própria homologada |
 | `configuracao.alterada` (granularidade/abrangência) | **PENDENTE** |
 | `prontuario.exportado` (alvo definitivo) | **PENDENTE** |
 | `autor_original_usuario_id` | **NÃO HOMOLOGADA** — rejeitada pelo validator até decisão expressa |
 | `P2.2-05` (fisioterapeuta ↔ paciente relacionado) | **PENDENTE** — fatia futura de autorização clínica |
-| `R-BL-09` (`deepmerge-ts` transitivo) | **ABERTO** — aceitação temporária monitorada (`docs/08` §15.2); remedido na 2.3A sem alteração: mesma cadeia, mesmas 3 high; reavaliação obrigatória a cada atualização do Prisma 7 e antes de CI de produção/deploy |
+| `R-BL-09` (`deepmerge-ts` transitivo) | **ABERTO** — aceitação temporária monitorada (`docs/08` §15.2); **remedido na 2.3B sem alteração**: mesma cadeia (`prisma@7.9.1 → @prisma/config@7.9.1 → deepmerge-ts@7.1.5`), mesmas 3 high (GHSA-ggr8-5vv4-36mx); nenhuma dependência nova instalada na 2.3B; reavaliação obrigatória a cada atualização do Prisma 7 e antes de CI de produção/deploy |
 | `V-06.c` (teto TS 6.0 × Next.js 16) | **PENDENTE** — bloqueia apenas o scaffold de `apps/web` |
 
 ## 10. Próximas etapas
@@ -149,16 +180,18 @@ Registrada no relatório de consolidação da 2.3A: `npm ci`; `db:generate`; `db
 Sujeitas a autorização própria, nesta ordem provável:
 
 1. ~~**Rito de integração da 2.3A**~~ — **EXECUTADO em 26/08/2026** (PR [#3](https://github.com/BrunoMNoronha/techlab-fisio/pull/3), merge commit `791e862`; registro pós-medição em §11, REV. 2).
-2. **Etapa 2.3B** — provider de persistência (Prisma Client + adapter-pg como provider Nest com ciclo de vida, role `tlf_app`) e **primeiro fluxo emissor de auditoria** ponta a ponta (`operação → validator → evento_auditoria`), que forçará as primeiras decisões reais de `alvo_tipo` em uso e abrirá caminho para encerrar `R2.2-04`.
-3. Decisões normativas adiadas (`L-05`..`L-08`, `configuracao.alterada`, `prontuario.exportado`, eventual `autor_original_usuario_id`) — cada uma por decisão expressa de Bruno, nunca por implicação de implementação.
+2. ~~**Etapa 2.3B — implementação**~~ — **EXECUTADA em 26/08/2026** em branch `agent/**` (§6-A); pendem **revisão independente** e, após homologação, o rito de integração com registro pós-medição.
+3. **Etapa 2.3C (futura, NÃO autorizada)** — primeiro fluxo real de ação com **whitelist POSITIVA** (candidato recomendado: `cobranca.desconto_aplicado` — §7.2), pré-condição para propor o encerramento de `R2.2-04`.
+4. Decisões normativas adiadas (`L-05`..`L-08`, `configuracao.alterada`, `prontuario.exportado`, eventual `autor_original_usuario_id`) e RBAC (`profissionais.gerenciar`) — cada uma por decisão expressa de Bruno, nunca por implicação de implementação.
 
 ## 11. Histórico de revisões
 
 | REV. | Data | Conteúdo |
 | --- | --- | --- |
+| **3** | **26/08/2026** | **REGISTRO PÓS-MEDIÇÃO DA IMPLEMENTAÇÃO DA ETAPA 2.3B** (branch `agent/fase2-etapa2.3b-persistencia-provider`, baseline `b84ae6a`) — nenhuma decisão normativa criada ou reaberta. (a) **Implementado e medido** (§6-A): fábrica pública `criarClientePersistencia` + tipos em `packages/database` (proprietário do Prisma Client; `exports.default` → `dist/src/index.js`, F-01 atualizado); `DatabaseModule`/`DatabaseService` singleton com conexão eager/fail-fast, shutdown limpo e **guarda capability-based de postura de role** em `evento_auditoria` (SELECT/INSERT permitidos; UPDATE/DELETE/TRUNCATE proibidos — role privilegiada aborta o bootstrap); `AuditWriter` transacional (validator sempre no caminho, mapeamento campo a campo, create-only, sem sanitização, sem valores em erro); fluxo interno `profissional.situacao.alterada` (PRO-005) com mutação condicional + evento na mesma transação, whitelist vazia, justificativa NULL, `correlacao_id` único por operação. (b) **Limite de autorização registrado**: sem controller/endpoint/rota; "ator existente/ativo" = integridade; "ator autorizado" = NÃO implementado (RBAC pendente) — §6-A.4. (c) **Medições**: API integração **3 suites · 21 passed** contra PostgreSQL 18 real como `tlf_app` (postura, rejeição do migrator, atomicidade commit/rollback reais, concorrência com exatamente um vencedor/evento); API unit **5 suites · 108 passed**; persistência **9 suites · 79 passed**; Guardas 1/2/3 verdes; golden byte a byte (59944 bytes); `migrate diff` exit 0; F-01 verde; smoke R-BL-02 adaptado verde; `git diff` vazio em schema/migrations/golden/protected-objects contra `b84ae6a`. (d) **Fato técnico medido**: proxy transacional do Prisma 7.9.1 remove `$connect`/`$disconnect` e mantém `$transaction` (§6-A.2). (e) Estados atualizados: `P-BACK-01` EM ANDAMENTO (primeiro fluxo emissor real existe); **`R2.2-04` ABERTO / PARCIALMENTE EXERCITADO POR PRIMEIRO FLUXO REAL** (encerramento exige futura prova com whitelist positiva — candidato `cobranca.desconto_aplicado`, sem autorizar 2.3C); `R-BL-09` remedido sem alteração; demais estados mantidos. (f) Nenhuma migration/schema/golden alterado; `docs/09` e Base Imutável intactos; nenhum merge/deploy/tag/release executado. |
 | **2** | **26/08/2026** | **REGISTRO PÓS-MEDIÇÃO DA INTEGRAÇÃO DA ETAPA 2.3A NA `main`** — nenhuma decisão reaberta. (a) **Integração executada em 26/08/2026**: **PR [#3](https://github.com/BrunoMNoronha/techlab-fisio/pull/3)** (`agent/fase2-etapa2.3a-backend-foundation` → `main`), **merge commit** `791e862f17f77cfafe74d39bad866b11c15c0e98` às 09:07:38Z — método `merge` (sem squash, sem rebase, sem force-push), com proteção de corrida sobre o HEAD aprovado `9d7dcd5`; os **5 commits granulares preservados** como ancestrais da `main` (`b839eb6`, `dd24897`, `bb29caf`, `9d80303`, `9d7dcd5`); árvore da `main` integrada **idêntica** à do HEAD aprovado (diff de 0 bytes). (b) **CI medida sobre a `main` integrada**: o workflow não dispara em push para `main`, então a run foi executada manualmente (`workflow_dispatch --ref main`, precedente da REV. 20 de `docs/08`) — run **`32951372071`**, **`success`** sobre `791e862`, todos os passos verdes: instalação pelo lockfile; Prisma generate/validate; typecheck; **Guarda 1**; **E-15 + Guarda 2** (reconstrução from-scratch + suíte 9 suites · 79 passed); **Guarda 3 + alarme** (golden byte a byte); build ESM dos workspaces; **suíte da API 4 suites · 93 passed** (incl. `T-AUD-CONTEXTO`); **prova runtime do `exports.default` (F-01)**; **smoke ESM de bootstrap (R-BL-02)** com `/health` 200, 404 e cleanup. (c) **Persistência intacta na `main` integrada**: `schema.prisma`, as 9 migrations e o golden byte a byte idênticos; Guardas 1/2/3 verdes na run acima. (d) Estados mantidos: Etapa 2.3A **CONCLUÍDA/HOMOLOGADA/INTEGRADA**; `R-BL-02` **ENCERRADO**; `T-AUD-CONTEXTO` **EXECUTADO/PASSED**; `P-BACK-01` **EM ANDAMENTO**; `R2.2-04` **ABERTO/TRANSFERIDO**; `L-05..L-08` **ADIADAS**; `R-BL-09` **ABERTO** (aceitação temporária monitorada); `V-06.c` **PENDENTE**. (e) **Nenhuma Etapa 2.3B iniciada**; nenhum deploy, tag ou release; `docs/09` e a Base Imutável intactos. Este registro entra na `main` por branch documental curta + PR com merge commit (MEDIR → REGISTRAR). |
 | **1** | **26/08/2026** | Criação do documento. Registro da Etapa 2.3A (CONCLUÍDA/HOMOLOGADA — revisão independente, veredito A); correção dos findings `F-01` (prova runtime do `exports.default` na CI) e `F-03` (cleanup garantido do smoke); correção do `F-02` neste registro (contagem correta: 88 testes de auditoria = 83 unitários + 5 integração; suíte da API 4 suites · 93 passed); `R-BL-02` ENCERRADO; `T-AUD-CONTEXTO` EXECUTADO/PASSED; `P-BACK-01` EM ANDAMENTO; `R2.2-04` ABERTO; hardening de escalares registrado como decisão técnica local (§7.3). Handoff recebido de `docs/08` REV. 21 |
 
 ---
 
-**Fim — `docs/10-backend-implementacao.md` — REV. 2 — documento mutável; estado vivo das pendências da frente de backend; Etapa 2.3A INTEGRADA NA `main` (merge `791e862`, CI run `32951372071` verde). Fontes normativas permanecem `TECHLAB_FISIO_BASE_IMUTAVEL_V1.md`, `docs/02`..`docs/07`, `docs/08` (baseline) e `docs/09` §12.**
+**Fim — `docs/10-backend-implementacao.md` — REV. 3 — documento mutável; estado vivo das pendências da frente de backend; Etapa 2.3A INTEGRADA NA `main` (merge `791e862`); Etapa 2.3B IMPLEMENTADA E MEDIDA em branch `agent/**`, aguardando revisão independente e integração. Fontes normativas permanecem `TECHLAB_FISIO_BASE_IMUTAVEL_V1.md`, `docs/02`..`docs/07`, `docs/08` (baseline) e `docs/09` §12.**
