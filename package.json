@@ -10,12 +10,15 @@
   },
   "packageManager": "npm@11.16.0",
   "workspaces": [
-    "packages/database"
+    "packages/database",
+    "apps/api"
   ],
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json && npm run typecheck --workspaces --if-present",
-    "test": "npm run test:integration",
+    "build": "npm run build --workspace @techlab-fisio/database && npm run build --workspace @techlab-fisio/api",
+    "test": "npm run test:integration && npm run test:api",
     "test:integration": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config packages/database/jest.config.mjs",
+    "test:api": "npm run test --workspace @techlab-fisio/api",
     "verify:from-scratch": "node scripts/verify-from-scratch.mjs",
     "lint:migrations": "node scripts/lint-migrations.mjs",
     "schema:golden:update": "node scripts/schema-snapshot.mjs --update",
