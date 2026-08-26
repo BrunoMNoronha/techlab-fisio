@@ -158,6 +158,20 @@ describe("AuditWriter — rejeições fail-closed (nenhuma escrita)", () => {
     expect(chamadas).toHaveLength(0);
   });
 
+  it("número não finito em chave permitida → rejeição do validator e zero create (F-REV-02)", async () => {
+    const { tx, chamadas } = criarTxFalsa();
+    await expect(
+      criarWriter().registrar(
+        tx,
+        candidatoBase({
+          acao: "cobranca.desconto_aplicado",
+          contexto: { valor_desconto_novo: Number.NaN },
+        }),
+      ),
+    ).rejects.toMatchObject({ motivo: "VALOR_NAO_ESCALAR" });
+    expect(chamadas).toHaveLength(0);
+  });
+
   it("mensagens de rejeição citam chaves, nunca VALORES", async () => {
     const { tx } = criarTxFalsa();
     const valorSensivel = "dado-sensivel-que-nao-pode-vazar";
