@@ -13,8 +13,9 @@ import { Module } from "@nestjs/common";
 import { AuditModule } from "./audit/audit.module.js";
 import { DatabaseModule } from "./database/database.module.js";
 import { HealthModule } from "./health/health.module.js";
+import { ProfissionalModule } from "./profissional/profissional.module.js";
 
 @Module({
-  imports: [HealthModule, AuditModule, DatabaseModule],
+  imports: [HealthModule, AuditModule, DatabaseModule, ProfissionalModule],
 })
 export class AppModule {}
