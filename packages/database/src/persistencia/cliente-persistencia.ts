@@ -28,7 +28,9 @@ export type ClientePersistencia = PrismaClient;
  * Cliente TRANSACIONAL — o que uma transação interativa entrega ao callback.
  * É o tipo que serviços de aplicação devem receber EXPLICITAMENTE para operar
  * dentro de uma fronteira transacional (mutação + auditoria na MESMA
- * transação); não possui `$connect`/`$disconnect`/`$transaction`.
+ * transação); não possui `$connect`/`$disconnect` (o runtime do Prisma 7 os
+ * remove do proxy transacional; `$transaction` permanece para transações
+ * aninhadas).
  */
 export type TransacaoPersistencia = Prisma.TransactionClient;
 

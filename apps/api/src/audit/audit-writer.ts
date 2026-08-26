@@ -63,13 +63,15 @@ export class ErroEscritaAuditoria extends Error {
   override readonly name = "ErroEscritaAuditoria";
 }
 
-/** Defesa em profundidade: rejeita cliente NÃO transacional (o cliente raiz
- * possui `$transaction`/`$connect`; o transacional, não). */
+/** Defesa em profundidade: rejeita cliente NÃO transacional. Discriminador
+ * medido no Prisma 7.9.1: o proxy transacional REMOVE `$connect`/`$disconnect`
+ * (denylist do runtime), mas MANTÉM `$transaction` (transações aninhadas) —
+ * por isso a checagem usa exclusivamente o par de conexão. */
 function exigirClienteTransacional(tx: TransacaoPersistencia): void {
-  const candidato = tx as { $transaction?: unknown; $connect?: unknown };
+  const candidato = tx as { $connect?: unknown; $disconnect?: unknown };
   if (
-    typeof candidato.$transaction === "function" ||
-    typeof candidato.$connect === "function"
+    typeof candidato.$connect === "function" ||
+    typeof candidato.$disconnect === "function"
   ) {
     throw new ErroEscritaAuditoria(
       "AuditWriter.registrar exige um cliente TRANSACIONAL: escrever auditoria " +
