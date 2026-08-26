@@ -65,3 +65,43 @@ jobs:
 
       - name: "Guarda 3 + alarme — golden schema byte a byte + prisma migrate diff --exit-code"
         run: npm run schema:verify
+
+      # ------------------------------------------------------------------
+      # Etapa 2.3A — fundação do backend (apps/api). Passos ACRESCENTADOS;
+      # nenhuma guarda de persistência acima foi alterada ou reordenada.
+      # ------------------------------------------------------------------
+
+      - name: "Backend — build ESM (packages/database → apps/api)"
+        run: npm run build
+
+      - name: "Backend — suíte de apps/api (bootstrap, health, integração database, T-AUD-CONTEXTO)"
+        run: npm run test:api
+
+      # F-01 (revisão da 2.3A): prova runtime, FORA do Jest, de que o Node ESM
+      # resolve `@techlab-fisio/database` pelo `exports.default` do pacote
+      # (dist/index.js, produzido pelo passo de build). O Jest não serve como
+      # prova deste caminho porque mapeia o pacote para src/index.ts.
+      - name: "Backend — prova runtime do exports público de @techlab-fisio/database (F-01)"
+        run: |
+          node --input-type=module -e '
+            const m = await import("@techlab-fisio/database");
+            if (typeof m.identificarViolacao !== "function") {
+              throw new Error("exports.default resolveu, mas nao expos identificarViolacao");
+            }
+            console.log("exports.default -> dist/index.js OK:", Object.keys(m).sort().join(", "));
+          '
+
+      - name: "Backend — prova de bootstrap ESM (R-BL-02): dist/main.js sobe, responde /health e encerra"
+        run: |
+          PORT=3777 node apps/api/dist/main.js &
+          API_PID=$!
+          # F-03: cleanup garantido mesmo se a prova HTTP falhar antes do kill;
+          # o `|| true` evita que o cleanup mascare o exit code real do passo.
+          trap 'kill "$API_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 50); do
+            if curl -sf http://127.0.0.1:3777/health > resposta_health.json; then break; fi
+            sleep 0.2
+          done
+          cat resposta_health.json
+          grep -q '{"status":"ok"}' resposta_health.json
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3777/rota-inexistente)" = "404"
