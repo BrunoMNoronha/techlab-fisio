@@ -1,0 +1,67 @@
+# TechLab Fisio — CI (docs/08 §13 `E-13` + `E-15` + `E-16`).
+#
+# A partir da E-16, o job executa PERMANENTEMENTE a tríade anti-drift de
+# docs/08 §9.3, na ordem barato → caro:
+#
+#   1. instalação reproduzível (lockfile) + Prisma generate/validate + typecheck;
+#   2. GUARDA 1 — lint de migrations sobre a lista única de objetos protegidos
+#      (packages/database/protected-objects.json) — análise de arquivos, sem SQL;
+#   3. E-15 — reconstrução from-scratch (instância PostgreSQL 18 limpa +
+#      `prisma migrate deploy` + catálogo B/C) que É a preparação da suíte
+#      integral de integração — a suíte inclui a GUARDA 2
+#      (test/guard-anti-drift.spec.ts: existência E efeito de todos os
+#      objetos protegidos, inclusive os REVOKEs que o golden não cobre);
+#   4. GUARDA 3 — golden schema: nova reconstrução limpa independente,
+#      `pg_dump --schema-only --no-owner --no-privileges --restrict-key=<fixa>`
+#      DENTRO do container, comparação BYTE A BYTE com o golden versionado
+#      (o CI NUNCA atualiza o golden; divergência => falha) + ALARME
+#      complementar `prisma migrate diff --from-migrations ... --to-schema ...
+#      --exit-code` (exit 2 = drift => falha).
+#
+# Nenhuma verificação da E-13/E-15 foi reduzida; a suíte roda UMA vez (dentro
+# da reconstrução from-scratch).
+#
+# Credenciais: exclusivamente as sintéticas de `.env.example`. Nenhum segredo.
+
+name: ci
+
+on:
+  push:
+    branches: ["agent/**"]
+  workflow_dispatch:
+
+jobs:
+  integracao:
+    name: E-16 — tríade anti-drift + reconstrução from-scratch + suíte integral
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Fonte única da versão de Node (docs/08 §4.4): linha 24.x.
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Ambiente sintético (.env a partir do modelo versionado)
+        run: cp .env.example .env
+
+      - name: Instalação reproduzível pelo lockfile
+        run: npm ci
+
+      - name: Prisma Client + validação do schema
+        run: |
+          npx prisma generate
+          npx prisma validate
+
+      - name: Typecheck (inclui os testes — tsconfig.test.json)
+        run: npm run typecheck
+
+      - name: "Guarda 1 — lint de migrations (objetos protegidos)"
+        run: npm run lint:migrations
+
+      - name: "E-15 + Guarda 2 — PostgreSQL 18 limpo → migrate deploy → catálogo → suíte integral → limpeza"
+        run: npm run verify:from-scratch
+
+      - name: "Guarda 3 + alarme — golden schema byte a byte + prisma migrate diff --exit-code"
+        run: npm run schema:verify
