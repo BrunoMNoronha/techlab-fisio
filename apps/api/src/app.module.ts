@@ -1,16 +1,20 @@
-// TechLab Fisio — módulo raiz do monólito modular (Etapa 2.3A).
+// TechLab Fisio — módulo raiz do monólito modular (Etapa 2.3A; provider de
+// persistência acrescentado na Etapa 2.3B).
 //
-// A fundação registra somente o que existe de fato: o health check de
-// infraestrutura (Bloco D) e a norma de auditoria da aplicação (P-BACK-01,
-// Bloco E/F). Módulos funcionais (autenticação, pacientes, agenda, ...)
-// pertencem a fatias futuras e NÃO nascem aqui.
+// O módulo raiz registra somente o que existe de fato: o health check de
+// infraestrutura, a norma de auditoria da aplicação (P-BACK-01) e, desde a
+// 2.3B, o provider de persistência (conexão eager — a API NÃO sobe sem banco
+// válido e sem a postura de privilégios de runtime). Módulos funcionais com
+// exposição HTTP (autenticação, pacientes, agenda, ...) pertencem a fatias
+// futuras e NÃO nascem aqui.
 
 import { Module } from "@nestjs/common";
 
 import { AuditModule } from "./audit/audit.module.js";
+import { DatabaseModule } from "./database/database.module.js";
 import { HealthModule } from "./health/health.module.js";
 
 @Module({
-  imports: [HealthModule, AuditModule],
+  imports: [HealthModule, AuditModule, DatabaseModule],
 })
 export class AppModule {}
