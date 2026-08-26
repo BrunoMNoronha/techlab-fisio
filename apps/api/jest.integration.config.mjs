@@ -34,6 +34,7 @@ export default {
   },
 
   setupFiles: ["<rootDir>/test/setup.ts"],
+  setupFilesAfterEnv: ["<rootDir>/test/integration/setup-db.ts"],
 
   globalSetup: "<rootDir>/../../packages/database/test/global-setup.mjs",
   globalTeardown: "<rootDir>/../../packages/database/test/global-teardown.mjs",
@@ -41,4 +42,9 @@ export default {
   // Bootstrap eager + transações reais + cenários de concorrência: folga
   // acima do default de 5s, sem mascarar travamento indefinido.
   testTimeout: 30_000,
+
+  // Mesma razão da suíte E-13 (packages/database/jest.config.mjs): todos os
+  // arquivos compartilham UM banco descartável, e o truncamento entre testes
+  // de um worker não pode interferir nas fixtures/transações de outro.
+  maxWorkers: 1,
 };

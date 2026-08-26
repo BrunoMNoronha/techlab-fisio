@@ -19,6 +19,8 @@
     "test": "npm run test:integration && npm run test:api",
     "test:integration": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config packages/database/jest.config.mjs",
     "test:api": "npm run test --workspace @techlab-fisio/api",
+    "verify:api-integration": "node scripts/verify-api-integration.mjs",
+    "smoke:api": "node scripts/smoke-api.mjs",
     "verify:from-scratch": "node scripts/verify-from-scratch.mjs",
     "lint:migrations": "node scripts/lint-migrations.mjs",
     "schema:golden:update": "node scripts/schema-snapshot.mjs --update",
