@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+
+    // NestJS 11 depende de decorators legados + metadata (D-ESM-01, docs/08
+    // §16: `legacyDecorator` + `decoratorMetadata`). O restante da
+    // configuração ESM estrita vem inalterado de tsconfig.base.json
+    // (module/moduleResolution nodenext, strict, isolatedModules).
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
+    // Inclusão EXPLÍCITA de tipos ambiente: resolve para o @types/node
+    // 24.13.3 fixado neste workspace (aninhado em apps/api/node_modules) e
+    // impede que o @types/node flutuante content-hoisted na raiz (transitivo
+    // do Jest) vaze para o typecheck do backend.
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts"]
+}

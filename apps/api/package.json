@@ -1,0 +1,30 @@
+{
+  "name": "@techlab-fisio/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Backend do TechLab Fisio — monólito modular NestJS (ESM real, Node 24). Fundação da Etapa 2.3A: bootstrap, health check e enforcement fail-closed do catálogo de auditoria (P-BACK-01, docs/09 §12).",
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
+    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --config jest.config.mjs"
+  },
+  "dependencies": {
+    "@nestjs/common": "11.2.3",
+    "@nestjs/core": "11.2.3",
+    "@nestjs/platform-express": "11.2.3",
+    "@techlab-fisio/database": "0.0.0",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
+  },
+  "devDependencies": {
+    "@jest/globals": "30.4.1",
+    "@nestjs/testing": "11.2.3",
+    "@types/express": "5.0.6",
+    "@types/node": "24.13.3",
+    "jest": "30.4.2",
+    "ts-jest": "29.4.12"
+  }
+}
