@@ -1,10 +1,16 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "src",
+    // Etapa 2.3B: o build passa a compilar TAMBÉM o Prisma Client gerado
+    // (`generated/prisma`, fonte .ts do generator `prisma-client`), exigido em
+    // runtime pela fábrica pública `criarClientePersistencia`. Com `generated/`
+    // fora de `src/`, o menor ajuste possível é rootDir "." — a saída preserva
+    // a topologia (`dist/src/**` + `dist/generated/**`) e o `exports.default`
+    // do package.json aponta para `dist/src/index.js` (prova F-01 na CI).
+    "rootDir": ".",
     "outDir": "dist",
     "noEmit": false,
     "declaration": true
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "generated/**/*.ts"]
 }

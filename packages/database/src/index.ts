@@ -7,10 +7,22 @@
 // pacote já documentava como superfície pública — o mapeamento medido de
 // erros por constraint (V-03, decisão C-6).
 //
-// O Prisma Client gerado (`generated/prisma/`) NÃO é reexportado aqui de
-// propósito: ele é artefato de `prisma generate` (não versionado) e a decisão
-// de como expô-lo ao backend (provider, ciclo de vida, credenciais) pertence
-// à fatia que criar o primeiro fluxo que precise de banco — não à fundação.
+// Etapa 2.3B: a superfície pública ganhou a fábrica do cliente de
+// persistência (`criarClientePersistencia`) — este pacote é o proprietário da
+// instanciação do Prisma Client + adapter. O Prisma Client gerado
+// (`generated/prisma/`) continua NÃO sendo reexportado como módulo: somente a
+// fábrica e os tipos mínimos necessários ao consumo (cliente e transação) são
+// públicos; provider, ciclo de vida e credenciais pertencem à aplicação.
+
+export {
+  criarClientePersistencia,
+} from "./persistencia/cliente-persistencia.js";
+
+export type {
+  ClientePersistencia,
+  OpcoesClientePersistencia,
+  TransacaoPersistencia,
+} from "./persistencia/cliente-persistencia.js";
 
 export {
   CONSTRAINT_CONSUMO_UNICO,

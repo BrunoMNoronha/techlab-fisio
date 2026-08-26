@@ -77,10 +77,12 @@ jobs:
       - name: "Backend — suíte de apps/api (bootstrap, health, integração database, T-AUD-CONTEXTO)"
         run: npm run test:api
 
-      # F-01 (revisão da 2.3A): prova runtime, FORA do Jest, de que o Node ESM
-      # resolve `@techlab-fisio/database` pelo `exports.default` do pacote
-      # (dist/index.js, produzido pelo passo de build). O Jest não serve como
-      # prova deste caminho porque mapeia o pacote para src/index.ts.
+      # F-01 (revisão da 2.3A; caminho ATUALIZADO na 2.3B): prova runtime,
+      # FORA do Jest, de que o Node ESM resolve `@techlab-fisio/database` pelo
+      # `exports.default` do pacote (dist/src/index.js — o build da 2.3B passou
+      # a compilar também o Prisma Client gerado, e o rootDir do pacote virou a
+      # raiz). O Jest não serve como prova deste caminho porque mapeia o pacote
+      # para src/index.ts. A prova também cobre a fábrica pública da 2.3B.
       - name: "Backend — prova runtime do exports público de @techlab-fisio/database (F-01)"
         run: |
           node --input-type=module -e '
@@ -88,7 +90,10 @@ jobs:
             if (typeof m.identificarViolacao !== "function") {
               throw new Error("exports.default resolveu, mas nao expos identificarViolacao");
             }
-            console.log("exports.default -> dist/index.js OK:", Object.keys(m).sort().join(", "));
+            if (typeof m.criarClientePersistencia !== "function") {
+              throw new Error("exports.default resolveu, mas nao expos criarClientePersistencia");
+            }
+            console.log("exports.default -> dist/src/index.js OK:", Object.keys(m).sort().join(", "));
           '
 
       - name: "Backend — prova de bootstrap ESM (R-BL-02): dist/main.js sobe, responde /health e encerra"
