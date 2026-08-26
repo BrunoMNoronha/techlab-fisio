@@ -2,8 +2,8 @@
 
 > **Arquivo:** `docs/10-backend-implementacao.md`
 > **Natureza:** documento **MUTÁVEL** — registro vivo de implementação da frente de backend (`apps/api`)
-> **Status:** backend **INICIADO** — Etapa 2.3A **CONCLUÍDA e HOMOLOGADA** após revisão técnica independente (veredito A — apto à homologação e versionamento, 26/08/2026)
-> **Revisão vigente:** REV. 1 (26/08/2026)
+> **Status:** backend **INICIADO** — Etapa 2.3A **CONCLUÍDA, HOMOLOGADA e INTEGRADA NA `main`** (revisão independente com veredito A; integração via PR [#3](https://github.com/BrunoMNoronha/techlab-fisio/pull/3), merge commit `791e862`, CI da `main` integrada verde — REV. 2)
+> **Revisão vigente:** REV. 2 (26/08/2026)
 
 ---
 
@@ -40,7 +40,7 @@ Marco de partida da frente de backend (26/08/2026): `main` em `382f366208257bdb1
 
 ## 4. Etapa 2.3A — Fundação do Backend
 
-**Estado: CONCLUÍDA / HOMOLOGADA** (revisão técnica independente, veredito **A**, 26/08/2026; findings apenas BAIXOS — `F-01` e `F-03` corrigidos na consolidação desta REV. 1, `F-02` corrigido neste registro).
+**Estado: CONCLUÍDA / HOMOLOGADA / INTEGRADA NA `main`** (revisão técnica independente, veredito **A**, 26/08/2026; findings apenas BAIXOS — `F-01` e `F-03` corrigidos na consolidação da REV. 1, `F-02` corrigido neste registro; integração registrada pós-medição na REV. 2 — §11).
 
 Entregas — deliberadamente **sem nenhuma funcionalidade de domínio**:
 
@@ -148,7 +148,7 @@ Registrada no relatório de consolidação da 2.3A: `npm ci`; `db:generate`; `db
 
 Sujeitas a autorização própria, nesta ordem provável:
 
-1. **Rito de integração da 2.3A**: PR da branch `agent/fase2-etapa2.3a-backend-foundation` para `main` (não executado nesta consolidação).
+1. ~~**Rito de integração da 2.3A**~~ — **EXECUTADO em 26/08/2026** (PR [#3](https://github.com/BrunoMNoronha/techlab-fisio/pull/3), merge commit `791e862`; registro pós-medição em §11, REV. 2).
 2. **Etapa 2.3B** — provider de persistência (Prisma Client + adapter-pg como provider Nest com ciclo de vida, role `tlf_app`) e **primeiro fluxo emissor de auditoria** ponta a ponta (`operação → validator → evento_auditoria`), que forçará as primeiras decisões reais de `alvo_tipo` em uso e abrirá caminho para encerrar `R2.2-04`.
 3. Decisões normativas adiadas (`L-05`..`L-08`, `configuracao.alterada`, `prontuario.exportado`, eventual `autor_original_usuario_id`) — cada uma por decisão expressa de Bruno, nunca por implicação de implementação.
 
@@ -156,8 +156,9 @@ Sujeitas a autorização própria, nesta ordem provável:
 
 | REV. | Data | Conteúdo |
 | --- | --- | --- |
+| **2** | **26/08/2026** | **REGISTRO PÓS-MEDIÇÃO DA INTEGRAÇÃO DA ETAPA 2.3A NA `main`** — nenhuma decisão reaberta. (a) **Integração executada em 26/08/2026**: **PR [#3](https://github.com/BrunoMNoronha/techlab-fisio/pull/3)** (`agent/fase2-etapa2.3a-backend-foundation` → `main`), **merge commit** `791e862f17f77cfafe74d39bad866b11c15c0e98` às 09:07:38Z — método `merge` (sem squash, sem rebase, sem force-push), com proteção de corrida sobre o HEAD aprovado `9d7dcd5`; os **5 commits granulares preservados** como ancestrais da `main` (`b839eb6`, `dd24897`, `bb29caf`, `9d80303`, `9d7dcd5`); árvore da `main` integrada **idêntica** à do HEAD aprovado (diff de 0 bytes). (b) **CI medida sobre a `main` integrada**: o workflow não dispara em push para `main`, então a run foi executada manualmente (`workflow_dispatch --ref main`, precedente da REV. 20 de `docs/08`) — run **`32951372071`**, **`success`** sobre `791e862`, todos os passos verdes: instalação pelo lockfile; Prisma generate/validate; typecheck; **Guarda 1**; **E-15 + Guarda 2** (reconstrução from-scratch + suíte 9 suites · 79 passed); **Guarda 3 + alarme** (golden byte a byte); build ESM dos workspaces; **suíte da API 4 suites · 93 passed** (incl. `T-AUD-CONTEXTO`); **prova runtime do `exports.default` (F-01)**; **smoke ESM de bootstrap (R-BL-02)** com `/health` 200, 404 e cleanup. (c) **Persistência intacta na `main` integrada**: `schema.prisma`, as 9 migrations e o golden byte a byte idênticos; Guardas 1/2/3 verdes na run acima. (d) Estados mantidos: Etapa 2.3A **CONCLUÍDA/HOMOLOGADA/INTEGRADA**; `R-BL-02` **ENCERRADO**; `T-AUD-CONTEXTO` **EXECUTADO/PASSED**; `P-BACK-01` **EM ANDAMENTO**; `R2.2-04` **ABERTO/TRANSFERIDO**; `L-05..L-08` **ADIADAS**; `R-BL-09` **ABERTO** (aceitação temporária monitorada); `V-06.c` **PENDENTE**. (e) **Nenhuma Etapa 2.3B iniciada**; nenhum deploy, tag ou release; `docs/09` e a Base Imutável intactos. Este registro entra na `main` por branch documental curta + PR com merge commit (MEDIR → REGISTRAR). |
 | **1** | **26/08/2026** | Criação do documento. Registro da Etapa 2.3A (CONCLUÍDA/HOMOLOGADA — revisão independente, veredito A); correção dos findings `F-01` (prova runtime do `exports.default` na CI) e `F-03` (cleanup garantido do smoke); correção do `F-02` neste registro (contagem correta: 88 testes de auditoria = 83 unitários + 5 integração; suíte da API 4 suites · 93 passed); `R-BL-02` ENCERRADO; `T-AUD-CONTEXTO` EXECUTADO/PASSED; `P-BACK-01` EM ANDAMENTO; `R2.2-04` ABERTO; hardening de escalares registrado como decisão técnica local (§7.3). Handoff recebido de `docs/08` REV. 21 |
 
 ---
 
-**Fim — `docs/10-backend-implementacao.md` — REV. 1 — documento mutável; estado vivo das pendências da frente de backend. Fontes normativas permanecem `TECHLAB_FISIO_BASE_IMUTAVEL_V1.md`, `docs/02`..`docs/07`, `docs/08` (baseline) e `docs/09` §12.**
+**Fim — `docs/10-backend-implementacao.md` — REV. 2 — documento mutável; estado vivo das pendências da frente de backend; Etapa 2.3A INTEGRADA NA `main` (merge `791e862`, CI run `32951372071` verde). Fontes normativas permanecem `TECHLAB_FISIO_BASE_IMUTAVEL_V1.md`, `docs/02`..`docs/07`, `docs/08` (baseline) e `docs/09` §12.**
