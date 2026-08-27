@@ -6,7 +6,7 @@
 > **Status:** **DECIDIDO — `D-2.3D-01`..`D-2.3D-12` homologadas por Bruno Menezes Noronha em 27/08/2026 (TLF-BASE-V1 §15, item 1)**
 > **Data:** 27 de agosto de 2026
 > **Natureza:** registro **normativo** das decisões que governam a implementação de autenticação e autorização da Etapa 2.3D. Segue o padrão de `docs/09` §12 e de `docs/11` (registro de decisão com valor normativo próprio). **Não altera** `TECHLAB_FISIO_BASE_IMUTAVEL_V1.md` nem `docs/02`..`docs/07`; **não reabre** `D-AUD-01`..`D-AUD-08` (`docs/09` §12).
-> **Revisão vigente:** REV. 0 (27/08/2026) — F0 executada: decisões registradas + única reabertura física da persistência de sessão.
+> **Revisão vigente:** REV. 1 (27/08/2026) — atualização exclusivamente factual: `P-2.3D-02` ENCERRADA pelo benchmark da F1 (`docs/10` §6-D.5). **Nenhuma decisão foi modificada** — `D-2.3D-01`..`D-2.3D-12` seguem como homologadas. REV. 0 (27/08/2026): F0 executada — decisões registradas + única reabertura física da persistência de sessão.
 
 ---
 
@@ -412,7 +412,7 @@ GRANT/REVOKE ....... sem alteração
 | ID | Pendência | Estado |
 | --- | --- | --- |
 | `P-2.3D-01` | Absorção editorial de `token_hash`, `ultima_atividade_em` e `ck_sessao_autenticacao_atividade` em `docs/07` §7.1/§10.2 | **ABERTA** — ação de governança separada (§7.2) |
-| `P-2.3D-02` | Benchmark empírico dos parâmetros de Argon2id | **ABERTA** — obrigatória na F1 (`D-2.3D-02`) |
+| ~~`P-2.3D-02`~~ | Benchmark empírico dos parâmetros de Argon2id | **ENCERRADA em 27/08/2026** — benchmark executado na F1 e registrado em `docs/10` §6-D.5: `hash` p50 39,16 ms · `verify` válido p50 38,70 ms · `verify` inválido p50 39,67 ms · ~19 MiB por operação (Node 24, win32-x64, i5-1235U, 30 amostras, warm-up 5). Sem ressalva material. **`D-2.3D-02` NÃO foi alterada**: os parâmetros homologados `m=19456`/`t=2`/`p=1` permanecem exatamente como decididos, agora com a medição que a própria decisão exigia. Limitação declarada: medição em máquina de desenvolvimento — remedir em hardware de produção antes do go-live é prudência operacional, não condição pendente |
 | `P-2.3D-03` | Medição de compatibilidade ESM/`nodenext` de `@nestjs/swagger@11.4.7` | **ABERTA** — F3 (`D-2.3D-11`) |
 | `P-2.3D-04` | Reavaliação da proteção CSRF contra a arquitetura real do `apps/web` | **ABERTA** — quando o frontend existir (`D-2.3D-07`) |
 | `P-2.3D-05` | Eventual auditoria de criação de usuário (`usuario.criado`) | **ABERTA** — exige decisão própria (`D-2.3D-10`) |
@@ -450,6 +450,7 @@ Nenhum requisito AUT foi ampliado, reduzido ou reinterpretado por este registro.
 
 | REV. | Data | Alterações |
 | --- | --- | --- |
+| **1** | 27/08/2026 | **Atualização exclusivamente FACTUAL — nenhuma decisão modificada.** `D-2.3D-01`..`D-2.3D-12` permanecem exatamente como homologadas em 27/08/2026; nenhum parâmetro, prazo, nome ou regra foi alterado, acrescentado ou removido. Única mudança: em §11, `P-2.3D-02` (benchmark empírico do Argon2id) passa de **ABERTA** a **ENCERRADA**, por ter sido cumprida na F1 — a medição está registrada em `docs/10` §6-D.5 e sustenta a manutenção dos parâmetros de `D-2.3D-02`, que **não é reaberta**. A F1 em si (implementação de `CredencialService`, `argon2@0.45.1`, normalização do login) é registrada em `docs/10` §6-D, não aqui: este documento é normativo, não registro de execução. |
 | **0** | 27/08/2026 | Criação. Registro normativo de `D-2.3D-01`..`D-2.3D-12` homologadas por Bruno Menezes Noronha. Execução da fatia **F0**: materialização física exclusiva de `D-2.3D-01` (`sessao_autenticacao.token_hash`, `sessao_autenticacao.ultima_atividade_em`, `ck_sessao_autenticacao_atividade`) na migration `20260827175151_sessao_autenticacao_token_atividade`; atualização de `protected-objects.json` (25 → 26 CHECKs), da Guarda 2 e do golden schema pelo fluxo oficial; testes de aceite/rejeição da CHECK e de NOT NULL. Nenhuma dependência instalada; nenhuma implementação de F1+ iniciada |
 
 ---

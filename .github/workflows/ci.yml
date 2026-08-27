@@ -74,6 +74,17 @@ jobs:
       - name: "Backend — build ESM (packages/database → apps/api)"
         run: npm run build
 
+      # Etapa 2.3D-B / F1 (achado A-04 da revisão independente): prova de
+      # runtime do addon NATIVO do `argon2` no ESM compilado, FORA do Jest.
+      # Posicionada no PRIMEIRO ponto em que `apps/api/dist/**` existe — a
+      # prova é barata (<1 s) e falha cedo, na ordem barato → caro do job.
+      # Nenhuma etapa anterior foi movida ou alterada.
+      # Fecha a lacuna de uma biblioteca nativa funcionar sob o runtime de VM
+      # do Jest e falhar em `node dist/main.js`, e é o único passo que valida
+      # o prebuild N-API de linux-x64 de forma explícita.
+      - name: "Backend — prova de runtime do Argon2id no ESM compilado (D-2.3D-02)"
+        run: npm run verify:argon2-runtime --workspace @techlab-fisio/api
+
       - name: "Backend — suíte de apps/api (bootstrap, health, integração database, T-AUD-CONTEXTO)"
         run: npm run test:api
 

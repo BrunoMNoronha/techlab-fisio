@@ -10,13 +10,16 @@
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
     "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --config jest.config.mjs",
-    "test:integration": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --config jest.integration.config.mjs"
+    "test:integration": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --config jest.integration.config.mjs",
+    "verify:argon2-runtime": "node scripts/verify-argon2-runtime.mjs",
+    "bench:argon2": "node scripts/benchmark-argon2.mjs"
   },
   "dependencies": {
     "@nestjs/common": "11.2.3",
     "@nestjs/core": "11.2.3",
     "@nestjs/platform-express": "11.2.3",
     "@techlab-fisio/database": "0.0.0",
+    "argon2": "0.45.1",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2"
   },
