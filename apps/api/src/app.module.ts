@@ -11,11 +11,18 @@
 import { Module } from "@nestjs/common";
 
 import { AuditModule } from "./audit/audit.module.js";
+import { CobrancaModule } from "./cobranca/cobranca.module.js";
 import { DatabaseModule } from "./database/database.module.js";
 import { HealthModule } from "./health/health.module.js";
 import { ProfissionalModule } from "./profissional/profissional.module.js";
 
 @Module({
-  imports: [HealthModule, AuditModule, DatabaseModule, ProfissionalModule],
+  imports: [
+    HealthModule,
+    AuditModule,
+    DatabaseModule,
+    ProfissionalModule,
+    CobrancaModule,
+  ],
 })
 export class AppModule {}

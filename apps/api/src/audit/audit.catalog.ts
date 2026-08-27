@@ -67,6 +67,51 @@ export function ehAcaoAuditoria(acao: string): acao is AcaoAuditoria {
  * vazio. O `satisfies` garante em compilação que TODA ação do catálogo tem
  * sua whitelist declarada aqui — não existe caso "não mapeado" em runtime.
  */
+/**
+ * Forma canônica de valor monetário aceito em chave de contexto monetária:
+ * string decimal com exatamente duas casas, sem sinal, sem zeros à esquerda,
+ * até 10 dígitos inteiros — o espaço NÃO NEGATIVO de `numeric(12,2)`
+ * (`docs/07` §19.2; contrato adotado por PROP-RN-2.3C-01 — `docs/11`).
+ * É a MESMA fronteira usada pelo emissor de FIN-003 (`CobrancaService`).
+ */
+const FORMATO_MONETARIO_CANONICO = /^(?:0|[1-9]\d{0,9})\.\d{2}$/;
+
+/**
+ * `true` sse `valor` é uma STRING decimal monetária canônica não negativa
+ * compatível com `numeric(12,2)`. Qualquer outro tipo (number inclusive) ou
+ * forma ("10", "10.0", "01.00", "-1.00", "1e2", "10,00", espaços, vazio) é
+ * falso — nenhuma conversão/normalização é feita aqui ou em outro lugar.
+ */
+export function ehDecimalMonetarioCanonico(valor: unknown): valor is string {
+  return typeof valor === "string" && FORMATO_MONETARIO_CANONICO.test(valor);
+}
+
+/**
+ * F-2.3C-REV-01 — validação SEMÂNTICA fail-closed por ação/chave, aplicada
+ * pelo `AuditContextValidator` DEPOIS das barreiras estruturais (whitelist e
+ * escalar JSON). Uma chave listada aqui só é aceita se o predicado aprovar o
+ * valor; chave sem predicado permanece sob as barreiras estruturais apenas.
+ *
+ * Escopo deliberadamente restrito (sem ampliação silenciosa de D-AUD-07):
+ *   - `cobranca.desconto_aplicado`: as duas chaves monetárias homologadas
+ *     exigem string decimal canônica de `numeric(12,2)` — fonte: `docs/07`
+ *     §19.2 + PROP-RN-2.3C-01 + autorização de F-2.3C-REV-01;
+ *   - `cobranca.data_referencia_recalculada` e
+ *     `retificacao_clinica.efetivada_terceiro`: NENHUMA regra semântica é
+ *     definida aqui — o formato dessas chaves (data civil ISO; uuid) não tem
+ *     regra homologada própria e será decidido quando seus emissores forem
+ *     implementados (pendência registrada em `docs/10`). O mecanismo suporta
+ *     acrescentá-las com uma linha por chave, mediante decisão expressa.
+ */
+export const SEMANTICA_CONTEXTO: Readonly<
+  Partial<Record<AcaoAuditoria, Readonly<Record<string, (valor: unknown) => boolean>>>>
+> = {
+  "cobranca.desconto_aplicado": {
+    valor_desconto_anterior: ehDecimalMonetarioCanonico,
+    valor_desconto_novo: ehDecimalMonetarioCanonico,
+  },
+};
+
 export const WHITELIST_CONTEXTO = {
   "usuario.autenticacao": [],
   "usuario.sessao.logout": [],

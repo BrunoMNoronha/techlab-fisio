@@ -249,13 +249,18 @@ describe("barreira contra serialização genérica de DTO/request", () => {
     expect(erro.motivo).toBe("CONTEXTO_NAO_OBJETO");
   });
 
-  it("aceita escalares JSON nas chaves permitidas (string, number, boolean, null)", () => {
+  it("aceita escalares JSON em chave permitida SEM regra semântica registrada", () => {
+    // F-2.3C-REV-01: as chaves monetárias de `cobranca.desconto_aplicado`
+    // ganharam regra semântica própria (ver bloco no fim do arquivo); a
+    // aceitação estrutural genérica de escalares continua valendo apenas
+    // para chaves homologadas SEM regra registrada — nenhuma regra foi
+    // inventada para datas/uuid nesta correção.
     expect(
-      validator.validar("cobranca.desconto_aplicado", {
-        valor_desconto_anterior: null,
-        valor_desconto_novo: 15,
+      validator.validar("cobranca.data_referencia_recalculada", {
+        data_referencia_anterior: null,
+        data_referencia_nova: 15,
       }),
-    ).toBe("cobranca.desconto_aplicado");
+    ).toBe("cobranca.data_referencia_recalculada");
   });
 });
 
@@ -297,12 +302,132 @@ describe("números não finitos NÃO são escalares JSON (F-REV-02)", () => {
     ["zero", 0],
     ["zero negativo", -0],
     ["Number.MAX_VALUE (finito)", Number.MAX_VALUE],
-  ])("continua aceitando %s", (_rotulo, valor) => {
+  ])("continua aceitando %s em chave SEM regra semântica", (_rotulo, valor) => {
+    // Desde F-2.3C-REV-01, número finito deixou de ser aceito nas chaves
+    // MONETÁRIAS (regra semântica própria — bloco abaixo); a aceitação
+    // estrutural de números finitos permanece para chave sem regra.
     expect(Number.isFinite(valor)).toBe(true);
     expect(
+      validator.validar("cobranca.data_referencia_recalculada", {
+        data_referencia_nova: valor,
+      }),
+    ).toBe("cobranca.data_referencia_recalculada");
+  });
+});
+
+describe("F-2.3C-REV-01 — validação semântica das chaves monetárias de cobranca.desconto_aplicado", () => {
+  it("aceita o par canônico mínimo", () => {
+    expect(
       validator.validar("cobranca.desconto_aplicado", {
-        valor_desconto_novo: valor,
+        valor_desconto_anterior: "0.00",
+        valor_desconto_novo: "10.00",
       }),
     ).toBe("cobranca.desconto_aplicado");
+  });
+
+  it("aceita o limite superior de numeric(12,2)", () => {
+    expect(
+      validator.validar("cobranca.desconto_aplicado", {
+        valor_desconto_anterior: "9999999999.98",
+        valor_desconto_novo: "9999999999.99",
+      }),
+    ).toBe("cobranca.desconto_aplicado");
+  });
+
+  const invalidosEscalares: Array<[string, unknown]> = [
+    ['string "10" (sem casas)', "10"],
+    ['string "10.0" (uma casa)', "10.0"],
+    ['string "01.00" (zero à esquerda)', "01.00"],
+    ['string "-1.00" (sinal negativo)', "-1.00"],
+    ['string "+1.00" (sinal positivo)', "+1.00"],
+    ['string "1e2" (notação científica)', "1e2"],
+    ['string "10,00" (vírgula)', "10,00"],
+    ['string "abc"', "abc"],
+    ["string vazia", ""],
+    ['string " 10.00" (espaço à esquerda)', " 10.00"],
+    ['string "10.00 " (espaço à direita)', "10.00 "],
+    ['string "10000000000.00" (11 dígitos inteiros)', "10000000000.00"],
+    ["number 10", 10],
+    ["number 10.5", 10.5],
+    ["null", null],
+    ["boolean true", true],
+    ["boolean false", false],
+  ];
+
+  for (const chave of ["valor_desconto_anterior", "valor_desconto_novo"]) {
+    describe(`chave ${chave}`, () => {
+      it.each(invalidosEscalares)(
+        "rejeita %s como VALOR_SEMANTICAMENTE_INVALIDO",
+        (_rotulo, valor) => {
+          const contexto = {
+            valor_desconto_anterior: "0.00",
+            valor_desconto_novo: "10.00",
+            [chave]: valor,
+          };
+          const erro = rejeicao("cobranca.desconto_aplicado", contexto);
+          expect(erro.motivo).toBe("VALOR_SEMANTICAMENTE_INVALIDO");
+          expect(erro.chaves).toEqual([chave]);
+        },
+      );
+
+      it.each([
+        ["NaN", Number.NaN],
+        ["Infinity", Number.POSITIVE_INFINITY],
+      ])(
+        "rejeita %s ANTES, pela barreira estrutural (VALOR_NAO_ESCALAR)",
+        (_rotulo, valor) => {
+          const erro = rejeicao("cobranca.desconto_aplicado", {
+            [chave]: valor,
+          });
+          expect(erro.motivo).toBe("VALOR_NAO_ESCALAR");
+        },
+      );
+
+      it.each([
+        ["objeto", { valor: "10.00" }],
+        ["array", ["10.00"]],
+      ])("rejeita %s pela barreira estrutural (VALOR_NAO_ESCALAR)", (_rotulo, valor) => {
+        const erro = rejeicao("cobranca.desconto_aplicado", {
+          [chave]: valor,
+        });
+        expect(erro.motivo).toBe("VALOR_NAO_ESCALAR");
+      });
+    });
+  }
+
+  it("as DUAS chaves inválidas são citadas juntas, sem valores na mensagem", () => {
+    const erro = rejeicao("cobranca.desconto_aplicado", {
+      valor_desconto_anterior: "SEGREDO-A-NAO-VAZAR",
+      valor_desconto_novo: "10,00",
+    });
+    expect(erro.motivo).toBe("VALOR_SEMANTICAMENTE_INVALIDO");
+    expect(erro.chaves).toEqual([
+      "valor_desconto_anterior",
+      "valor_desconto_novo",
+    ]);
+    expect(erro.message).not.toContain("SEGREDO-A-NAO-VAZAR");
+    expect(erro.message).not.toContain("10,00");
+  });
+
+  it("nenhuma conversão/normalização: o candidato rejeitado não é mutado", () => {
+    const contexto = { valor_desconto_novo: "10" };
+    const antes = JSON.stringify(contexto);
+    rejeicao("cobranca.desconto_aplicado", contexto);
+    expect(JSON.stringify(contexto)).toBe(antes);
+  });
+
+  it("NÃO amplia silenciosamente para as demais whitelists positivas", () => {
+    // Datas e uuid não ganharam regra nesta correção (sem fonte homologada):
+    // continuam sob as barreiras estruturais apenas.
+    expect(
+      validator.validar("cobranca.data_referencia_recalculada", {
+        data_referencia_anterior: "qualquer-string",
+      }),
+    ).toBe("cobranca.data_referencia_recalculada");
+    expect(
+      validator.validar("retificacao_clinica.efetivada_terceiro", {
+        registro_original_id: "qualquer-string",
+      }),
+    ).toBe("retificacao_clinica.efetivada_terceiro");
   });
 });

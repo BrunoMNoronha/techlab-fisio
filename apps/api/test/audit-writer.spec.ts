@@ -172,6 +172,50 @@ describe("AuditWriter — rejeições fail-closed (nenhuma escrita)", () => {
     expect(chamadas).toHaveLength(0);
   });
 
+  it.each([
+    ['string "10,00" (vírgula)', "10,00"],
+    ['string "10" (sem casas)', "10"],
+    ["number 10", 10],
+    ["string arbitrária com conteúdo sensível", "PACIENTE: DADO QUE NÃO DEVE ENTRAR"],
+  ])(
+    "F-2.3C-REV-01: chave monetária homologada com %s → zero create e rejeição semântica",
+    async (_rotulo, valor) => {
+      const { tx, chamadas } = criarTxFalsa();
+      await expect(
+        criarWriter().registrar(
+          tx,
+          candidatoBase({
+            acao: "cobranca.desconto_aplicado",
+            alvoTipo: "cobranca",
+            contexto: { valor_desconto_anterior: "0.00", valor_desconto_novo: valor },
+          }),
+        ),
+      ).rejects.toMatchObject({ motivo: "VALOR_SEMANTICAMENTE_INVALIDO" });
+      expect(chamadas).toHaveLength(0);
+    },
+  );
+
+  it("F-2.3C-REV-01: a rejeição semântica não ecoa o valor inválido", async () => {
+    const { tx } = criarTxFalsa();
+    const valorSensivel = "PACIENTE: DADO QUE NÃO DEVE ENTRAR";
+    let mensagem = "";
+    try {
+      await criarWriter().registrar(
+        tx,
+        candidatoBase({
+          acao: "cobranca.desconto_aplicado",
+          alvoTipo: "cobranca",
+          contexto: { valor_desconto_novo: valorSensivel },
+        }),
+      );
+    } catch (erro) {
+      mensagem = erro instanceof Error ? erro.message : String(erro);
+    }
+    expect(mensagem).toContain("valor_desconto_novo");
+    expect(mensagem).not.toContain(valorSensivel);
+    expect(mensagem).not.toContain("PACIENTE");
+  });
+
   it("mensagens de rejeição citam chaves, nunca VALORES", async () => {
     const { tx } = criarTxFalsa();
     const valorSensivel = "dado-sensivel-que-nao-pode-vazar";
