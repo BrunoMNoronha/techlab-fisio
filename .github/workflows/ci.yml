@@ -77,10 +77,12 @@ jobs:
       - name: "Backend — suíte de apps/api (bootstrap, health, integração database, T-AUD-CONTEXTO)"
         run: npm run test:api
 
-      # F-01 (revisão da 2.3A): prova runtime, FORA do Jest, de que o Node ESM
-      # resolve `@techlab-fisio/database` pelo `exports.default` do pacote
-      # (dist/index.js, produzido pelo passo de build). O Jest não serve como
-      # prova deste caminho porque mapeia o pacote para src/index.ts.
+      # F-01 (revisão da 2.3A; caminho ATUALIZADO na 2.3B): prova runtime,
+      # FORA do Jest, de que o Node ESM resolve `@techlab-fisio/database` pelo
+      # `exports.default` do pacote (dist/src/index.js — o build da 2.3B passou
+      # a compilar também o Prisma Client gerado, e o rootDir do pacote virou a
+      # raiz). O Jest não serve como prova deste caminho porque mapeia o pacote
+      # para src/index.ts. A prova também cobre a fábrica pública da 2.3B.
       - name: "Backend — prova runtime do exports público de @techlab-fisio/database (F-01)"
         run: |
           node --input-type=module -e '
@@ -88,20 +90,28 @@ jobs:
             if (typeof m.identificarViolacao !== "function") {
               throw new Error("exports.default resolveu, mas nao expos identificarViolacao");
             }
-            console.log("exports.default -> dist/index.js OK:", Object.keys(m).sort().join(", "));
+            if (typeof m.criarClientePersistencia !== "function") {
+              throw new Error("exports.default resolveu, mas nao expos criarClientePersistencia");
+            }
+            console.log("exports.default -> dist/src/index.js OK:", Object.keys(m).sort().join(", "));
           '
 
-      - name: "Backend — prova de bootstrap ESM (R-BL-02): dist/main.js sobe, responde /health e encerra"
-        run: |
-          PORT=3777 node apps/api/dist/main.js &
-          API_PID=$!
-          # F-03: cleanup garantido mesmo se a prova HTTP falhar antes do kill;
-          # o `|| true` evita que o cleanup mascare o exit code real do passo.
-          trap 'kill "$API_PID" 2>/dev/null || true' EXIT
-          for i in $(seq 1 50); do
-            if curl -sf http://127.0.0.1:3777/health > resposta_health.json; then break; fi
-            sleep 0.2
-          done
-          cat resposta_health.json
-          grep -q '{"status":"ok"}' resposta_health.json
-          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3777/rota-inexistente)" = "404"
+      # ------------------------------------------------------------------
+      # Etapa 2.3B — provider de persistência + primeiro fluxo transacional
+      # de auditoria. Passos ACRESCENTADOS; nenhuma guarda anterior alterada.
+      # ------------------------------------------------------------------
+
+      # Integração real da API: AppModule → DatabaseService → fábrica pública
+      # → tlf_app → PostgreSQL 18 descartável → profissional →
+      # AuditContextValidator → evento_auditoria (atomicidade, rollback,
+      # concorrência, postura de role — tlf_app aceito, migrator rejeitado).
+      - name: "Backend — integração da API com PostgreSQL 18 real (tlf_app + fluxo auditado)"
+        run: npm run verify:api-integration
+
+      # R-BL-02 (2.3A) ADAPTADO na 2.3B: o DatabaseService conecta EAGER no
+      # bootstrap, então o smoke provisiona banco descartável (tlf_app) antes
+      # de executar o processo real. Preserva TODAS as verificações da 2.3A:
+      # processo real dist/main.js, /health 200, 404 sem stack, encerramento
+      # limpo por SIGTERM e cleanup garantido mesmo em falha (F-03).
+      - name: "Backend — prova de bootstrap ESM (R-BL-02): dist/main.js + banco descartável"
+        run: npm run smoke:api

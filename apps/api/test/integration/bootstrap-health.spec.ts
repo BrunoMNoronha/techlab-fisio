@@ -1,14 +1,18 @@
-// TechLab Fisio — bootstrap + health check (Etapa 2.3A, Blocos B e D).
+// TechLab Fisio — bootstrap + health check (Etapa 2.3A, Blocos B e D;
+// movido para a suíte de INTEGRAÇÃO na Etapa 2.3B).
 //
 // Prova automatizada de que: o módulo raiz carrega; a aplicação NestJS sobe
 // como HTTP server real (porta efêmera); `GET /health` responde o contrato
-// mínimo; e a aplicação encerra corretamente. Complementa a prova manual de
-// R-BL-02 (execução de `node dist/main.js` compilado).
+// mínimo; e a aplicação encerra corretamente. Desde a 2.3B o AppModule
+// conecta EAGER ao banco no init (DatabaseModule) — por isso este spec exige
+// o banco descartável provisionado pelo globalSetup da suíte de integração.
+// O smoke da CI (scripts/smoke-api.mjs) continua provando o processo real
+// `node dist/main.js` (R-BL-02).
 
 import { Test } from "@nestjs/testing";
 import { describe, expect, it } from "@jest/globals";
 
-import { AppModule } from "../src/app.module.js";
+import { AppModule } from "../../src/app.module.js";
 
 describe("bootstrap e health", () => {
   it("cria a aplicação a partir do AppModule, responde GET /health e encerra", async () => {

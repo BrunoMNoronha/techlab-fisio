@@ -10,9 +10,12 @@
 //      nunca devolve cópia filtrada, nunca prossegue após encontrar
 //      irregularidade: ou o contexto candidato é aceito EXATAMENTE como
 //      está, ou a operação inteira é rejeitada com erro;
-//   5. valores aceitos são exclusivamente escalares JSON — objetos e arrays
-//      são rejeitados, o que torna estruturalmente impossível serializar um
-//      DTO/request inteiro dentro de uma chave permitida;
+//   5. valores aceitos são exclusivamente escalares JSON VÁLIDOS — objetos e
+//      arrays são rejeitados (impossível serializar um DTO/request inteiro
+//      dentro de uma chave permitida) e números só são aceitos quando FINITOS:
+//      NaN e ±Infinity não existem em JSON e seriam silenciosamente
+//      serializados como null na coluna jsonb, o que violaria a proibição de
+//      sanitização silenciosa;
 //   6. mensagens de erro citam AÇÃO e NOMES de chave, nunca VALORES — um
 //      valor recusado pode conter dado sensível e não deve vazar em log.
 //
@@ -66,7 +69,7 @@ function ehEscalarJson(valor: unknown): valor is ValorContexto {
   return (
     valor === null ||
     typeof valor === "string" ||
-    typeof valor === "number" ||
+    (typeof valor === "number" && Number.isFinite(valor)) ||
     typeof valor === "boolean"
   );
 }
@@ -144,7 +147,7 @@ export class AuditContextValidator {
         "VALOR_NAO_ESCALAR",
         acao,
         naoEscalares,
-        "valores de contexto devem ser escalares JSON (string, number, boolean ou null); objetos e arrays são rejeitados para impedir serialização genérica de DTO/request.",
+        "valores de contexto devem ser escalares JSON válidos (string, número finito, boolean ou null); objetos, arrays e números não finitos são rejeitados para impedir serialização genérica de DTO/request e valores sem representação em JSON.",
       );
     }
 

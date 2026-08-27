@@ -27,6 +27,12 @@ export default {
   testEnvironment: "node",
   testMatch: ["<rootDir>/test/**/*.spec.ts"],
 
+  // Etapa 2.3B: os testes que exigem PostgreSQL real vivem em
+  // test/integration/ e rodam pela configuração própria
+  // (jest.integration.config.mjs), que provisiona banco descartável.
+  // Esta configuração permanece a suíte SEM banco.
+  testPathIgnorePatterns: ["<rootDir>/test/integration/"],
+
   moduleNameMapper: {
     "^@techlab-fisio/database$": "<rootDir>/../../packages/database/src/index.ts",
     "^(\\.{1,2}/.*)\\.js$": "$1",

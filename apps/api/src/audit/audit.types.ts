@@ -31,9 +31,12 @@ export type AlvoTipo = string;
 
 /**
  * Valor admissível em uma chave de `contexto` já permitida pela whitelist:
- * exclusivamente escalares JSON. Objetos e arrays são rejeitados pelo
+ * exclusivamente escalares JSON VÁLIDOS. Objetos e arrays são rejeitados pelo
  * validator — é a barreira estrutural contra serialização genérica de
- * DTO/request em `contexto` (D-AUD-07/D-AUD-08; proibições F-04).
+ * DTO/request em `contexto` (D-AUD-07/D-AUD-08; proibições F-04). O tipo TS
+ * `number` inclui NaN/±Infinity, mas esses valores NÃO são escalares JSON e o
+ * validator os rejeita em runtime (`Number.isFinite`): serializá-los viraria
+ * `null` silencioso no `jsonb`, o que a política proíbe.
  */
 export type ValorContexto = string | number | boolean | null;
 

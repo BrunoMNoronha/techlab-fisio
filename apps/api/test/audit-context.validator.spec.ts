@@ -258,3 +258,51 @@ describe("barreira contra serialização genérica de DTO/request", () => {
     ).toBe("cobranca.desconto_aplicado");
   });
 });
+
+describe("números não finitos NÃO são escalares JSON (F-REV-02)", () => {
+  // NaN e ±Infinity não existem em JSON: persistir um deles serializaria
+  // silenciosamente para null no jsonb — sanitização silenciosa proibida.
+  // Ação homologada com whitelist POSITIVA exercita a validação de VALOR
+  // sem implementar nenhum fluxo funcional dessa ação.
+  it.each([
+    ["NaN", Number.NaN],
+    ["Infinity", Number.POSITIVE_INFINITY],
+    ["-Infinity", Number.NEGATIVE_INFINITY],
+  ])("rejeita %s em chave permitida, sem mutar o candidato", (_rotulo, valor) => {
+    const contexto = { valor_desconto_novo: valor };
+    const erro = rejeicao("cobranca.desconto_aplicado", contexto);
+    expect(erro.motivo).toBe("VALOR_NAO_ESCALAR");
+    expect(erro.chaves).toEqual(["valor_desconto_novo"]);
+    // Candidato não mutado: rejeição não é remoção nem substituição por null.
+    expect(Object.is(contexto.valor_desconto_novo, valor)).toBe(true);
+  });
+
+  it.each([
+    ["NaN", Number.NaN, "NaN"],
+    ["Infinity", Number.POSITIVE_INFINITY, "Infinity"],
+    ["-Infinity", Number.NEGATIVE_INFINITY, "-Infinity"],
+  ])(
+    "a mensagem de rejeição de %s cita a chave, nunca o valor",
+    (_rotulo, valor, formaTextual) => {
+      const erro = rejeicao("cobranca.desconto_aplicado", {
+        valor_desconto_novo: valor,
+      });
+      expect(erro.message).toContain("valor_desconto_novo");
+      expect(erro.message).not.toContain(formaTextual);
+    },
+  );
+
+  it.each([
+    ["número finito comum", 15.5],
+    ["zero", 0],
+    ["zero negativo", -0],
+    ["Number.MAX_VALUE (finito)", Number.MAX_VALUE],
+  ])("continua aceitando %s", (_rotulo, valor) => {
+    expect(Number.isFinite(valor)).toBe(true);
+    expect(
+      validator.validar("cobranca.desconto_aplicado", {
+        valor_desconto_novo: valor,
+      }),
+    ).toBe("cobranca.desconto_aplicado");
+  });
+});
