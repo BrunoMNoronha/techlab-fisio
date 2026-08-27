@@ -28,7 +28,12 @@ import { readFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import type { PrismaClient } from "../generated/prisma/client.js";
 import { criarClienteApp } from "./helpers/db.js";
-import { criarBaseSintetica, criarAgendamento, type BaseSintetica } from "./helpers/fixtures.js";
+import {
+  criarBaseSintetica,
+  criarAgendamento,
+  TOKEN_HASH_SINTETICO,
+  type BaseSintetica,
+} from "./helpers/fixtures.js";
 import { capturarErro, extrairSqlstate } from "./helpers/erros.js";
 import { identificarViolacao } from "../src/errors/constraint-map.js";
 
@@ -156,9 +161,11 @@ describe("GUARDA 2 — existência e configuração no catálogo", () => {
     expect(linhas).toHaveLength(1);
   });
 
-  it("as 25 CHECK constraints existem, cada uma na tabela esperada", async () => {
+  it("as 26 CHECK constraints existem, cada uma na tabela esperada", async () => {
     const nomes = inventario.checkConstraints.map((c) => c.nome);
-    expect(nomes).toHaveLength(25);
+    // 25 de `E-09` + `ck_sessao_autenticacao_atividade`, acrescentada pela
+    // reabertura física controlada da Etapa 2.3D-B / F0 (`docs/12`, `D-2.3D-01`).
+    expect(nomes).toHaveLength(26);
     const linhas = await db.$queryRaw<Array<{ conname: string; tabela: string }>>`
       SELECT con.conname, rel.relname AS tabela
       FROM pg_constraint con
@@ -607,14 +614,56 @@ const casosCheck: CasoCheck[] = [
   },
   {
     titulo: "ck_sessao_autenticacao_expiracao rejeita expira_em <= criada_em",
-    esperadas: ["ck_sessao_autenticacao_expiracao"],
+    // NÃO ISOLÁVEL desde a F0 da Etapa 2.3D-B: com `expira_em < criada_em` a
+    // janela é vazia, logo NENHUM valor de `ultima_atividade_em` satisfaz
+    // `criada_em <= ultima_atividade_em <= expira_em`. As duas CHECKs falham
+    // juntas e o PostgreSQL reporta uma delas sem ordem garantida — as duas
+    // são admissíveis. A `ck_sessao_autenticacao_atividade` tem prova ISOLADA
+    // própria nos dois casos seguintes.
+    esperadas: ["ck_sessao_autenticacao_expiracao", "ck_sessao_autenticacao_atividade"],
     executar: (base) =>
       db.sessaoAutenticacao.create({
         data: {
           usuarioId: base.usuarioId,
+          tokenHash: TOKEN_HASH_SINTETICO,
           estado: "ATIVA",
           criadaEm: new Date("2026-08-25T10:00:00Z"),
+          ultimaAtividadeEm: new Date("2026-08-25T10:00:00Z"),
           expiraEm: new Date("2026-08-25T09:00:00Z"),
+        },
+      }),
+  },
+  {
+    // `D-2.3D-01`/`D-2.3D-04`: atividade ANTES da criação é impossível.
+    // Isolável — `expira_em > criada_em` continua satisfeita.
+    titulo: "ck_sessao_autenticacao_atividade rejeita ultima_atividade_em < criada_em",
+    esperadas: ["ck_sessao_autenticacao_atividade"],
+    executar: (base) =>
+      db.sessaoAutenticacao.create({
+        data: {
+          usuarioId: base.usuarioId,
+          tokenHash: TOKEN_HASH_SINTETICO,
+          estado: "ATIVA",
+          criadaEm: new Date("2026-08-25T10:00:00Z"),
+          ultimaAtividadeEm: new Date("2026-08-25T09:00:00Z"),
+          expiraEm: new Date("2026-08-25T18:00:00Z"),
+        },
+      }),
+  },
+  {
+    // `D-2.3D-04`: nenhuma sessão sobrevive a `expira_em`, e nenhuma atividade
+    // pode ser registrada além do prazo absoluto. Isolável.
+    titulo: "ck_sessao_autenticacao_atividade rejeita ultima_atividade_em > expira_em",
+    esperadas: ["ck_sessao_autenticacao_atividade"],
+    executar: (base) =>
+      db.sessaoAutenticacao.create({
+        data: {
+          usuarioId: base.usuarioId,
+          tokenHash: TOKEN_HASH_SINTETICO,
+          estado: "ATIVA",
+          criadaEm: new Date("2026-08-25T10:00:00Z"),
+          ultimaAtividadeEm: new Date("2026-08-25T19:00:00Z"),
+          expiraEm: new Date("2026-08-25T18:00:00Z"),
         },
       }),
   },
@@ -623,7 +672,7 @@ const casosCheck: CasoCheck[] = [
 describe("GUARDA 2 — efeito das CHECK constraints (violação rejeitada com 23514)", () => {
   // ck_paciente_cpf_formato: efeito REUTILIZADO — já provado permanentemente
   // em constraint-errors.spec.ts (V-03, caso B) e patient-invariants.spec.ts
-  // (T-CPF-03). Este bloco cobre as 24 demais; a existência das 25 está no
+  // (T-CPF-03). Este bloco cobre as 25 demais; a existência das 26 está no
   // bloco de catálogo acima.
   for (const caso of casosCheck) {
     it(caso.titulo, async () => {

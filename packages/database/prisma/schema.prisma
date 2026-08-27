@@ -9,6 +9,14 @@
 //   coluna gerada `STORED` (`E-08`), CHECK constraints (`E-09`), índices
 //   parciais e exclusion constraints (`E-10`), triggers e `REVOKE` (`E-11`).
 //
+// REABERTURA FÍSICA CONTROLADA — Etapa 2.3D-B / F0 (`docs/12`, `D-2.3D-01`):
+//   única alteração estrutural autorizada após o encerramento da persistência
+//   da Fase 2 — `sessao_autenticacao.token_hash` e
+//   `sessao_autenticacao.ultima_atividade_em` (migration
+//   `20260827..._sessao_autenticacao_token_atividade`). A CHECK que acompanha a
+//   decisão, `ck_sessao_autenticacao_atividade`, permanece só na migration,
+//   pela mesma regra de `E-09`. Nenhum outro objeto físico foi tocado.
+//
 // Conexão: no Prisma 7, `url`, `directUrl` e `shadowDatabaseUrl` NÃO ficam neste
 // arquivo. Eles vivem em `prisma.config.ts`, na raiz do repositório, o que
 // mantém este arquivo livre de qualquer credencial.
@@ -288,11 +296,27 @@ model PapelPermissao {
 
 /// AUT-002, RN-004. Coluna de criação nomeada `criada_em` pela fonte (§7.1),
 /// que também é operando da CHECK `expira_em > criada_em` (§10.2, `E-09`).
+///
+/// `token_hash` e `ultima_atividade_em` — Etapa 2.3D-B / F0, decisão
+/// `D-2.3D-01` (`docs/12` §5.1), única reabertura física autorizada da
+/// persistência após o encerramento da Fase 2. Ambas NOT NULL e sem default:
+///   - `token_hash` guarda APENAS o verificador SHA-256 do segredo do token
+///     `<sessao_id>.<segredo>`; o segredo em claro NUNCA é persistido
+///     (TLF-BASE-V1 §10; `docs/07` §7.1, mesma disciplina de
+///     `segredo_recuperacao_senha.hash_segredo`);
+///   - `ultima_atividade_em` materializa o timeout ocioso de `D-2.3D-04`. Sem
+///     `@default(now())` DELIBERADAMENTE: o instante é decidido pela aplicação
+///     (criação e renovação monotônica), não pelo relógio implícito do banco.
+/// A CHECK `ck_sessao_autenticacao_atividade`
+/// (`criada_em <= ultima_atividade_em <= expira_em`) vive só na migration —
+/// CHECK não é representável no schema declarativo (`docs/07` §22.1).
 model SessaoAutenticacao {
   id                   String                   @id @default(uuid(7)) @db.Uuid
   usuarioId            String                   @map("usuario_id") @db.Uuid
+  tokenHash            String                   @map("token_hash")
   estado               EstadoSessaoAutenticacao
   criadaEm             DateTime                 @default(now()) @map("criada_em") @db.Timestamptz(6)
+  ultimaAtividadeEm    DateTime                 @map("ultima_atividade_em") @db.Timestamptz(6)
   expiraEm             DateTime                 @map("expira_em") @db.Timestamptz(6)
   encerradaEm          DateTime?                @map("encerrada_em") @db.Timestamptz(6)
   revogadaPorUsuarioId String?                  @map("revogada_por_usuario_id") @db.Uuid

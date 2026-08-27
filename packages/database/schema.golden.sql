@@ -719,6 +719,9 @@ CREATE TABLE public.sessao_autenticacao (
     expira_em timestamp(6) with time zone NOT NULL,
     encerrada_em timestamp(6) with time zone,
     revogada_por_usuario_id uuid,
+    token_hash text NOT NULL,
+    ultima_atividade_em timestamp(6) with time zone NOT NULL,
+    CONSTRAINT ck_sessao_autenticacao_atividade CHECK (((ultima_atividade_em >= criada_em) AND (ultima_atividade_em <= expira_em))),
     CONSTRAINT ck_sessao_autenticacao_expiracao CHECK ((expira_em > criada_em))
 );
 
