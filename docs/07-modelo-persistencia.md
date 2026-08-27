@@ -3,7 +3,7 @@
 > **Documento:** `docs/07-modelo-persistencia.md`
 > **Projeto:** TechLab Fisio
 > **Fase:** 2 — Modelagem — **Etapa 2.2: Modelo de Persistência, Integridade Transacional e Concorrência**
-> **Status:** **HOMOLOGADO — REV. 2 — ETAPA 2.2 CONCLUÍDA** *(correções editoriais `DIV-04`/`DIV-05` aplicadas na REV. 2.1, 25/08/2026 — ver §1.3; nenhuma decisão homologada alterada)*
+> **Status:** **HOMOLOGADO — REV. 2 — ETAPA 2.2 CONCLUÍDA** *(correções editoriais `DIV-04`/`DIV-05` aplicadas na REV. 2.1, 25/08/2026; absorção editorial de `D-2.3D-01` aplicada na REV. 2.2, 27/08/2026 — ver §1.3; nenhuma decisão homologada da Etapa 2.2 alterada)*
 > **Homologação:** decisões **`H2.2-01` a `H2.2-18`**, **P-CLIN (Alternativa A)**, **`PROP-RN-2.2-01`** e **`PROP-RN-2.2-02`** aprovadas em conjunto por **Bruno Menezes Noronha** em **19 de agosto de 2026**
 > **Data:** 19 de agosto de 2026
 > **Idioma oficial:** Português do Brasil
@@ -34,6 +34,7 @@ O conteúdo desta revisão resulta de **revisão arquitetural independente e adv
 - **REV. 1** — primeira proposta física da Etapa 2.2, com `H2.2-01`..`H2.2-18`.
 - **REV. 2 — CONSOLIDAÇÃO HOMOLOGADA** — revisão arquitetural independente seguida de homologação. Correções materiais em `H2.2-02`, `H2.2-04`, `H2.2-06`, `H2.2-10` e **substituição da recomendação de P-CLIN** (`H2.2-16`); remoção de três elementos sem sustentação nas fontes; resolução das lacunas `P2.2-03` e `P2.2-04` em regras formais; simulação de 12 cenários concorrentes (§25); matriz de homologação (§27). **Homologada em 19/08/2026** — P-CLIN resolvida pela Alternativa A e aplicada ao modelo físico; aggregate root de `Atendimento` mantido deliberadamente em aberto.
 - **REV. 2.1 (editorial) — 25/08/2026 — E-18A.** Aplicação exclusivamente **editorial** das duas correções decididas por Bruno em 21/08/2026 e remetidas a `E-18` (`docs/08` §11): **(a) `DIV-04`** — em §14, removidas a marcação `U` e a citação indevida a C-06 de `movimento_sessao.chave_idempotencia` (a coluna permanece; a decisão física vigente é: existe, **sem unicidade própria**; C-06 pertence a M8 — U-09/U-10); **(b) `DIV-05`** — em §28.2, IDX-R3 (`reserva_sessao(agendamento_id)`, índice simples de §10-A) incluído na Categoria A, da qual fora omitido. **Nenhuma decisão homologada foi alterada, nenhum objeto físico mudou, nenhuma seção foi reinterpretada** — o texto passou a refletir o que §10.1/§10-A/§18/§24.2 já determinavam e o que está implementado desde `E-07` (correção pré-versionamento, `docs/08` REV. 6).
+- **REV. 2.2 (editorial) — 27/08/2026 — Etapa 2.3D-B / F0.** Absorção exclusivamente **editorial** da decisão **`D-2.3D-01`**, homologada por Bruno Menezes Noronha em 27/08/2026 e registrada em **`docs/12-decisoes-autenticacao-autorizacao.md` §5.1** — cuja implementação física **já está integrada na `main`** (migration `20260827175151_sessao_autenticacao_token_atividade`, merge commit `f612fa7`). Atualizados: **§7.1** (`sessao_autenticacao` passa a listar `token_hash text NN` e `ultima_atividade_em timestamptz NN`), **§10.2** (acrescentada a CHECK `ck_sessao_autenticacao_atividade`; a CHECK de expiração permanece intacta) e **§28.1** (pendência `P-2.3D-01`). **Nada da Etapa 2.2 foi reaberto, revogado ou reinterpretado**: as decisões `H2.2-01`..`H2.2-18`, P-CLIN, `PROP-RN-2.2-01` e `PROP-RN-2.2-02` seguem homologadas exatamente como em 19/08/2026, e a composição de `sessao_autenticacao` descrita até a REV. 2.1 continua correta — apenas deixou de ser completa. Esta revisão **não cria norma**: a fonte normativa de `D-2.3D-01` é e continua sendo `docs/12`; `docs/07` passa a refletir o estado físico vigente, como exige TLF-BASE-V1 §4.8 ("documentação junto do código").
 
 ### 1.4 Registro de homologação e efeitos
 
@@ -208,7 +209,9 @@ Notação: `PK`, `FK`, `NN` = `NOT NULL`, `U` = unicidade, `∅` = anulável.
 
 **`usuario_papel`** / **`papel_permissao`** — PK composta. *(`docs/06` §9: `* — *`)*
 
-**`sessao_autenticacao`** — `id PK`; `usuario_id FK NN`; `estado ENUM(ATIVA, EXPIRADA, REVOGADA) NN`; `criada_em`; `expira_em timestamptz NN`; `encerrada_em timestamptz ∅`; `revogada_por_usuario_id FK ∅`. *(AUT-002, RN-004)*
+**`sessao_autenticacao`** — `id PK`; `usuario_id FK NN`; `token_hash text NN`; `estado ENUM(ATIVA, EXPIRADA, REVOGADA) NN`; `criada_em`; `ultima_atividade_em timestamptz NN`; `expira_em timestamptz NN`; `encerrada_em timestamptz ∅`; `revogada_por_usuario_id FK ∅`. *(AUT-001, AUT-002, RN-004)*
+
+> **`token_hash` e `ultima_atividade_em` — acréscimo posterior à Etapa 2.2.** As duas colunas **não** pertencem à modelagem homologada em 19/08/2026: entraram pela decisão **`D-2.3D-01`** (Etapa 2.3D-B / F0), homologada em 27/08/2026 e registrada em **`docs/12` §5.1**, que autorizou uma **reabertura física pontual e controlada** da persistência já encerrada. Ambas são `NOT NULL` e **sem DEFAULT**, deliberadamente. `token_hash` guarda **apenas o verificador SHA-256** do segredo do token de sessão, conceitualmente `<sessao_id>.<segredo>` — o `id` da sessão não é segredo e o **segredo em claro nunca é persistido**, mesma disciplina de `segredo_recuperacao_senha.hash_segredo` (TLF-BASE-V1 §10). `ultima_atividade_em` materializa o timeout ocioso da política de sessão (`docs/12` §5.4); a ausência de `DEFAULT now()` é intencional, para que o instante seja decidido pela aplicação e não pelo relógio implícito do banco. **`docs/12` permanece a fonte normativa**; esta seção apenas reflete o estado físico vigente.
 
 **`segredo_recuperacao_senha`** — `id PK`; `usuario_id FK NN`; `hash_segredo text NN`; `expira_em timestamptz NN`; `consumido_em timestamptz ∅`; `criado_por_usuario_id FK NN`. **O segredo em claro nunca é persistido.** *(AUT-004, D-04, RN-005, TLF-BASE-V1 §10)*
 
@@ -397,6 +400,9 @@ Derivados **exclusivamente** de `docs/06` §9. Onde a Etapa 2.1 não fixou multi
 | `retificacao_clinica` | `(estado='EFETIVADA') = (efetivada_em IS NOT NULL)`; justificativa não-vazia | RN-027, D-01 |
 | `horario_funcionamento`, `disponibilidade_profissional` | `hora_fim > hora_inicio`; `dia_semana` 0..6 | CFG-002, PRO-003 |
 | `sessao_autenticacao` | `expira_em > criada_em` | AUT-002 |
+| `sessao_autenticacao` | `ultima_atividade_em >= criada_em` **e** `ultima_atividade_em <= expira_em` | **`D-2.3D-01`** — acréscimo posterior à Etapa 2.2 (ver nota abaixo) |
+
+> **Nota editorial (REV. 2.2).** A primeira linha de `sessao_autenticacao` é a CHECK homologada na Etapa 2.2, implementada como `ck_sessao_autenticacao_expiracao` e **preservada sem alteração**. A segunda é `ck_sessao_autenticacao_atividade`, acrescentada pela decisão **`D-2.3D-01`** (`docs/12` §5.1) e implementada na migration `20260827175151_sessao_autenticacao_token_atividade`. As duas **coexistem e são complementares**: a de expiração garante que a janela absoluta da sessão não seja degenerada; a de atividade garante que a última atividade viva **dentro** dessa janela. Os limites da segunda são **inclusivos** (`>=` / `<=`) por decisão expressa: uma sessão recém-criada tem legitimamente `ultima_atividade_em = criada_em`, e limites estritos rejeitariam fisicamente uma escrita legítima de borda. Nenhuma das 25 CHECKs da Etapa 2.2 foi alterada, renomeada ou removida.
 
 ---
 
@@ -1354,6 +1360,7 @@ Simulação obrigatória antes de recomendar homologação.
 | ~~**P-CLIN**~~ | Multiplicidade e decomposição | **ENCERRADA em 19/08/2026** — Alternativa A homologada (§21) |
 | **`P2.2-10`** | **Aggregate root de `Atendimento`** | **Aberta por decisão expressa** — H2-06 vigente; reavaliar somente se surgir necessidade concreta (§21.6) |
 | **`P2.2-11`** | Absorção de `PROP-RN-2.2-01` e `PROP-RN-2.2-02` em `docs/03-regras-negocio.md` | **Governança documental** — até lá, este documento é a fonte vigente dessas regras |
+| ~~**`P-2.3D-01`**~~ | Absorção editorial de `D-2.3D-01` (`sessao_autenticacao.token_hash`, `sessao_autenticacao.ultima_atividade_em`, `ck_sessao_autenticacao_atividade`) neste documento | **ENCERRADA em 27/08/2026** — absorvida na REV. 2.2 (§1.3): §7.1 e §10.2 passaram a refletir o estado físico vigente. A pendência foi levantada em `docs/12` §11; **a fonte normativa de `D-2.3D-01` continua sendo `docs/12` §5.1** |
 | `P2.2-01` | Encadeamento de retificação de retificação | Modelagem — **deixou de depender de P-CLIN**; questão isolada da cadeia |
 | `P2.2-02` | Recibo com numeração sequencial persistida? | Regra de negócio |
 | ~~`P2.2-03`~~ | **ENCERRADA** → `PROP-RN-2.2-01` homologada | — |
