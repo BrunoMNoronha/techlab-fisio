@@ -82,7 +82,8 @@
     { "nome": "ck_horario_funcionamento_dia_semana", "tabela": "horario_funcionamento", "origem": "20260822144354_check_constraints" },
     { "nome": "ck_disponibilidade_profissional_intervalo", "tabela": "disponibilidade_profissional", "origem": "20260822144354_check_constraints" },
     { "nome": "ck_disponibilidade_profissional_dia_semana", "tabela": "disponibilidade_profissional", "origem": "20260822144354_check_constraints" },
-    { "nome": "ck_sessao_autenticacao_expiracao", "tabela": "sessao_autenticacao", "origem": "20260822144354_check_constraints" }
+    { "nome": "ck_sessao_autenticacao_expiracao", "tabela": "sessao_autenticacao", "origem": "20260822144354_check_constraints" },
+    { "nome": "ck_sessao_autenticacao_atividade", "tabela": "sessao_autenticacao", "origem": "20260827175151_sessao_autenticacao_token_atividade" }
   ],
   "triggers": [
     {

@@ -97,3 +97,12 @@ export function criarAgendamento(
     },
   });
 }
+
+/**
+ * Valor sintético para `sessao_autenticacao.token_hash` (Etapa 2.3D-B / F0,
+ * `D-2.3D-01`). A F0 prova PERSISTÊNCIA, não lógica de autenticação: nenhum
+ * SHA-256 é calculado aqui e nenhum segredo real existe. A coluna guardará o
+ * verificador do segredo de `<sessao_id>.<segredo>`; para o banco ela é apenas
+ * um `text NOT NULL`, e é exatamente isso que os specs desta fatia exercitam.
+ */
+export const TOKEN_HASH_SINTETICO = "token-hash-sintetico-f0-sem-valor-real";
