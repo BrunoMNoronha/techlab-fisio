@@ -16,7 +16,12 @@
 //      NaN e ±Infinity não existem em JSON e seriam silenciosamente
 //      serializados como null na coluna jsonb, o que violaria a proibição de
 //      sanitização silenciosa;
-//   6. mensagens de erro citam AÇÃO e NOMES de chave, nunca VALORES — um
+//   6. (F-2.3C-REV-01) chave com regra SEMÂNTICA registrada no catálogo só
+//      aceita o tipo/forma específicos — as chaves monetárias de
+//      `cobranca.desconto_aplicado` exigem string decimal canônica de
+//      numeric(12,2); escalar de outro tipo ou forma → rejeição, sem
+//      conversão/normalização;
+//   7. mensagens de erro citam AÇÃO e NOMES de chave, nunca VALORES — um
 //      valor recusado pode conter dado sensível e não deve vazar em log.
 //
 // O ownership desta regra é da APLICAÇÃO (D-AUD-08): nada disto é replicado
@@ -24,7 +29,11 @@
 
 import { Injectable } from "@nestjs/common";
 
-import { WHITELIST_CONTEXTO, ehAcaoAuditoria } from "./audit.catalog.js";
+import {
+  SEMANTICA_CONTEXTO,
+  WHITELIST_CONTEXTO,
+  ehAcaoAuditoria,
+} from "./audit.catalog.js";
 import type { AcaoAuditoria } from "./audit.catalog.js";
 import type { ContextoCandidato, ValorContexto } from "./audit.types.js";
 
@@ -34,7 +43,8 @@ export type MotivoRejeicaoContexto =
   | "CONTEXTO_NAO_OBJETO"
   | "CONTEXTO_NAO_VAZIO_EM_WHITELIST_VAZIA"
   | "CHAVE_FORA_DA_WHITELIST"
-  | "VALOR_NAO_ESCALAR";
+  | "VALOR_NAO_ESCALAR"
+  | "VALOR_SEMANTICAMENTE_INVALIDO";
 
 export class ErroContextoAuditoria extends Error {
   override readonly name = "ErroContextoAuditoria";
@@ -149,6 +159,28 @@ export class AuditContextValidator {
         naoEscalares,
         "valores de contexto devem ser escalares JSON válidos (string, número finito, boolean ou null); objetos, arrays e números não finitos são rejeitados para impedir serialização genérica de DTO/request e valores sem representação em JSON.",
       );
+    }
+
+    // F-2.3C-REV-01: validação SEMÂNTICA por ação/chave, depois das barreiras
+    // estruturais. Uma chave homologada com regra semântica só aceita o tipo/
+    // forma específicos (ex.: chave monetária exige string decimal canônica de
+    // numeric(12,2)) — mesmo que o valor seja um escalar JSON válido. Nenhuma
+    // conversão/normalização: valor fora da forma → rejeição da operação
+    // inteira. Chaves sem regra registrada não são afetadas.
+    const regras = SEMANTICA_CONTEXTO[acao];
+    if (regras !== undefined) {
+      const semanticamenteInvalidas = chaves.filter((c) => {
+        const regra = regras[c];
+        return regra !== undefined && !regra(contexto[c]);
+      });
+      if (semanticamenteInvalidas.length > 0) {
+        rejeitar(
+          "VALOR_SEMANTICAMENTE_INVALIDO",
+          acao,
+          semanticamenteInvalidas,
+          "o valor não satisfaz a forma semântica exigida para a chave (chave monetária exige string decimal canônica compatível com numeric(12,2)); nenhuma conversão ou normalização é aplicada.",
+        );
+      }
     }
 
     return acao;

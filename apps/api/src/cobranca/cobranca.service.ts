@@ -46,20 +46,19 @@ import { randomUUID } from "node:crypto";
 
 import { Injectable } from "@nestjs/common";
 
+import { ehDecimalMonetarioCanonico } from "../audit/audit.catalog.js";
 import { AuditWriter } from "../audit/audit-writer.js";
 import { DatabaseService } from "../database/database.service.js";
 
 /** Código de catálogo da permissão exigida por FIN-003/RN-043 (docs/04 §5). */
 export const PERMISSAO_APLICAR_DESCONTO = "financeiro.desconto.aplicar";
 
-/**
- * Forma canônica de valor monetário na fronteira desta operação: dígitos,
- * ponto, exatamente duas casas; sem sinal, sem zeros à esquerda, até 10
- * dígitos inteiros — o espaço exato de `numeric(12,2)` não negativo.
- * Qualquer outra representação (float, notação científica, vírgula, casas a
- * mais/menos) é rejeitada ANTES de qualquer acesso ao banco.
- */
-const FORMATO_DECIMAL_CANONICO = /^(?:0|[1-9]\d{0,9})\.\d{2}$/;
+// Forma canônica de valor monetário na fronteira desta operação: a MESMA
+// função usada pela validação semântica da política de auditoria
+// (`ehDecimalMonetarioCanonico` — F-2.3C-REV-01): string decimal com duas
+// casas, sem sinal, o espaço não negativo de `numeric(12,2)`. Qualquer outra
+// representação (float, notação científica, vírgula, casas a mais/menos) é
+// rejeitada ANTES de qualquer acesso ao banco.
 
 /** Converte string decimal canônica em centavos (inteiro exato — sem float). */
 function centavos(valorCanonico: string): bigint {
@@ -129,7 +128,7 @@ export class CobrancaService {
     comando: ComandoAplicarDescontoCobranca,
   ): Promise<ResultadoAplicarDescontoCobranca> {
     const novo = comando.valorDescontoNovo;
-    if (typeof novo !== "string" || !FORMATO_DECIMAL_CANONICO.test(novo)) {
+    if (!ehDecimalMonetarioCanonico(novo)) {
       // Cobre negativo, casas erradas, vírgula, notação científica, NaN,
       // Infinity, number serializado etc. — nada disso chega ao banco.
       throw new ErroDescontoCobranca("VALOR_DESCONTO_INVALIDO");

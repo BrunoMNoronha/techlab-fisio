@@ -618,6 +618,72 @@ describe("whitelist positiva — política fail-closed no caminho de escrita REA
     expect(await contarTodosEventos()).toBe(0);
   }
 
+  it("Cenário A (F-2.3C-REV-01): escrita DIRETA no writer com par canônico → COMMIT de mutação + evento exatos", async () => {
+    const f = await criarFixtures();
+    const correlacaoId = randomUUID();
+    await database.transacao(async (tx) => {
+      const mutacao = await tx.cobranca.updateMany({
+        where: { id: f.cobrancaId, canceladaEm: null, valorDesconto: "0.00" },
+        data: { valorDesconto: "10.00", descontoPorUsuarioId: f.atorId },
+      });
+      expect(mutacao.count).toBe(1);
+      await auditWriter.registrar(tx, {
+        acao: "cobranca.desconto_aplicado",
+        ocorridoEm: new Date(),
+        atorUsuarioId: f.atorId,
+        alvoTipo: "cobranca",
+        alvoId: f.cobrancaId,
+        resultado: "SUCESSO",
+        justificativa: null,
+        correlacaoId,
+        contexto: {
+          valor_desconto_anterior: "0.00",
+          valor_desconto_novo: "10.00",
+        },
+      });
+    });
+    // Caminho real transação → AuditWriter → validator → PostgreSQL, commitado:
+    expect((await lerCobranca(f.cobrancaId)).valor_desconto).toBe("10.00");
+    const eventos = await lerEventosDesconto();
+    expect(eventos).toHaveLength(1);
+    expect(eventos[0]?.correlacaoId).toBe(correlacaoId);
+    expect(eventos[0]?.contexto).toEqual({
+      valor_desconto_anterior: "0.00",
+      valor_desconto_novo: "10.00",
+    });
+  });
+
+  it.each([
+    ["string sensível arbitrária", "PACIENTE: DADO QUE NÃO DEVE ENTRAR"],
+    ['string "10,00" (vírgula)', "10,00"],
+    ['string "10" (sem casas)', "10"],
+    ["number 10", 10],
+  ])(
+    "Cenário B (F-2.3C-REV-01): chave monetária homologada com %s → rejeição semântica + ROLLBACK integral",
+    async (_rotulo, valor) => {
+      const f = await criarFixtures();
+      let mensagem = "";
+      try {
+        await tentarEscritaComContexto(f, {
+          valor_desconto_anterior: "0.00",
+          valor_desconto_novo: valor,
+        });
+        throw new Error("a escrita deveria ter sido rejeitada");
+      } catch (erro) {
+        expect(erro).toBeInstanceOf(ErroContextoAuditoria);
+        expect((erro as { motivo: string }).motivo).toBe(
+          "VALOR_SEMANTICAMENTE_INVALIDO",
+        );
+        mensagem = (erro as Error).message;
+      }
+      // Nenhum valor rejeitado ecoado (proteção contra vazamento):
+      expect(mensagem).toContain("valor_desconto_novo");
+      expect(mensagem).not.toContain(String(valor));
+      // A mutação de negócio foi DESFEITA pelo PostgreSQL; zero evento:
+      await esperarRollbackIntegral(f);
+    },
+  );
+
   it("chave extra além do par homologado → operação INTEIRA desfeita", async () => {
     const f = await criarFixtures();
     await expect(
