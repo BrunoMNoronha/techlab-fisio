@@ -85,6 +85,17 @@ jobs:
       - name: "Backend — prova de runtime do Argon2id no ESM compilado (D-2.3D-02)"
         run: npm run verify:argon2-runtime --workspace @techlab-fisio/api
 
+      # Etapa 2.3D-B / F3 (`D-2.3D-11`, `P-2.3D-03`): prova de runtime do
+      # `@nestjs/swagger@11.4.7` sobre o ESM compilado, FORA do Jest — a
+      # compatibilidade com ESM/`nodenext` é MEDIDA, nunca assumida. Cobre
+      # também a construção do documento a partir do `AppModule` compilado, a
+      # ausência de campo secreto no contrato, a montagem da rota por ambiente
+      # e o cookie seguro de `R-2.3D-04` no artefato real. Mesma posição e
+      # mesma razão da prova do Argon2: barata, no primeiro ponto em que
+      # `apps/api/dist/**` existe, e falha cedo.
+      - name: "Backend — prova de runtime do OpenAPI no ESM compilado (D-2.3D-11)"
+        run: npm run verify:openapi-runtime --workspace @techlab-fisio/api
+
       - name: "Backend — suíte de apps/api (bootstrap, health, integração database, T-AUD-CONTEXTO)"
         run: npm run test:api
 

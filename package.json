@@ -29,6 +29,9 @@
     "db:generate": "prisma generate",
     "db:status": "prisma migrate status"
   },
+  "scarfSettings": {
+    "enabled": false
+  },
   "devDependencies": {
     "dotenv": "17.4.2",
     "prisma": "7.9.1",

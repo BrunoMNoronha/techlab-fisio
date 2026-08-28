@@ -3,7 +3,7 @@
 > **Arquivo:** `docs/10-backend-implementacao.md`
 > **Natureza:** documento **MUTÁVEL** — registro vivo de implementação da frente de backend (`apps/api`)
 > **Status:** backend **EM CONSTRUÇÃO** — Etapa 2.3A **CONCLUÍDA/HOMOLOGADA/INTEGRADA** (REV. 2); Etapa 2.3B **CONCLUÍDA/HOMOLOGADA/INTEGRADA NA `main`** (revisão independente veredito B; correções `F-REV-01`/`F-REV-02` aplicadas — REV. 4; integração por merge commit `5aae8de`, PR [#5](https://github.com/BrunoMNoronha/techlab-fisio/pull/5), 27/08/2026 — registro pós-medição em §11, REV. 5) — provider de persistência + primeiro fluxo transacional real de auditoria (`profissional.situacao.alterada`, fatia técnica INTERNA, sem endpoint/RBAC)
-> **Revisão vigente:** REV. 15 (27/08/2026) — **registro pós-medição da INTEGRAÇÃO da Etapa 2.3D-B / F2 na `main`**: commit da fatia `289a94b`, PR [#12](https://github.com/BrunoMNoronha/techlab-fisio/pull/12), **merge commit `70b30aebf09368200343d6a5672b267811f337ee`**; `main` passou de `f4c2466` para `70b30ae`. CI verde no PR e na `main` pós-merge; bateria local pós-merge integralmente verde; zero drift de persistência. Registro **exclusivamente factual** — nenhuma decisão criada, alterada ou reaberta. Estado corrente: **F0, F1 e F2 INTEGRADAS; F3 — endpoints REST de autenticação NÃO INICIADA**. Estado anterior preservado: REV. 14 (27/08/2026) — **F2 HOMOLOGADA por Bruno Menezes Noronha** (TLF-BASE-V1 §15, item 1) e **`R-2.3D-03` ENCERRADO NA F2** (§9): o risco sai de aberto porque a obrigação de monotonicidade atômica de `D-2.3D-04` foi materializada e provada — `UPDATE` condicional atômico, `GREATEST`, predicado de throttle que também barra atividade regressiva, testes concorrentes contra PostgreSQL real, mutation challenge de last-writer-wins detectado, e confirmação de que `C-01` não enfraqueceu a proteção. **`D-2.3D-04` NÃO foi alterada e nenhuma decisão normativa nova foi criada.** Os limites da evidência (`READ COMMITTED`, PostgreSQL autoritativo compartilhado) permanecem registrados como **limites da prova**, não como risco aberto. Esta REV. acompanha o **rito de versionamento e integração da F2**. Estado anterior preservado: REV. 13 (27/08/2026) — Etapa **2.3D-B / F2 (`SessaoService`) REVISADA DE FORMA INDEPENDENTE, CORRIGIDA E REMEDIDA — permanece NÃO INTEGRADA** (§6-E.9): revisão adversarial com veredito **`B — APTO COM CORREÇÕES OBJETIVAS`**; correções obrigatórias **`C-01`** (achado `A-01` — logout que podia informar encerramento deixando a sessão `ATIVA` e utilizável) e **`C-02`** (precisão documental do `verify:argon2-runtime`) aplicadas, com teste de regressão determinístico contra PostgreSQL real. Nenhuma decisão normativa criada ou reaberta; `docs/12` e a Base Imutável **não foram tocados**. `R-2.3D-03` permanece **MITIGADO**, com encerramento **pendente de decisão de Bruno**. Publicação continua **não autorizada**: sem commit, push, PR, merge, tag ou deploy. Estado corrente: **F1 INTEGRADA; F2 CORRIGIDA E MEDIDA EM BRANCH PRÓPRIA, NÃO INTEGRADA; F3 NÃO INICIADA**. Estado anterior preservado: REV. 12 (27/08/2026) — **duas atualizações, uma factual e uma de execução.** (1) **Correção factual:** a Etapa **2.3D-B / F1 (`CredencialService` / Argon2id) foi INTEGRADA NA `main`** por merge commit `f4c246648e436c3a50121c371147768bd8403657`, PR [#11](https://github.com/BrunoMNoronha/techlab-fisio/pull/11) (commit da fatia: `f642b6259b0c916b42d8f8bc77d25258592805a6`) — a REV. 11 a registrava como "não integrada" porque a publicação ainda não havia ocorrido àquela altura; nenhuma decisão foi alterada por esta correção. (2) **Execução:** Etapa **2.3D-B / F2 (`SessaoService`) IMPLEMENTADA E MEDIDA em branch própria (`agent/fase2-etapa2.3d-f2-sessao`), NÃO INTEGRADA** (§6-E): publicação não autorizada nesta execução — sem commit, push, PR, merge, tag ou deploy. Estado anterior preservado: REV. 10 (27/08/2026) — Etapa **2.3D-B / F0 CONCLUÍDA/HOMOLOGADA/INTEGRADA NA `main`** (merge `f612fa7`, PR [#9](https://github.com/BrunoMNoronha/techlab-fisio/pull/9)): decisões `D-2.3D-01`..`D-2.3D-12` registradas em **`docs/12`** e única reabertura física controlada da persistência (`sessao_autenticacao`: +2 colunas, +1 CHECK). Etapa 2.3C permanece **CONCLUÍDA/HOMOLOGADA/INTEGRADA** (merge `58a6e4b`, PR [#7](https://github.com/BrunoMNoronha/techlab-fisio/pull/7) — REV. 9). `R2.2-04` permanece **ABERTO / MITIGADO PARCIALMENTE** (§7.2); ressalvas `F-2.3C-REV-02`/`F-2.3C-REV-03` preservadas sem correção (§9). Estado corrente: **F1 INTEGRADA; F2 IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA, NÃO INTEGRADA; F3 — endpoints REST de autenticação NÃO INICIADA**
+> **Revisão vigente:** REV. 19 (28/08/2026) — **Etapa 2.3D-B / F3 HOMOLOGADA por Bruno Menezes Noronha e submetida ao rito de versionamento e integração** (§6-I). A **terceira** revisão técnica independente adversarial devolveu **`A — APTO À HOMOLOGAÇÃO E VERSIONAMENTO`**, sem nenhum achado BLOQUEANTE, ALTO ou MÉDIO, tendo reproduzido de forma independente as correções `F3R-01` e `F3R-03` (29 variantes de request-target com zero incoerências entre roteador e filtro; oito propriedades do iterador de `Map` sob mutação; saturação a 50 000 buckets). Único achado, **`F3R-08` (BAIXO)** — a tabela viva de §9 ainda rotulava `L-11` como decisão local —, **corrigido nesta revisão**: a linha passa a apontar **`D-2.3D-13`** como fonte normativa e `L-11` como alias histórico. **Nenhuma decisão `D-2.3D-*` foi alterada ou reaberta.** Riscos residuais aceitos e registrados: `R-2.3D-08`, `F-12`, `F3R-06`, `F3R-07`. Bateria integral verde; zero drift; F4/F5/F6 não iniciadas. Estado anterior preservado: REV. 18 (28/08/2026) — **Etapa 2.3D-B / F3 CORRIGIDA PELA SEGUNDA VEZ, após a segunda revisão técnica independente adversarial (veredito `B — APTO COM CORREÇÕES OBJETIVAS`); permanece NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-H). A segunda revisão **confirmou por reprodução própria** que `F-01`, `F-04` e `F-05` estão de fato corrigidos, e não encontrou achado BLOQUEANTE ou ALTO. Corrigidos agora: `F3R-01` (MÉDIO — request-target *absolute-form* reabria o vazamento do parser e o log de ERRO acionável sem autenticação), `F3R-03` (MÉDIO — inanição da amostragem de despejo ancorada na cabeça do `Map`, medida em 2 000/2 000 recusas), `F3R-04` e `F3R-05` (BAIXOS, documentais). **`F3R-02` foi resolvido por DECISÃO DE BRUNO**: `L-11` passou a norma como **`D-2.3D-13`** em `docs/12` REV. 3 — acréscimo de decisão nova, **sem alterar, renumerar ou reabrir `D-2.3D-01`..`D-2.3D-12`**. `F3R-06`, `F3R-07` permanecem OBSERVAÇÃO não tratada e `F-12` permanece BAIXO aceito. Bateria integral verde (`test:api` 437; integração 203); 3 mutation challenges novos (`C-18`..`C-20`) detectados e revertidos; zero drift; F4/F5/F6 não iniciadas. Próximo passo: **nova revisão independente adversarial**. Estado anterior preservado: REV. 17 (28/08/2026) — **Etapa 2.3D-B / F3 CORRIGIDA após revisão técnica independente adversarial (veredito `B — APTO COM CORREÇÕES OBJETIVAS`); permanece NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-G). Doze dos catorze achados corrigidos, `F-07` resolvido por consequência e `F-12` mantido BAIXO com racional. Destaques: o gate de `D-2.3D-06` passou a valer sob **concorrência** (reserva de tentativa em voo — `F-01`, ALTO); `TLF_AMBIENTE` tornou-se **obrigatória**, fechando o cenário principal de `R-2.3D-04` (`F-02`); o **rehash** exigido por `D-2.3D-02` foi materializado no login com escrita condicionada ao digest verificado (`F-04`); o despejo do limitador deixou de sacrificar bloqueios vigentes (`F-05`); erro 4xx do parser deixou de virar `500` (`F-03`). **Nenhuma decisão `D-2.3D-*` alterada; `docs/12` intocado.** Bateria integral verde; 17 mutation challenges detectados e revertidos; zero drift; F4/F5/F6 não iniciadas. Próximo passo: **nova revisão independente adversarial**. Estado anterior preservado: REV. 16 (27/08/2026) — **Etapa 2.3D-B / F3 (endpoints REST de autenticação) IMPLEMENTADA E MEDIDA em branch própria (`agent/fase2-etapa2.3d-f3-auth-http`), a partir de `main` = `9a22262` — NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-F). Publicação **não autorizada** nesta execução: sem commit, push, PR, merge, tag ou deploy. `D-2.3D-06`, `D-2.3D-07`, `D-2.3D-11` e `D-2.3D-12` materializadas; **nenhuma decisão foi criada, alterada ou reaberta** e **`docs/12` não foi tocado**. `P-2.3D-03` **medida e verde** pelo Caminho A (`@nestjs/swagger@11.4.7` compatível com ESM/`nodenext`), com encerramento formal deixado a decisão de Bruno. `T-AUTH-ENUMERATION` provado estruturalmente; `R-2.3D-04` protegido por fail-fast testado em três níveis; 14 challenges de mutação detectados e revertidos; bateria integral verde; zero drift de persistência. Estado corrente: **F0, F1 e F2 INTEGRADAS; F3 IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA, NÃO INTEGRADA; F4/F5/F6 NÃO INICIADAS**. Próximo passo: **revisão técnica independente adversarial da F3**. Estado anterior preservado: REV. 15 (27/08/2026) — **registro pós-medição da INTEGRAÇÃO da Etapa 2.3D-B / F2 na `main`**: commit da fatia `289a94b`, PR [#12](https://github.com/BrunoMNoronha/techlab-fisio/pull/12), **merge commit `70b30aebf09368200343d6a5672b267811f337ee`**; `main` passou de `f4c2466` para `70b30ae`. CI verde no PR e na `main` pós-merge; bateria local pós-merge integralmente verde; zero drift de persistência. Registro **exclusivamente factual** — nenhuma decisão criada, alterada ou reaberta. Estado corrente: **F0, F1 e F2 INTEGRADAS; F3 — endpoints REST de autenticação NÃO INICIADA**. Estado anterior preservado: REV. 14 (27/08/2026) — **F2 HOMOLOGADA por Bruno Menezes Noronha** (TLF-BASE-V1 §15, item 1) e **`R-2.3D-03` ENCERRADO NA F2** (§9): o risco sai de aberto porque a obrigação de monotonicidade atômica de `D-2.3D-04` foi materializada e provada — `UPDATE` condicional atômico, `GREATEST`, predicado de throttle que também barra atividade regressiva, testes concorrentes contra PostgreSQL real, mutation challenge de last-writer-wins detectado, e confirmação de que `C-01` não enfraqueceu a proteção. **`D-2.3D-04` NÃO foi alterada e nenhuma decisão normativa nova foi criada.** Os limites da evidência (`READ COMMITTED`, PostgreSQL autoritativo compartilhado) permanecem registrados como **limites da prova**, não como risco aberto. Esta REV. acompanha o **rito de versionamento e integração da F2**. Estado anterior preservado: REV. 13 (27/08/2026) — Etapa **2.3D-B / F2 (`SessaoService`) REVISADA DE FORMA INDEPENDENTE, CORRIGIDA E REMEDIDA — permanece NÃO INTEGRADA** (§6-E.9): revisão adversarial com veredito **`B — APTO COM CORREÇÕES OBJETIVAS`**; correções obrigatórias **`C-01`** (achado `A-01` — logout que podia informar encerramento deixando a sessão `ATIVA` e utilizável) e **`C-02`** (precisão documental do `verify:argon2-runtime`) aplicadas, com teste de regressão determinístico contra PostgreSQL real. Nenhuma decisão normativa criada ou reaberta; `docs/12` e a Base Imutável **não foram tocados**. `R-2.3D-03` permanece **MITIGADO**, com encerramento **pendente de decisão de Bruno**. Publicação continua **não autorizada**: sem commit, push, PR, merge, tag ou deploy. Estado corrente: **F1 INTEGRADA; F2 CORRIGIDA E MEDIDA EM BRANCH PRÓPRIA, NÃO INTEGRADA; F3 NÃO INICIADA**. Estado anterior preservado: REV. 12 (27/08/2026) — **duas atualizações, uma factual e uma de execução.** (1) **Correção factual:** a Etapa **2.3D-B / F1 (`CredencialService` / Argon2id) foi INTEGRADA NA `main`** por merge commit `f4c246648e436c3a50121c371147768bd8403657`, PR [#11](https://github.com/BrunoMNoronha/techlab-fisio/pull/11) (commit da fatia: `f642b6259b0c916b42d8f8bc77d25258592805a6`) — a REV. 11 a registrava como "não integrada" porque a publicação ainda não havia ocorrido àquela altura; nenhuma decisão foi alterada por esta correção. (2) **Execução:** Etapa **2.3D-B / F2 (`SessaoService`) IMPLEMENTADA E MEDIDA em branch própria (`agent/fase2-etapa2.3d-f2-sessao`), NÃO INTEGRADA** (§6-E): publicação não autorizada nesta execução — sem commit, push, PR, merge, tag ou deploy. Estado anterior preservado: REV. 10 (27/08/2026) — Etapa **2.3D-B / F0 CONCLUÍDA/HOMOLOGADA/INTEGRADA NA `main`** (merge `f612fa7`, PR [#9](https://github.com/BrunoMNoronha/techlab-fisio/pull/9)): decisões `D-2.3D-01`..`D-2.3D-12` registradas em **`docs/12`** e única reabertura física controlada da persistência (`sessao_autenticacao`: +2 colunas, +1 CHECK). Etapa 2.3C permanece **CONCLUÍDA/HOMOLOGADA/INTEGRADA** (merge `58a6e4b`, PR [#7](https://github.com/BrunoMNoronha/techlab-fisio/pull/7) — REV. 9). `R2.2-04` permanece **ABERTO / MITIGADO PARCIALMENTE** (§7.2); ressalvas `F-2.3C-REV-02`/`F-2.3C-REV-03` preservadas sem correção (§9). Estado corrente: **F1 INTEGRADA; F2 IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA, NÃO INTEGRADA; F3 — endpoints REST de autenticação NÃO INICIADA**
 
 ---
 
@@ -416,6 +416,642 @@ A revisão levantou outros pontos, todos **classificados como não bloqueantes**
 
 A revisão executou uma sonda dedicada, com `WHERE` deliberadamente **fraco** (que permanece verdadeiro após a atualização concorrente), e mediu que a cláusula `SET` **é avaliada sobre a versão NOVA** da linha: `GREATEST` **impediu a regressão** exatamente onde o predicado não protegia — final `10:05`, e não `10:02`. A leitura correta, portanto, é: `GREATEST` **não é decorativo**; é uma barreira **real**, hoje **sombreada** por um predicado mais forte, e por isso comportamentalmente inobservável sob as invariantes atuais. Deve **permanecer**.
 
+## 6-F. Etapa 2.3D-B / F3 — endpoints REST de autenticação
+
+**Estado: CONCLUÍDA / HOMOLOGADA / INTEGRADA NA `main`** — ver §6-I para o rito de fechamento e §11, REV. 19. Esta seção preserva o registro da **primeira execução** da fatia: implementada e medida em 27/08/2026 na branch `agent/fase2-etapa2.3d-f3-auth-http`, a partir de `main` = `9a22262c515c8b97c73dc7cf8493252db07dd501` (baseline confirmada: F0, F1 e F2 integradas; `R-2.3D-03` encerrado; F3 não iniciada). **Naquela execução a publicação não era autorizada** — sem commit, push, PR, merge, tag ou deploy —, e o passo seguinte foi a revisão técnica independente adversarial registrada em §6-G/§6-H.
+
+Fontes normativas materializadas: **`D-2.3D-06`** (`docs/12` §5.6), **`D-2.3D-07`** (§5.7), **`D-2.3D-11`** (§5.11) e **`D-2.3D-12`** (§5.12) — **nenhuma delas foi alterada**, e `docs/12` **não foi tocado**. Requisitos: AUT-001, AUT-002, AUT-006; FC-01 (`docs/05` §4, inclusive o bloco *Auditoria*); `docs/09` §5/§12 (`D-AUD-01`/`D-AUD-03`/`D-AUD-07`/`D-AUD-08`). **Zero mudança física de persistência**: `packages/` inteiro com diff vazio contra `9a22262`. **Uma dependência nova**, prevista pela própria decisão: `@nestjs/swagger@11.4.7` (§6-F.7).
+
+### 6-F.1 Componentes implementados
+
+Primeira fatia da frente de backend com **exposição HTTP real**.
+
+| Arquivo | Papel | Estado |
+| --- | --- | --- |
+| `src/auth/politica-cookie.ts` | `D-2.3D-07` — resolução da política de cookie por ambiente, fail-fast de `R-2.3D-04`, montagem de `Set-Cookie` de emissão **e** de limpeza (fonte única), leitura fail-closed do cookie | novo (252 linhas) |
+| `src/auth/limitador-login.ts` | `D-2.3D-06` — contadores de falha em memória de processo, duas dimensões, janela deslizante, poda, teto de entradas, `Retry-After` | novo (300) |
+| `src/auth/protecao-csrf.guard.ts` | `D-2.3D-07` — baseline CSRF: custom header, `application/json`, Fetch Metadata, `Origin`; função pura + guard | novo (169) |
+| `src/auth/auth.dto.ts` | contratos HTTP, catálogo fechado de erro, validação estrutural pura do payload | novo (175) |
+| `src/auth/autenticacao.service.ts` | orquestração de login/logout e emissão dos eventos de `D-2.3D-12` e de FC-01 | novo (240) |
+| `src/auth/auth.controller.ts` | `POST /auth/login`, `POST /auth/logout` + decorators OpenAPI | novo (279) |
+| `src/auth/erro-autenticacao.filter.ts` | normalização do contrato de erro das duas rotas (inclusive erros de middleware) | novo (118) |
+| `src/openapi/documento-openapi.ts` | `D-2.3D-11` — construção e montagem do documento OpenAPI | novo (129) |
+| `src/auth/auth.module.ts` | passa a declarar o controller e a importar `AuditModule` | alterado |
+| `src/auth/sessao.service.ts` | acréscimo **aditivo** de `emitirEm` / `revogarEm` (§6-F.2) | alterado |
+| `src/main.ts` | montagem do documento OpenAPI entre `create` e `listen`; CORS segue ausente | alterado |
+| `scripts/verify-openapi-runtime.mjs` | prova de runtime do OpenAPI contra o `dist/` ESM real | novo (267) |
+| `scripts/smoke-api.mjs` (raiz) | duas provas novas no processo real (`/openapi.json`; recusa CSRF) | alterado |
+| `.github/workflows/ci.yml` | passo `verify:openapi-runtime` | alterado |
+| `.env.example` | variável `TLF_AMBIENTE` documentada | alterado |
+
+### 6-F.2 Ampliação de fronteira — as duas únicas, ambas previstas
+
+1. **`AuthModule` passa a importar `AuditModule`.** Até a F2 ele estava deliberadamente fora, porque `usuario.autenticacao` e a auditoria de logout pertenciam a esta fatia (`docs/12` §9). Agora pertencem. `auth.module.integration.spec.ts` falha se **qualquer outro** módulo aparecer nos imports.
+2. **`SessaoService` ganhou `emitirEm(tx, …)` e `revogarEm(tx, …)`** — **aditivos, sem nenhuma mudança de semântica**: `emitir`/`revogar` viraram invólucros transacionais e todo o corpo migrou sem alteração, inclusive a ordem obrigatória de `C-01` (detecção de expiração antes da revogação). **Motivo:** o contrato do `AuditWriter` (`D-AUD-08`) exige que o evento entre na **mesma transação** da mutação de negócio — aqui, a criação e o encerramento da sessão. Sem esse ponto de entrada, o login abriria duas transações independentes e existiria um desfecho em que a sessão nasce sem seu evento. É o mesmo padrão que o `AuditWriter` já adota: quem tem a fronteira transacional a passa explicitamente.
+
+Nada de F4+ nasceu: nenhum guard/decorator de RBAC, nenhuma resolução de papéis, nenhum seed, nenhum bootstrap de Administrador, nenhuma rota de recuperação de senha, nenhuma revogação de terceiro, nenhum refresh token, nenhum JWT, nenhum CORS, nenhum frontend.
+
+### 6-F.3 Contratos HTTP
+
+Rotas, status e formatos **não são fixados por fonte homologada**; adota-se a alternativa REST mínima e convencional, registrada como **decisão local de implementação** (§6-F.8).
+
+| Rota | Método | Requisição | Sucesso | Erros |
+| --- | --- | --- | --- | --- |
+| `/auth/login` | `POST` | `application/json` + `X-TLF-Requisicao`; `{ identificador, senha }` | `200` `{ usuarioId, expiraEm }` + `Set-Cookie` da sessão | `400` `REQUISICAO_INVALIDA` · `401` `CREDENCIAIS_INVALIDAS` · `403` `REQUISICAO_NAO_AUTORIZADA` · `429` `TENTATIVAS_EXCEDIDAS` + `Retry-After` · `500` `FALHA_INTERNA` |
+| `/auth/logout` | `POST` | `application/json` + `X-TLF-Requisicao`; cookie de sessão; sem corpo útil | `204` sem corpo + `Set-Cookie` de limpeza | `401` `SESSAO_INVALIDA` (uniforme) · `403` `REQUISICAO_NAO_AUTORIZADA` · `500` `FALHA_INTERNA` |
+
+Corpo de erro **único** em toda a fronteira: `{ "erro": "<CODIGO>" }`, código de conjunto fechado. O token de sessão **não aparece no corpo em hipótese alguma** — sai exclusivamente pelo cookie `HttpOnly` (`D-2.3D-07`). O logout **não devolve** id, estado, instante ou qualquer informação interna da sessão. O cookie é **limpo em todos os desfechos** do logout, inclusive na falha.
+
+### 6-F.4 `D-2.3D-06` — rate limiting do login
+
+| Item | Materialização |
+| --- | --- |
+| Limites | **5 falhas / 15 min** por identificador normalizado e hasheado; **30 falhas / 15 min** por IP — exatamente os valores homologados |
+| Mecanismo | dois `Map` de processo. **Sem Redis, sem armazenamento externo, sem dependência nova.** Provado negativamente: duas instâncias no mesmo processo não compartilham contador |
+| Janela | **deslizante**, por lista de instantes por chave; libera quando a falha mais antiga sai da janela — **sem lockout duro** |
+| Hash do identificador | **HMAC-SHA-256 com chave aleatória de processo**, não SHA-256 puro. Um e-mail tem entropia baixa e seu digest simples seria reconstruível; com chave de processo, o mapa não é uma lista de identificadores tentados. Provado: nenhuma chave é, contém ou revela o identificador; duas instâncias produzem chaves diferentes para o mesmo identificador |
+| Poda / expiração | por chave em toda leitura, **mais** varredura global periódica a cada 1 000 admissões. **Sem timer** — nenhum `setInterval` segura o event loop no encerramento |
+| Teto de entradas | `MAXIMO_DE_ENTRADAS = 50 000` por dimensão. **CORRIGIDO pela revisão independente (`F-05`, §6-G.3): a heurística original — despejar a entrada de expiração mais próxima — removia justamente a vítima BLOQUEADA há mais tempo, e o racional aqui registrado estava materialmente invertido.** Vale agora: bucket bloqueado ou com reserva em voo é indespejável; entre candidatos seguros vence o de menor número de falhas; sem candidato seguro, a admissão é recusada |
+| `Retry-After` | segundos até a falha mais antiga sair da janela; **nunca 0** enquanto bloqueado; quando as duas dimensões bloqueiam, prevalece o **maior**. **`F-09` (revisão): o relógio era `Date.now()` — descrito no código como "monotônico", o que era falso — e uma regressão de relógio produzia `Retry-After` de 1 200 s, acima da janela de 900 s. Agora o relógio é de fato monotônico e o valor tem teto (§6-G.1)** |
+| **Ordem vs. Argon2** | a **consulta** ao limitador precede a busca do usuário e o `verify`. Tentativa bloqueada retorna `429` **sem executar Argon2, sem consultar o banco e sem emitir evento** — medido por espiã sobre `verificarComCaminhoDummy`, com **controle positivo** (uma tentativa admitida de fato executa o Argon2) |
+| Contabilização | `registrarFalha` só é chamado para tentativa **bem-formada, admitida e rejeitada pela autenticação** — a mesma condição de `D-2.3D-12`. Tentativa já bloqueada **não** conta: contá-la converteria o limite temporal no lockout progressivo que a alternativa A-08 rejeita |
+| Restart | zera os contadores — **limitação homologada** (`R-2.3D-02`/`P-2.3D-06`), não corrigida aqui |
+
+**Fronteira preservada:** `docs/12` §5.6 tem duas metades. O limite de **conclusão de recuperação de senha** (10 tentativas / 15 min por IP) pertence à F6 e **não** foi implementado, preparado nem parametrizado.
+
+**Limitação declarada, no espírito de `R-2.3D-02`:** sob pressão suficiente para encher uma dimensão, chaves NOVAS passam a ser recusadas transitoriamente (`429`). Nenhum bloqueio vigente é sacrificado — ver `F-05` em §6-G.3, que corrigiu o comportamento anterior. **Restart continua zerando os contadores**, limitação homologada do MVP.
+
+### 6-F.5 `D-2.3D-07` — cookie e CSRF
+
+**Cookie, por ambiente (`TLF_AMBIENTE`):**
+
+| Ambiente | Nome | Atributos |
+| --- | --- | --- |
+| `producao` / `homologacao` | `__Host-tlf_sessao` | `HttpOnly` · `Secure` · `SameSite=Strict` · `Path=/` · **sem** `Domain` |
+| `desenvolvimento` / `teste` | `tlf_sessao_dev` | `HttpOnly` · `SameSite=Strict` · `Path=/` · **sem** `Domain` · sem `Secure` (HTTP local) |
+
+Sem detecção de navegador (alternativa A-09). **Sem `Max-Age`/`Expires`** — decisão local: o cookie é de sessão de navegador e o teto absoluto de 8 h já é enforçado no backend por `D-2.3D-04`; um prazo no cookie seria segunda fonte da mesma verdade. `set` e `clear` derivam do **mesmo** objeto e reutilizam literalmente os mesmos atributos: divergir é impossível por construção, e o teste compara os dois cabeçalhos atributo a atributo nos quatro ambientes.
+
+**`R-2.3D-04` — fail-fast de bootstrap, em três barreiras:**
+
+1. `TLF_AMBIENTE` com valor desconhecido **falha** — nunca degrada silenciosamente para desenvolvimento;
+2. `NODE_ENV=production` sem ambiente protegido declarado **falha** — é a barreira que pega o deploy que esqueceu de declarar a variável;
+3. a política construída para ambiente protegido é **reverificada** contra a invariante de `D-2.3D-07` antes de ser devolvida.
+
+A resolução acontece numa **fábrica de provider** de `AuthModule`, isto é, dentro de `NestFactory.create`: configuração insegura faz a aplicação **não subir**. Provado em três níveis: função pura (`politica-cookie.spec.ts`), container NestJS real (`auth.module.integration.spec.ts`) e artefato compilado (`verify:openapi-runtime`).
+
+**CSRF — a baseline homologada, e nada além dela:**
+
+| Camada | Comportamento |
+| --- | --- |
+| Custom request header | `X-TLF-Requisicao` **obrigatório**, qualquer valor não vazio. Decisão local do nome (§6-F.8); a proteção está no nome ser não-simples |
+| Content type | somente `application/json` (parâmetros como `; charset=utf-8` são aceitos) — fecha a brecha do formulário HTML |
+| Fetch Metadata | `Sec-Fetch-Site` deve ser `same-origin`/`none`; `Sec-Fetch-Mode` não pode ser `navigate`; `Sec-Fetch-Dest` deve ser `empty` — avaliados **quando enviados** |
+| `Origin` | quando presente, tem de ser a própria origem (comparação contra `Host`); `null` e valores não analisáveis são recusados |
+| `SameSite=Strict` | na política de cookie |
+| CORS | **não habilitado** — a ausência de `enableCors` é deliberada e é parte da baseline |
+
+Aplicada também ao **login**, deliberadamente: *login-CSRF* é ataque real e o custo para o cliente legítimo é zero. Rejeição **uniforme**: `403` `{ "erro": "REQUISICAO_NAO_AUTORIZADA" }`, sem dizer qual camada recusou. **Synchronizer token não foi implementado e não é registrado como obrigação futura** (alternativa A-10); `P-2.3D-04` permanece **ABERTA**.
+
+Fail-closed sem quebrar o legítimo: ausência de `Origin`/Fetch Metadata (clientes não navegador, `curl`, o smoke da CI) **não** derruba sozinha a requisição — o custom header continua obrigatório em todos os casos, e é justamente ele que um navegador atacante não transpõe.
+
+### 6-F.6 `D-2.3D-12` e a auditoria de FC-01
+
+**Falha de autenticação — literal, com `contexto` vazio (whitelist vazia de `D-AUD-07`, não ampliada):**
+
+| Situação | `acao` | `resultado` | `ator_usuario_id` | `alvo_tipo` | `alvo_id` | `contexto` |
+| --- | --- | --- | --- | --- | --- | --- |
+| Conta existente (senha errada) | `usuario.autenticacao` | `FALHA` | `NULL` | `usuario` | `usuario.id` | `{}` |
+| Conta **inativa** | `usuario.autenticacao` | `FALHA` | `NULL` | `usuario` | `usuario.id` | `{}` |
+| Conta inexistente | `usuario.autenticacao` | `FALHA` | `NULL` | `usuario` | `NULL` | `{}` |
+
+**Não geram evento** — provado negativamente contra o banco: payload malformado (`400`), requisição recusada pela baseline CSRF (`403`) e tentativa bloqueada pelo rate limiter (`429`).
+
+**Auditoria adicional, apenas o que já é normativamente exigido** (FC-01 §Auditoria — "login bem-sucedido", "falhas relevantes", "logout"; `docs/09` §5, ambas as linhas **DD**):
+
+| Evento | `acao` | `resultado` | `ator` | `alvo_tipo` | `alvo_id` |
+| --- | --- | --- | --- | --- | --- |
+| Login bem-sucedido | `usuario.autenticacao` | `SUCESSO` | `usuario.id` | `usuario` | `usuario.id` |
+| Logout | `usuario.sessao.logout` | `SUCESSO` | `usuario.id` | `sessao_autenticacao` | `sessao.id` |
+
+**Nenhuma ação nova foi criada; nenhuma whitelist foi ampliada; nenhuma chave de `contexto` foi introduzida.** `contexto` é **omitido** (coluna `NULL`) em vez de enviado como `{}` — o validator trata ausente e vazio identicamente, e é o precedente já vigente em `profissional.situacao.alterada`. `justificativa` é `NULL` em todos: nenhuma fonte a exige aqui. O catálogo tipado e o validator fail-closed existentes são consumidos sem alteração.
+
+**Atomicidade:** login → `emitirEm` + evento na **mesma** transação; logout → `revogarEm` + evento na **mesma** transação. O evento de **falha** vive em transação própria — é a única forma possível, porque não houve mutação de negócio à qual se acoplar, e não enfraquece garantia alguma.
+
+**Logout com sessão já terminal não emite evento**: nada mudou, e registrar a tentativa transformaria a auditoria num contador de ruído (`docs/09` §5: "resultado necessário? Não — só sucesso").
+
+**Ausência de segredo**, provada por varredura sobre `SELECT * FROM evento_auditoria` e sobre toda escrita em `console`: identificador tentado, senha, token, segredo, cookie e digest Argon2 **não aparecem**.
+
+### 6-F.7 `D-2.3D-11` e `P-2.3D-03` — medição e **Caminho A**
+
+Medição da baseline candidata, executada **antes** de qualquer instalação e depois confirmada em runtime:
+
+```text
+npm view @nestjs/swagger@11.4.7 version peerDependencies engines license
+  version = 11.4.7
+  license = MIT
+  engines = (não declarado)
+  peerDependencies: @nestjs/core ^11.0.1 · @nestjs/common ^11.0.1 ·
+                    reflect-metadata ^0.1.12 || ^0.2.0 ·
+                    @fastify/static ^8|^9|^10 (OPCIONAL) ·
+                    class-validator * (OPCIONAL) · class-transformer * (OPCIONAL)
+  dependencies: lodash · js-yaml · path-to-regexp · swagger-ui-dist ·
+                @microsoft/tsdoc · @nestjs/mapped-types
+```
+
+**Cadeia transitiva com telemetria, apontada pela revisão independente (`F-11`):** `swagger-ui-dist@5.32.13` traz `@scarf/scarf@1.4.0`, pacote de telemetria de instalação com `postinstall` de rede. Ele **não participa do runtime** (a UI do Swagger não é servida) e foi **desligado explicitamente** por `scarfSettings.enabled = false` no `package.json` da raiz — ver §6-G.8.
+
+`@nestjs/core`/`@nestjs/common` vigentes são `11.2.3` — dentro da faixa. Os três peers restantes são **opcionais** (`peerDependenciesMeta.optional = true`, medido), e **nenhum deles foi instalado**: `class-validator`/`class-transformer` não entraram no projeto.
+
+| Verificação | Resultado |
+| --- | --- |
+| `tsc --noEmit` com `module`/`moduleResolution` `nodenext` e **`skipLibCheck: false`** | **verde** |
+| `tsc -p tsconfig.build.json` (ESM real) | **verde** |
+| Import ESM do artefato compilado, fora do Jest (`node`, sem loader) | **verde** |
+| `DocumentBuilder` + `SwaggerModule.createDocument` sobre o `AppModule` **compilado** | **verde** |
+| Bootstrap do processo real `node apps/api/dist/main.js` servindo `/openapi.json` | **verde** (smoke) |
+| `npm ci` reproduzível / lockfile coerente | **verde** — 7 pacotes acrescentados, instalados **apenas** no workspace `@techlab-fisio/api` |
+
+**Nenhuma incompatibilidade técnica reproduzível foi encontrada.** Adotado o **Caminho A**: `@nestjs/swagger@11.4.7`, versão exata, **sem troca silenciosa por versão mais nova**. O fallback autoral previsto por `D-2.3D-11` **não foi necessário** e não foi construído. `D-ESM-01` **não foi alterada**.
+
+Contrato: **decorators explícitos**, sem plugin de compilação — nada é inferido silenciosamente de tipos. **Sem UI**: `swagger-ui-dist` vem como dependência transitiva, mas a interface **não é servida** em caminho algum (provado: `/openapi` responde `404`); só o JSON, e apenas em ambientes não protegidos (decisão local, §6-F.8). Nenhuma dependência extra de UI foi instalada.
+
+**Modos de falha MEDIDOS e corrigidos nesta fatia** — ambos silenciosos, ambos encontrados pelas próprias provas:
+
+1. **`raw` é obrigatório.** Em `@nestjs/swagger@11.4.7`, desligar a UI **não** basta: a rota do documento só é registrada quando `raw` inclui o formato. Sem `raw: ["json"]`, `jsonDocumentUrl` responde `404`.
+2. **Ordem de montagem.** O Nest registra o handler de rota desconhecida durante a inicialização; uma rota montada **depois** fica atrás dele e responde `404`. `montarDocumentoOpenApi` roda entre `NestFactory.create` e `listen` — e o smoke prova isso no processo real.
+
+**Estado de `P-2.3D-03`: MEDIDA e verde — encerramento formal PENDENTE de decisão de Bruno Menezes Noronha.** `docs/12` **não foi alterado** nesta execução: o precedente vigente (REV. 1 para `P-2.3D-02`; REV. 2 para `R-2.3D-03`) é o de encerramento **por decisão expressa**, após revisão. `R-2.3D-06` (incompatibilidade de `@nestjs/swagger`) fica **materialmente afastado** pela medição, com a mesma ressalva de forma.
+
+### 6-F.8 Decisões locais de implementação — reversíveis, **não** são norma
+
+Rotuladas como tais no próprio código. Nenhuma reabre, estende ou reinterpreta decisão homologada.
+
+| ID | Decisão | Racional |
+| --- | --- | --- |
+| `L-01` | Rotas `POST /auth/login` e `POST /auth/logout` | alternativa REST mínima e convencional; nenhuma fonte fixa a rota |
+| `L-02` | `200` com corpo mínimo no login; `204` sem corpo no logout | não há representação a devolver no logout, e o único artefato é o `Set-Cookie` de limpeza |
+| `L-03` | Corpo de erro único `{ "erro": "<CODIGO>" }`, conjunto fechado | contrato deliberado, estável e testável; nenhuma mensagem livre |
+| `L-04` | `401` autenticação/sessão · `429` rate limit · `403` CSRF · `400` payload · `500` falha técnica | convenção HTTP; `500` distinto de `401` por §6-F.9 |
+| `L-05` | IP da dimensão de `D-2.3D-06` vem do **socket**, nunca de `X-Forwarded-For` | nenhuma topologia de proxy está homologada; confiar no cabeçalho daria um contador novo por requisição, abolindo a dimensão. Provado por teste |
+| `L-06` | Nome do custom header CSRF: `X-TLF-Requisicao` | `D-2.3D-07` exige o header e não fixa o nome; prefixo do produto, estável, sem colisão |
+| `L-07` | Segredo do cookie sem `Max-Age`/`Expires` | teto absoluto já é do backend; prazo no cookie seria segunda fonte da mesma verdade |
+| `L-08` | Documento OpenAPI **sempre construído**; **rota** exposta só fora de produção/homologação | construir sempre transforma decorator quebrado em falha de bootstrap; publicar o mapa da API de autenticação não tem contrapartida operacional no MVP |
+| `L-09` | Falha em `registrarFalha` **não** é limpa por login bem-sucedido | `D-2.3D-06` não decide; não limpar evita que quem conhece uma credencial válida zere o contador de IP |
+| `L-10` | Log de falha técnica com **classe + correlação**, sem `message`/`stack` | mensagens do Prisma podem carregar a consulta e seus parâmetros; do Argon2, o digest. Limitação declarada, não propriedade |
+| **`A-05`** | Os cinco motivos internos de sessão inválida colapsam numa **única** resposta HTTP | **observação** da revisão independente da F2 (§6-E.9) — **não é requisito homologado**. Adotada por ser coerente com a disciplina anti-enumeração de AUT-001/`D-2.3D-12` e com o critério de que o logout não vire oráculo do estado interno. Coberta por teste |
+
+### 6-F.9 Tratamento de erros — o defeito medido e a correção
+
+Um corpo JSON sintaticamente inválido **nunca chega ao controller**: é rejeitado pelo body parser, registrado como middleware global pelo próprio `NestFactory`. O desfecho padrão, **medido nesta fatia**, era
+
+```text
+400 {"message":"Expected property name or '}' in JSON at position 1 ...",
+     "error":"Bad Request","statusCode":400}
+```
+
+— que **não** é o contrato fechado declarado no OpenAPI para `400` (contrato e runtime divergentes) e cuja mensagem é detalhe do parser, não decisão da fronteira. Um filtro de controller não alcança o caso, porque o erro nasce **antes** do roteamento.
+
+`FiltroErroAutenticacao` (`APP_FILTER`) fecha a lacuna com escopo **deliberadamente estreito**: age **apenas** nas duas operações da F3 e delega ao comportamento padrão do Nest em qualquer outro caminho — o `404` de rota desconhecida e o `GET /health` seguem exatamente como eram. **Ressalva registrada pela revisão independente (`F-06`/`F-07`): na primeira versão o escopo comparava a URL crua e não reconhecia `/auth/login/` nem `/AUTH/LOGIN`, variantes que o próprio roteador aceita — o vazamento reaparecia por elas. Corrigido em §6-G.5, junto com a exigência do método `POST`.**
+
+**Falha técnica não é mascarada como credencial inválida.** Exceção inesperada — erro do driver, falha do addon do Argon2, indisponibilidade — vira `500 FALHA_INTERNA`, **jamais `401`**: devolver `401` destruiria a observabilidade operacional (todo incidente pareceria senha errada) e mentiria para o cliente. Provado com exceção sintética portando um valor sensível, que não chega ao cliente. Nenhuma resposta de erro carrega stack trace, erro Prisma, erro Argon2, hash, token, cookie ou SQL — varrido por teste.
+
+### 6-F.10 `T-AUTH-ENUMERATION`
+
+Prova **estrutural**, não temporal — nenhum limiar de milissegundos participa de asserção alguma.
+
+| Propriedade | Como é provada |
+| --- | --- |
+| Conta inexistente percorre o **caminho dummy** | espiã sobre `verificarComCaminhoDummy`: chamada **duas** vezes, uma por caso; a existente recebe o digest PHC real, a inexistente recebe `null` e o resultado é `false` |
+| Contrato HTTP observável **idêntico** | mesmo status, mesmo corpo, mesmo conjunto de `Set-Cookie` e mesmo conjunto de nomes de cabeçalho (exceto `date`/`etag`) |
+| Conta **inativa** indistinguível | mesma comparação, contra o caso inexistente |
+| Mesma estrutura de auditoria | duas linhas com mesma `acao`, `resultado`, `ator` (NULL), `alvo_tipo` e `contexto`; a **única** diferença é o `alvo_id`, que `D-2.3D-12` determina e que não é observável pelo cliente |
+| Identificador inexistente **não** aparece | varredura de `SELECT * FROM evento_auditoria` e de toda escrita em `console` |
+| `429` **antes** do Argon2 | espiã não é chamada com a janela saturada; controle positivo confirma que a espiã discrimina |
+| Payload malformado **não** chega à autenticação/auditoria | `400` e zero eventos |
+| Contabilização simétrica | existente e inexistente chegam a `429` com o mesmo número de tentativas — um identificador inexistente que não contasse seria, por si só, um oráculo |
+
+**Medição complementar — evidência, não gate.** Cinco amostras por caso, mediana, com falha apenas em diferença **grosseira** (razão ≥ 10, que indicaria um caminho inteiro a mais ou a menos, não ruído):
+
+```text
+[T-AUTH-ENUMERATION] mediana existente=33,6 ms · inexistente=34,9 ms · razão=1,04
+```
+
+### 6-F.11 Provas medidas
+
+Ambiente: Node 24.18.0 · npm 11.16.0 · win32-x64 · PostgreSQL 18 em instância descartável.
+
+| Comando | Exit | Resultado |
+| --- | --- | --- |
+| `npm run typecheck` | 0 | verde (inclui `tsconfig.test.json`) |
+| `npm run test:api` | 0 | **15 suites · 405 passed · 0 failed · 0 skipped** |
+| `npm run verify:api-integration` | 0 | **6 suites · 173 passed · 0 failed · 0 skipped** (PostgreSQL real, `tlf_app`) |
+| `npm run verify:from-scratch` | 0 | **10 suites · 87 passed** — replay integral do histórico |
+| `npm run build` | 0 | verde (`packages/database` → `apps/api`, ESM) |
+| `npm run smoke:api` | 0 | processo real `node dist/main.js`: `/health` `200`; `404` sem stack; **`/openapi.json` `200` com as rotas da F3**; **`POST /auth/login` sem custom header → `403` sem cookie**; encerramento limpo |
+| `npm run verify:argon2-runtime --workspace @techlab-fisio/api` | 0 | **15/15** verificações |
+| `npm run verify:openapi-runtime --workspace @techlab-fisio/api` | 0 | **15/15** verificações (novo) |
+| `npm run lint:migrations` | 0 | Guarda 1 — 10 migrations · 37 objetos protegidos |
+| `npm run schema:verify` | 0 | Guarda 3 — dump byte a byte idêntico ao golden (60 169 bytes); `migrate diff --exit-code` = 0 |
+| `git diff --check` | 0 | limpo |
+
+O enunciado desta fatia cita `npm run verify:argon2-runtime -w api`; o alias `-w api` **não resolve** neste monorepositório — o workspace chama-se `@techlab-fisio/api`. Executado com o nome correto.
+
+### 6-F.12 Challenges de mutação — todos detectados, todos revertidos
+
+Cada mutação foi aplicada temporariamente, o detector executado, a falha confirmada e o arquivo **restaurado com verificação por hash SHA-256**. **Nenhuma mutação sobreviveu**: a árvore final foi reconferida por `grep` e pela bateria integral.
+
+| # | Mutação | Detector | Exit | Detectado |
+| --- | --- | --- | --- | --- |
+| `C-01` | remover o rate limit por identificador | `test/limitador-login.spec.ts` | 1 | ✅ 9 testes falham |
+| `C-02` | mover o rate limit para **depois** do Argon2 | integração — "ORDEM — Argon2 NÃO é executado quando a tentativa já está bloqueada" | 1 | ✅ |
+| `C-03` | usar o identificador **em claro** no contador | `test/limitador-login.spec.ts` | 1 | ✅ 2 testes falham |
+| `C-04` | não marcar `Secure` em produção (**com a barreira também desligada**) | `test/politica-cookie.spec.ts` | 1 | ✅ 5 testes falham |
+| `C-04b` | idem, medido contra o `dist/` ESM real | `verify:openapi-runtime` | 1 | ✅ "produção resolve o cookie SEGURO" falha |
+| `C-05` | aceitar mutação **sem** proteção CSRF | integração — "D-2.3D-07 — CSRF na fronteira real" | 1 | ✅ 7 testes falham |
+| `C-06` | status **diferente** para conta inexistente | integração — T-AUTH-ENUMERATION "contrato HTTP observável é idêntico" | 1 | ✅ |
+| `C-06b` | conta inexistente **pula** o caminho dummy | integração — T-AUTH-ENUMERATION "mesmo caminho de verificação" | 1 | ✅ |
+| `C-07` | omitir a auditoria da falha admitida | integração — "D-2.3D-12 — auditoria da falha admitida" | 1 | ✅ 4 testes falham |
+| `C-08` | auditar payload rejeitado **antes** da autenticação | integração — "payload REJEITADO ANTES da autenticação NÃO gera evento" | 1 | ✅ |
+| `C-09` | auditar tentativa já bloqueada com `429` | integração — "requisição BLOQUEADA com 429 NÃO gera evento adicional" | 1 | ✅ |
+| `C-10` | expor o token de sessão no JSON | integração — "o token sai EXCLUSIVAMENTE pelo cookie" | 1 | ✅ |
+| `C-11` | remover a documentação OpenAPI do `429` de `/auth/login` | `test/openapi.spec.ts` | 1 | ✅ 2 testes falham |
+| `C-11b` | idem, medido contra o `dist/` ESM real | `verify:openapi-runtime` | 1 | ✅ |
+
+### 6-F.13 Zero drift de persistência
+
+```text
+git diff 9a22262 -- packages/database          -> VAZIO
+git diff 9a22262 -- packages/database/prisma   -> VAZIO
+git diff 9a22262 --stat -- packages/           -> VAZIO
+```
+
+`schema.prisma`, `schema.golden.sql` e `protected-objects.json` com **blob idêntico** ao da baseline; **10 migrations**, nenhuma nova. `prisma format`, `migrate dev`, `db push` e `db pull` **não** foram executados. Guardas 1 e 3 verdes; Guarda 2 verde dentro de `verify:from-scratch`.
+
+### 6-F.14 Fronteira — o que a F3 deliberadamente NÃO fez
+
+Sem guards ou decorators de RBAC, resolução de papéis/permissões ou `D-2.3D-09` (F4); sem seed de papéis e sem bootstrap do primeiro Administrador (`D-2.3D-10`, F5); sem recuperação de senha e sem o rate limit próprio dela (`D-2.3D-08`/§5.6 segunda metade, F6); sem frontend; sem autorização clínica; sem endpoints de profissionais, pacientes ou agenda; sem refresh token; sem JWT; sem armazenamento externo de rate limit ou Redis; sem multitenancy; sem sessão por dispositivo; sem CORS cross-origin; sem synchronizer token CSRF; sem qualquer ampliação do catálogo de auditoria ou de whitelist de `contexto`; sem alteração de schema, migration, golden ou objetos protegidos; sem alteração de qualquer `D-2.3D-*`. Provado por asserção mecânica: as rotas publicadas pela aplicação são exatamente `/health`, `/auth/login` e `/auth/logout`, e `AuthModule` importa exatamente `DatabaseModule` e `AuditModule`.
+
+**Não materializado por estar fora do escopo enumerado desta fatia:** a **persistência do rehash** de `D-2.3D-02` — `CredencialService.precisaRehash` existe desde a F1 e o registro da F1 remete a decisão de persistir ao fluxo de login. O enunciado da F3 manda materializar **exclusivamente** os dez itens que lista, e rehash não é um deles. Fica registrado em §9 para que não se perca silenciosamente.
+
+## 6-G. Etapa 2.3D-B / F3 — correções pós-revisão independente
+
+**Estado: registro histórico da PRIMEIRA fatia corretiva — superado por §6-H e encerrado por §6-I.** Executada em 28/08/2026 sobre a working tree revisada, a partir da mesma baseline `main` = `9a22262c515c8b97c73dc7cf8493252db07dd501`. **Naquela execução a publicação não era autorizada** — sem commit, push, PR, merge, tag ou deploy. A fatia como um todo foi homologada e integrada em 28/08/2026 (§6-I; §11, REV. 19).
+
+A F3 foi submetida a **revisão técnica independente e adversarial**, com veredito **`B — APTO COM CORREÇÕES OBJETIVAS`** e catorze achados (`F-01`..`F-14`). Esta seção registra o tratamento de cada um. **Nenhuma decisão `D-2.3D-*` foi criada, alterada ou reaberta; `docs/12` não foi tocado.** A §6-F permanece como registro do estado que foi revisado e não é reescrita.
+
+### 6-G.1 Tratamento por achado
+
+| ID | Sev. | Ação | Arquivos | Prova |
+| --- | --- | --- | --- | --- |
+| `F-01` | ALTO | **CORRIGIDO** — reserva de tentativa em voo (§6-G.2) | `limitador-login.ts`, `autenticacao.service.ts` | `C-01`, `C-02`; testes de concorrência determinísticos |
+| `F-02` | MÉDIO | **CORRIGIDO** — `TLF_AMBIENTE` obrigatória (§6-G.4) | `politica-cookie.ts`, `setup.ts`, `smoke-api.mjs`, `.env.example` | `C-04`; prova no processo real |
+| `F-03` | MÉDIO | **CORRIGIDO** — 4xx do parser preservado, sem log de erro (§6-G.5) | `erro-autenticacao.filter.ts`, `auth.controller.ts` | `C-06`, `C-13` |
+| `F-04` | MÉDIO | **CORRIGIDO** — rehash de `D-2.3D-02` materializado (§6-G.6) | `autenticacao.service.ts` | `C-07`, `C-08` |
+| `F-05` | MÉDIO | **CORRIGIDO** — despejo nunca sacrifica bloqueio (§6-G.3) | `limitador-login.ts` | `C-03` |
+| `F-06` | BAIXO | **CORRIGIDO** — normalização de caminho no filtro | `erro-autenticacao.filter.ts` | integração: 4 variantes de caminho |
+| `F-07` | BAIXO | **RESOLVIDO por consequência** — o filtro passou a exigir `POST`; `GET /auth/login` volta ao `404` da plataforma e sai do contrato | `erro-autenticacao.filter.ts` | integração |
+| `F-08` | BAIXO | **CORRIGIDO** — cookie limpo só após o desfecho (§6-G.7) | `auth.controller.ts` | `C-09` |
+| `F-09` | BAIXO | **CORRIGIDO** — relógio monotônico + teto de `Retry-After` | `limitador-login.ts` | teste de relógio regressivo |
+| `F-10` | BAIXO | **CORRIGIDO** — normalização IPv4-mapped | `limitador-login.ts` | `C-10` |
+| `F-11` | BAIXO | **TRATADO E DOCUMENTADO** — opt-out do Scarf (§6-G.8) | `package.json` (raiz), `supply-chain.spec.ts` | `C-12` |
+| `F-12` | BAIXO | **MANTIDO — decisão consciente** (§6-G.9) | — | racional registrado |
+| `F-13` | BAIXO | **CORRIGIDO** — `Origin` valida protocolo por ambiente | `protecao-csrf.guard.ts`, `politica-cookie.ts` | `C-11` |
+| `F-14` | BAIXO | **CORRIGIDO** — linguagem de `R-2.3D-04` requalificada (§9) | `docs/10` | — |
+
+### 6-G.2 `F-01` — o gate de `D-2.3D-06` passa a valer sob concorrência
+
+**O defeito, medido pela revisão.** A sequência era `consultar()` → `await` (leitura + Argon2, ~40 ms) → `registrarFalha()`. Um CHECK-THEN-ACT: todas as requisições em voo atravessavam o gate antes que qualquer falha fosse contabilizada.
+
+```text
+12 concorrentes, limite 5  ->  401=12  429=0  argon2=12   (controle sequencial: 401=5 429=7 argon2=5)
+45 concorrentes, limite 30 ->  401=45  429=0  argon2=45
+```
+
+O limite homologado deixava de valer, e 45 Argon2 simultâneos (19 MiB cada) eram vetor de esgotamento de memória.
+
+**A correção.** O limitador ganhou **reserva de tentativa**. `adquirir()` é síncrono, decide sobre `falhas_vivas + tentativas_em_voo` e reserva a vaga nas **duas** dimensões de uma só vez — antes de qualquer `await`. A reserva é encerrada por `registrarFalha()` (rejeição) ou `liberar()` (sucesso **ou erro técnico**), sempre em `finally`; as duas operações são **idempotentes**, de modo que o `finally` do chamador nunca desfaz uma falha nem decrementa duas vezes.
+
+**Atomicidade entre dimensões:** se a segunda dimensão não couber, a primeira é desfeita. Nunca existe reserva órfã — provado por teste.
+
+**Resultado medido, com barreira determinística sobre o verificador de credencial:**
+
+| Cenário | Limite | Chegaram ao verificador | `401` | `429` | Reservas residuais |
+| --- | --- | --- | --- | --- | --- |
+| 12 concorrentes, mesmo identificador | 5 | **≤ 5** | ≤ 5 | ≥ 7 | **0** |
+| 45 concorrentes, mesmo IP | 30 | **≤ 30** | ≤ 30 | ≥ 15 | **0** |
+
+O teste não depende da velocidade real do Argon2: uma barreira segura as verificações em voo, a convergência do lote é aguardada com teto explícito e falha ruidosa, e a asserção é feita **antes** de liberar. O `verify` real não é executado nesses dois casos — o que se mede é o gate, e disparar 30 Argon2 simultâneos só consumiria memória; as provas de Argon2 real seguem nos demais blocos.
+
+**Erro técnico** libera a reserva **sem** contabilizar falha de credencial: oito `500` seguidos não bloqueiam a conta, e o login seguinte é admitido — provado.
+
+**DECISÃO LOCAL `L-11` (não normativa, reversível).** A reserva limita **tentativas simultâneas**, não apenas falhas. Um lote de logins simultâneos para o mesmo identificador acima das vagas em voo recebe **saturação transitória**: `429` com **`Retry-After: 1`**, e não os 15 minutos da janela. As vagas se devolvem em milissegundos, nenhuma falha é contabilizada e nenhum bloqueio persiste — provado. Quando há falhas **persistidas** suficientes, prevalece o cálculo real da janela.
+
+### 6-G.3 `F-05` — a saturação não reseta mais um bloqueio vigente
+
+**O defeito, medido.** A heurística anterior despejava a entrada de expiração mais próxima — que é exatamente a da vítima bloqueada há mais tempo. `vitimaAindaBloqueada=false` após flooding além do teto. O racional registrado em §6-F.4 (“a menos danosa a se perder”) estava **materialmente invertido** e fica **corrigido aqui**.
+
+**A correção.** Nenhum bucket **bloqueado** e nenhum bucket **com reserva em voo** é despejável. Entre os candidatos seguros vence o de **menor número de falhas**; no empate, o mais antigo. Sem candidato seguro, a admissão é **recusada** (saturação transitória) — nunca se sacrifica um bloqueio para caber uma chave nova.
+
+**Correção adicional de desempenho, descoberta ao escrever o teste.** A varredura da política de despejo percorria o mapa inteiro a cada admissão no teto — **O(n) por requisição**, com a varredura global também disparando por saturação. Sob ataque de saturação sustentada, o próprio mecanismo de defesa virava amplificador de CPU (medido: a suíte não terminava em 8 minutos). Agora o despejo examina uma **amostra limitada** das entradas mais antigas (`AMOSTRA_DE_DESPEJO = 64`) e a varredura global é **estritamente periódica**. Custo constante por requisição, com as duas guardas preservadas.
+
+**Provas, todas com não-vacuidade assegurada** — os testes afirmam explicitamente que o teto foi atingido, porque a primeira versão deles era vacuamente verdadeira (a dimensão de IP saturava antes, e nenhum despejo chegava a ocorrer; defeito encontrado pelo próprio challenge `C-03`):
+
+- vítima bloqueada permanece bloqueada após flooding de `MAXIMO + 500`;
+- com **todos** os candidatos bloqueados, a chave nova é **recusada** e o bloqueio mais antigo sobrevive;
+- o teto nunca é excedido;
+- nenhuma reserva em voo é despejada — um bucket reservado tem zero falhas e seria o primeiro escolhido pelo critério de menor-falhas se a guarda não existisse;
+- entradas expiradas são recolhidas antes de qualquer despejo de entrada viva.
+
+### 6-G.4 `F-02` — ambiente fail-closed
+
+`TLF_AMBIENTE` passa a ser **obrigatória**. Ausência, string vazia ou valor desconhecido **abortam o bootstrap**. `NODE_ENV` permanece apenas como checagem de **coerência** — nunca como fallback permissivo.
+
+| Configuração | Antes | Agora |
+| --- | --- | --- |
+| `TLF_AMBIENTE` ausente | sobe como `desenvolvimento`, cookie `tlf_sessao_dev` sem `Secure` | **FALHA** — `AMBIENTE_AUSENTE` |
+| `TLF_AMBIENTE` vazia / só espaços | idem | **FALHA** — `AMBIENTE_AUSENTE` |
+| `TLF_AMBIENTE` desconhecida | FALHA | **FALHA** — `AMBIENTE_DESCONHECIDO` |
+| Deploy realista só com `DATABASE_URL`/`PORT` | sobe inseguro | **FALHA** |
+| `NODE_ENV=production` + ambiente não protegido | FALHA | **FALHA** — `AMBIENTE_INCOERENTE_COM_NODE_ENV` |
+| `producao` / `homologacao` | `__Host-tlf_sessao` seguro | inalterado |
+| `desenvolvimento` / `teste` | `tlf_sessao_dev` | inalterado |
+
+Declaração explícita adicionada em `.env.example` (já presente), no `setupFiles` das suítes (`teste`) e no processo real do smoke (`desenvolvimento`). O smoke ganhou uma prova nova: **sem `TLF_AMBIENTE`, o processo real aborta o bootstrap** citando a variável — a única forma de provar o fail-closed no artefato que roda em produção.
+
+### 6-G.5 `F-03` / `F-06` / `F-07` — fronteira e contrato do filtro
+
+| Item | Antes | Agora |
+| --- | --- | --- |
+| Escopo | caminho exato, qualquer método | caminho **normalizado** (caixa e barra final) **e** método `POST` |
+| `/auth/login/`, `/AUTH/LOGIN` | vazavam a mensagem do parser | contrato fechado |
+| JSON malformado | `400` contrato fechado | inalterado |
+| Corpo acima do limite | **`500 FALHA_INTERNA` + log de ERRO** | **`413` `REQUISICAO_INVALIDA`, sem log de erro** |
+| `GET /auth/login` | `404` com corpo do contrato (status não documentado) | `404` da plataforma, fora do contrato dos endpoints `POST` |
+| Falha técnica real | `500 FALHA_INTERNA` + log | inalterado |
+
+O erro do body parser nasce **antes** da guard CSRF: qualquer cliente, sem custom header e sem autenticação, produzia uma entrada de log de nível ERROR por requisição grande. Isso poluía o log e destruía o significado operacional de `500`, que existe para marcar incidente de infraestrutura. `413` entrou no contrato OpenAPI dos dois endpoints.
+
+### 6-G.6 `F-04` — rehash de `D-2.3D-02` materializado
+
+**Situação encontrada.** `precisaRehash` existia desde a F1 e **nunca era chamado em produção** — código morto que mascarava a lacuna. `D-2.3D-02` lista "rehash quando os parâmetros persistidos estiverem defasados" como item da decisão homologada; a F1 entregou apenas a detecção e remeteu a persistência ao fluxo de login. Esse fluxo é o da F3.
+
+**Isto não é decisão nova.** É o cumprimento de `D-2.3D-02`; `docs/12` não foi alterado.
+
+**Implementação.** Após senha válida e usuário ativo:
+
+1. `precisaRehash(hashVerificado)`;
+2. se verdadeiro, o novo digest é gerado **fora da transação** — ~40 ms de Argon2 dentro dela prenderiam conexão e lock sem necessidade;
+3. a escrita entra na **mesma transação** que emite a sessão e grava a auditoria de sucesso, **condicionada ao digest efetivamente verificado**:
+
+```sql
+UPDATE usuario SET senha_hash = <novo>
+ WHERE id = <usuario> AND senha_hash = <o que foi verificado>
+```
+
+**Segurança concorrente.** Se a credencial mudou entre leitura e escrita (troca de senha, ação administrativa), o predicado não casa, a transação inteira reverte e o login termina no **`401` uniforme**: a credencial corrente **não** é sobrescrita, o hash antigo **não** é restaurado, nenhuma sessão nasce de credencial superada e o cliente não aprende que houve concorrência. A tentativa é auditada como rejeição, como qualquer outra.
+
+**Provas medidas** (política deliberadamente defasada — `m=8192, t=1, p=1`): senha correta autentica; `precisaRehash` verdadeiro antes e **falso** depois; digest persistido muda, é `$argon2id$` e passa a refletir `m=19456, t=2, p=1`; a senha continua verificável e a incorreta continua recusada; segundo login não regrava; senha incorreta, usuário inativo e usuário inexistente **nunca** geram rehash nem persistência; falha da transação não deixa estado parcial e o rehash é refeito no login seguinte; alteração concorrente não é sobrescrita.
+
+### 6-G.7 `F-08` — o cookie não é mais perdido em rollback
+
+O `Set-Cookie` de limpeza passou a ser escrito **depois** de conhecer o desfecho:
+
+| Desfecho | Cookie limpo? |
+| --- | --- |
+| Logout encerrado | **sim** |
+| Sessão inválida/terminal (desfecho conhecido) | **sim** |
+| Falha técnica / rollback (`500`) | **não** |
+
+Medido: com a auditoria falhando, o logout devolve `500`, a sessão permanece `ATIVA` (rollback correto) e **nenhum** `Set-Cookie` é emitido — o cliente conserva a credencial de uma sessão que o banco manteve viva, e um logout posterior a encerra normalmente.
+
+### 6-G.8 `F-11` — telemetria transitiva desligada e declarada
+
+Cadeia: **`@nestjs/swagger@11.4.7` → `swagger-ui-dist@5.32.13` → `@scarf/scarf@1.4.0`**. O `@scarf/scarf` é um pacote de **telemetria de instalação** com `postinstall` que faz requisição de rede; ele não participa do runtime da aplicação (a UI do Swagger não é servida). Opt-out aplicado no `package.json` da **raiz**, que é onde o pacote o procura:
+
+```json
+"scarfSettings": { "enabled": false }
+```
+
+Nenhuma dependência nova; nenhuma versão atualizada colateralmente; lockfile coerente. `supply-chain.spec.ts` passa a ser o detector — falha se o opt-out sumir ou for reativado, e também se `class-validator`, `class-transformer`, Redis, JWT, `cookie-parser` ou bibliotecas de rate limit externo entrarem no workspace.
+
+### 6-G.9 `F-12` — mantido BAIXO, com racional
+
+`AuditWriter` valida que recebeu cliente transacional; `SessaoService.emitirEm`/`revogarEm` não. A verificação existente é uma **função privada, não exportada**, de `audit-writer.ts`, e `packages/database` — intocável por zero drift — expõe apenas o **tipo** `TransacaoPersistencia`, nenhuma primitiva. Reutilizá-la exigiria criar dependência `auth → audit`, alterar `packages/database`, duplicar lógica privada ou criar abstração sem outro uso. Nenhuma dessas opções se justifica para um achado BAIXO cuja superfície é interna e tipada, e cujo cliente não transacional é privado em `DatabaseService`.
+
+**`F-12` permanece BAIXO, aceito nesta fatia como decisão técnica consciente.**
+
+### 6-G.10 Provas medidas
+
+| Comando | Exit | Suites | Passed | Failed | Skipped |
+| --- | --- | --- | --- | --- | --- |
+| `npm run typecheck` | 0 | — | — | 0 | — |
+| `npm run test:api` | 0 | 16 | 432 | 0 | 0 |
+| `npm run verify:api-integration` | 0 | 6 | 194 | 0 | 0 |
+| `npm run verify:from-scratch` | 0 | 10 | 87 | 0 | 0 |
+| `npm run build` | 0 | — | — | 0 | — |
+| `npm run smoke:api` | 0 | — | 6 provas | 0 | — |
+| `verify:argon2-runtime` | 0 | — | 15/15 | 0 | — |
+| `verify:openapi-runtime` | 0 | — | 17/17 | 0 | — |
+| `npm run lint:migrations` | 0 | — | Guarda 1 | 0 | — |
+| `npm run schema:verify` | 0 | — | Guarda 3 | 0 | — |
+| `git diff --check` | 0 | — | — | — | — |
+
+### 6-G.11 Mutation challenges da fatia corretiva
+
+17 mutações aplicadas, **todas detectadas**, todas revertidas com verificação por hash SHA-256.
+
+| # | Mutação | Detector | Detectado |
+| --- | --- | --- | --- |
+| `C-01` | remover o controle de tentativas em voo | `limitador-login.spec` | ✅ |
+| `C-02` | voltar ao padrão `consultar → await → registrarFalha` | integração `F-01` | ✅ |
+| `C-03` | permitir despejo da vítima bloqueada | `limitador-login.spec` | ✅ |
+| `C-04` | default de ambiente volta a desenvolvimento | `politica-cookie.spec` | ✅ |
+| `C-05` | `Secure` removido em produção | `politica-cookie.spec` | ✅ |
+| `C-06` | corpo grande volta a `500` | integração `F-03` | ✅ |
+| `C-07` | remover a persistência do rehash | integração `F-04` | ✅ |
+| `C-08` | rehash sobrescreve hash alterado concorrentemente | integração `F-04` | ✅ |
+| `C-09` | limpar cookie antes do desfecho do logout | integração `F-08` | ✅ |
+| `C-10` | remover normalização IPv4-mapped | `limitador-login.spec` | ✅ |
+| `C-11` | aceitar `Origin` `http:` em ambiente HTTPS | `protecao-csrf.spec` | ✅ |
+| `C-12` | reativar o Scarf | `supply-chain.spec` | ✅ |
+| `C-13` | remover `413` do OpenAPI | `openapi.spec` | ✅ |
+| `C-14` | expor `/openapi.json` em produção | `verify:openapi-runtime` | ✅ |
+| `C-15` | remover o caminho dummy | `credencial.service.spec` | ✅ |
+| `C-16` | omitir a auditoria da falha admitida | integração `D-2.3D-12` | ✅ |
+| `C-17` | expor o token no JSON | integração | ✅ |
+
+`C-03` merece registro: na primeira rodada ele **não foi detectado**, e a investigação revelou que os testes de saturação eram **vacuamente verdadeiros**. Os testes foram reescritos com não-vacuidade assegurada, e só então o challenge passou a falhar como devia.
+
+### 6-G.12 Regressão da F2 e fronteiras
+
+`SessaoService` não foi alterado nesta fatia. Os testes focais da F2 — monotonicidade atômica, throttle, expiração absoluta e ociosa, revogação, corrida corrigida em `C-01` da F2, ausência de ressurreição de estado terminal — seguem verdes dentro das 194 provas de integração. `emitirEm`/`revogarEm` continuam semanticamente equivalentes aos invólucros públicos.
+
+**F4, F5 e F6 permanecem não iniciadas**; nenhum RBAC, seed, bootstrap de Administrador, recuperação de senha, JWT, refresh token, Redis, CORS cross-origin, synchronizer token, multitenancy, sessão por dispositivo ou frontend. O rehash de `F-04` **não** autoriza recuperação de senha. As rotas publicadas continuam sendo exatamente `/health`, `/auth/login` e `/auth/logout`.
+
+**Zero drift** reconfirmado: `packages/` com diff vazio contra `9a22262`; `schema.prisma`, `schema.golden.sql`, `protected-objects.json` e as 10 migrations com hash idêntico ao da baseline.
+
+## 6-H. Etapa 2.3D-B / F3 — segunda fatia corretiva pós-revisão independente
+
+**Estado: registro da SEGUNDA fatia corretiva — o estado que a revisão de gate aprovou; encerrado por §6-I.** Executada em 28/08/2026 na mesma branch `agent/fase2-etapa2.3d-f3-auth-http`, sobre a mesma baseline `main` = `9a22262`. **Naquela execução a publicação não era autorizada** — sem commit, push, PR, merge, tag ou deploy. A homologação e a integração vieram em seguida (§6-I; §11, REV. 19).
+
+### 6-H.1 Resultado da segunda revisão independente
+
+A revisão adversarial independente da F3 corrigida devolveu **`B — APTO COM CORREÇÕES OBJETIVAS ANTES DO VERSIONAMENTO`**. Ela **confirmou por reprodução própria** que as três correções de fundo da fatia anterior são reais: `F-01` (reserva em voo, medida com concorrência assíncrona real), `F-04` (rehash sob `READ COMMITTED`, reproduzido contra PostgreSQL real inclusive com espera de lock e rollback da transação concorrente) e `F-05` (despejo que não sacrifica bloqueios). Nenhum achado BLOQUEANTE ou ALTO.
+
+| ID | Sev. | Ação nesta fatia | Arquivos |
+| --- | --- | --- | --- |
+| `F3R-01` | MÉDIO | **CORRIGIDO** — request-target absolute-form (§6-H.2) | `erro-autenticacao.filter.ts` |
+| `F3R-02` | MÉDIO | **RESOLVIDO POR DECISÃO DE BRUNO** — `L-11` homologada como **`D-2.3D-13`** (§6-H.3) | `docs/12` |
+| `F3R-03` | MÉDIO | **CORRIGIDO** — cursor rotativo + poda local (§6-H.4) | `limitador-login.ts` |
+| `F3R-04` | BAIXO | **CORRIGIDO** — `.env.example` deixa de documentar default inexistente | `.env.example` |
+| `F3R-05` | BAIXO | **CORRIGIDO** — contagem do smoke de 7 para **6**, confirmada por reexecução | `docs/10` |
+| `F3R-06` | OBSERVAÇÃO | **NÃO TRATADO** — fora do escopo autorizado (§9) | — |
+| `F3R-07` | OBSERVAÇÃO | **NÃO TRATADO** — fora do escopo autorizado (§9) | — |
+| `F-12` | BAIXO | **MANTIDO E ACEITO** — a revisão verificou materialmente e concordou (§6-G.9) | — |
+
+### 6-H.2 `F3R-01` — o absolute-form passa a pertencer ao contrato fechado
+
+**O defeito.** O RFC 7230 §5.3.2 obriga o servidor a aceitar a forma absoluta do request-target. O Express **roteia** `POST http://host/auth/login` para o handler do login — medido: devolve `401` com corpo bem-formado. O filtro, porém, comparava a URL **crua** contra `{"/auth/login","/auth/logout"}`, e o URI absoluto não casava. Por essa porta reapareciam os dois danos que `F-06`/`F-03` diziam ter fechado:
+
+```text
+origin-form   413 -> {"erro":"REQUISICAO_INVALIDA"}      log: +0  linhas
+absolute-form 413 -> {"statusCode":413,"message":...}    log: +16 linhas ERROR com stack
+```
+
+E era alcançável **sem cabeçalho algum** — o body parser roda antes da guard CSRF.
+
+**A correção.** A decisão passa a usar o **pathname efetivo**, preferindo o `path` da própria plataforma (no Express, o `pathname` de `parseurl` — exatamente o valor contra o qual a rota é casada). A retaguarda, quando a plataforma não oferece `path`, extrai o pathname do request-target sem normalizar nada além de descartar query/fragmento e, na forma absoluta, esquema e autoridade.
+
+**Medição que fundamenta a escolha** — 18 variantes contra o Express real. `req.path` reproduz **exatamente** a decisão de roteamento: as 8 variantes que chegam ao login normalizam para `/auth/login`; as 10 que o roteador devolve como `404` continuam distintas e seguem delegadas ao Nest.
+
+**Por que NÃO `new URL()`** — a normalização WHATWG é excessiva e faria o filtro capturar rota que o roteador não trata como login:
+
+```text
+new URL("/auth/./login")    -> "/auth/login"   (roteador: 404)
+new URL("/auth/x/../login") -> "/auth/login"   (roteador: 404)
+new URL("//auth/login")     -> "/login"        (roteador: 404)
+```
+
+A regra de método (`POST`) permanece intacta.
+
+### 6-H.3 `F3R-02` / `L-11` — decisão devolvida a Bruno e homologada
+
+A revisão classificou a proteção de concorrência em voo como **decisão comportamental, não detalhe de implementação**, por três razões medidas: o teto de simultaneidade foi acoplado ao limite de falhas sem que fonte alguma o fixasse; `Retry-After: 1` não é derivável de fonte homologada; e o `429` transitório é invisível ao contador de falhas. Ela **recusou-se a homologá-la** em nome de Bruno (TLF-BASE-V1 §15) e devolveu alternativas com recomendação.
+
+**Bruno homologou** a opção recomendada — manter o comportamento como está — e ela foi registrada como **`D-2.3D-13`** em `docs/12` §5.13 (REV. 3), com o risco residual declarado e aceito como **`R-2.3D-08`**. **Nenhuma decisão anterior foi modificada ou renumerada**; `D-2.3D-06` permanece intacta e `D-2.3D-13` a complementa. `L-11` passa a **alias histórico**.
+
+### 6-H.4 `F3R-03` — a amostragem de despejo deixa de sofrer inanição
+
+**O defeito, em duas partes.** A amostra recomeçava **sempre** no primeiro elemento do `Map`; como o `Map` preserva ordem de inserção e bucket bloqueado nunca é despejado, os bloqueados mais antigos **fixavam-se na cabeça**. Medido pela revisão: 64 bloqueados na cabeça, 49 936 candidatos seguros atrás deles, **2 000 de 2 000** identificadores novos recusados. Agravante: a elegibilidade lia `falhas.length` **sem podar**, de modo que um bucket com a janela inteira vencida continuava contando como bloqueado.
+
+**A correção — duas mudanças, ambas de custo constante:**
+
+1. **Cursor persistente por dimensão.** Iterador vivo do `Map`, preservado entre admissões; `next()` é O(1) e o iterador só é recriado quando se esgota. **Não** é "pular N desde o início" — isso voltaria a ser O(n) por requisição.
+2. **Poda local do candidato amostrado**, com o mesmo instante monotônico da operação, **antes** de classificá-lo. Só os até 64 amostrados são podados; nenhuma varredura global é reintroduzida. Bucket que fica vazio após a poda é lixo puro e sai na hora.
+
+**O que não mudou:** `AMOSTRA_DE_DESPEJO = 64`; bloqueado e com reserva em voo continuam **indespejáveis**; o critério entre seguros continua "menor número de falhas, desempate no mais antigo"; sem candidato seguro na amostra, a admissão é recusada. O que deixou de existir é a inanição **indefinida** por posição: um prefixo inelegível de `k` entradas é atravessado em ~`ceil(k / 64)` admissões.
+
+### 6-H.5 Testes acrescentados
+
+| Arquivo | Suíte | Propriedades provadas |
+| --- | --- | --- |
+| `test/integration/auth-http.integration.spec.ts` | `F3R-01 — absolute-form pertence ao contrato fechado` (9 testes) | a forma absoluta **realmente alcança** o handler (não-vacuidade); JSON malformado em 4 variantes absolutas devolve o contrato fechado; `413` absoluto devolve `{"erro":"REQUISICAO_INVALIDA"}`; **zero log de nível ERROR** (sem `PayloadTooLargeError`, sem stack); logout absoluto pelo contrato; e a correção **não** passou a capturar as 10 variantes que o roteador devolve como `404` |
+| `test/limitador-login.spec.ts` | `F3R-03 — cursor rotativo e poda local` (5 testes) | **A** prefixo bloqueado do tamanho da amostra não causa inanição; **B** prefixo maior que uma amostra é atravessado em amostras sucessivas, dentro do teto de progresso; **C** falha vencida do candidato amostrado é podada e ele volta a ser elegível; **D** bucket com reserva em voo na cabeça nunca é vítima; **F** nenhuma admissão no teto varre o mapa inteiro |
+
+O caso **E** ("todos os candidatos realmente inelegíveis ⇒ recusa") já era coberto pelo teste vigente *"com TODOS os candidatos bloqueados, a admissão é RECUSADA em vez de despejar"*, que permanece verde com o cursor.
+
+Novo ponto de instrumentação: `medirCandidatosVisitados()`, exposto **exclusivamente para prova** de que o custo por admissão fica limitado pela amostra — não participa de decisão alguma, no mesmo espírito de `medirEntradas`/`medirEmVoo`.
+
+### 6-H.6 Mutation challenges da fatia — `C-18`..`C-20`
+
+3 mutações aplicadas, **todas detectadas**, todas revertidas com verificação por hash SHA-256.
+
+| # | Mutação | Detector | Detectado |
+| --- | --- | --- | --- |
+| `C-18` | remover suporte a absolute-form do reconhecimento do filtro | integração `F3R-01` | ✅ 5 testes falham |
+| `C-19` | reancorar a amostra de despejo no início do `Map` | `limitador-login.spec` `F3R-03` | ✅ testes A e B falham |
+| `C-20` | remover a poda/reavaliação do candidato amostrado | `limitador-login.spec` `F3R-03` | ✅ teste C falha |
+
+**`C-20` merece registro — e repete a lição de `C-03`.** Na primeira rodada ele **não foi detectado**: o teste C construía a cabeça do mapa com buckets expirados, mas o **cursor já apontava para a região segura** deixada pelo laço de preenchimento, de modo que a admissão era concedida sem que a poda fosse necessária. O teste era **vacuamente verdadeiro**. Foi reescrito para isolar a poda de verdade: todo bucket do mapa fica **parcialmente vencido** (4 falhas antigas que expiram + 1 recente que sobrevive), o que elimina as duas causas concorrentes — o cursor não ajuda, porque nenhum bucket é elegível sem poda; e a varredura periódica não age, porque a falha mais recente continua viva. Só então o challenge passou a falhar pela razão certa.
+
+### 6-H.7 Bateria integral — medida nesta fatia
+
+| Comando | Exit | Suites | Passed | Failed | Observação |
+| --- | --- | --- | --- | --- | --- |
+| `npm run typecheck` | 0 | — | — | 0 | — |
+| `npm run test:api` | 0 | 16 | **437** | 0 | era 432; +5 de `F3R-03` |
+| `npm run verify:api-integration` | 0 | 6 | **203** | 0 | era 194; +9 de `F3R-01` |
+| `npm run verify:from-scratch` | 0 | 10 | 87 | 0 | inalterado |
+| `npm run build` | 0 | — | — | 0 | — |
+| `npm run smoke:api` | 0 | — | **6 provas** | 0 | contagem reconfirmada (`F3R-05`) |
+| `verify:argon2-runtime` | 0 | — | 15/15 | 0 | — |
+| `verify:openapi-runtime` | 0 | — | 17/17 | 0 | — |
+| `npm run lint:migrations` | 0 | — | Guarda 1 | 0 | 10 migrations · 37 objetos |
+| `npm run schema:verify` | 0 | — | Guarda 3 | 0 | golden 60 169 B idêntico; `migrate diff` 0 |
+| `git diff --check` | 0 | — | — | 0 | — |
+
+### 6-H.8 Regressão, fronteiras e drift
+
+**F1/F2 sem regressão.** `credencial.service.ts` e `sessao.service.ts` **não foram tocados** nesta fatia. Os testes focais de `F-01` (12 simultâneas contra o limite 5; 45 contra 30; atomicidade all-or-nothing; liberação idempotente; erro técnico; falha persistida; `Retry-After`) seguem verdes — a mudança de despejo não os alterou.
+
+**F4, F5 e F6 permanecem não iniciadas**; nenhum RBAC, seed, bootstrap de Administrador, recuperação de senha, JWT, refresh token, Redis, CORS cross-origin, synchronizer token, multitenancy, sessão por dispositivo ou frontend. As rotas publicadas continuam sendo exatamente `/health`, `/auth/login` e `/auth/logout`.
+
+**Zero drift** reconfirmado: `packages/database` com diff vazio contra `9a22262`; `schema.prisma`, `schema.golden.sql` e `protected-objects.json` com hash idêntico; 10 migrations. `prisma format`, `migrate dev`, `db push` e `db pull` **não** foram executados.
+
+**A F3 NÃO está homologada nem encerrada.** Próximo passo: **nova revisão técnica independente adversarial**.
+
+## 6-I. Etapa 2.3D-B / F3 — homologação e rito de integração
+
+**Estado: HOMOLOGADA por Bruno Menezes Noronha em 28/08/2026** (TLF-BASE-V1 §15, item 1), após **três** revisões técnicas independentes adversariais e duas fatias corretivas. Esta seção é o registro autoritativo do fechamento da fatia; §6-F, §6-G e §6-H permanecem como registro histórico das execuções que a produziram.
+
+### 6-I.1 Escopo homologado
+
+`POST /auth/login` e `POST /auth/logout` — os primeiros endpoints REST autenticados do produto. Compõem a fatia: `AuthController`, `AutenticacaoService`, `LimitadorLogin`, `ProtecaoCsrfGuard`, `FiltroErroAutenticacao`, `politica-cookie.ts`, `auth.dto.ts`, o documento OpenAPI e a prova de runtime `verify-openapi-runtime.mjs`. `SessaoService` ganhou apenas os pontos de entrada transacionais `emitirEm`/`revogarEm`, aditivos e sem mudança de semântica.
+
+### 6-I.2 Decisões normativas materializadas
+
+`D-2.3D-06` (anti-abuso), `D-2.3D-07` (cookie e CSRF), `D-2.3D-11` (OpenAPI), `D-2.3D-12` (auditoria de autenticação) e — acrescentada durante o ciclo de revisão — **`D-2.3D-13`** (proteção de concorrência em voo do limitador). O rehash exigido por `D-2.3D-02` foi materializado no login.
+
+**`D-2.3D-13` — origem e natureza.** A implementação registrara o comportamento como decisão local `L-11`. A segunda revisão independente o classificou como **decisão comportamental, não detalhe de implementação**, recusou-se a homologá-lo em nome de Bruno (TLF-BASE-V1 §15) e o devolveu com alternativas. Bruno homologou a opção recomendada, e ela passou a norma em `docs/12` §5.13 (REV. 3). **`L-11` é, desde então, apenas alias histórico** (`F3R-08`). Nenhuma decisão de `D-2.3D-01` a `D-2.3D-12` foi alterada, renumerada ou reaberta — provado por comparação textual: as doze seções §5.1..§5.12 permanecem byte a byte idênticas à baseline.
+
+### 6-I.3 Revisões independentes e findings encerrados
+
+| Rodada | Veredito | Desfecho |
+| --- | --- | --- |
+| 1ª — F3 implementada | `B` | 14 achados (`F-01` ALTO; `F-02`..`F-05` MÉDIOS; demais BAIXOS) — corrigidos em §6-G, exceto `F-12` |
+| 2ª — F3 corrigida | `B` | 3 achados (`F3R-01`, `F3R-02`, `F3R-03` MÉDIOS) + 2 BAIXOS — corrigidos em §6-H; `F3R-02` devolvido a Bruno e homologado como `D-2.3D-13` |
+| 3ª — gate final | **`A`** | Nenhum BLOQUEANTE/ALTO/MÉDIO. Um BAIXO (`F3R-08`), corrigido nesta seção |
+
+**Encerrados:** `F-01`..`F-11`, `F-13`, `F-14`, `F3R-01`, `F3R-03`, `F3R-04`, `F3R-05`, `F3R-08`. `F-07` foi resolvido por consequência.
+
+**Evidência material reproduzida pelas revisões, e não apenas declarada:** reserva em voo medida sob concorrência assíncrona real (12/limite 5 e 45/limite 30); corrida do rehash reproduzida contra PostgreSQL 18 real sob `READ COMMITTED`, inclusive com espera de lock confirmada e rollback da transação concorrente; 29 variantes de request-target comparadas entre roteador e filtro, com zero incoerências; oito propriedades do iterador de `Map` sob mutação; saturação a 50 000 buckets em três topologias adversariais.
+
+### 6-I.4 Riscos residuais aceitos
+
+| ID | Severidade | Situação |
+| --- | --- | --- |
+| `R-2.3D-08` | BAIXO | **ACEITO** — `429` transitório contra usuário legítimo, contrapartida da proteção dos recursos de Argon2; não gera bloqueio persistente (`docs/12` §8) |
+| `F-12` | BAIXO | **ACEITO** — guarda de cliente transacional; corrigir exigiria acoplamento `auth → audit` ou alteração de `packages/` (§6-G.9) |
+| `F3R-06` | OBSERVAÇÃO | `Origin` comparada ao `Host` da requisição, sem allowlist — inerente ao modelo de ameaça de navegador; não tratado |
+| `F3R-07` | OBSERVAÇÃO | Corrida do rehash consome uma falha do orçamento e audita `FALHA` — não tratado |
+
+Pendências **não** encerradas por esta homologação: `P-2.3D-03`, `P-2.3D-04`, `P-2.3D-05`, `P-2.3D-06`, `R-2.3D-04`, `R-2.3D-05`, `R-2.3D-06`. Nenhuma delas foi fechada por implicação.
+
+### 6-I.5 Bateria de homologação
+
+Medida no estado exato que foi versionado. Números em §6-I.6.
+
+### 6-I.6 Zero drift e fronteiras
+
+`packages/database` com **diff vazio** contra `9a22262`; `schema.prisma`, `schema.golden.sql` e `protected-objects.json` com hash idêntico; **10 migrations**, nenhuma nova; Guarda 3 com golden byte a byte (60 169 bytes) e `prisma migrate diff --exit-code` 0. `prisma format`, `migrate dev`, `db push` e `db pull` não foram executados em nenhuma das execuções da fatia.
+
+**F4, F5 e F6 permanecem NÃO INICIADAS.** Busca mecânica em `apps/api/src/` confirma zero implementação de RBAC, seeds, bootstrap de Administrador, recuperação de senha, JWT, refresh token, Redis, CORS cross-origin, synchronizer token, multitenancy ou sessão por dispositivo. `apps/web` não existe. Rotas funcionais publicadas: `/health`, `/auth/login` e `/auth/logout`; `/openapi.json` é montada conforme a política de ambiente e **não** é exposta em produção/homologação.
+
+### 6-I.7 Conformidade — limite declarado
+
+Esta homologação é **técnica**. Nos termos da TLF-BASE-V1 §10, implementação técnica isoladamente não autoriza afirmar conformidade legal definitiva: afirmações de conformidade e decisões regulatórias permanecem sujeitas a validação jurídica e profissional competente.
+
 ## 7. Auditoria — `P-BACK-01`
 
 ### 7.1 Estado
@@ -504,6 +1140,18 @@ Registrada no relatório de consolidação da 2.3A: `npm ci`; `db:generate`; `db
 | `P-2.3D-05` (eventual `usuario.criado`) | **PENDENTE** — exige decisão própria; `D-2.3D-10` **não** cria a ação e usa `usuario.papeis.alterados`, já no catálogo |
 | `P-2.3D-06` (rate limit resiliente a restart) | **ADIADA** — limitação aceita e documentada do MVP (`D-2.3D-06`) |
 | ~~`R-2.3D-03`~~ (regressão temporal de `ultima_atividade_em`) | **ENCERRADO NA F2 em 27/08/2026 — por decisão de Bruno Menezes Noronha** (TLF-BASE-V1 §15, item 1), após a revisão técnica independente (§6-E.9). Fundamentação técnica: a F2 materializou e provou a obrigação de monotonicidade atômica de `D-2.3D-04` por (1) `UPDATE` **condicional atômico**, com o predicado inteiro no `WHERE` e nenhuma decisão de escrita tomada em memória; (2) `GREATEST(ultima_atividade_em, instante_candidato)` na cláusula `SET`, medido como barreira real — a sonda da revisão provou que o `SET` é avaliado sobre a versão **nova** da linha; (3) predicado de throttle que exige avanço sobre o valor vigente e, por isso, **também bloqueia atividade temporalmente regressiva**; (4) testes de integração **concorrentes** contra PostgreSQL real, com espera de lock confirmada em `pg_stat_activity` — o teste falha se a corrida não for exercida — e convergência determinística de 5 atualizações fora de ordem; (5) **mutation challenge last-writer-wins** que faz os detectores falharem (reproduzido 3/3 pela revisão independente); (6) confirmação de que a correção `C-01` de `revogar` **não enfraqueceu** a proteção — o challenge de LWW foi reaplicado sobre o código já corrigido e continua sendo detectado. **Limites da evidência, registrados como tais e NÃO como risco aberto:** a prova foi executada em PostgreSQL sob `READ COMMITTED`, na arquitetura vigente de **PostgreSQL autoritativo compartilhado** — que é onde a propriedade é sustentada, pela própria operação SQL atômica. Cenários de escrita distribuída/multi-primary estão **fora da arquitetura vigente** (TLF-BASE-V1 §4.5/§4.6, §13) e não devem ser antecipados. **`D-2.3D-04` NÃO foi alterada** e nenhuma decisão normativa nova foi criada: o risco encerra porque a obrigação que ele vigiava foi cumprida e provada |
+| `P-2.3D-03` (compatibilidade ESM de `@nestjs/swagger@11.4.7`) | **MEDIDA E VERDE NA F3 — encerramento formal PENDENTE de decisão de Bruno Menezes Noronha** (§6-F.7). Medição: typecheck `nodenext` com `skipLibCheck: false` verde; build ESM verde; import ESM do `dist/` fora do Jest verde; documento construído a partir do `AppModule` compilado; `/openapi.json` servido pelo processo real `node dist/main.js` no smoke; lockfile coerente com 7 pacotes acrescentados apenas no workspace da API; os três peers pesados (`class-validator`, `class-transformer`, `@fastify/static`) são **opcionais** e **não** foram instalados. **Caminho A adotado**; o fallback autoral de `D-2.3D-11` não foi necessário e não foi construído. `docs/12` **não foi alterado**: o precedente vigente (REV. 1 / REV. 2) é o de encerramento por decisão expressa após revisão |
+| `R-2.3D-06` (`@nestjs/swagger` incompatível com ESM) | **MATERIALMENTE AFASTADO pela medição da F3** (§6-F.7) — mesma ressalva de forma de `P-2.3D-03`: baixa formal pertence a decisão de Bruno |
+| `R-2.3D-04` (cookie inseguro em produção) | **TRATADO — agora fail-closed; ENCERRAMENTO FORMAL PENDENTE de decisão de Bruno.** A revisão independente (`F-02`) mediu que o tratamento da §6-F.5 **não fechava** o cenário principal do risco: sem `TLF_AMBIENTE` e sem `NODE_ENV=production`, um deploy de produção subia emitindo `tlf_sessao_dev` sem `Secure` — o default era fail-OPEN. Corrigido em §6-G.4: a variável passou a ser **obrigatória**, e o processo real aborta o bootstrap sem ela (provado no smoke). A linguagem anterior ("tratado e testado", "protegido por fail-fast") era **mais forte que a evidência** e fica retificada aqui (`F-14`) |
+| `R-2.3D-05` (enumeração por diferença de tempo) | **MITIGADO E PROVADO NA F3** (§6-F.10) — `T-AUTH-ENUMERATION` estrutural, com medição temporal complementar registrada como evidência (razão 1,04) e **não** como gate. Encerramento formal pendente de decisão de Bruno |
+| `P-2.3D-04` (CSRF reavaliada contra o `apps/web` real) | **ABERTA e inalterada** — a F3 implementou **exatamente** a baseline de `D-2.3D-07`; synchronizer token **não** foi implementado nem registrado como obrigação futura |
+| Persistência do **rehash** de `D-2.3D-02` | **MATERIALIZADA na fatia corretiva** (§6-G.6), após a revisão independente (`F-04`) apurar que a obrigação homologada estava aberta e sem dono: `precisaRehash` existia desde a F1 e **nunca era chamado em produção**. A escrita é condicionada ao digest efetivamente verificado e vive na mesma transação da sessão e da auditoria. **Não é decisão nova — é cumprimento de `D-2.3D-02`; `docs/12` não foi alterado** |
+| Despejo forçado do limitador sob saturação (`D-2.3D-06`) | **LIMITAÇÃO DECLARADA da F3** (§6-F.4), no mesmo espírito de `R-2.3D-02`: ao atingir `MAXIMO_DE_ENTRADAS`, o despejo é uma via de diluição do contador, limitada na prática pela dimensão de IP. Registrada como limitação do MVP, **não** como propriedade |
+| Log de falha técnica sem `message`/`stack` (`L-10`) | **LIMITAÇÃO DECLARADA da F3** (§6-F.9): mensagens do Prisma podem carregar a consulta e seus parâmetros, e do Argon2 o digest — registrá-las violaria TLF-BASE-V1 §10 e `D-2.3D-12`. A perda de detalhe no log é o preço aceito; revisitar com observabilidade estruturada é melhoria futura |
+| Revisão independente da F3 (`F-01`..`F-14`) | **CONCLUÍDA em 28/08/2026 — veredito `B — APTO COM CORREÇÕES OBJETIVAS`.** Doze achados corrigidos, um (`F-07`) resolvido por consequência e um (`F-12`) mantido BAIXO com racional (§6-G). Nenhuma decisão `D-2.3D-*` alterada |
+| `F-12` (guarda de cliente transacional em `emitirEm`/`revogarEm`) | **BAIXO — ACEITO nesta fatia** (§6-G.9): a verificação existente é função privada não exportada de `audit-writer.ts`, e `packages/database` — intocável por zero drift — expõe apenas o tipo. Corrigir exigiria acoplamento `auth → audit`, alteração de `packages/`, duplicação ou abstração prematura |
+| Saturação transitória do limitador (~~`L-11`~~ → **`D-2.3D-13`**) | **HOMOLOGADA COMO NORMA em 28/08/2026 — deixou de ser decisão local** (`F3R-08`). A segunda revisão independente classificou o comportamento como decisão comportamental, e Bruno o homologou: a fonte normativa é **`D-2.3D-13`** (`docs/12` §5.13, REV. 3), e **`L-11` permanece apenas como alias/referência histórica** ao registro de implementação em §6-G.2. O risco residual está declarado e aceito como **`R-2.3D-08`** (`docs/12` §8). O conteúdo material da decisão não é reproduzido aqui: `docs/12` é a fonte |
+| Amostra de despejo do limitador (`AMOSTRA_DE_DESPEJO`) | **DECISÃO LOCAL declarada** (§6-G.3): o despejo examina uma amostra limitada em vez do mapa inteiro, porque a varredura total era O(n) por requisição e transformava a saturação em amplificador de CPU. Pode recusar admissão havendo candidato seguro fora da amostra — conservador por desenho |
 | Higiene de formatação do `schema.prisma` | **PENDENTE — fora da F0 por decisão** — `prisma format` reformataria 7 modelos alheios ao escopo (condição **preexistente** à F0); merece PR próprio de formatação isolada, nunca misturado a uma fatia funcional |
 
 ## 10. Próximas etapas
@@ -516,13 +1164,18 @@ Sujeitas a autorização própria, nesta ordem provável:
 4. ~~**Etapa 2.3D-B / F0 — decisões de autenticação e persistência de sessão**~~ — decisões `D-2.3D-01`..`D-2.3D-12` registradas em **`docs/12`**; `D-2.3D-01` implementada como única reabertura física controlada; **INTEGRADA NA `main` em 27/08/2026** (commit `89abfd6`, PR [#9](https://github.com/BrunoMNoronha/techlab-fisio/pull/9), merge commit `f612fa7`; registro pós-medição em §11, REV. 10).
 5. ~~**`F1 — CredencialService / Argon2id`**~~ — implementação **EXECUTADA em 27/08/2026** (§6-D), na branch `agent/fase2-etapa2.3d-f1-credenciais` a partir de `04aa01f`; `D-2.3D-02` e `D-2.3D-03` materializadas; `argon2@0.45.1` instalada apenas em `@techlab-fisio/api`; `P-2.3D-02` medida e encerrada (§6-D.5); **INTEGRADA NA `main` em 27/08/2026** (commit `f642b62`, PR [#11](https://github.com/BrunoMNoronha/techlab-fisio/pull/11), merge commit `f4c2466`; registro pós-medição em §11, REV. 12).
 6. ~~**`F2 — SessaoService`**~~ — implementação **EXECUTADA em 27/08/2026** (§6-E), revisão técnica independente com veredito **B** e correções `C-01`/`C-02` aplicadas (§6-E.9); `R-2.3D-03` **ENCERRADO** por decisão de Bruno (§9); **HOMOLOGADA e INTEGRADA NA `main` em 27/08/2026** (commit `289a94b`, PR [#12](https://github.com/BrunoMNoronha/techlab-fisio/pull/12), merge commit `70b30ae`; registro pós-medição em §11, REV. 15).
-7. **`F3 — endpoints REST de autenticação`** — **NÃO INICIADA**, sujeita a autorização expressa própria. Responsável por login/logout HTTP, cookies (`D-2.3D-07`), CSRF, rate limiting (`D-2.3D-06`), OpenAPI (`D-2.3D-11`, com `P-2.3D-03` a medir) e a auditoria `usuario.autenticacao` (`D-2.3D-12`). Consome `CredencialService` (F1) e `SessaoService` (F2).
-8. Decisões normativas adiadas (`L-05`..`L-08`, `configuracao.alterada`, `prontuario.exportado`, eventual `autor_original_usuario_id`) e RBAC (`profissionais.gerenciar`) — cada uma por decisão expressa de Bruno, nunca por implicação de implementação.
+7. **`F3 — endpoints REST de autenticação`** — implementação **EXECUTADA em 27/08/2026** (§6-F), na branch `agent/fase2-etapa2.3d-f3-auth-http` a partir de `9a22262`. `D-2.3D-06`, `D-2.3D-07`, `D-2.3D-11` e `D-2.3D-12` materializadas; `P-2.3D-03` **medida e verde** pelo **Caminho A** (`@nestjs/swagger@11.4.7`); `T-AUTH-ENUMERATION` provado estruturalmente; `R-2.3D-04` protegido por fail-fast testado; 14 challenges de mutação detectados e revertidos; zero drift de persistência. Submetida a **revisão técnica independente adversarial** (veredito **`B`**), e **CORRIGIDA** na fatia de §6-G: `F-01`..`F-14` tratados. **NÃO HOMOLOGADA / NÃO INTEGRADA — sem commit, push, PR, merge, tag ou deploy.** Próximo passo: **nova revisão técnica independente adversarial da F3 corrigida**, e NÃO a F4.
+8. **`F4 — guards e decorators de autorização (RBAC)`** — **NÃO INICIADA**, sujeita a autorização expressa própria e à conclusão da revisão da F3 (`D-2.3D-09`).
+9. Decisões normativas adiadas (`L-05`..`L-08`, `configuracao.alterada`, `prontuario.exportado`, eventual `autor_original_usuario_id`) e RBAC (`profissionais.gerenciar`) — cada uma por decisão expressa de Bruno, nunca por implicação de implementação.
 
 ## 11. Histórico de revisões
 
 | REV. | Data | Conteúdo |
 | --- | --- | --- |
+| **19** | **28/08/2026** | **ETAPA 2.3D-B / F3 HOMOLOGADA — rito de versionamento e integração** (§6-I). **(a) Veredito recebido:** a terceira revisão técnica independente adversarial devolveu **`A — APTO À HOMOLOGAÇÃO E VERSIONAMENTO`**, sem achado BLOQUEANTE, ALTO ou MÉDIO, e confirmou por reprodução própria — não por leitura do relatório — que `F3R-01` e `F3R-03` estão materialmente encerrados. **(b) `F3R-08` (BAIXO) corrigido:** a linha de §9 que ainda classificava a saturação transitória do limitador como “DECISÃO LOCAL declarada” passou a registrar **`D-2.3D-13`** como fonte normativa, com `L-11` explicitamente rebaixada a alias/referência histórica e o risco residual apontado para `R-2.3D-08`. O conteúdo material da decisão **não** foi duplicado em `docs/10`: `docs/12` §5.13 continua sendo a fonte. **(c) Homologação registrada em §6-I**, com escopo, decisões materializadas, as três rodadas de revisão, findings encerrados, riscos residuais aceitos, zero drift e fronteiras. Os cabeçalhos de estado de §6-F, §6-G e §6-H foram atualizados para refletir que aquelas execuções são registro histórico e que a fatia foi homologada — **nenhum fato medido naquelas seções foi alterado**. **(d) Nenhuma decisão `D-2.3D-01`..`D-2.3D-13` foi alterada, renumerada ou reaberta**; a Base Imutável permanece intacta. **(e) Pendências NÃO encerradas por implicação:** `P-2.3D-03`, `P-2.3D-04`, `P-2.3D-05`, `P-2.3D-06`, `R-2.3D-04`, `R-2.3D-05`, `R-2.3D-06`. **(f) Riscos residuais aceitos:** `R-2.3D-08` (BAIXO), `F-12` (BAIXO), `F3R-06` e `F3R-07` (OBSERVAÇÃO). **(g) F4, F5 e F6 NÃO INICIADAS.** **(h) Deploy, tag e release NÃO autorizados e não realizados.** O registro pós-medição da integração na `main` — SHAs do commit, do PR e do merge — segue o precedente das REV. 10 e REV. 15 e será feito em atualização factual própria. |
+| **18** | **28/08/2026** | **ETAPA 2.3D-B / F3 — SEGUNDA FATIA CORRETIVA PÓS-REVISÃO INDEPENDENTE; permanece NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-H). Executada sobre a mesma baseline `main` = `9a22262`, na branch `agent/fase2-etapa2.3d-f3-auth-http`. **Publicação não autorizada: sem commit, push, PR, merge, tag ou deploy.** A REV. 17 é preservada como registro do estado que foi revisado. **(a) Veredito recebido:** `B — APTO COM CORREÇÕES OBJETIVAS`, sem nenhum achado BLOQUEANTE ou ALTO; a revisão **reproduziu independentemente** e confirmou `F-01` (concorrência assíncrona real), `F-04` (corrida do rehash contra PostgreSQL real, inclusive com espera de lock e rollback da transação concorrente) e `F-05`. **(b) `F3R-01` (MÉDIO) CORRIGIDO:** o RFC 7230 §5.3.2 obriga a aceitar o request-target absoluto, e o Express o ROTEIA para o login, mas o filtro comparava a URL crua — por essa porta o corpo cru do parser voltava a vazar e o `413` produzia log de nível ERROR com stack trace, acionável SEM cabeçalho algum. O reconhecimento passou a usar o **pathname efetivo** da plataforma (`req.path`, o `pathname` de `parseurl`), medido contra 18 variantes: reproduz EXATAMENTE a decisão do roteador. `new URL()` foi deliberadamente REJEITADO por normalizar demais (colapsa dot segments e transforma `//auth/login` em `/login`), o que faria o filtro capturar rota que o roteador devolve como `404`. **(c) `F3R-02` RESOLVIDO POR DECISÃO DE BRUNO:** a revisão classificou `L-11` como decisão comportamental e recusou homologá-la em nome dele (TLF-BASE-V1 §15); Bruno homologou a opção recomendada e ela virou **`D-2.3D-13`** (`docs/12` §5.13, REV. 3), com o risco residual declarado e aceito como **`R-2.3D-08`**. **Nenhuma decisão anterior foi modificada ou renumerada; `D-2.3D-06` permanece intacta**; `L-11` vira alias histórico. **(d) `F3R-03` (MÉDIO) CORRIGIDO:** a amostra de despejo recomeçava sempre na cabeça do `Map`, onde os bloqueados se fixavam — 2 000/2 000 identificadores novos recusados havendo 49 936 candidatos seguros; e a elegibilidade lia `falhas.length` sem podar. Agora há **cursor persistente** por dimensão (iterador vivo, `next()` O(1), jamais skip-desde-o-início) e **poda local** do candidato amostrado com o instante monotônico da operação. `AMOSTRA_DE_DESPEJO = 64`, as duas guardas de indespejabilidade e o critério de seleção permanecem. **(e) `F3R-04` e `F3R-05` CORRIGIDOS:** `.env.example` deixou de documentar um default/fallback que não existe (a variável é obrigatória e o bootstrap aborta sem ela), e a contagem do smoke foi retificada de 7 para **6**, confirmada por reexecução — mesma classe do achado `A-03` da F2. **(f) NÃO tratados, por estarem fora do escopo autorizado:** `F3R-06` (OBSERVAÇÃO — `Origin` comparada ao `Host` sem allowlist) e `F3R-07` (OBSERVAÇÃO — corrida do rehash consome uma falha do orçamento); **`F-12` permanece BAIXO ACEITO**, agora com a concordância material da revisão. **(g) Testes acrescentados:** 9 em `F3R-01` (incluindo prova de não-vacuidade de que a forma absoluta alcança o handler, ausência de log ERROR, e que a correção não passou a capturar as 10 variantes que o roteador devolve como `404`) e 5 em `F3R-03` (prefixo bloqueado, prefixo maior que a amostra, poda por expiração, reserva em voo intocável, custo limitado). **(h) Bateria integral verde:** typecheck 0; `test:api` **16 suites · 437 passed** (era 432); `verify:api-integration` **6 suites · 203 passed** (era 194); `verify:from-scratch` **10 suites · 87 passed**; build 0; `smoke:api` **6 provas**; `verify:argon2-runtime` **15/15**; `verify:openapi-runtime` **17/17**; Guardas 1 e 3 verdes; `git diff --check` limpo. **(i) 3 mutation challenges novos** (`C-18`..`C-20`) aplicados, **todos detectados**, todos revertidos com verificação por hash. **(j) Defeito de TESTE encontrado pelo próprio challenge `C-20`** — repetindo a lição de `C-03`: a primeira versão do teste de poda era **vacuamente verdadeira**, porque o cursor já alcançava região segura do mapa sem precisar da poda; foi reescrita com buckets **parcialmente vencidos**, que eliminam tanto o cursor quanto a varredura periódica como causas alternativas. **(k) Regressão de F1/F2 ausente** — `credencial.service.ts` e `sessao.service.ts` não foram tocados. **(l) Zero drift** reconfirmado por diff e por hash. **(m) F4/F5/F6 NÃO INICIADAS.** **Próximo passo: NOVA revisão técnica independente adversarial da F3 corrigida — a F3 NÃO está homologada nem versionável.** |
+| **17** | **28/08/2026** | **ETAPA 2.3D-B / F3 — CORREÇÕES PÓS-REVISÃO INDEPENDENTE; permanece NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-G). Executada sobre a mesma baseline `main` = `9a22262`, na branch `agent/fase2-etapa2.3d-f3-auth-http`. **Publicação não autorizada: sem commit, push, PR, merge, tag ou deploy.** **Nenhuma decisão `D-2.3D-*` foi criada, alterada ou reaberta; `docs/12` NÃO foi tocado; a Base Imutável permanece intacta. A REV. 16 é preservada como registro do estado que foi revisado.** **(a) Veredito recebido:** `B — APTO COM CORREÇÕES OBJETIVAS`, com catorze achados. **(b) Corrigidos:** `F-01` (ALTO — o gate de `D-2.3D-06` era um check-then-act e não valia sob concorrência: 12 tentativas simultâneas contra o limite 5 produziam 12 execuções de Argon2 e zero bloqueios; agora há RESERVA DE TENTATIVA EM VOO, síncrona, atômica nas duas dimensões e idempotente, com no máximo `limite` chegando ao verificador — provado por barreira determinística); `F-02` (MÉDIO — `TLF_AMBIENTE` passa a ser OBRIGATÓRIA; ausência, vazio ou valor desconhecido abortam o bootstrap, e o processo real prova isso no smoke); `F-03` (MÉDIO — erro 4xx do body parser deixa de virar `500 FALHA_INTERNA` com log de ERRO acionável sem CSRF e sem autenticação: corpo acima do limite agora é `413`); `F-04` (MÉDIO — o rehash exigido por `D-2.3D-02` estava aberto e sem dono, com `precisaRehash` como código morto; foi materializado no login com escrita CONDICIONADA ao digest verificado, Argon2 fora da transação e rollback conjunto); `F-05` (MÉDIO — o despejo por saturação removia justamente a vítima bloqueada, e o racional documentado estava invertido; agora bucket bloqueado ou reservado é indespejável e, sem candidato seguro, a admissão é recusada); `F-06`, `F-08`, `F-09`, `F-10`, `F-13` (BAIXOS); `F-11` (telemetria transitiva `@scarf/scarf` declarada e desligada por `scarfSettings.enabled = false`). **(c) `F-07` resolvido por consequência:** o filtro passou a exigir o método `POST`, e `GET /auth/login` volta ao `404` da plataforma. **(d) `F-12` MANTIDO BAIXO por decisão consciente** — corrigi-lo exigiria acoplamento `auth → audit`, alteração de `packages/database` (vedada por zero drift), duplicação de lógica privada ou abstração prematura. **(e) `F-14` corrigido:** a linguagem de `R-2.3D-04` em §9 era mais forte que a evidência e foi retificada; o risco segue **registrado, não encerrado**. **(f) Correção adicional descoberta durante a correção:** a política de despejo varria o mapa inteiro a cada admissão no teto — O(n) por requisição hostil, transformando a saturação em amplificador de CPU; passou a usar amostra limitada e varredura estritamente periódica. **(g) Defeito de TESTE encontrado pelo próprio challenge `C-03`:** os primeiros testes de saturação eram **vacuamente verdadeiros** (a dimensão de IP saturava antes de o mapa atingir o teto); foram reescritos com não-vacuidade assegurada. **(h) Bateria integral verde:** typecheck 0; `test:api` **16 suites · 432 passed**; `verify:api-integration` **6 suites · 194 passed**; `verify:from-scratch` **10 suites · 87 passed**; build 0; `smoke:api` verde com **seis** provas no processo real; `verify:argon2-runtime` **15/15**; `verify:openapi-runtime` **17/17**; Guardas 1 e 3 verdes; `git diff --check` limpo. **(i) 17 mutation challenges** aplicados, **todos detectados**, todos revertidos com verificação por hash. **(j) Regressão da F2 ausente** — `SessaoService` não foi alterado nesta fatia e seus testes focais seguem verdes. **(k) Zero drift** reconfirmado por diff e por hash. **(l) F4/F5/F6 NÃO INICIADAS**; o rehash de `F-04` não autoriza recuperação de senha. **(m) `P-2.3D-03` permanece MEDIDA e verde, sem encerramento autodeclarado; `R-2.3D-04`, `R-2.3D-05` e `R-2.3D-06` permanecem registrados, sem encerramento autodeclarado** — todos pertencem a decisão de Bruno. **Próximo passo: NOVA revisão técnica independente adversarial da F3 corrigida.** |
+| **16** | **27/08/2026** | **ETAPA 2.3D-B / F3 (endpoints REST de autenticação) IMPLEMENTADA E MEDIDA em branch própria — NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-F). Executada na branch `agent/fase2-etapa2.3d-f3-auth-http` a partir de `main` = `9a22262c515c8b97c73dc7cf8493252db07dd501`. **Publicação não autorizada nesta execução: sem commit, push, PR, merge, tag ou deploy.** **Nenhuma decisão normativa foi criada, alterada ou reaberta** — `D-2.3D-01`..`D-2.3D-12` seguem exatamente como homologadas e **`docs/12` NÃO foi tocado**; a Base Imutável permanece intacta. **(a) Materializadas:** `D-2.3D-06` (rate limit 5/15 min por identificador hasheado e 30/15 min por IP, janela deslizante, poda, teto de entradas, `429` uniforme com `Retry-After`, consulta **antes** do Argon2, HMAC de processo em vez de digest simples, sem infraestrutura nova); `D-2.3D-07` (cookie `__Host-tlf_sessao` em produção/homologação e `tlf_sessao_dev` em desenvolvimento, fonte única para `set` e `clear`, fail-fast de bootstrap em três barreiras para `R-2.3D-04`; baseline CSRF com custom header `X-TLF-Requisicao`, `application/json`, Fetch Metadata, `Origin` e **CORS não habilitado**, sem synchronizer token); `D-2.3D-11` (**Caminho A** — `@nestjs/swagger@11.4.7` medido e compatível com ESM/`nodenext` sob `skipLibCheck: false`, decorators explícitos, sem UI servida); `D-2.3D-12` (`usuario.autenticacao`/`FALHA` com `ator NULL`, `alvo` conforme a conta e `contexto {}`; ausente para payload malformado, para recusa CSRF e para `429`), mais a auditoria de FC-01 já normativamente exigida (`usuario.autenticacao`/`SUCESSO` e `usuario.sessao.logout`/`SUCESSO`). **Nenhuma ação de auditoria nova; nenhuma whitelist ampliada; nenhuma chave de `contexto` introduzida.** **(b) `P-2.3D-03` MEDIDA E VERDE** (§6-F.7) — encerramento formal deixado a decisão de Bruno, seguindo o precedente das REV. 1/REV. 2 de `docs/12`; `R-2.3D-06` materialmente afastado com a mesma ressalva de forma. **(c) Dois modos de falha silenciosos medidos e corrigidos:** `@nestjs/swagger@11.4.7` só registra a rota do documento com `raw` incluindo o formato, e uma rota montada depois da inicialização do Nest fica atrás do handler de rota desconhecida. **(d) Um defeito de contrato medido e corrigido:** o erro do body parser vazava fora do contrato fechado das rotas da F3 — `FiltroErroAutenticacao`, com escopo estreito a `/auth/login` e `/auth/logout`, normaliza o corpo e mapeia falha técnica para `500 FALHA_INTERNA`, **jamais `401`**. **(e) Duas ampliações de fronteira, ambas previstas:** `AuthModule` passa a importar `AuditModule`; `SessaoService` ganhou `emitirEm`/`revogarEm` **aditivos**, sem mudança de semântica, para que o evento entre na mesma transação da mutação (`D-AUD-08`). **(f) `T-AUTH-ENUMERATION` provado estruturalmente** (§6-F.10), com medição temporal apenas como evidência (mediana 33,6 ms × 34,9 ms; razão 1,04). **(g) Bateria integral verde** (§6-F.11): typecheck 0; `test:api` **15 suites · 405 passed**; `verify:api-integration` **6 suites · 173 passed**; `verify:from-scratch` **10 suites · 87 passed**; build 0; `smoke:api` verde com duas provas novas no processo real; `verify:argon2-runtime` **15/15**; `verify:openapi-runtime` **15/15** (novo); Guarda 1 verde; Guarda 3 golden byte a byte **60 169 bytes** e `migrate diff --exit-code` **0**; `git diff --check` limpo. **(h) 14 challenges de mutação aplicados, todos detectados e todos revertidos com verificação por hash** (§6-F.12) — nenhuma mutação sobreviveu. **(i) Zero drift de persistência:** `packages/` com diff vazio contra `9a22262`; 10 migrations, nenhuma nova; `prisma format`/`migrate dev`/`db push`/`db pull` não executados. **(j) Uma dependência nova, prevista pela própria decisão:** `@nestjs/swagger@11.4.7`, apenas no workspace `@techlab-fisio/api`; `class-validator`/`class-transformer` são peers **opcionais** e **não** foram instalados. **(k) F4, F5 e F6 NÃO INICIADAS**, e nenhum frontend: as rotas publicadas pela aplicação são exatamente `/health`, `/auth/login` e `/auth/logout` — asserção mecânica na suíte. **Próximo passo esperado: revisão técnica independente adversarial da F3, e NÃO a F4.** |
 | **15** | **27/08/2026** | **REGISTRO PÓS-MEDIÇÃO DA INTEGRAÇÃO DA ETAPA 2.3D-B / F2 NA `main`** — registro **exclusivamente factual** do rito de versionamento; **nenhuma decisão criada, alterada ou reaberta**; `D-2.3D-01`..`D-2.3D-12` intactas; nenhuma medição anterior reescrita. **(a) Integração:** commit da fatia `289a94b5aab53b24f9635bb9a3503ce541028737` ("feat(auth): implement session service"), PR [#12](https://github.com/BrunoMNoronha/techlab-fisio/pull/12), **merge commit `70b30aebf09368200343d6a5672b267811f337ee`** (pais `f4c2466` + `289a94b`), por **merge commit** — preservando o rito das fatias anteriores (PRs #5, #7, #9, #11). `main` passou de `f4c2466` para `70b30ae`. **(b) Proteção contra corrida verificada imediatamente antes do merge:** SHA remoto da branch = `289a94b` (inalterado desde o push), `main` = `f4c2466` (não avançou desde a baseline), exatamente **1 commit** sobre `main`, `mergeable = MERGEABLE`, `mergeStateStatus = CLEAN`. **(c) Conteúdo do commit:** 9 arquivos, 2 165 inserções, 28 remoções — somente `apps/api/src/auth/**`, testes correspondentes e `docs/10`+`docs/12`. **Nenhum arquivo de `packages/`, `.github/`, `package.json` ou `package-lock.json`.** **(d) CI do PR (branch `289a94b`):** run [33131113044](https://github.com/BrunoMNoronha/techlab-fisio/actions/runs/33131113044) — **success**, 16 passos, todos verdes, incluindo Guarda 1, E-15 + Guarda 2 (reconstrução from-scratch), Guarda 3 + `migrate diff`, prova de runtime do Argon2id no ESM compilado, suíte de `apps/api`, prova do `exports` público de `@techlab-fisio/database`, integração com PostgreSQL 18 real e bootstrap ESM (`R-BL-02`). **(e) CI da `main` pós-merge (`70b30ae`):** run [33131355234](https://github.com/BrunoMNoronha/techlab-fisio/actions/runs/33131355234) — **success**, **zero passos falhos** (a workflow dispara em `agent/**` e por `workflow_dispatch`; a execução em `main` seguiu o precedente das integrações anteriores). Única anotação: aviso pré-existente de depreciação do Node 20 em `actions/checkout@v4`/`actions/setup-node@v4`, alheio a esta fatia. **(f) Bateria local pós-merge sobre `main` = `70b30ae`, toda verde:** typecheck exit 0; `test:api` **10 suites · 291 passed**; `verify:api-integration` **5 suites · 111 passed**; `verify:from-scratch` **10 suites · 87 passed**; build exit 0; `smoke:api` verde; Guarda 1 verde; Guarda 3 golden byte a byte **60 169 bytes** e `migrate diff --exit-code` **0**. **(g) Zero drift confirmado na `main` integrada:** `schema.prisma`, migrations, `schema.golden.sql` e `protected-objects.json` sem alteração; nenhuma dependência nova; `.github/` intocada. **(h) F3 — endpoints REST de autenticação — NÃO INICIADA.** Nenhum controller, rota, DTO HTTP, cookie, CSRF, rate limiting, OpenAPI, guard, RBAC ou auditoria de autenticação foi introduzido. |
 | **14** | **27/08/2026** | **HOMOLOGAÇÃO DA F2 + ENCERRAMENTO DE `R-2.3D-03` + RITO DE VERSIONAMENTO** — decisão de **Bruno Menezes Noronha** (TLF-BASE-V1 §15, item 1). **Nenhuma decisão normativa foi criada, alterada ou reaberta**: `D-2.3D-01`..`D-2.3D-12` seguem exatamente como homologadas; em particular **`D-2.3D-04` NÃO foi tocada**. **(a) `R-2.3D-03` ENCERRADO NA F2** (§9): o risco existia para vigiar o cumprimento da obrigação de monotonicidade atômica de `D-2.3D-04`; a obrigação foi materializada e **provada** por `UPDATE` condicional atômico (predicado inteiro no `WHERE`, nenhuma decisão de escrita em memória), `GREATEST(ultima_atividade_em, instante_candidato)` medido como barreira real, predicado de throttle que exige avanço sobre o valor vigente e portanto **também barra atividade temporalmente regressiva**, testes de integração concorrentes contra PostgreSQL real com espera de lock confirmada em `pg_stat_activity`, mutation challenge de **last-writer-wins** que faz os detectores falharem (3/3 na reprodução independente), e confirmação de que a correção `C-01` de `revogar` **não enfraqueceu** a proteção. **(b) Limites da evidência preservados como limites, não como risco:** prova executada em PostgreSQL sob `READ COMMITTED`, na arquitetura vigente de **PostgreSQL autoritativo compartilhado**, que é precisamente onde a propriedade é sustentada pela operação SQL atômica; escrita distribuída/multi-primary está fora da arquitetura vigente e não é antecipada. **(c) `docs/12` sincronizado apenas FACTUALMENTE** (REV. 2 daquele documento — §8, `R-2.3D-03`), seguindo o precedente já vigente de `P-2.3D-02`/REV. 1: nenhuma `D-2.3D-*` foi alterada. **(d) Histórico preservado:** as REV. 11, 12 e 13 e todas as medições anteriores permanecem intactas como registro factual — inclusive o parecer `MANTER MITIGADO` da revisão independente, que era correto no momento em que foi emitido e foi superado pela decisão de Bruno, não por autodeclaração do agente. **(e) Não corrigido nesta fatia, por decisão de escopo:** as ocorrências históricas de "16/16" herdadas da F1 (§6-D.4 e REV. 11) e os achados `A-02`, `A-04`, `A-05` e `A-06`, que permanecem **observações** e não requisitos homologados. **(f) Rito executado:** bateria completa reexecutada sobre o estado exato levado a commit; commit único em Conventional Commits; branch publicada; PR contra `main`; merge por **merge commit**, preservando o precedente das fatias anteriores; medição pós-merge da `main`. **(g) F3 NÃO INICIADA.** |
 | **13** | **27/08/2026** | **REVISÃO INDEPENDENTE DA F2 + CORREÇÕES `C-01`/`C-02`** (branch `agent/fase2-etapa2.3d-f2-sessao`, baseline `f4c2466`) — nenhuma decisão normativa criada ou reaberta; `D-2.3D-01`, `D-2.3D-04` e `D-2.3D-05` **não foram alteradas**; `TECHLAB_FISIO_BASE_IMUTAVEL_V1.md` e `docs/12` **não foram tocados**. **(a) Revisão adversarial executada** sobre a árvore não commitada da F2, com veredito **`B — APTO COM CORREÇÕES OBJETIVAS`**: a revisão reproduziu de forma independente a semântica READ COMMITTED, a corrida bloqueada de `R-2.3D-03`, os três challenges de mutação e a bateria completa — não aceitou o relatório anterior como prova. **(b) Achado `A-01` (ALTO), reproduzido**: na ordem anterior, `revogar` executava o `UPDATE` de revogação com predicados temporais antes da detecção de expiração; como um `UPDATE` que casa **zero linhas não adquire lock**, abria-se uma janela de um round-trip em que uma `validar` concorrente com instante ligeiramente anterior renovava `ultima_atividade_em`, a detecção deixava de disparar e o chamador recebia `SESSAO_EXPIRADA` enquanto a linha permanecia `estado = ATIVA`, `encerrada_em = NULL` e o token seguia utilizável — **um logout que falhava em silêncio** (contraria AUT-002). **(c) Correção `C-01`**: a detecção de expiração passou a rodar **antes** da revogação, e o `UPDATE` de revogação passou a exigir **apenas** `id` e `estado = 'ATIVA'` — dois predicados a menos. A janela não foi deslocada, foi **eliminada**: se a sessão está vencida, a detecção a fecha atomicamente **e adquire o lock**, e nenhuma atividade concorrente a reanima (todo `UPDATE` de atividade exige `estado = 'ATIVA'`); se não está vencida, a revogação vence. Depois desta ordem, `revogadas === 0` significa exatamente `estado <> 'ATIVA'`, de modo que a resposta corresponde **sempre** ao estado persistido, sem TOCTOU residual. **(d) Teste de regressão** (2 testes, PostgreSQL real): a validação concorrente é posicionada **deterministicamente** entre os dois statements do logout, com espera até que ela termine **ou** entre em disputa de lock — falhando explicitamente se a corrida não for exercida; a invariante essencial é verificada **no estado persistido** (a sessão nunca permanece `ATIVA` e utilizável quando o logout não a revogou), mais um **controle positivo** que impede a correção de transformar logout legítimo em "expirada". A instrumentação vive **inteiramente no teste** (`jest.spyOn` + `Proxy`): **nenhum hook entrou no código de produção**. **Detecção provada por restauração temporária da lógica anterior** (revertida): o teste falha exatamente na invariante essencial e passa com a correção. **(e) `C-02`**: a REV. 12 registrava `verify:argon2-runtime` como "16/16"; a contagem real medida é **15** verificações `OK` (o script não publica contagem própria). Corrigido em §6-E.7 e na REV. 12. As ocorrências equivalentes em **§6-D.4 e na REV. 11 pertencem à F1 já integrada e foram deliberadamente PRESERVADAS** — reescrever registro histórico de fatia integrada exige decisão própria; fica registrado como imprecisão herdada. **(f) `R-2.3D-03` preservado**: a correção não tocou `#registrarAtividade`; `GREATEST`, o predicado de throttle, o `UPDATE` condicional atômico e o `expira_em` absoluto permanecem intactos. O challenge de last-writer-wins foi **reaplicado sobre o código já corrigido e continua sendo detectado**. Parecer isolado da revisão: **`MANTER MITIGADO`** — o risco **não é encerrado** nesta fatia. **(g) Leitura de `GREATEST` corrigida para melhor**: sonda da revisão mediu que a cláusula `SET` é avaliada sobre a versão **nova** da linha e que, com `WHERE` fraco, `GREATEST` **impediu** a regressão — logo ele é barreira **real**, hoje sombreada por um predicado mais forte, e não código decorativo. **(h) Achados não implementados por decisão de escopo**: `A-02` (TOCTOU de `emitir`), `A-04` (formato estrito de `token_hash`), `A-05` (uniformização HTTP — F3) e `A-06` (relógio do teste) permanecem como **observações**, não como requisitos homologados. **(i) Medições pós-correção**: suíte da API **10 suites · 291 passed**; integração × PostgreSQL 18 real **5 suites · 111 passed** (+2 da regressão de `A-01`); persistência **10 suites · 87 passed**; Guardas 1–3 verdes, golden byte a byte **60 169 bytes**, `migrate diff --exit-code` **0**; `verify:from-scratch`, smoke `R-BL-02`, `verify:argon2-runtime` (exit 0, 15 `OK`), typecheck e build verdes; suíte de sessão **53/53 em 3 execuções**. **(j) Zero drift**: `git diff f4c2466 -- packages/` vazio; blobs de persistência idênticos; nenhuma dependência nova; CI intocada. **(k) NÃO INTEGRADA**: sem commit, push, PR, merge, tag ou deploy. Próximo ato: **homologação final da F2 e decisão de Bruno sobre `R-2.3D-03`, seguida do rito de versionamento** — e não o início automático da F3. |
