@@ -1,12 +1,12 @@
-# Decisões de Autenticação e Autorização — `D-2.3D-01`..`D-2.3D-12`
+# Decisões de Autenticação e Autorização — `D-2.3D-01`..`D-2.3D-13`
 
 > **Documento:** `docs/12-decisoes-autenticacao-autorizacao.md`
 > **Projeto:** TechLab Fisio
 > **Fase:** 2 — Frente de backend (`apps/api`) — Etapa 2.3D-B, fatia **F0**
-> **Status:** **DECIDIDO — `D-2.3D-01`..`D-2.3D-12` homologadas por Bruno Menezes Noronha em 27/08/2026 (TLF-BASE-V1 §15, item 1)**
-> **Data:** 27 de agosto de 2026
+> **Status:** **DECIDIDO — `D-2.3D-01`..`D-2.3D-13` homologadas por Bruno Menezes Noronha (`D-2.3D-01`..`D-2.3D-12` em 27/08/2026; `D-2.3D-13` em 28/08/2026 — TLF-BASE-V1 §15, item 1)**
+> **Data:** 27 de agosto de 2026 (REV. 3 e REV. 4 em 28/08/2026)
 > **Natureza:** registro **normativo** das decisões que governam a implementação de autenticação e autorização da Etapa 2.3D. Segue o padrão de `docs/09` §12 e de `docs/11` (registro de decisão com valor normativo próprio). **Não altera** `TECHLAB_FISIO_BASE_IMUTAVEL_V1.md` nem `docs/02`..`docs/07`; **não reabre** `D-AUD-01`..`D-AUD-08` (`docs/09` §12).
-> **Revisão vigente:** REV. 2 (27/08/2026) — atualização exclusivamente factual: `R-2.3D-03` **ENCERRADO** pela prova de monotonicidade atômica produzida na F2 (`docs/10` §6-E.5/§6-E.9/§9), por decisão de Bruno Menezes Noronha. **Nenhuma decisão foi modificada** — `D-2.3D-01`..`D-2.3D-12` seguem como homologadas; em particular `D-2.3D-04` permanece intacta. REV. 1 (27/08/2026) — atualização exclusivamente factual: `P-2.3D-02` ENCERRADA pelo benchmark da F1 (`docs/10` §6-D.5). **Nenhuma decisão foi modificada** — `D-2.3D-01`..`D-2.3D-12` seguem como homologadas. REV. 0 (27/08/2026): F0 executada — decisões registradas + única reabertura física da persistência de sessão.
+> **Revisão vigente:** REV. 4 (28/08/2026) — atualização **exclusivamente factual**: a fatia **F3 passa a CONCLUÍDA** em §9, por ter sido homologada por Bruno Menezes Noronha em 28/08/2026 (`docs/10` §6-I; §11, REV. 19). **Nenhuma decisão foi modificada** — `D-2.3D-01`..`D-2.3D-13` seguem exatamente como homologadas, e nenhuma pendência de §11 foi alterada ou encerrada. Estado anterior preservado: REV. 3 (28/08/2026) — **acréscimo de UMA decisão nova: `D-2.3D-13` — proteção de concorrência em voo do limitador de login** (§5.13), homologada por Bruno Menezes Noronha após a segunda revisão técnica independente adversarial da F3, que a classificou como decisão comportamental e recusou homologá-la em nome dele. **Nenhuma decisão anterior foi modificada, renumerada ou reaberta** — `D-2.3D-01`..`D-2.3D-12` seguem exatamente como homologadas; em particular `D-2.3D-06` permanece intacta, e `D-2.3D-13` a COMPLEMENTA sem alterar a política de falhas/janela. A implementação registrava o comportamento como decisão local `L-11` (`docs/10` §6-G.2); `L-11` passa a ser **alias histórico** de `D-2.3D-13`. Estado anterior preservado: REV. 2 (27/08/2026) — atualização exclusivamente factual: `R-2.3D-03` **ENCERRADO** pela prova de monotonicidade atômica produzida na F2 (`docs/10` §6-E.5/§6-E.9/§9), por decisão de Bruno Menezes Noronha. **Nenhuma decisão foi modificada** — `D-2.3D-01`..`D-2.3D-12` seguem como homologadas; em particular `D-2.3D-04` permanece intacta. REV. 1 (27/08/2026) — atualização exclusivamente factual: `P-2.3D-02` ENCERRADA pelo benchmark da F1 (`docs/10` §6-D.5). **Nenhuma decisão foi modificada** — `D-2.3D-01`..`D-2.3D-12` seguem como homologadas. REV. 0 (27/08/2026): F0 executada — decisões registradas + única reabertura física da persistência de sessão.
 
 ---
 
@@ -14,12 +14,12 @@
 
 | Campo | Valor |
 | --- | --- |
-| Identificadores | `D-2.3D-01` .. `D-2.3D-12` |
+| Identificadores | `D-2.3D-01` .. `D-2.3D-13` |
 | Autoridade | Bruno Menezes Noronha (TLF-BASE-V1 §15, item 1) |
-| Data da homologação | 27/08/2026 |
+| Data da homologação | 27/08/2026 (`D-2.3D-01`..`D-2.3D-12`) · 28/08/2026 (`D-2.3D-13`) |
 | Baseline de código na homologação | `main` = `53f9fc5777759388bfb4bcaa429f4f607733b422` |
 | Fatia que materializou este registro | **F0** — decisões normativas + reabertura física controlada da persistência de sessão |
-| Efeito físico nesta fatia | **exclusivamente `D-2.3D-01`**; as outras onze são normativas e produzem efeito nas fatias F1..F7 |
+| Efeito físico nesta fatia | **exclusivamente `D-2.3D-01`**; as demais são normativas e produzem efeito nas fatias F1..F7 (`D-2.3D-13` foi acrescentada em 28/08/2026, REV. 3) |
 
 Este documento é a **baseline normativa da Etapa 2.3D**. Onde uma fatia posterior divergir dele, prevalece este registro até que uma decisão expressa de Bruno o altere.
 
@@ -274,6 +274,41 @@ O objetivo é eliminar a **diferença estrutural de processamento** entre "senha
 
 **Relação com `docs/09` §12 — sem reabertura.** `usuario.autenticacao` **já pertence** ao catálogo homologado `D-AUD-01`, e sua whitelist de `contexto` **já é vazia** por `D-AUD-07` (regra base fail-closed). Esta decisão **não amplia** `D-AUD-07`, **não acrescenta** ação ao catálogo e **não introduz** chave de `contexto`: `contexto = {}` é exatamente o que a whitelist vazia permite. `resultado = FALHA` pertence ao catálogo de `D-AUD-02`.
 
+### 5.13 `D-2.3D-13` — Proteção de concorrência em voo do limitador de login *(normativa; efeito na F3)*
+
+**Origem.** A primeira revisão independente da F3 mediu que o gate de `D-2.3D-06` era um *check-then-act*: 12 tentativas simultâneas contra o limite 5 produziam 12 execuções de Argon2 e zero bloqueios. A correção introduziu **reserva de tentativa em voo**. A segunda revisão independente classificou esse mecanismo como **decisão comportamental, e não detalhe de implementação**, e recusou-se a homologá-lo em nome de Bruno (TLF-BASE-V1 §15: nenhum agente escolhe silenciosamente a interpretação mais conveniente). Esta decisão resolve o ponto.
+
+**O que fica homologado.** O limitador possui uma **proteção de concorrência em voo**, *separada* da política de falhas persistidas:
+
+| Dimensão | Máximo SIMULTÂNEO |
+| --- | --- |
+| Por identificador normalizado e hasheado | **5** |
+| Por IP normalizado | **30** |
+
+Quando uma dimensão está sem vaga, e a causa é **exclusivamente** saturação concorrente transitória, a resposta é:
+
+```text
+HTTP 429
+Retry-After: 1
+```
+
+**Regras vinculantes:**
+
+- a requisição rejeitada nesse gate **não chegou à verificação da credencial** e, portanto, **não conta como falha de autenticação persistida**;
+- ela **não altera a janela de falhas de `D-2.3D-06`**;
+- ela **não pode produzir lockout persistente por si só**;
+- a aquisição entre identificador e IP permanece **all-or-nothing**;
+- toda reserva adquirida é **liberada exatamente uma vez**, inclusive em erro técnico;
+- quando a mesma chave também tem falhas persistidas suficientes, prevalece o **cálculo real da janela** de `D-2.3D-06`, não o `Retry-After: 1`.
+
+**Relação com `D-2.3D-06` — sem reabertura.** `D-2.3D-06` **não é alterada**. Seus limites (5 falhas/15 min por identificador; 30 falhas/15 min por IP), a janela deslizante, a ausência de lockout duro, o `429` uniforme com `Retry-After`, a ordem antes do Argon2, a poda, o teto de entradas e o identificador hasheado permanecem exatamente como homologados. `D-2.3D-13` **acrescenta** uma segunda proteção, de natureza distinta — concorrência, não acúmulo — que existe para que a primeira seja verdadeira sob carga simultânea.
+
+**Risco residual — declarado e aceito.** Um atacante pode ocupar temporariamente as vagas simultâneas de um identificador e provocar `429` para um usuário legítimo. **Aceito nesta fase** como contrapartida da proteção dos recursos de Argon2 (19 MiB por operação; 45 simultâneos foram medidos como vetor de esgotamento de memória), **desde que não gere bloqueio persistente** — e não gera: as reservas se desfazem em milissegundos e nenhuma falha é contabilizada.
+
+**Distinção em relação a `A-08`.** A alternativa rejeitada `A-08` era *lockout duro de conta após N falhas* — bloqueio **persistente** disparado por falhas. `D-2.3D-13` é o oposto: **transitório**, não contabilizado, e some sozinho. A rejeição de `A-08` permanece integralmente vigente.
+
+**Alias histórico.** A implementação registrou este comportamento como decisão local **`L-11`** (`docs/10` §6-G.2). `L-11` permanece citável como referência histórica, mas a fonte normativa passa a ser `D-2.3D-13`.
+
 ## 6. Alternativas rejeitadas
 
 | # | Alternativa | Por que foi rejeitada |
@@ -328,6 +363,7 @@ O `token_hash` **habilita** a F1/F2 (credencial e sessão) sem nova reabertura d
 | --- | --- | --- | --- |
 | `R-2.3D-01` | Parâmetros de Argon2id inadequados ao hardware real (lentos demais → DoS; rápidos demais → fracos) | Média | Benchmark empírico **obrigatório** na F1 (`D-2.3D-02`); parâmetros só encerram como operacionais após medição |
 | `R-2.3D-02` | Contadores de rate limit em memória zerados por restart | Baixa (MVP) | **Aceito e documentado** (`D-2.3D-06`). Reavaliar antes de produção com múltiplas instâncias |
+| `R-2.3D-08` | Atacante ocupa as vagas simultâneas de um identificador e provoca `429` transitório para usuário legítimo | Baixa | **ACEITO E DECLARADO** em `D-2.3D-13` (§5.13) como contrapartida da proteção dos recursos de Argon2. Limitado por construção: as reservas se desfazem em milissegundos, nenhuma falha é contabilizada e **nenhum bloqueio persistente** decorre daí. Reavaliar quando existir o `apps/web` real e houver tráfego legítimo concorrente medido |
 | ~~`R-2.3D-03`~~ | Atualização de `ultima_atividade_em` implementada como last-writer-wins, permitindo regressão temporal e estendendo sessão indevidamente | Média | **ENCERRADO em 27/08/2026** — a prova exigida foi produzida pela F2 e registrada em `docs/10` §6-E.5/§6-E.9/§9: `UPDATE` condicional atômico (predicado inteiro no `WHERE`), `GREATEST(ultima_atividade_em, instante_candidato)` medido como barreira real, predicado de throttle que exige avanço sobre o valor vigente e portanto também barra atividade regressiva, testes concorrentes contra PostgreSQL real com espera de lock confirmada, mutation challenge de last-writer-wins detectado (3/3 em reprodução independente) e confirmação de que a correção `C-01` de `revogar` não enfraqueceu a proteção. Limites da evidência, registrados como limites e **não** como risco aberto: prova sob `READ COMMITTED`, na arquitetura vigente de PostgreSQL autoritativo compartilhado — onde a propriedade é sustentada pela própria operação SQL atômica. **`D-2.3D-04` NÃO foi alterada**: a decisão permanece exatamente como homologada, agora com a prova que ela própria exigia |
 | `R-2.3D-04` | Configuração insegura de cookie vazar para produção | Alta | `D-2.3D-07` exige **falha no bootstrap**; teste obrigatório na F3 |
 | `R-2.3D-05` | Diferença de tempo entre conta existente e inexistente permitir enumeração | Média | Caminho dummy (`D-2.3D-02`) + simetria estrutural de auditoria (`D-2.3D-12`); `T-AUTH-ENUMERATION` na F3 |
@@ -343,7 +379,7 @@ Riscos herdados e **não** alterados por este registro: `R2.2-04`, `R-BL-09`, `V
 | **F0** | Registro normativo + persistência de sessão | — | **CONCLUÍDA** |
 | F1 | `CredencialService` / Argon2id | `D-2.3D-02`, `D-2.3D-03` | F0 |
 | F2 | `SessaoService` — emissão, verificação, atividade monotônica, estados terminais | `D-2.3D-01`, `D-2.3D-04`, `D-2.3D-05` | **F0 (colunas + CHECK)**, F1 |
-| F3 | Endpoints REST de autenticação, cookies, CSRF, OpenAPI, rate limiting do login | `D-2.3D-06`, `D-2.3D-07`, `D-2.3D-11`, `D-2.3D-12` | F1, F2 |
+| **F3** | Endpoints REST de autenticação, cookies, CSRF, OpenAPI, rate limiting do login | `D-2.3D-06`, `D-2.3D-07`, `D-2.3D-11`, `D-2.3D-12`, `D-2.3D-13` | **CONCLUÍDA** (homologada em 28/08/2026 — `docs/10` §6-I) |
 | F4 | Guards e decorators de autorização (RBAC) | `D-2.3D-09` | F2, F3 |
 | F5 | Seed de papéis/permissões + bootstrap do primeiro Administrador | `D-2.3D-09`, `D-2.3D-10` | F4 |
 | F6 | Recuperação de senha (início e conclusão) + rate limiting próprio | `D-2.3D-06`, `D-2.3D-08` | F1, F2, F5 |
@@ -450,10 +486,12 @@ Nenhum requisito AUT foi ampliado, reduzido ou reinterpretado por este registro.
 
 | REV. | Data | Alterações |
 | --- | --- | --- |
+| **4** | 28/08/2026 | **Atualização exclusivamente FACTUAL — nenhuma decisão modificada.** `D-2.3D-01`..`D-2.3D-13` permanecem exatamente como homologadas. Único campo alterado: a linha da fatia **F3** em §9, que passa a **CONCLUÍDA**, por ter sido homologada por Bruno Menezes Noronha em 28/08/2026 após a terceira revisão técnica independente adversarial (veredito `A`). Mesma forma e mesmo precedente das REV. 1 e REV. 2. **Nenhuma pendência de §11 foi alterada ou encerrada**; em particular `P-2.3D-03`, `P-2.3D-04`, `P-2.3D-05` e `P-2.3D-06` seguem como estavam, e `R-2.3D-08` permanece registrado em §8 como risco aceito. A evidência da homologação e o rito de integração vivem em `docs/10` §6-I — este documento continua sendo apenas o registro normativo das decisões. |
+| **3** | 28/08/2026 | **ACRÉSCIMO DE UMA DECISÃO NOVA — `D-2.3D-13` (§5.13), homologada por Bruno Menezes Noronha.** Nenhuma decisão anterior foi modificada, renumerada, reduzida ou reaberta: `D-2.3D-01`..`D-2.3D-12` permanecem exatamente como homologadas em 27/08/2026, e **`D-2.3D-06` em particular está intacta**. **Fundamento:** a segunda revisão técnica independente adversarial da F3 classificou a proteção de concorrência em voo do limitador — registrada pela implementação como decisão local `L-11` — como **decisão comportamental, e não detalhe de implementação**, por três razões medidas: o teto de simultaneidade (5 e 30) foi acoplado ao limite de falhas sem que fonte alguma o fixasse; `Retry-After: 1` não é derivável de fonte homologada; e o `429` transitório é invisível ao contador de falhas, alterando a semântica de `429` que o próprio OpenAPI descreve. A revisão **recusou-se a homologá-la** em nome de Bruno (TLF-BASE-V1 §15) e a devolveu como decisão pendente, com alternativas e recomendação. Bruno homologou a opção recomendada — manter o comportamento como está — e ela passa a ser normativa como `D-2.3D-13`. **`L-11` vira alias histórico.** Acrescentado também o risco `R-2.3D-08` em §8, declarando e aceitando o risco residual de `429` transitório contra usuário legítimo. `D-2.3D-13` foi acrescentada à linha da F3 em §9. Nenhuma pendência de §11 foi alterada. |
 | **2** | 27/08/2026 | **Atualização exclusivamente FACTUAL — nenhuma decisão modificada.** `D-2.3D-01`..`D-2.3D-12` permanecem exatamente como homologadas; **`D-2.3D-04` não foi tocada**. Único campo alterado: a linha de acompanhamento de **`R-2.3D-03`** em §8, que passa a **ENCERRADO em 27/08/2026** — mesma forma e mesmo precedente da REV. 1 para `P-2.3D-02`. Fundamento: a F2 produziu a prova que o risco vigiava (`UPDATE` condicional atômico, `GREATEST`, throttle que barra regressão, testes concorrentes contra PostgreSQL real, mutation challenge de last-writer-wins detectado, e `C-01` sem enfraquecimento da proteção) — evidência integral em `docs/10` §6-E.5/§6-E.9/§9. Os limites da evidência (`READ COMMITTED`; PostgreSQL autoritativo compartilhado) ficam registrados como **limites da prova**, não como risco aberto; escrita distribuída/multi-primary está fora da arquitetura vigente e não é antecipada. Nenhuma pendência de §11 foi alterada. |
 | **1** | 27/08/2026 | **Atualização exclusivamente FACTUAL — nenhuma decisão modificada.** `D-2.3D-01`..`D-2.3D-12` permanecem exatamente como homologadas em 27/08/2026; nenhum parâmetro, prazo, nome ou regra foi alterado, acrescentado ou removido. Única mudança: em §11, `P-2.3D-02` (benchmark empírico do Argon2id) passa de **ABERTA** a **ENCERRADA**, por ter sido cumprida na F1 — a medição está registrada em `docs/10` §6-D.5 e sustenta a manutenção dos parâmetros de `D-2.3D-02`, que **não é reaberta**. A F1 em si (implementação de `CredencialService`, `argon2@0.45.1`, normalização do login) é registrada em `docs/10` §6-D, não aqui: este documento é normativo, não registro de execução. |
 | **0** | 27/08/2026 | Criação. Registro normativo de `D-2.3D-01`..`D-2.3D-12` homologadas por Bruno Menezes Noronha. Execução da fatia **F0**: materialização física exclusiva de `D-2.3D-01` (`sessao_autenticacao.token_hash`, `sessao_autenticacao.ultima_atividade_em`, `ck_sessao_autenticacao_atividade`) na migration `20260827175151_sessao_autenticacao_token_atividade`; atualização de `protected-objects.json` (25 → 26 CHECKs), da Guarda 2 e do golden schema pelo fluxo oficial; testes de aceite/rejeição da CHECK e de NOT NULL. Nenhuma dependência instalada; nenhuma implementação de F1+ iniciada |
 
 ---
 
-**Fim — `docs/12-decisoes-autenticacao-autorizacao.md` — `D-2.3D-01`..`D-2.3D-12` registradas; F0 da Etapa 2.3D-B executada em 27/08/2026.**
+**Fim — `docs/12-decisoes-autenticacao-autorizacao.md` — `D-2.3D-01`..`D-2.3D-13` registradas; F0 da Etapa 2.3D-B executada em 27/08/2026; `D-2.3D-13` homologada em 28/08/2026.**
