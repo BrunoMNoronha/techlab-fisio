@@ -32,6 +32,7 @@ import type { TestingModule } from "@nestjs/testing";
 import { AppModule } from "../src/app.module.js";
 import { AuthModule } from "../src/auth/auth.module.js";
 import { CredencialService } from "../src/auth/credencial.service.js";
+import { DatabaseModule } from "../src/database/database.module.js";
 import { DatabaseService } from "../src/database/database.service.js";
 
 // O aquecimento paga um `hash()` Argon2 real (m=19456) no `init()`, e o
@@ -181,8 +182,8 @@ describe("AuthModule — ciclo de vida real (onModuleInit) pelo AppModule", () =
   });
 });
 
-describe("AuthModule — fronteira da F1 preservada", () => {
-  it("não declara controller — a F1 não expõe rota", () => {
+describe("AuthModule — fronteira da F1+F2 preservada", () => {
+  it("não declara controller — F1 e F2 não expõem rota", () => {
     // `controllers` é a chave pública de metadado de `@Module` (Nest
     // `MODULE_METADATA.CONTROLLERS`). Endpoints de autenticação são da F3
     // (`docs/12` §9); nascer um controller aqui é invasão de escopo.
@@ -190,11 +191,14 @@ describe("AuthModule — fronteira da F1 preservada", () => {
     expect(controllers ?? []).toEqual([]);
   });
 
-  it("não importa outros módulos — sem banco e sem auditoria na F1", () => {
-    // A F1 não consulta usuário (`DatabaseModule`) e não emite
-    // `usuario.autenticacao` (`AuditModule`, `D-2.3D-12` — F3). Ambos entram
-    // quando a fatia que os exigir for autorizada, não por antecipação.
+  it("importa EXCLUSIVAMENTE DatabaseModule — e nunca AuditModule", () => {
+    // Mudança de fronteira AUTORIZADA na F2: a sessão é persistida, logo a
+    // fatia exige de fato a fronteira transacional (`D-2.3D-01`). O que NÃO
+    // muda: `AuditModule` continua fora — `usuario.autenticacao` e a auditoria
+    // de logout são da F3 (`D-2.3D-12`, `docs/12` §9) e não entram por
+    // antecipação. A F1 não importava nada; esta asserção documenta a única
+    // adição legítima e falha se qualquer outra aparecer.
     const imports: unknown = Reflect.getMetadata("imports", AuthModule);
-    expect(imports ?? []).toEqual([]);
+    expect(imports ?? []).toEqual([DatabaseModule]);
   });
 });
