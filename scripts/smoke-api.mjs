@@ -11,6 +11,9 @@
 //   1. processo real do artefato compilado (ESM, Node 24) sobe;
 //   2. GET /health → 200 com corpo exato {"status":"ok"};
 //   3. rota inexistente → 404 SEM stack trace no corpo;
+//   3-B. (F3) GET /openapi.json → 200 com as rotas de autenticação, e
+//        POST /auth/login sem o custom header CSRF → 403 sem cookie;
+//   3-C. (F3, correção F-02) sem TLF_AMBIENTE o bootstrap ABORTA;
 //   4. encerramento LIMPO por sinal (SIGTERM → exit 0);
 //   5. cleanup garantido mesmo em falha (processo morto + instância
 //      destruída no finally).
@@ -71,6 +74,11 @@ async function main() {
           ...process.env,
           DATABASE_URL: instancia.urlApp,
           PORT: String(PORTA_API),
+          // `F-02` — `TLF_AMBIENTE` e OBRIGATORIA desde a correcao pos-revisao:
+          // a aplicacao nao assume ambiente por omissao, e sem esta linha o
+          // bootstrap falharia de proposito. O smoke exercita o ambiente de
+          // desenvolvimento, que e onde o documento OpenAPI e servido.
+          TLF_AMBIENTE: "desenvolvimento",
         },
         stdio: ["ignore", "pipe", "pipe"],
       },
@@ -117,6 +125,86 @@ async function main() {
       falhar("corpo do 404 contém frame de stack trace");
     }
     console.log(`${ROTULO} rota inexistente -> 404 sem stack.`);
+
+    // 3-B (Etapa 2.3D-B / F3). Duas provas que SÓ o processo real dá, e que
+    // nem o Jest nem `verify:openapi-runtime` cobrem: elas exercitam o
+    // bootstrap de `main.ts` como ele roda em produção.
+    //
+    //   (a) `D-2.3D-11` — a rota do documento OpenAPI é montada ENTRE
+    //       `NestFactory.create` e `listen`. Montá-la depois da inicialização
+    //       a deixaria atrás do handler de rota desconhecida e ela
+    //       responderia 404 — modo de falha MEDIDO nesta fatia;
+    //   (b) `D-2.3D-07` — a baseline CSRF está aplicada às mutações no
+    //       processo real: uma tentativa de login sem o custom request header
+    //       é recusada com 403, sem autenticar e sem cookie.
+    const documento = await fetch(`${base}/openapi.json`);
+    if (documento.status !== 200) {
+      falhar(`GET /openapi.json respondeu ${documento.status} (esperado 200)`);
+    }
+    const contrato = await documento.json();
+    for (const rota of ["/auth/login", "/auth/logout"]) {
+      if (contrato?.paths?.[rota]?.post === undefined) {
+        falhar(`o documento OpenAPI servido não descreve POST ${rota}`);
+      }
+    }
+    console.log(`${ROTULO} GET /openapi.json -> 200 com as rotas da F3.`);
+
+    const semCabecalho = await fetch(`${base}/auth/login`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        identificador: "smoke-sintetico@local",
+        senha: "senha-sintetica-smoke",
+      }),
+    });
+    if (semCabecalho.status !== 403) {
+      falhar(
+        `POST /auth/login sem o custom header respondeu ${semCabecalho.status} (esperado 403)`,
+      );
+    }
+    if (semCabecalho.headers.getSetCookie().length > 0) {
+      falhar("a recusa CSRF emitiu Set-Cookie");
+    }
+    const corpoCsrf = await semCabecalho.text();
+    if (corpoCsrf !== '{"erro":"REQUISICAO_NAO_AUTORIZADA"}') {
+      falhar(`corpo inesperado da recusa CSRF: ${corpoCsrf}`);
+    }
+    console.log(`${ROTULO} POST /auth/login sem custom header -> 403 sem cookie.`);
+
+    // 3-C (correcao `F-02`). Prova de FAIL-CLOSED no processo REAL: sem
+    // `TLF_AMBIENTE` a aplicacao nao pode subir. E a unica forma de provar que
+    // um deploy que esqueca a variavel nao sobe emitindo cookie de
+    // desenvolvimento — o risco `R-2.3D-04` que a revisao independente mediu
+    // como aberto.
+    const envSemAmbiente = {
+      ...process.env,
+      DATABASE_URL: instancia.urlApp,
+      PORT: String(PORTA_API + 1),
+    };
+    delete envSemAmbiente.TLF_AMBIENTE;
+    const semAmbiente = spawn(
+      process.execPath,
+      [path.join(raizRepo, "apps", "api", "dist", "main.js")],
+      { cwd: raizRepo, env: envSemAmbiente, stdio: ["ignore", "pipe", "pipe"] },
+    );
+    let saidaSemAmbiente = "";
+    semAmbiente.stdout.on("data", (pedaco) => { saidaSemAmbiente += String(pedaco); });
+    semAmbiente.stderr.on("data", (pedaco) => { saidaSemAmbiente += String(pedaco); });
+    const desfechoSemAmbiente = await Promise.race([
+      new Promise((resolve) => semAmbiente.on("exit", (codigo) => resolve(codigo))),
+      aguardar(20_000).then(() => "TIMEOUT"),
+    ]);
+    if (desfechoSemAmbiente === "TIMEOUT") {
+      semAmbiente.kill("SIGKILL");
+      falhar("a API SUBIU sem TLF_AMBIENTE — fail-closed de R-2.3D-04 inativo");
+    }
+    if (desfechoSemAmbiente === 0) {
+      falhar("a API encerrou com exit 0 sem TLF_AMBIENTE — esperado bootstrap abortado");
+    }
+    if (!saidaSemAmbiente.includes("TLF_AMBIENTE")) {
+      falhar("o bootstrap abortou sem citar a variavel ausente");
+    }
+    console.log(`${ROTULO} sem TLF_AMBIENTE -> bootstrap abortado (exit ${desfechoSemAmbiente}).`);
 
     // 4. Encerramento limpo por sinal. Comportamento MEDIDO do Nest 11 com
     // enableShutdownHooks: o handler executa os hooks de ciclo de vida

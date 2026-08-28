@@ -161,41 +161,61 @@ export class SessaoService {
    * permanece na F3.
    */
   async emitir(comando: { readonly usuarioId: string }): Promise<SessaoEmitida> {
+    return this.database.transacao(async (tx) => this.emitirEm(tx, comando));
+  }
+
+  /**
+   * Mesma emissão de `emitir`, sobre uma transação JÁ ABERTA pelo chamador.
+   *
+   * ACRÉSCIMO DA F3 — ADITIVO, sem nenhuma mudança de semântica: `emitir`
+   * passou a ser o invólucro transacional deste método, e todo o corpo veio
+   * de lá sem alteração. A F2 permanece exatamente como homologada.
+   *
+   * POR QUE ELE EXISTE: `D-2.3D-12` e FC-01 exigem que o login emita evento
+   * de auditoria, e o contrato do `AuditWriter` (`docs/09` §12, `D-AUD-08`)
+   * exige que o evento entre na MESMA transação da mutação de negócio — aqui,
+   * a própria criação da sessão. Sem este ponto de entrada, o login abriria
+   * duas transações independentes e existiria um desfecho em que a sessão
+   * nasce sem seu evento. É exatamente o mesmo padrão que o `AuditWriter` já
+   * adota: quem tem a fronteira transacional a passa explicitamente.
+   */
+  async emitirEm(
+    tx: TransacaoPersistencia,
+    comando: { readonly usuarioId: string },
+  ): Promise<SessaoEmitida> {
     const criadaEm = this.relogio.agora();
     const expiraEm = new Date(criadaEm.getTime() + POLITICA_SESSAO.expiracaoAbsolutaMs);
     const segredo = gerarSegredoSessao();
 
-    return this.database.transacao(async (tx) => {
-      const usuario = await tx.usuario.findUnique({
-        where: { id: comando.usuarioId },
-        select: { ativo: true },
-      });
-      if (usuario === null) throw new ErroSessao("USUARIO_INEXISTENTE");
-      if (!usuario.ativo) throw new ErroSessao("USUARIO_INATIVO");
-
-      const sessao = await tx.sessaoAutenticacao.create({
-        data: {
-          usuarioId: comando.usuarioId,
-          tokenHash: calcularVerificadorSessao(segredo),
-          estado: "ATIVA",
-          criadaEm,
-          ultimaAtividadeEm: criadaEm,
-          expiraEm,
-          encerradaEm: null,
-          revogadaPorUsuarioId: null,
-        },
-        select: { id: true, criadaEm: true, ultimaAtividadeEm: true, expiraEm: true },
-      });
-
-      return {
-        sessaoId: sessao.id,
-        usuarioId: comando.usuarioId,
-        token: comporTokenSessao(sessao.id, segredo),
-        criadaEm: sessao.criadaEm,
-        ultimaAtividadeEm: sessao.ultimaAtividadeEm,
-        expiraEm: sessao.expiraEm,
-      };
+    const usuario = await tx.usuario.findUnique({
+      where: { id: comando.usuarioId },
+      select: { ativo: true },
     });
+    if (usuario === null) throw new ErroSessao("USUARIO_INEXISTENTE");
+    if (!usuario.ativo) throw new ErroSessao("USUARIO_INATIVO");
+
+    const sessao = await tx.sessaoAutenticacao.create({
+      data: {
+        usuarioId: comando.usuarioId,
+        tokenHash: calcularVerificadorSessao(segredo),
+        estado: "ATIVA",
+        criadaEm,
+        ultimaAtividadeEm: criadaEm,
+        expiraEm,
+        encerradaEm: null,
+        revogadaPorUsuarioId: null,
+      },
+      select: { id: true, criadaEm: true, ultimaAtividadeEm: true, expiraEm: true },
+    });
+
+    return {
+      sessaoId: sessao.id,
+      usuarioId: comando.usuarioId,
+      token: comporTokenSessao(sessao.id, segredo),
+      criadaEm: sessao.criadaEm,
+      ultimaAtividadeEm: sessao.ultimaAtividadeEm,
+      expiraEm: sessao.expiraEm,
+    };
   }
 
   /**
@@ -293,12 +313,28 @@ export class SessaoService {
    * `ATIVA` e utilizável.
    */
   async revogar(token: unknown): Promise<ResultadoRevogacaoSessao> {
+    return this.database.transacao(async (tx) => this.revogarEm(tx, token));
+  }
+
+  /**
+   * Mesma revogação de `revogar`, sobre uma transação JÁ ABERTA pelo chamador.
+   *
+   * ACRÉSCIMO DA F3 — ADITIVO, sem mudança de semântica, pelo mesmo motivo e
+   * com o mesmo cuidado de `emitirEm`: `usuario.sessao.logout` (`docs/09` §5,
+   * linha DD; FC-01 §Auditoria) precisa entrar na MESMA transação que fecha a
+   * sessão. A ordem obrigatória de `C-01` (detecção de expiração antes da
+   * revogação) é preservada literalmente — nada do corpo mudou.
+   */
+  async revogarEm(
+    tx: TransacaoPersistencia,
+    token: unknown,
+  ): Promise<ResultadoRevogacaoSessao> {
     const decomposto = decomporTokenSessao(token);
     if (decomposto === null) return { revogada: false, motivo: "TOKEN_MALFORMADO" };
     const { sessaoId, segredo } = decomposto;
     const agora = this.relogio.agora();
 
-    return this.database.transacao(async (tx) => {
+    {
       const sessao = await tx.sessaoAutenticacao.findUnique({
         where: { id: sessaoId },
         select: PROJECAO_SESSAO,
@@ -363,7 +399,7 @@ export class SessaoService {
       if (atual === null) return { revogada: false, motivo: "SESSAO_INEXISTENTE" };
       if (atual.estado === "REVOGADA") return { revogada: false, motivo: "SESSAO_REVOGADA" };
       return { revogada: false, motivo: "SESSAO_EXPIRADA" };
-    });
+    }
   }
 
   /**

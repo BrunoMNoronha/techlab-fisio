@@ -1,4 +1,4 @@
-// TechLab Fisio — Etapa 2.3D-B / F1 — `AuthModule` pelo container NestJS real.
+// TechLab Fisio — Etapa 2.3D-B / F1+F2+F3 — `AuthModule` pelo container real.
 //
 // Mesmo propósito e mesma forma de `audit.module.integration.spec.ts`: provar
 // que o serviço exercido pela APLICAÇÃO é o MESMO coberto pelos testes
@@ -8,11 +8,16 @@
 // diretamente; nada lá falharia se `AuthModule` saísse de `AppModule`. Esta
 // suíte fecha exatamente essa lacuna.
 //
-// Prova duas propriedades que os testes unitários não alcançam:
+// Prova propriedades que os testes unitários não alcançam:
 //   1. FIAÇÃO — `CredencialService` é resolvível a partir do `AppModule`;
 //   2. CICLO DE VIDA — o Nest executa `onModuleInit` e o digest dummy fica
 //      AQUECIDO antes de qualquer tentativa de autenticação (`D-2.3D-02`,
-//      `docs/12` §5.2; risco `R-2.3D-05`).
+//      `docs/12` §5.2; risco `R-2.3D-05`);
+//   3. FRONTEIRA (F3) — o módulo expõe UM controller, importa DOIS módulos e
+//      a aplicação inteira publica TRÊS rotas. Qualquer vazamento de F4+
+//      (RBAC, seed, recuperação de senha, endpoints de domínio) falha aqui;
+//   4. `R-2.3D-04` — o fail-fast de cookie inseguro está ligado ao BOOTSTRAP,
+//      e não apenas disponível como função pura.
 //
 // SEM ASSERÇÃO DE TEMPO: o aquecimento é provado por ORDEM DE EVENT LOOP, não
 // por `duração < X ms`. Ver `venceuNaFilaDeMicrotarefas` abaixo — a propriedade
@@ -30,10 +35,21 @@ import { afterAll, beforeAll, describe, expect, it, jest } from "@jest/globals";
 import type { TestingModule } from "@nestjs/testing";
 
 import { AppModule } from "../src/app.module.js";
+import { AuditModule } from "../src/audit/audit.module.js";
+import { AuthController } from "../src/auth/auth.controller.js";
 import { AuthModule } from "../src/auth/auth.module.js";
+import { AutenticacaoService } from "../src/auth/autenticacao.service.js";
 import { CredencialService } from "../src/auth/credencial.service.js";
+import {
+  ErroPoliticaCookie,
+  NOME_COOKIE_PROTEGIDO,
+  POLITICA_COOKIE_SESSAO,
+} from "../src/auth/politica-cookie.js";
+import type { PoliticaCookieSessao } from "../src/auth/politica-cookie.js";
+import { SessaoService } from "../src/auth/sessao.service.js";
 import { DatabaseModule } from "../src/database/database.module.js";
 import { DatabaseService } from "../src/database/database.service.js";
+import { construirDocumentoOpenApi } from "../src/openapi/documento-openapi.js";
 
 // O aquecimento paga um `hash()` Argon2 real (m=19456) no `init()`, e o
 // controle negativo paga outro. Poucos hashes, mas o default de 5 s do Jest
@@ -182,23 +198,141 @@ describe("AuthModule — ciclo de vida real (onModuleInit) pelo AppModule", () =
   });
 });
 
-describe("AuthModule — fronteira da F1+F2 preservada", () => {
-  it("não declara controller — F1 e F2 não expõem rota", () => {
-    // `controllers` é a chave pública de metadado de `@Module` (Nest
-    // `MODULE_METADATA.CONTROLLERS`). Endpoints de autenticação são da F3
-    // (`docs/12` §9); nascer um controller aqui é invasão de escopo.
-    const controllers: unknown = Reflect.getMetadata("controllers", AuthModule);
-    expect(controllers ?? []).toEqual([]);
+describe("AuthModule — fronteira da F1+F2+F3 preservada", () => {
+  let moduloFronteira: TestingModule;
+  let appFronteira: import("@nestjs/common").INestApplication;
+  let documentoDaAplicacao: import("@nestjs/swagger").OpenAPIObject;
+
+  beforeAll(async () => {
+    moduloFronteira = await Test.createTestingModule({ imports: [AppModule] })
+      .overrideProvider(DatabaseService)
+      .useValue({})
+      .compile();
+    appFronteira = moduloFronteira.createNestApplication();
+    await appFronteira.init();
+    // O documento OpenAPI é derivado do ROUTER real: usá-lo aqui transforma a
+    // fronteira de rotas numa asserção mecânica em vez de uma inspeção manual.
+    documentoDaAplicacao = construirDocumentoOpenApi(appFronteira);
   });
 
-  it("importa EXCLUSIVAMENTE DatabaseModule — e nunca AuditModule", () => {
-    // Mudança de fronteira AUTORIZADA na F2: a sessão é persistida, logo a
-    // fatia exige de fato a fronteira transacional (`D-2.3D-01`). O que NÃO
-    // muda: `AuditModule` continua fora — `usuario.autenticacao` e a auditoria
-    // de logout são da F3 (`D-2.3D-12`, `docs/12` §9) e não entram por
-    // antecipação. A F1 não importava nada; esta asserção documenta a única
-    // adição legítima e falha se qualquer outra aparecer.
+  afterAll(async () => {
+    await appFronteira.close();
+  });
+
+  it("declara EXCLUSIVAMENTE o AuthController — nenhum outro endpoint nasce aqui", () => {
+    // `controllers` é a chave pública de metadado de `@Module` (Nest
+    // `MODULE_METADATA.CONTROLLERS`). A F3 é a fatia autorizada a expor HTTP,
+    // e expõe UMA fronteira: login e logout. Qualquer segundo controller neste
+    // módulo é invasão de escopo (recuperação de senha é F6; RBAC é F4).
+    const controllers: unknown = Reflect.getMetadata("controllers", AuthModule);
+    expect(controllers ?? []).toEqual([AuthController]);
+  });
+
+  it("importa EXCLUSIVAMENTE DatabaseModule e AuditModule", () => {
+    // Mudança de fronteira AUTORIZADA na F3, e a última: `usuario.autenticacao`
+    // (`D-2.3D-12`) e `usuario.sessao.logout` (`docs/09` §5) são desta fatia,
+    // logo `AuditModule` entra — e nada além dele. A F1 não importava nada; a
+    // F2 acrescentou `DatabaseModule`. Esta asserção falha se QUALQUER outro
+    // módulo aparecer, inclusive um módulo de RBAC/seed/recuperação de F4+.
     const imports: unknown = Reflect.getMetadata("imports", AuthModule);
-    expect(imports ?? []).toEqual([DatabaseModule]);
+    expect(imports ?? []).toEqual([DatabaseModule, AuditModule]);
+  });
+
+  it("as rotas expostas pela aplicação são SÓ /health, /auth/login e /auth/logout", () => {
+    // Prova de fronteira contra o ROUTER real, e não contra metadados: se um
+    // endpoint de F4+ (profissionais, pacientes, agenda, recuperação de senha,
+    // revogação de terceiro, refresh) entrar acidentalmente no `AppModule`,
+    // esta asserção falha.
+    const caminhos = Object.keys(documentoDaAplicacao.paths).sort();
+    expect(caminhos).toEqual(["/auth/login", "/auth/logout", "/health"]);
+  });
+
+  it("nenhum provider de F4+ é resolvível a partir do AppModule", () => {
+    // Complementa a asserção de rotas: um guard/serviço de RBAC poderia
+    // existir sem rota própria. Nenhum símbolo desses existe no código, e o
+    // teste registra a fronteira explicitamente.
+    for (const nome of [
+      "RbacGuard",
+      "PermissaoGuard",
+      "PapelService",
+      "RecuperacaoSenhaService",
+      "SeedService",
+    ]) {
+      expect(Object.keys(globalThis)).not.toContain(nome);
+    }
+    // `AuthModule` exporta apenas as três fronteiras das fatias F1..F3.
+    const exports: unknown = Reflect.getMetadata("exports", AuthModule);
+    expect(exports ?? []).toEqual([
+      CredencialService,
+      SessaoService,
+      AutenticacaoService,
+    ]);
+  });
+});
+
+describe("R-2.3D-04 — o fail-fast de cookie está LIGADO ao bootstrap real", () => {
+  // A regra em si é provada em `politica-cookie.spec.ts`. Esta suíte prova a
+  // outra metade, que nenhum teste de função pura alcança: a regra é executada
+  // pelo CONTAINER, na construção do grafo — isto é, dentro de
+  // `NestFactory.create`. Se o provider sair de `AuthModule`, ou virar `lazy`,
+  // ou passar a ter fallback silencioso, a aplicação voltaria a subir com
+  // cookie inseguro e este teste falha.
+
+  async function montarCom(
+    variaveis: Record<string, string | undefined>,
+  ): Promise<TestingModule> {
+    const anteriores = new Map<string, string | undefined>();
+    for (const [chave, valor] of Object.entries(variaveis)) {
+      anteriores.set(chave, process.env[chave]);
+      if (valor === undefined) delete process.env[chave];
+      else process.env[chave] = valor;
+    }
+    try {
+      return await Test.createTestingModule({ imports: [AppModule] })
+        .overrideProvider(DatabaseService)
+        .useValue({})
+        .compile();
+    } finally {
+      for (const [chave, valor] of anteriores) {
+        if (valor === undefined) delete process.env[chave];
+        else process.env[chave] = valor;
+      }
+    }
+  }
+
+  it("F-02 — TLF_AMBIENTE AUSENTE aborta a construção do grafo", async () => {
+    // Correção pós-revisão: a ausência da variável já não significa
+    // "desenvolvimento". Sem declaração explícita, a aplicação não sobe.
+    await expect(montarCom({ TLF_AMBIENTE: undefined })).rejects.toThrow(
+      ErroPoliticaCookie,
+    );
+  });
+
+  it("NODE_ENV=production sem TLF_AMBIENTE protegida ABORTA a construção do grafo", async () => {
+    await expect(
+      montarCom({ NODE_ENV: "production", TLF_AMBIENTE: "desenvolvimento" }),
+    ).rejects.toThrow(ErroPoliticaCookie);
+  });
+
+  it("TLF_AMBIENTE com valor desconhecido ABORTA a construção do grafo", async () => {
+    await expect(
+      montarCom({ TLF_AMBIENTE: "valor-arbitrario-x9" }),
+    ).rejects.toThrow(ErroPoliticaCookie);
+  });
+
+  it("ambiente protegido coerente SOBE, e com a política segura injetada", async () => {
+    const moduloProtegido = await montarCom({
+      NODE_ENV: "production",
+      TLF_AMBIENTE: "producao",
+    });
+    try {
+      const politica = moduloProtegido.get<PoliticaCookieSessao>(
+        POLITICA_COOKIE_SESSAO,
+      );
+      expect(politica.nome).toBe(NOME_COOKIE_PROTEGIDO);
+      expect(politica.secure).toBe(true);
+    } finally {
+      await moduloProtegido.close();
+    }
   });
 });
