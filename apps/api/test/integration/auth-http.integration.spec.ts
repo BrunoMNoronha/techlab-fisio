@@ -29,6 +29,7 @@
 
 import { randomUUID } from "node:crypto";
 import http from "node:http";
+import { urlToHttpOptions } from "node:url";
 
 import { argon2id, hash as hashArgon2 } from "argon2";
 
@@ -202,25 +203,56 @@ async function medir(resposta: Response): Promise<RespostaMedida> {
 }
 
 /**
+ * Destino de conexão dos clientes `node:http` desta suíte.
+ *
+ * PORTABILIDADE IPv6 — o defeito que esta função existe para fechar. Os dois
+ * helpers brutos derivavam o destino de `new URL(baseUrl).hostname`. Quando o
+ * Nest escuta em IPv6, `app.getUrl()` devolve `http://[::1]:PORT` e aquele
+ * `hostname` preserva os COLCHETES: chega `"[::1]"` a `http.request`, que o
+ * trata como nome de host e o manda ao resolvedor.
+ *
+ * MEDIDO nos dois sistemas, com o mesmo script:
+ *
+ *   linux/x64  node v24.x  hostname "[::1]"  ->  getaddrinfo ENOTFOUND [::1]
+ *   win32/x64  node v24.x  hostname "[::1]"  ->  conecta normalmente
+ *
+ * Daí a suíte passar na máquina de desenvolvimento e falhar no runner da CI:
+ * 21 provas — CSRF, escopo do filtro e absolute-form — morriam no cliente,
+ * sem sequer alcançar o produto. `fetch` normaliza a forma com colchetes por
+ * conta própria, e por isso só os testes de `node:http` eram afetados.
+ *
+ * `urlToHttpOptions` é a conversão que o próprio Node usa quando recebe uma
+ * `URL`: devolve `hostname` já sem colchetes (`"::1"`), com `port` e `path`
+ * coerentes. Nada do request-target que cada prova quer transmitir é alterado
+ * — quem precisa de alvo literal sobrescreve `path` explicitamente.
+ */
+function destinoDaBaseUrl(): ReturnType<typeof urlToHttpOptions> {
+  return urlToHttpOptions(new URL(baseUrl));
+}
+
+/**
  * POST por `node:http` bruto — necessário para os cenários de Fetch Metadata.
  *
  * MEDIDO nesta fatia: o `fetch` do Node (undici) SOBRESCREVE `Sec-Fetch-Mode`
  * com `cors` e não deixa o chamador declarar `navigate`. Um teste de CSRF que
  * dependesse disso passaria por acidente, medindo o cliente e não a guard. O
  * cliente bruto envia exatamente os cabeçalhos pedidos.
+ *
+ * O destino vem de `urlToHttpOptions` — ver `destinoDaBaseUrl`.
  */
 async function postBruto(
   caminho: string,
   cabecalhos: Record<string, string>,
   corpo: string,
 ): Promise<RespostaMedida> {
-  const url = new URL(caminho, baseUrl);
+  // `urlToHttpOptions` também devolve `path` como `pathname + search`, de modo
+  // que a query passa a ser REALMENTE transmitida — antes `path: url.pathname`
+  // a descartava, e o caso "com query" não exercitava o que anunciava.
+  const destino = urlToHttpOptions(new URL(caminho, baseUrl));
   return new Promise((resolver, rejeitar) => {
     const requisicao = http.request(
       {
-        hostname: url.hostname,
-        port: url.port,
-        path: url.pathname,
+        ...destino,
         method: "POST",
         headers: { ...cabecalhos, "content-length": Buffer.byteLength(corpo) },
       },
@@ -274,12 +306,12 @@ async function postComRequestTarget(
   cabecalhos: Record<string, string>,
   corpo: string,
 ): Promise<RespostaMedida> {
-  const url = new URL(baseUrl);
   return new Promise((resolver, rejeitar) => {
     const requisicao = http.request(
       {
-        hostname: url.hostname,
-        port: url.port,
+        ...destinoDaBaseUrl(),
+        // O `path` de `destinoDaBaseUrl()` é sobrescrito DE PROPÓSITO: o alvo
+        // literal é justamente o que esta prova precisa colocar no fio.
         path: requestTarget,
         method: "POST",
         headers: { ...cabecalhos, "content-length": Buffer.byteLength(corpo) },
@@ -1780,6 +1812,46 @@ describe("F3R-01 — absolute-form pertence ao contrato fechado", () => {
       expect(resposta.corpo).not.toEqual({ erro: "REQUISICAO_INVALIDA" });
       expect(resposta.corpo).not.toEqual({ erro: "CREDENCIAIS_INVALIDAS" });
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Portabilidade do harness — o defeito que fez 21 provas nunca rodarem na CI
+// ---------------------------------------------------------------------------
+
+describe("harness — o cliente bruto conecta de forma portável", () => {
+  it("o destino derivado NÃO carrega colchetes de IPv6", () => {
+    // Guarda direta do defeito: `new URL(baseUrl).hostname` devolvia "[::1]",
+    // que no Linux vira consulta de DNS e falha com ENOTFOUND. Se alguém
+    // voltar a derivar o destino daquela forma, este caso quebra.
+    const destino = urlToHttpOptions(new URL(baseUrl));
+    expect(destino.hostname).toBeDefined();
+    expect(destino.hostname).not.toContain("[");
+    expect(destino.hostname).not.toContain("]");
+  });
+
+  it("o cliente bruto alcança o servidor, seja o bind IPv6 ou IPv4", async () => {
+    // Não-vacuidade: `401` só é possível se a requisição atravessou o parser,
+    // a guard CSRF e o controller — isto é, se a conexão de fato aconteceu.
+    const resposta = await postBruto(
+      "/auth/login",
+      { "content-type": "application/json", [CABECALHO_REQUISICAO_TLF]: "1" },
+      JSON.stringify({ identificador: "ninguem@sintetico.local", senha: "x" }),
+    );
+    expect(resposta.status).toBe(401);
+    expect(resposta.corpo).toEqual({ erro: "CREDENCIAIS_INVALIDAS" });
+  });
+
+  it("a query do request-target é REALMENTE transmitida", async () => {
+    // `path: url.pathname` descartava a query em silêncio: o caso "com query"
+    // do bloco F-06 vinha exercitando o mesmo alvo do caso canônico.
+    const resposta = await postBruto(
+      "/auth/login?origem=x",
+      { "content-type": "application/json", [CABECALHO_REQUISICAO_TLF]: "1" },
+      "{não é json",
+    );
+    expect(resposta.status).toBe(400);
+    expect(resposta.corpo).toEqual({ erro: "REQUISICAO_INVALIDA" });
   });
 });
 
