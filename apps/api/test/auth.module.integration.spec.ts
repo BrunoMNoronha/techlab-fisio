@@ -15,7 +15,10 @@
 //      `docs/12` §5.2; risco `R-2.3D-05`);
 //   3. FRONTEIRA (F3) — o módulo expõe UM controller, importa DOIS módulos e
 //      a aplicação inteira publica TRÊS rotas. Qualquer vazamento de F4+
-//      (RBAC, seed, recuperação de senha, endpoints de domínio) falha aqui;
+//      (RBAC, seed, recuperação de senha, endpoints de domínio) falha aqui.
+//      NOTA DA F4: o RBAC passou a existir, em módulo PRÓPRIO (`AuthzModule`),
+//      sem controller e sem rota — as três asserções desta seção continuam
+//      valendo exatamente como estavam, e são elas que provam isso;
 //   4. `R-2.3D-04` — o fail-fast de cookie inseguro está ligado ao BOOTSTRAP,
 //      e não apenas disponível como função pura.
 //
@@ -247,10 +250,19 @@ describe("AuthModule — fronteira da F1+F2+F3 preservada", () => {
     expect(caminhos).toEqual(["/auth/login", "/auth/logout", "/health"]);
   });
 
-  it("nenhum provider de F4+ é resolvível a partir do AppModule", () => {
-    // Complementa a asserção de rotas: um guard/serviço de RBAC poderia
-    // existir sem rota própria. Nenhum símbolo desses existe no código, e o
-    // teste registra a fronteira explicitamente.
+  it("o AuthModule não absorve provider de F4+ — nem de F5/F6", () => {
+    // RENOMEADO NA F4, e o motivo é factual: até a F3 o título correto era
+    // "nenhum provider de F4+ é resolvível a partir do `AppModule`", porque a
+    // F4 não existia. Ela agora existe, foi autorizada, e seus providers
+    // (`PermissoesService`, `SessaoAutenticadaGuard`, `PermissoesGuard`) são
+    // legitimamente resolvíveis a partir do `AppModule` — pelo `AuthzModule`,
+    // que é módulo PRÓPRIO e não publica rota alguma. Manter o título
+    // anterior deixaria uma prova verde afirmando algo falso.
+    //
+    // O que esta prova continua guardando, sem afrouxar nada: a superfície do
+    // `AuthModule` em si. Nenhum artefato de RBAC nasce dentro dele, e F5
+    // (seed/bootstrap de Administrador) e F6 (recuperação de senha)
+    // permanecem inexistentes em qualquer módulo.
     for (const nome of [
       "RbacGuard",
       "PermissaoGuard",
@@ -260,12 +272,24 @@ describe("AuthModule — fronteira da F1+F2+F3 preservada", () => {
     ]) {
       expect(Object.keys(globalThis)).not.toContain(nome);
     }
-    // `AuthModule` exporta apenas as três fronteiras das fatias F1..F3.
+    // `AuthModule` exporta as três fronteiras das fatias F1..F3 e — desde a
+    // F4 — o token da política de cookie.
+    //
+    // AJUSTE DA F4, e o que ele NÃO afrouxa: `POLITICA_COOKIE_SESSAO` é um
+    // provider que JÁ EXISTIA neste módulo desde a F3; exportá-lo não cria
+    // artefato, não muda comportamento e não traz funcionalidade de F4+ para
+    // dentro do `AuthModule`. Ele passa a ser exportado para que a
+    // `SessaoAutenticadaGuard` da F4 leia o cookie de sessão pela FONTE ÚNICA
+    // da política, em vez de resolver uma segunda cópia da mesma configuração
+    // de segurança. A asserção continua sendo de IGUALDADE EXATA: qualquer
+    // outro export — um `PermissoesService`, um `RbacGuard`, um serviço de
+    // seed ou de recuperação de senha — continua fazendo esta prova falhar.
     const exports: unknown = Reflect.getMetadata("exports", AuthModule);
     expect(exports ?? []).toEqual([
       CredencialService,
       SessaoService,
       AutenticacaoService,
+      POLITICA_COOKIE_SESSAO,
     ]);
   });
 });

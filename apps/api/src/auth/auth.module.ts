@@ -69,6 +69,23 @@ import { SessaoService } from "./sessao.service.js";
     // padrão do Nest fora das rotas da F3.
     { provide: APP_FILTER, useClass: FiltroErroAutenticacao },
   ],
-  exports: [CredencialService, SessaoService, AutenticacaoService],
+  // ACRÉSCIMO DA F4 — ADITIVO E SEM NENHUMA MUDANÇA DE COMPORTAMENTO:
+  // `POLITICA_COOKIE_SESSAO` passa a ser EXPORTADO. Nada é criado, nada muda
+  // de semântica e nenhuma funcionalidade nova entra neste módulo: o provider
+  // já existia, já era resolvido no bootstrap (`R-2.3D-04`) e continua sendo
+  // o MESMO singleton. A exportação existe para que a `SessaoAutenticadaGuard`
+  // da F4 leia o cookie de sessão pela FONTE ÚNICA da política (`D-2.3D-07`),
+  // em vez de instanciar uma segunda cópia — duas resoluções independentes da
+  // mesma configuração de segurança seriam duas fontes para o mesmo fato.
+  //
+  // O que NÃO mudou, e é o que a fronteira da F3 protege: `imports` continuam
+  // `[DatabaseModule, AuditModule]`, `controllers` continua `[AuthController]`
+  // e nenhum artefato de RBAC, seed ou recuperação de senha nasce aqui.
+  exports: [
+    CredencialService,
+    SessaoService,
+    AutenticacaoService,
+    POLITICA_COOKIE_SESSAO,
+  ],
 })
 export class AuthModule {}

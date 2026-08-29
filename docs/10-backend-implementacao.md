@@ -3,7 +3,7 @@
 > **Arquivo:** `docs/10-backend-implementacao.md`
 > **Natureza:** documento **MUTÁVEL** — registro vivo de implementação da frente de backend (`apps/api`)
 > **Status:** backend **EM CONSTRUÇÃO** — Etapa 2.3A **CONCLUÍDA/HOMOLOGADA/INTEGRADA** (REV. 2); Etapa 2.3B **CONCLUÍDA/HOMOLOGADA/INTEGRADA NA `main`** (revisão independente veredito B; correções `F-REV-01`/`F-REV-02` aplicadas — REV. 4; integração por merge commit `5aae8de`, PR [#5](https://github.com/BrunoMNoronha/techlab-fisio/pull/5), 27/08/2026 — registro pós-medição em §11, REV. 5) — provider de persistência + primeiro fluxo transacional real de auditoria (`profissional.situacao.alterada`, fatia técnica INTERNA, sem endpoint/RBAC)
-> **Revisão vigente:** REV. 20 (28/08/2026) — **REGISTRO PÓS-MEDIÇÃO DA INTEGRAÇÃO DA ETAPA 2.3D-B / F3 NA `main`.** Registro **exclusivamente factual**, no precedente MEDIR → REGISTRAR das REV. 10 e REV. 15: **nenhuma decisão foi criada, alterada ou reaberta** e **nenhuma medição histórica foi reescrita**. Estado: **Etapa 2.3D-B / F3 CONCLUÍDA / HOMOLOGADA / VERSIONADA / INTEGRADA NA `main`** — PR [#14](https://github.com/BrunoMNoronha/techlab-fisio/pull/14), HEAD homologado e corrigido `c20cf1c`, **merge commit `35569727789f6f73b4f81fec3cc94c34d4cb0038`**; a `main` passou de `9a22262` para `3556972`. A CI do PR ficou **verde sobre o HEAD integrado**, com **206 provas de integração** (as 203 anteriores mais 3 regressões do harness), depois de uma correção de portabilidade restrita ao cliente HTTP dos testes (§6-I.8) — **sem nenhuma alteração de runtime, contrato ou persistência**. Validação local pós-merge integralmente verde; **zero drift** de `packages/database`; 10 migrations. **F4, F5 e F6 permanecem NÃO INICIADAS**; deploy, tag e release não foram realizados. Estado anterior preservado: REV. 19 (28/08/2026) — **Etapa 2.3D-B / F3 HOMOLOGADA por Bruno Menezes Noronha e submetida ao rito de versionamento e integração** (§6-I). A **terceira** revisão técnica independente adversarial devolveu **`A — APTO À HOMOLOGAÇÃO E VERSIONAMENTO`**, sem nenhum achado BLOQUEANTE, ALTO ou MÉDIO, tendo reproduzido de forma independente as correções `F3R-01` e `F3R-03` (29 variantes de request-target com zero incoerências entre roteador e filtro; oito propriedades do iterador de `Map` sob mutação; saturação a 50 000 buckets). Único achado, **`F3R-08` (BAIXO)** — a tabela viva de §9 ainda rotulava `L-11` como decisão local —, **corrigido nesta revisão**: a linha passa a apontar **`D-2.3D-13`** como fonte normativa e `L-11` como alias histórico. **Nenhuma decisão `D-2.3D-*` foi alterada ou reaberta.** Riscos residuais aceitos e registrados: `R-2.3D-08`, `F-12`, `F3R-06`, `F3R-07`. Bateria integral verde; zero drift; F4/F5/F6 não iniciadas. Estado anterior preservado: REV. 18 (28/08/2026) — **Etapa 2.3D-B / F3 CORRIGIDA PELA SEGUNDA VEZ, após a segunda revisão técnica independente adversarial (veredito `B — APTO COM CORREÇÕES OBJETIVAS`); permanece NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-H). A segunda revisão **confirmou por reprodução própria** que `F-01`, `F-04` e `F-05` estão de fato corrigidos, e não encontrou achado BLOQUEANTE ou ALTO. Corrigidos agora: `F3R-01` (MÉDIO — request-target *absolute-form* reabria o vazamento do parser e o log de ERRO acionável sem autenticação), `F3R-03` (MÉDIO — inanição da amostragem de despejo ancorada na cabeça do `Map`, medida em 2 000/2 000 recusas), `F3R-04` e `F3R-05` (BAIXOS, documentais). **`F3R-02` foi resolvido por DECISÃO DE BRUNO**: `L-11` passou a norma como **`D-2.3D-13`** em `docs/12` REV. 3 — acréscimo de decisão nova, **sem alterar, renumerar ou reabrir `D-2.3D-01`..`D-2.3D-12`**. `F3R-06`, `F3R-07` permanecem OBSERVAÇÃO não tratada e `F-12` permanece BAIXO aceito. Bateria integral verde (`test:api` 437; integração 203); 3 mutation challenges novos (`C-18`..`C-20`) detectados e revertidos; zero drift; F4/F5/F6 não iniciadas. Próximo passo: **nova revisão independente adversarial**. Estado anterior preservado: REV. 17 (28/08/2026) — **Etapa 2.3D-B / F3 CORRIGIDA após revisão técnica independente adversarial (veredito `B — APTO COM CORREÇÕES OBJETIVAS`); permanece NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-G). Doze dos catorze achados corrigidos, `F-07` resolvido por consequência e `F-12` mantido BAIXO com racional. Destaques: o gate de `D-2.3D-06` passou a valer sob **concorrência** (reserva de tentativa em voo — `F-01`, ALTO); `TLF_AMBIENTE` tornou-se **obrigatória**, fechando o cenário principal de `R-2.3D-04` (`F-02`); o **rehash** exigido por `D-2.3D-02` foi materializado no login com escrita condicionada ao digest verificado (`F-04`); o despejo do limitador deixou de sacrificar bloqueios vigentes (`F-05`); erro 4xx do parser deixou de virar `500` (`F-03`). **Nenhuma decisão `D-2.3D-*` alterada; `docs/12` intocado.** Bateria integral verde; 17 mutation challenges detectados e revertidos; zero drift; F4/F5/F6 não iniciadas. Próximo passo: **nova revisão independente adversarial**. Estado anterior preservado: REV. 16 (27/08/2026) — **Etapa 2.3D-B / F3 (endpoints REST de autenticação) IMPLEMENTADA E MEDIDA em branch própria (`agent/fase2-etapa2.3d-f3-auth-http`), a partir de `main` = `9a22262` — NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-F). Publicação **não autorizada** nesta execução: sem commit, push, PR, merge, tag ou deploy. `D-2.3D-06`, `D-2.3D-07`, `D-2.3D-11` e `D-2.3D-12` materializadas; **nenhuma decisão foi criada, alterada ou reaberta** e **`docs/12` não foi tocado**. `P-2.3D-03` **medida e verde** pelo Caminho A (`@nestjs/swagger@11.4.7` compatível com ESM/`nodenext`), com encerramento formal deixado a decisão de Bruno. `T-AUTH-ENUMERATION` provado estruturalmente; `R-2.3D-04` protegido por fail-fast testado em três níveis; 14 challenges de mutação detectados e revertidos; bateria integral verde; zero drift de persistência. Estado corrente: **F0, F1 e F2 INTEGRADAS; F3 IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA, NÃO INTEGRADA; F4/F5/F6 NÃO INICIADAS**. Próximo passo: **revisão técnica independente adversarial da F3**. Estado anterior preservado: REV. 15 (27/08/2026) — **registro pós-medição da INTEGRAÇÃO da Etapa 2.3D-B / F2 na `main`**: commit da fatia `289a94b`, PR [#12](https://github.com/BrunoMNoronha/techlab-fisio/pull/12), **merge commit `70b30aebf09368200343d6a5672b267811f337ee`**; `main` passou de `f4c2466` para `70b30ae`. CI verde no PR e na `main` pós-merge; bateria local pós-merge integralmente verde; zero drift de persistência. Registro **exclusivamente factual** — nenhuma decisão criada, alterada ou reaberta. Estado corrente: **F0, F1 e F2 INTEGRADAS; F3 — endpoints REST de autenticação NÃO INICIADA**. Estado anterior preservado: REV. 14 (27/08/2026) — **F2 HOMOLOGADA por Bruno Menezes Noronha** (TLF-BASE-V1 §15, item 1) e **`R-2.3D-03` ENCERRADO NA F2** (§9): o risco sai de aberto porque a obrigação de monotonicidade atômica de `D-2.3D-04` foi materializada e provada — `UPDATE` condicional atômico, `GREATEST`, predicado de throttle que também barra atividade regressiva, testes concorrentes contra PostgreSQL real, mutation challenge de last-writer-wins detectado, e confirmação de que `C-01` não enfraqueceu a proteção. **`D-2.3D-04` NÃO foi alterada e nenhuma decisão normativa nova foi criada.** Os limites da evidência (`READ COMMITTED`, PostgreSQL autoritativo compartilhado) permanecem registrados como **limites da prova**, não como risco aberto. Esta REV. acompanha o **rito de versionamento e integração da F2**. Estado anterior preservado: REV. 13 (27/08/2026) — Etapa **2.3D-B / F2 (`SessaoService`) REVISADA DE FORMA INDEPENDENTE, CORRIGIDA E REMEDIDA — permanece NÃO INTEGRADA** (§6-E.9): revisão adversarial com veredito **`B — APTO COM CORREÇÕES OBJETIVAS`**; correções obrigatórias **`C-01`** (achado `A-01` — logout que podia informar encerramento deixando a sessão `ATIVA` e utilizável) e **`C-02`** (precisão documental do `verify:argon2-runtime`) aplicadas, com teste de regressão determinístico contra PostgreSQL real. Nenhuma decisão normativa criada ou reaberta; `docs/12` e a Base Imutável **não foram tocados**. `R-2.3D-03` permanece **MITIGADO**, com encerramento **pendente de decisão de Bruno**. Publicação continua **não autorizada**: sem commit, push, PR, merge, tag ou deploy. Estado corrente: **F1 INTEGRADA; F2 CORRIGIDA E MEDIDA EM BRANCH PRÓPRIA, NÃO INTEGRADA; F3 NÃO INICIADA**. Estado anterior preservado: REV. 12 (27/08/2026) — **duas atualizações, uma factual e uma de execução.** (1) **Correção factual:** a Etapa **2.3D-B / F1 (`CredencialService` / Argon2id) foi INTEGRADA NA `main`** por merge commit `f4c246648e436c3a50121c371147768bd8403657`, PR [#11](https://github.com/BrunoMNoronha/techlab-fisio/pull/11) (commit da fatia: `f642b6259b0c916b42d8f8bc77d25258592805a6`) — a REV. 11 a registrava como "não integrada" porque a publicação ainda não havia ocorrido àquela altura; nenhuma decisão foi alterada por esta correção. (2) **Execução:** Etapa **2.3D-B / F2 (`SessaoService`) IMPLEMENTADA E MEDIDA em branch própria (`agent/fase2-etapa2.3d-f2-sessao`), NÃO INTEGRADA** (§6-E): publicação não autorizada nesta execução — sem commit, push, PR, merge, tag ou deploy. Estado anterior preservado: REV. 10 (27/08/2026) — Etapa **2.3D-B / F0 CONCLUÍDA/HOMOLOGADA/INTEGRADA NA `main`** (merge `f612fa7`, PR [#9](https://github.com/BrunoMNoronha/techlab-fisio/pull/9)): decisões `D-2.3D-01`..`D-2.3D-12` registradas em **`docs/12`** e única reabertura física controlada da persistência (`sessao_autenticacao`: +2 colunas, +1 CHECK). Etapa 2.3C permanece **CONCLUÍDA/HOMOLOGADA/INTEGRADA** (merge `58a6e4b`, PR [#7](https://github.com/BrunoMNoronha/techlab-fisio/pull/7) — REV. 9). `R2.2-04` permanece **ABERTO / MITIGADO PARCIALMENTE** (§7.2); ressalvas `F-2.3C-REV-02`/`F-2.3C-REV-03` preservadas sem correção (§9). Estado corrente: **F1 INTEGRADA; F2 IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA, NÃO INTEGRADA; F3 — endpoints REST de autenticação NÃO INICIADA**
+> **Revisão vigente:** REV. 23 (28/08/2026) — **ETAPA 2.3D-B / F4 (guards e decorators de autorização — RBAC) HOMOLOGADA POR BRUNO MENEZES NORONHA; APTA AO RITO DE VERSIONAMENTO/INTEGRACAO** (§6-L). Homologada sobre a MESMA baseline `main` = `origin/main` = `a9be742`, na branch `agent/fase2-etapa2.3d-f4-rbac`, apos a **segunda** revisao tecnica independente adversarial devolver **`A — APTO A HOMOLOGACAO E VERSIONAMENTO`** com **0 BLOQUEANTES, 0 ALTOS, 0 MEDIOS** e **1 BAIXO documental (`R4R2-01`)**. **`R4R2-01` corrigido nesta execucao e EXCLUSIVAMENTE documental** (§6-K.6): `apps/api/src/authz/` tem **798 linhas em 9 arquivos** na arvore corrigida; as **745 em 8 arquivos** ficam preservadas como valor **historico** da arvore pre-correcao. **Nenhuma linha de runtime ou de teste foi alterada** — manifesto SHA-256 dos 14 arquivos de runtime/teste identico ao conferido pela revisao. **Nenhuma decisao normativa criada, alterada ou reaberta; `D-2.3D-09` intacta; nenhuma `D-2.3D-14`; Base Imutavel intacta.** `R4-01`..`R4-08` confirmados por evidencia independente; **15 mutation challenges independentes, 15 detectados, 15 revertidos por hash**. Bateria independente verde: `test:api` **19 · 479**; `verify:api-integration` **7 · 239**; `verify:from-scratch` **10 · 87**; Argon2 runtime **15/15**; OpenAPI runtime **17/17**; Guardas 1-3; golden **60 169 bytes**. **Zero drift; zero migration; zero dependencia nova.** **AUT-005 permanece NAO MATERIALIZADA / NAO ENCERRADA**; autorizacao clinica contextual (`P2.2-05`) **NAO INICIADA**; **F5 e F6 NAO INICIADAS**. Nenhum deploy, tag ou release. O registro factual do merge pertence a execucao documental posterior (`MEDIR -> REGISTRAR`). Estado anterior preservado: REV. 22 (28/08/2026) — **ETAPA 2.3D-B / F4 CORRIGIDA APOS REVISAO TECNICA INDEPENDENTE ADVERSARIAL (veredito `B — APTO COM CORRECOES OBJETIVAS`); permanece NAO HOMOLOGADA / NAO INTEGRADA** (§6-K). Mesma baseline `a9be742`, mesma branch, mesma working tree nao commitada. **Nenhuma decisao normativa criada, alterada ou reaberta; `docs/12` NAO foi tocado; `D-2.3D-09` intacta; nenhuma `D-2.3D-14`.** **Corrigidos:** `R4-01` — a identidade validada pelo `SessaoService` passa a SOBRESCREVER qualquer contexto preexistente (a revisao mediu que um contexto semeado prevalecia e a guard decidia sobre ele), e o limite do modelo de confianca passou a ser declarado; `R4-03`/`R4-04` — o decorator plural foi **substituido** por **`@RequerPermissao(P)`**, singular, somente metodo, que INSTALA `SessaoAutenticadaGuard` + `PermissoesGuard` na ordem, tornando declarar-sem-proteger inexpressavel e eliminando a superficie de classe/heranca que podia reduzir exigencia. **`L-F4-01` ENCERRADA POR ELIMINACAO** — nao por decisao normativa: nenhuma operacao de `docs/04` §4/§8 exige duas permissoes, logo a composicao era abstracao antecipada e nao ha `AND`/`OR` a homologar. **`R4-02` retificado sem mudar comportamento:** a cobertura do usuario inativo e **PARCIAL** (defesa em profundidade apenas sob a `PermissoesGuard`); **AUT-005 permanece NAO MATERIALIZADA / NAO ENCERRADA** e RN-001 segue aplicavel, com linha propria em §9. **BAIXOS** `R4-05`..`R4-08` retificados. Bateria integral verde (`test:api` **19 · 479**; integracao **7 · 239**; from-scratch 87; Guardas 1–3; runtime 15/15 e 17/17); **9 mutation challenges detectados e revertidos por hash**; **zero drift**; **nenhuma dependencia nova**; F5/F6 nao iniciadas. Proximo passo: **NOVA revisao independente adversarial sobre a arvore corrigida**. Estado anterior preservado: REV. 21 (28/08/2026) — **ETAPA 2.3D-B / F4 (guards e decorators de autorização — RBAC) IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA (`agent/fase2-etapa2.3d-f4-rbac`), a partir de `main` = `origin/main` = `a9be742` — NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-J). Publicação **não autorizada** nesta execução: sem commit, push, PR, merge, tag, release ou deploy. `D-2.3D-09` e a parte de RBAC de `AUT-003` materializadas: catálogo **tipado** dos 29 identificadores de `docs/04` §5 (materialização, não catálogo paralelo — provado por comparação mecânica contra o documento), resolução das permissões efetivas por **união** dos papéis, decorator declarativo `@RequerPermissoes(...)`, `PermissoesGuard` (`403`) e `SessaoAutenticadaGuard` (`401`), que **consome** a autenticação vigente sem substituí-la. **Nenhuma decisão foi criada, alterada, renumerada ou reaberta; `docs/12` NÃO foi tocado; `docs/09` §12 não foi reaberto; a Base Imutável permanece intacta.** Identidade não controlável pelo cliente (contexto sob símbolo privado); `401` e `403` não se confundem; falha técnica **não** é maquiada como negação. **Nenhuma rota de produção foi protegida — e nenhuma podia ser**, pois as três publicadas não têm permissão exigida pela matriz de `docs/04` §4; a guard é provada por integração sobre **controller exclusivamente de teste**, e as rotas publicadas continuam sendo exatamente `/health`, `/auth/login` e `/auth/logout`. Cinco decisões locais declaradas (`L-F4-01`..`L-F4-05`), das quais **`L-F4-01` — semântica de composição de múltiplas permissões — fica PENDENTE DE DECISÃO DE BRUNO** (adotada a conjunção, alternativa conservadora sob lacuna de fonte). Bateria integral verde (`test:api` **19 suites · 479**; integração **7 suites · 239**; from-scratch 87; Guardas 1–3; runtime Argon2 15/15 e OpenAPI 17/17); **13 mutation challenges detectados e revertidos com prova por hash**; **zero drift** de `packages/database` (10 migrations, hashes idênticos); **nenhuma dependência nova**. **F5 e F6 permanecem NÃO INICIADAS**; autorização clínica contextual (`P2.2-05`) permanece fora. Próximo passo: **revisão técnica independente e adversarial da F4**. Estado anterior preservado: REV. 20 (28/08/2026) — **REGISTRO PÓS-MEDIÇÃO DA INTEGRAÇÃO DA ETAPA 2.3D-B / F3 NA `main`.** Registro **exclusivamente factual**, no precedente MEDIR → REGISTRAR das REV. 10 e REV. 15: **nenhuma decisão foi criada, alterada ou reaberta** e **nenhuma medição histórica foi reescrita**. Estado: **Etapa 2.3D-B / F3 CONCLUÍDA / HOMOLOGADA / VERSIONADA / INTEGRADA NA `main`** — PR [#14](https://github.com/BrunoMNoronha/techlab-fisio/pull/14), HEAD homologado e corrigido `c20cf1c`, **merge commit `35569727789f6f73b4f81fec3cc94c34d4cb0038`**; a `main` passou de `9a22262` para `3556972`. A CI do PR ficou **verde sobre o HEAD integrado**, com **206 provas de integração** (as 203 anteriores mais 3 regressões do harness), depois de uma correção de portabilidade restrita ao cliente HTTP dos testes (§6-I.8) — **sem nenhuma alteração de runtime, contrato ou persistência**. Validação local pós-merge integralmente verde; **zero drift** de `packages/database`; 10 migrations. **F4, F5 e F6 permanecem NÃO INICIADAS**; deploy, tag e release não foram realizados. Estado anterior preservado: REV. 19 (28/08/2026) — **Etapa 2.3D-B / F3 HOMOLOGADA por Bruno Menezes Noronha e submetida ao rito de versionamento e integração** (§6-I). A **terceira** revisão técnica independente adversarial devolveu **`A — APTO À HOMOLOGAÇÃO E VERSIONAMENTO`**, sem nenhum achado BLOQUEANTE, ALTO ou MÉDIO, tendo reproduzido de forma independente as correções `F3R-01` e `F3R-03` (29 variantes de request-target com zero incoerências entre roteador e filtro; oito propriedades do iterador de `Map` sob mutação; saturação a 50 000 buckets). Único achado, **`F3R-08` (BAIXO)** — a tabela viva de §9 ainda rotulava `L-11` como decisão local —, **corrigido nesta revisão**: a linha passa a apontar **`D-2.3D-13`** como fonte normativa e `L-11` como alias histórico. **Nenhuma decisão `D-2.3D-*` foi alterada ou reaberta.** Riscos residuais aceitos e registrados: `R-2.3D-08`, `F-12`, `F3R-06`, `F3R-07`. Bateria integral verde; zero drift; F4/F5/F6 não iniciadas. Estado anterior preservado: REV. 18 (28/08/2026) — **Etapa 2.3D-B / F3 CORRIGIDA PELA SEGUNDA VEZ, após a segunda revisão técnica independente adversarial (veredito `B — APTO COM CORREÇÕES OBJETIVAS`); permanece NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-H). A segunda revisão **confirmou por reprodução própria** que `F-01`, `F-04` e `F-05` estão de fato corrigidos, e não encontrou achado BLOQUEANTE ou ALTO. Corrigidos agora: `F3R-01` (MÉDIO — request-target *absolute-form* reabria o vazamento do parser e o log de ERRO acionável sem autenticação), `F3R-03` (MÉDIO — inanição da amostragem de despejo ancorada na cabeça do `Map`, medida em 2 000/2 000 recusas), `F3R-04` e `F3R-05` (BAIXOS, documentais). **`F3R-02` foi resolvido por DECISÃO DE BRUNO**: `L-11` passou a norma como **`D-2.3D-13`** em `docs/12` REV. 3 — acréscimo de decisão nova, **sem alterar, renumerar ou reabrir `D-2.3D-01`..`D-2.3D-12`**. `F3R-06`, `F3R-07` permanecem OBSERVAÇÃO não tratada e `F-12` permanece BAIXO aceito. Bateria integral verde (`test:api` 437; integração 203); 3 mutation challenges novos (`C-18`..`C-20`) detectados e revertidos; zero drift; F4/F5/F6 não iniciadas. Próximo passo: **nova revisão independente adversarial**. Estado anterior preservado: REV. 17 (28/08/2026) — **Etapa 2.3D-B / F3 CORRIGIDA após revisão técnica independente adversarial (veredito `B — APTO COM CORREÇÕES OBJETIVAS`); permanece NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-G). Doze dos catorze achados corrigidos, `F-07` resolvido por consequência e `F-12` mantido BAIXO com racional. Destaques: o gate de `D-2.3D-06` passou a valer sob **concorrência** (reserva de tentativa em voo — `F-01`, ALTO); `TLF_AMBIENTE` tornou-se **obrigatória**, fechando o cenário principal de `R-2.3D-04` (`F-02`); o **rehash** exigido por `D-2.3D-02` foi materializado no login com escrita condicionada ao digest verificado (`F-04`); o despejo do limitador deixou de sacrificar bloqueios vigentes (`F-05`); erro 4xx do parser deixou de virar `500` (`F-03`). **Nenhuma decisão `D-2.3D-*` alterada; `docs/12` intocado.** Bateria integral verde; 17 mutation challenges detectados e revertidos; zero drift; F4/F5/F6 não iniciadas. Próximo passo: **nova revisão independente adversarial**. Estado anterior preservado: REV. 16 (27/08/2026) — **Etapa 2.3D-B / F3 (endpoints REST de autenticação) IMPLEMENTADA E MEDIDA em branch própria (`agent/fase2-etapa2.3d-f3-auth-http`), a partir de `main` = `9a22262` — NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-F). Publicação **não autorizada** nesta execução: sem commit, push, PR, merge, tag ou deploy. `D-2.3D-06`, `D-2.3D-07`, `D-2.3D-11` e `D-2.3D-12` materializadas; **nenhuma decisão foi criada, alterada ou reaberta** e **`docs/12` não foi tocado**. `P-2.3D-03` **medida e verde** pelo Caminho A (`@nestjs/swagger@11.4.7` compatível com ESM/`nodenext`), com encerramento formal deixado a decisão de Bruno. `T-AUTH-ENUMERATION` provado estruturalmente; `R-2.3D-04` protegido por fail-fast testado em três níveis; 14 challenges de mutação detectados e revertidos; bateria integral verde; zero drift de persistência. Estado corrente: **F0, F1 e F2 INTEGRADAS; F3 IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA, NÃO INTEGRADA; F4/F5/F6 NÃO INICIADAS**. Próximo passo: **revisão técnica independente adversarial da F3**. Estado anterior preservado: REV. 15 (27/08/2026) — **registro pós-medição da INTEGRAÇÃO da Etapa 2.3D-B / F2 na `main`**: commit da fatia `289a94b`, PR [#12](https://github.com/BrunoMNoronha/techlab-fisio/pull/12), **merge commit `70b30aebf09368200343d6a5672b267811f337ee`**; `main` passou de `f4c2466` para `70b30ae`. CI verde no PR e na `main` pós-merge; bateria local pós-merge integralmente verde; zero drift de persistência. Registro **exclusivamente factual** — nenhuma decisão criada, alterada ou reaberta. Estado corrente: **F0, F1 e F2 INTEGRADAS; F3 — endpoints REST de autenticação NÃO INICIADA**. Estado anterior preservado: REV. 14 (27/08/2026) — **F2 HOMOLOGADA por Bruno Menezes Noronha** (TLF-BASE-V1 §15, item 1) e **`R-2.3D-03` ENCERRADO NA F2** (§9): o risco sai de aberto porque a obrigação de monotonicidade atômica de `D-2.3D-04` foi materializada e provada — `UPDATE` condicional atômico, `GREATEST`, predicado de throttle que também barra atividade regressiva, testes concorrentes contra PostgreSQL real, mutation challenge de last-writer-wins detectado, e confirmação de que `C-01` não enfraqueceu a proteção. **`D-2.3D-04` NÃO foi alterada e nenhuma decisão normativa nova foi criada.** Os limites da evidência (`READ COMMITTED`, PostgreSQL autoritativo compartilhado) permanecem registrados como **limites da prova**, não como risco aberto. Esta REV. acompanha o **rito de versionamento e integração da F2**. Estado anterior preservado: REV. 13 (27/08/2026) — Etapa **2.3D-B / F2 (`SessaoService`) REVISADA DE FORMA INDEPENDENTE, CORRIGIDA E REMEDIDA — permanece NÃO INTEGRADA** (§6-E.9): revisão adversarial com veredito **`B — APTO COM CORREÇÕES OBJETIVAS`**; correções obrigatórias **`C-01`** (achado `A-01` — logout que podia informar encerramento deixando a sessão `ATIVA` e utilizável) e **`C-02`** (precisão documental do `verify:argon2-runtime`) aplicadas, com teste de regressão determinístico contra PostgreSQL real. Nenhuma decisão normativa criada ou reaberta; `docs/12` e a Base Imutável **não foram tocados**. `R-2.3D-03` permanece **MITIGADO**, com encerramento **pendente de decisão de Bruno**. Publicação continua **não autorizada**: sem commit, push, PR, merge, tag ou deploy. Estado corrente: **F1 INTEGRADA; F2 CORRIGIDA E MEDIDA EM BRANCH PRÓPRIA, NÃO INTEGRADA; F3 NÃO INICIADA**. Estado anterior preservado: REV. 12 (27/08/2026) — **duas atualizações, uma factual e uma de execução.** (1) **Correção factual:** a Etapa **2.3D-B / F1 (`CredencialService` / Argon2id) foi INTEGRADA NA `main`** por merge commit `f4c246648e436c3a50121c371147768bd8403657`, PR [#11](https://github.com/BrunoMNoronha/techlab-fisio/pull/11) (commit da fatia: `f642b6259b0c916b42d8f8bc77d25258592805a6`) — a REV. 11 a registrava como "não integrada" porque a publicação ainda não havia ocorrido àquela altura; nenhuma decisão foi alterada por esta correção. (2) **Execução:** Etapa **2.3D-B / F2 (`SessaoService`) IMPLEMENTADA E MEDIDA em branch própria (`agent/fase2-etapa2.3d-f2-sessao`), NÃO INTEGRADA** (§6-E): publicação não autorizada nesta execução — sem commit, push, PR, merge, tag ou deploy. Estado anterior preservado: REV. 10 (27/08/2026) — Etapa **2.3D-B / F0 CONCLUÍDA/HOMOLOGADA/INTEGRADA NA `main`** (merge `f612fa7`, PR [#9](https://github.com/BrunoMNoronha/techlab-fisio/pull/9)): decisões `D-2.3D-01`..`D-2.3D-12` registradas em **`docs/12`** e única reabertura física controlada da persistência (`sessao_autenticacao`: +2 colunas, +1 CHECK). Etapa 2.3C permanece **CONCLUÍDA/HOMOLOGADA/INTEGRADA** (merge `58a6e4b`, PR [#7](https://github.com/BrunoMNoronha/techlab-fisio/pull/7) — REV. 9). `R2.2-04` permanece **ABERTO / MITIGADO PARCIALMENTE** (§7.2); ressalvas `F-2.3C-REV-02`/`F-2.3C-REV-03` preservadas sem correção (§9). Estado corrente: **F1 INTEGRADA; F2 IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA, NÃO INTEGRADA; F3 — endpoints REST de autenticação NÃO INICIADA**
 
 ---
 
@@ -1133,6 +1133,603 @@ migrations ............. 10 -> 10
 
 **F4, F5 e F6 permanecem NÃO INICIADAS.** Nenhum deploy, tag ou release foi realizado.
 
+## 6-J. Etapa 2.3D-B / F4 — guards e decorators de autorização (RBAC)
+
+**Estado: REGISTRO HISTÓRICO DA EXECUÇÃO INICIAL — SUPERADO EM PONTOS ESPECÍFICOS PELA FATIA CORRETIVA DE §6-K.** A F4 permanece **NÃO HOMOLOGADA / NÃO INTEGRADA**. As MEDIÇÕES desta seção continuam válidas para o estado em que foram tomadas e **não foram reescritas**; as afirmações que a revisão técnica independente provou incorretas estão marcadas abaixo com **[RETIFICADO — §6-K]**. Executada em 28/08/2026 na branch `agent/fase2-etapa2.3d-f4-rbac`, criada a partir de `main` = `origin/main` = `a9be742c150ebe43df0d03ef9ec1529cff5d780a` (PR [#15](https://github.com/BrunoMNoronha/techlab-fisio/pull/15), `docs/10` REV. 20). **Publicação não autorizada nesta execução: sem commit, push, PR, merge, rebase de publicação, tag, release ou deploy.**
+
+**Nenhuma decisão normativa foi criada, alterada, renumerada ou reaberta.** `D-2.3D-01`..`D-2.3D-13` seguem exatamente como homologadas; **`docs/12` NÃO foi tocado** por esta execução; a Base Imutável permanece intacta; `docs/09` §12 não foi reaberto.
+
+### 6-J.1 Objetivo e escopo materializado
+
+A F4 entrega o **mecanismo** de autorização — não funcionalidade nova. Requisições autenticadas passam a poder ser autorizadas no backend, de forma declarativa e testável, a partir dos papéis e permissões efetivamente associados ao usuário da sessão.
+
+| Elemento da fatia | Fonte que o governa | Como foi materializado |
+| --- | --- | --- |
+| Identificadores técnicos de permissão | `D-2.3D-09`; `docs/04` §5 | `permissoes.catalogo.ts` — materialização **tipada** dos 29 nomes funcionais, na ordem da fonte. Mesmo precedente e mesma disciplina de `audit/audit.catalog.ts` para `docs/09` §12: o arquivo **não decide nada** |
+| Ausência de catálogo paralelo | `D-2.3D-09` | Provada mecanicamente: `permissoes.catalogo.spec.ts` **lê** `docs/04-perfis-permissoes.md`, extrai os cabeçalhos de §5 e exige igualdade exata, na mesma ordem |
+| Múltiplos papéis; união de permissões | `D-2.3D-09`; TLF-BASE-V1 §6; `docs/04` §6.1 | `PermissoesService.resolverDoUsuario` — uma única consulta `usuario → usuario_papel → papel → papel_permissao → permissao`, união deduplicada e ordenada |
+| Autorização declarativa | `AUT-003` | `@RequerPermissoes(...)` — apenas metadata. **[RETIFICADO — §6-K]** substituído por `@RequerPermissao(...)`, singular, que também INSTALA as guards |
+| Enforcement no backend | `AUT-003`; `docs/04` §2.3; TLF-BASE-V1 §4.7 | `PermissoesGuard`, integrada ao mecanismo padrão de guards do NestJS |
+| Sessão autenticada válida como pré-condição | `AUT-003`; `D-2.3D-04`/`D-2.3D-05` | `SessaoAutenticadaGuard`, que **consome** o `SessaoService` da F2 e a política de cookie de `D-2.3D-07` — não reimplementa nenhum dos dois |
+| Privilégio mínimo e negação por padrão | TLF-BASE-V1 §4.2; `docs/04` §2.1/§2.2 | Guard **opt-in** por rota; toda dúvida nega; nenhum privilégio implícito |
+
+### 6-J.2 Componentes implementados
+
+| Arquivo | Papel |
+| --- | --- |
+| `apps/api/src/authz/permissoes.catalogo.ts` | Conjunto FECHADO e tipado dos 29 identificadores de `docs/04` §5; `ehPermissao` |
+| `apps/api/src/authz/erro-autorizacao.ts` | Contrato de erro da fatia — um único código, `ACESSO_NEGADO` |
+| `apps/api/src/authz/contexto-autenticado.ts` | Contexto autenticado sob **chave de símbolo privada**; `anexarContextoAutenticado`, `lerContextoAutenticado` e o param decorator `@UsuarioAutenticado()` |
+| `apps/api/src/authz/requer-permissoes.decorator.ts` | `@RequerPermissoes(...)`, a chave de metadata e a normalização fail-closed. **[RETIFICADO — §6-K]** arquivo REMOVIDO; substituído por `requer-permissao.decorator.ts` + `permissao-exigida.metadata.ts` |
+| `apps/api/src/authz/permissoes.service.ts` | Resolução das permissões efetivas contra a persistência homologada |
+| `apps/api/src/authz/sessao-autenticada.guard.ts` | Guard de autenticação — produz `401`, e só ela |
+| `apps/api/src/authz/permissoes.guard.ts` | Guard de autorização RBAC — produz `403`, e só ela |
+| `apps/api/src/authz/authz.module.ts` | Módulo **sem controller**; registrado no `AppModule` |
+
+### 6-J.3 Arquitetura — como a decisão é tomada
+
+```text
+requisição HTTP
+  -> SessaoAutenticadaGuard
+       lê o cookie de D-2.3D-07 pela função da própria F3 (lerCookieSessao)
+       chama SessaoService.validar  (F2 — token, estados terminais, atividade)
+       inválida  -> 401 { "erro": "SESSAO_INVALIDA" }
+       válida    -> grava { usuarioId, sessaoId } sob CHAVE DE SÍMBOLO privada
+  -> PermissoesGuard
+       reúne a metadata de @RequerPermissoes do HANDLER e da CLASSE (união)
+       [RETIFICADO — §6-K] passou a ler UMA permissão, SOMENTE do handler
+       metadata ausente/inválida -> 403
+       contexto autenticado ausente -> 403
+       PermissoesService.resolverDoUsuario(contexto.usuarioId)
+         usuário inexistente / inativo -> 403
+       falta qualquer permissão exigida -> 403
+       caso contrário -> prossegue
+  -> handler
+```
+
+**A identidade não é controlável pelo cliente.** O contexto vive sob `Symbol("tlf.contexto_autenticado")` — símbolo **não registrado**, privado do módulo. Nenhum corpo JSON, query string ou cabeçalho HTTP produz propriedade de símbolo no objeto de requisição: o parser escreve em `req.body`, `req.query` e `req.headers`, que são propriedades de string de outros objetos. Não existe caminho pelo qual o pedido injete, sobrescreva ou adivinhe essa chave.
+
+**`401` e `403` não se confundem.** A guard de sessão é a única que emite `401`; a guard de RBAC é a única que emite `403` e nunca autentica. A ordem de `@UseGuards(SessaoAutenticadaGuard, PermissoesGuard)` é significativa — o Nest executa as guards em sequência e interrompe na primeira recusa.
+
+**Fail-closed, e o que isso NÃO significa.** Fail-closed é "o handler não é alcançado". Uma falha **técnica** na resolução (banco indisponível, erro de driver) **sobe como exceção** e vira `500`; ela não é maquiada como `403`. Converter indisponibilidade de infraestrutura em "sem permissão" faria todo incidente parecer erro de configuração de papéis — mesmo racional já homologado do `FiltroErroAutenticacao` ("falha técnica nunca vira `401`"). O contrato de erro existente foi preservado, e nenhum código foi acrescentado a `auth.dto.ts`.
+
+**Sem cache, por decisão de escopo** (`docs/12` §16): a persistência é consultada no momento da decisão. Nenhum snapshot de permissão na sessão, nenhum papel no token, nenhum Redis, nenhum JWT, nenhum refresh token. Uma permissão revogada passa a valer na requisição seguinte, sem invalidação de cache.
+
+**Sem auditoria de negação — fronteira, não esquecimento.** `autorizacao.negada` é uma das ações RC/SF que `D-AUD-04`/`D-AUD-05` mantêm **expressamente fora** do catálogo homologado (`docs/09` §12). Emiti-la aqui ampliaria o catálogo sem decisão própria. `docs/04` §10 prevê auditar rejeições relevantes "quando isso tiver utilidade operacional" — a promoção da ação continua sendo decisão de Bruno.
+
+### 6-J.4 Onde o RBAC passou a ser aplicado — e por que só ali
+
+**Nenhuma rota de produção foi protegida nesta fatia, e nenhuma podia ser.** As três rotas FUNCIONAIS publicadas são `/health` (infraestrutura) e `POST /auth/login` / `POST /auth/logout` — a que resta, `/openapi.json`, não é rota funcional e é servida apenas conforme a política de ambiente homologada na F3 (`D-2.3D-11`; `docs/10` §6-I.6) **[precisão acrescentada — §6-K, `R4-08`]** — precisamente as operações que `docs/04` §4 marca como permitidas a **todos** os papéis ("Autenticar/logout próprio": ✓ ✓ ✓ ✓), isto é, operações **sem permissão exigida**. Protegê-las com RBAC contrariaria a matriz homologada. As demais permissões do catálogo governam operações cujos endpoints ainda não existem.
+
+A guard é, portanto, provada por integração sobre um **controller exclusivamente de teste** (`apps/api/test/integration/fixture-rbac.controller.ts`), que vive fora de `rootDir: "src"` de `tsconfig.build.json`, não é compilado para `dist/`, não é importado pelo `AppModule` e não aparece no documento OpenAPI. **O conjunto de rotas publicadas continua sendo exatamente `/health`, `/auth/login` e `/auth/logout`** — asserção mecânica de `auth.module.integration.spec.ts` e de `openapi.spec.ts`, ambas verdes e inalteradas nesse ponto.
+
+O fluxo interno `profissional.situacao.alterada` (§6-A.4) **continua sem exposição HTTP** e, portanto, sem RBAC aplicado: proteger o serviço interno exigiria decidir o ator autorizado sem endpoint, o que não é desta fatia. A pendência "RBAC / `profissionais.gerenciar`" de §9 permanece aberta, agora com o mecanismo disponível.
+
+### 6-J.5 Decisões locais — reversíveis, **não** são norma
+
+| ID | Problema | Alternativas | Escolha | Por que não é decisão normativa |
+| --- | --- | --- | --- | --- |
+| ~~`L-F4-01`~~ **[ELIMINADA — §6-K]** | Nenhuma fonte homologada define como compor **várias** permissões numa mesma operação | (a) conjunção — todas obrigatórias; (b) disjunção — qualquer uma; (c) oferecer as duas e escolher por rota | **(a) conjunção.** É a única que, na dúvida, **não amplia privilégio**: todo acesso concedido por `AND` também o seria por `OR`. **(c) foi recusada** — obrigaria a escolher a semântica por rota sem fonte que a sustente, transferindo a decisão, em silêncio, para o ponto de uso | É escolha de implementação sob lacuna declarada de fonte. **Adotar a alternativa (b) AMPLIA acesso e, por isso, exige decisão expressa de Bruno.** Fica registrada como pendente de revisão — ver §9 |
+| `L-F4-02` | Sessão viva de usuário **inativado** depois do login | (a) autorizar mesmo assim (a sessão é válida); (b) negar a autorização; (c) invalidar a sessão | **(b) negar.** AUT-001 proíbe sessão para conta inativa e AUT-005 revoga sessões na inativação: uma sessão viva de conta inativa é estado **inconsistente**, e o RBAC não é o lugar de consertá-lo — é o lugar de não confiar nele. **(c) foi recusada** por ser mutação de estado de sessão, que pertence à máquina de estados de `D-2.3D-05` | Nenhuma fonte manda o RBAC reavaliar a situação do usuário, e nenhuma o proíbe. Na dúvida, nega-se. Reversível sem tocar decisão homologada |
+| `L-F4-03` | Metadata de permissão **ausente** com a guard aplicada | (a) tratar como rota pública; (b) negar | **(b) negar.** "Atribuiu a guard e não declarou nada" é erro de fiação, não autorização irrestrita. A guard é **opt-in** por rota — a ausência da guard, essa sim, deixa a rota fora do RBAC, e isso é explícito no código | Contrato interno do mecanismo, não política de acesso |
+| ~~`L-F4-04`~~ **[ELIMINADA — §6-K, `R4-04`]** — a afirmação "a rota de um controller protegido nunca exige menos do que ele" foi MEDIDA como FALSA sob herança: uma subclasse com decorator próprio descarta a exigência da classe-base. A superfície de classe foi removida. | Metadata de **classe** × metadata de **método** | (a) `getAllAndOverride` — o método substitui a classe; (b) união | **(b) união.** `getAllAndOverride` faria um método anotado com permissão barata **descartar** a exigência do controller inteiro | Detalhe de composição do mecanismo; a alternativa (a) reduziria exigência, e por isso foi recusada |
+| `L-F4-05` | Corpo do `403` | (a) informar a permissão que faltou; (b) código único opaco | **(b).** Informar transformaria o `403` em oráculo sobre a matriz de permissões e sobre o cadastro — mesma disciplina anti-enumeração de AUT-001/`D-2.3D-12` e da decisão local `A-05` da F3 | Forma de resposta, no precedente já adotado pela F3 |
+
+### 6-J.6 A única alteração em artefato da F3 — e o que ela não faz
+
+`AuthModule` passou a **exportar** `POLITICA_COOKIE_SESSAO`. A mudança é **aditiva e sem nenhuma mudança de comportamento**: o provider já existia desde a F3, já era resolvido no bootstrap (`R-2.3D-04`) e continua sendo o **mesmo singleton**. Ele é exportado para que a `SessaoAutenticadaGuard` leia o cookie pela **fonte única** da política, em vez de resolver uma segunda cópia da mesma configuração de segurança — duas resoluções independentes seriam duas fontes para o mesmo fato.
+
+O que **não** mudou, e é o que a fronteira da F3 protege: `imports` continuam `[DatabaseModule, AuditModule]`; `controllers` continua `[AuthController]`; nenhum artefato de RBAC, seed ou recuperação de senha nasce dentro do `AuthModule`. `credencial.service.ts`, `sessao.service.ts`, `autenticacao.service.ts`, `auth.controller.ts`, `auth.dto.ts`, `politica-cookie.ts`, `protecao-csrf.guard.ts`, `limitador-login.ts`, `erro-autenticacao.filter.ts`, `token-sessao.ts`, `identificador-login.ts`, `relogio-sessao.ts` e o documento OpenAPI **não foram tocados**.
+
+Duas asserções de `auth.module.integration.spec.ts` acompanharam a mudança, e ambas continuam sendo de **igualdade exata**: a lista de `exports` ganhou o token; e o teste cujo título afirmava "nenhum provider de F4+ é resolvível a partir do `AppModule`" foi **renomeado** — a F4 agora existe, foi autorizada, e seus providers são legitimamente resolvíveis pelo `AuthzModule`. Manter o título anterior deixaria uma prova verde afirmando algo falso.
+
+### 6-J.7 Provas medidas
+
+**Unitárias — 42 provas novas, sem banco e sem servidor** (`test:api` passou de 16 suites · 437 para **19 suites · 479**):
+
+| Suíte | Provas | O que mede |
+| --- | ---: | --- |
+| `permissoes.catalogo.spec.ts` | 8 | O catálogo tipado **é** `docs/04` §5 — comparação contra o documento lido em disco, com controle de não vacuidade da extração; conjunto fechado fail-closed |
+| `requer-permissoes.decorator.spec.ts` | 13 | Metadata gravada e congelada; as 29 permissões aceitas; recusa **na declaração** de lista vazia e de identificador fora do catálogo; normalização fail-closed |
+| `permissoes.guard.spec.ts` | 21 | Concessão e negação; conjunção `L-F4-01`; união classe+método; metadata ausente/inválida; contexto ausente; usuário inexistente/inativo; `403` e nunca `401`; falha técnica que **não** vira `403`; identidade não forjável; isolamento entre usuários; propriedades do contexto autenticado |
+
+**Integração com PostgreSQL 18 real — 33 provas novas** (`verify:api-integration` passou de 6 suites · 206 para **7 suites · 239**), em `authz-rbac.integration.spec.ts`. Caminho provado inteiro, sem mock no meio: servidor HTTP real → cookie de `D-2.3D-07` → `SessaoAutenticadaGuard` → `SessaoService` → `PermissoesGuard` → `PermissoesService` → `DatabaseService` → `tlf_app` → PostgreSQL 18.
+
+| Caso | Cenário | Resultado medido |
+| --- | --- | --- |
+| **A** | autenticado + papel A + permissão P; rota exige P | **200**, com o corpo que só existe se o **handler executou**; e o mesmo desfecho partindo do **login real** da F3 |
+| **B** | autenticado + papel A sem P; rota exige P | **403** `{"erro":"ACESSO_NEGADO"}`; a MESMA sessão obtém `200` na rota que exige apenas autenticação — controle que separa `401` de `403` |
+| **C** | papel A sem P + papel B com P | **200**; união medida como `["auditoria.ler","usuarios.gerenciar"]`; a mesma permissão em dois papéis entra **uma vez**; duas permissões exigidas vindas de papéis diferentes permitem; possuir só uma das duas **nega** |
+| **D** | autenticado sem papel algum | **403** nas duas rotas RBAC, `200` na rota apenas autenticada; resolução devolve lista **vazia**, que é resposta legítima e não "não foi possível resolver". Papel **sem permissão alguma** também não concede nada |
+| **E** | usuário 1 com P, usuário 2 sem P | `200` e `403`; o cookie do usuário 2 devolve a identidade do usuário 2, e o id do usuário 1 não aparece em resposta alguma |
+| **F** | identidade forjada por cabeçalhos, query string e corpo JSON | **403** nos três; **sem cookie**, nem os forjados autenticam — `401`. Controle positivo: o **mesmo** POST forjado, com a permissão real, devolve `201` e alcança o handler |
+| **G** | sessão inválida ou terminal | sem cookie, cookie malformado, sessão inexistente e segredo errado → **401**; sessão **revogada** → `401`; expirada por **prazo absoluto** e por **ociosidade** → `401`; usuário **inativado** após o login → `403` (`L-F4-02`). Em cada caso, o token verdadeiro no mesmo cookie continua obtendo `200` — controle positivo |
+
+Provas adicionais medidas na mesma suíte: guard aplicada **sem** `@RequerPermissoes` nega mesmo para quem tem todas as permissões (com controle positivo na rota vizinha); `PermissoesGuard` **sem** a guard de sessão nega e não autentica sozinha; resolução determinística (mesma ordem para o mesmo estado); identificador degenerado não vira consulta permissiva; código persistido **fora** do catálogo de `docs/04` §5 não autoriza nada; e as rotas de autenticação continuam **sem** exigir RBAC, com `/health` público.
+
+**Não vacuidade** — cada caso confirma no banco, antes de asserir, que a fixture gravou de fato: `usuario_papel` e `papel_permissao` são **contados** por consulta própria, e a resolução efetiva é lida diretamente do serviço. Nenhum `403` esperado passa por engano de fixture, `404` de rota ou erro anterior ao RBAC.
+
+**As fixtures de papel/permissão são fixtures de teste, e somente isso.** Nascem e morrem dentro da suíte, sob a limpeza determinística do `setup-db`. Não existe seed, script de seed, associação automática papel↔permissão nem bootstrap de Administrador.
+
+### 6-J.8 Mutation challenges — 13 aplicados, 13 detectados, 13 revertidos
+
+Cada mutação foi aplicada ao código-fonte, medida pela suíte detectora, revertida e teve a reversão **provada por SHA-256** idêntico ao valor anterior à aplicação. Nenhuma sobreviveu.
+
+| # | Mutação | Detectada por | Resultado observado |
+| --- | --- | --- | --- |
+| `C-F4-01` | `PermissoesGuard.canActivate` sempre devolve `true` | unitária | **13 provas falharam** |
+| `C-F4-02` | Comparação invertida — negação vira permissão | unitária | 8 falharam |
+| `C-F4-03` | Resolução ignora todos os papéis exceto o primeiro | integração | 3 falharam |
+| `C-F4-04` | Metadata ausente/vazia passa a valer como permissão irrestrita | unitária | 2 falharam |
+| `C-F4-05` | Guard soma às permissões efetivas as de um cabeçalho HTTP | unitária | 1 falhou |
+| `C-F4-06` | Guard consulta um `usuarioId` fixo em vez do da sessão | unitária | 1 falhou |
+| `C-F4-07` | Composição `AND` vira `OR` | unitária | 2 falharam |
+| `C-F4-08` | Consulta de permissões perde o filtro por `usuario_id` | integração | 5 falharam |
+| `C-F4-09` | Falta de permissão passa a responder `401` | unitária | 11 falharam |
+| `C-F4-10` | Fail-open: erro técnico na resolução vira acesso permitido | unitária | 3 falharam |
+| `C-F4-11` | Catálogo ganha identificador inexistente em `docs/04` §5 | unitária | 1 falhou |
+| `C-F4-12` | Identidade passa a ser lida de propriedade de **string** do pedido | unitária | 1 falhou |
+| `C-F4-13` | Decorator passa a aceitar lista vazia de permissões | unitária | 2 falharam |
+
+Verificação final da reversão, sobre os oito arquivos de `src/authz/` mais `auth.module.ts` e `app.module.ts`: **todos os SHA-256 idênticos aos medidos antes do primeiro challenge**, e `git status` sem resíduo.
+
+### 6-J.9 Bateria integral — medida nesta fatia
+
+| Comando | Exit | Resultado |
+| --- | ---: | --- |
+| `npm run typecheck` | 0 | — |
+| `npm run test:api` | 0 | **19 suites · 479 passed** (era 16 · 437) |
+| `npm run verify:api-integration` | 0 | **7 suites · 239 passed** (era 6 · 206) |
+| `npm run verify:from-scratch` | 0 | 10 suites · 87 passed |
+| `npm run build` | 0 | — |
+| `npm run smoke:api` | 0 | 6 provas |
+| `npm run verify:argon2-runtime` | 0 | 15/15 |
+| `npm run verify:openapi-runtime` | 0 | 17/17 |
+| `npm run lint:migrations` (Guarda 1) | 0 | 10 migrations · 37 objetos protegidos |
+| `npm run schema:verify` (Guarda 3) | 0 | golden byte a byte **60 169 bytes**; `prisma migrate diff --exit-code` **0** |
+| `git diff --check` | 0 | — |
+
+Guarda 2 (anti-drift) é executada dentro de `verify:from-scratch`, verde.
+
+### 6-J.10 Regressão de F1/F2/F3
+
+Reexecutadas integralmente e verdes: a suíte de `apps/api` (que cobre credencial/Argon2, token de sessão, política de cookie, CSRF, limitador de login, DTOs, OpenAPI, auditoria e a fiação do `AuthModule`) e a suíte de integração com PostgreSQL real (que cobre login, logout, sessão, expiração, revogação, rate limiting, cookies, CSRF, contrato de erros e a auditoria de autenticação). As **206** provas de integração anteriores continuam passando, ao lado das 33 novas; as **437** provas unitárias anteriores continuam passando, ao lado das 42 novas.
+
+`verify:openapi-runtime` (17/17) prova que o contrato REST não mudou no artefato ESM compilado, e `openapi.spec.ts` continua exigindo que os caminhos documentados sejam exatamente `["/auth/login","/auth/logout","/health"]`.
+
+### 6-J.11 Zero drift de persistência
+
+```text
+git diff a9be742 -- packages/database ........ 0 linhas
+
+schema.prisma .......... 7bee911e75e4742f = 7bee911e75e4742f   IDÊNTICO
+schema.golden.sql ...... c2ad5dc539098f51 = c2ad5dc539098f51   IDÊNTICO
+protected-objects.json . 9b4033a3c2cf3a79 = 9b4033a3c2cf3a79   IDÊNTICO
+migrations ............. 10 -> 10   (nenhuma nova)
+```
+
+`prisma format`, `prisma migrate dev`, `prisma db push` e `prisma db pull` **NÃO** foram executados em nenhum momento desta fatia. **Nenhuma dependência nova foi instalada**: `package.json`, `package-lock.json` e `apps/api/package.json` com diff vazio contra a baseline. NestJS e TypeScript, já presentes, foram suficientes — nenhum framework de autorização (CASL, Oso, AccessControl ou equivalente) foi cogitado para poucas linhas de RBAC simples.
+
+### 6-J.12 Fronteira — o que a F4 deliberadamente NÃO fez
+
+- **F5 NÃO INICIADA**: nenhum seed de papéis ou permissões, nenhuma associação automática papel↔permissão, nenhum bootstrap ou usuário Administrador inicial, nenhuma senha inicial, nenhum comando ou endpoint de setup, nenhuma variável de ambiente de bootstrap.
+- **F6 NÃO INICIADA**: nenhuma recuperação de senha — início, conclusão, segredo, endpoint, rate limiting próprio ou revogação em massa. A presença de `senha.recuperar_terceiro` no catálogo é reprodução do documento homologado e **não** materializa fluxo algum.
+- **Autorização clínica contextual NÃO INICIADA**: nada de vínculo profissional↔paciente, atendimento, prontuário ou acesso contextual a dado clínico. `P2.2-05` permanece fora. Possuir uma permissão funcional **não** elimina as futuras restrições contextuais sobre dados clínicos (`docs/04` §2.4/§6.3; TLF-BASE-V1 §6).
+- **Sem revogação de sessão de terceiro**, sem JWT, sem refresh token, sem permission token, sem Redis, sem cache distribuído, sem invalidação de cache, sem snapshot de permissão na sessão, sem CORS cross-origin, sem multitenancy, sem `apps/web`.
+- **Sem nova ação de auditoria** e sem ampliação de whitelist de `contexto`.
+- **Sem novo endpoint de produção**: a fatia não publica rota alguma.
+
+Busca mecânica em `apps/api/src/` confirma que as únicas ocorrências de `seed`, `bootstrap`, `recuperação de senha`, `JWT`, `refresh token`, `Redis`, `multitenancy` e `frontend` são **textuais**, em comentários de fronteira ou no bootstrap pré-existente da aplicação — nenhuma implementação.
+
+### 6-J.13 Riscos e pendências desta fatia
+
+| ID | Severidade | Situação |
+| --- | --- | --- |
+| ~~`L-F4-01`~~ (semântica de composição) | **ENCERRADA POR ELIMINAÇÃO — §6-K** (não por decisão normativa: a abstração que a exigia foi removida) | A conjunção foi adotada por ser a alternativa conservadora sob lacuna declarada de fonte. Trocá-la por disjunção **amplia acesso** e exige decisão expressa. Enquanto não houver decisão, nenhuma rota deve depender de uma semântica que a fonte não fixou |
+| Guard não aplicada a rota de produção | **OBSERVAÇÃO** | Consequência do escopo: nenhuma rota publicada tem permissão exigida pela matriz homologada. O mecanismo está provado por integração, mas seu primeiro uso real ocorrerá quando existir endpoint de domínio |
+| Sessão de usuário inativado | **BAIXO** | **[RETIFICADO — §6-K, `R4-02`]** A redação anterior dizia "tratado por `L-F4-02`". A cobertura é **PARCIAL** — defesa em profundidade apenas onde a `PermissoesGuard` está aplicada; uma rota apenas autenticada permanece utilizável. **AUT-005 permanece NÃO MATERIALIZADA e NÃO ENCERRADA**; RN-001 segue aplicável. Ver §6-K.4 |
+| Custo da consulta por requisição | **OBSERVAÇÃO** | Uma consulta por requisição autorizada, sem cache, por decisão de escopo (`docs/12` §16). **Nenhum problema de custo foi medido nesta fatia**; se vier a ser medido, é evidência para decisão posterior, não licença para introduzir cache agora |
+| Fronteira `auth ↔ authz` no NestJS | **OBSERVAÇÃO** | **[RETIFICADO — §6-K, `R4-05`]** A redação anterior dizia "necessidade medida do framework, não escolha de arquitetura". É **uma opção**, não a única: a revisão mediu que não exportar nada falha, que exportar providers de módulos importados é rejeitado pelo NestJS, e que fazer cada consumidor importar os três módulos **funciona**. Ver §6-K.5 |
+
+Pendências herdadas e **não** alteradas por esta fatia: `P-2.3D-03`, `P-2.3D-04`, `P-2.3D-05`, `P-2.3D-06`, `P-2.3D-01`, `R-2.3D-04`, `R-2.3D-05`, `R-2.3D-06`, `R-2.3D-08`, `F-12`, `F3R-06`, `F3R-07`, `P-BACK-01`, `R2.2-04`, `P2.2-05`, `L-05`..`L-08`.
+
+### 6-J.14 Estado
+
+```text
+F4 IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA
+NÃO HOMOLOGADA
+NÃO INTEGRADA
+
+F5 NÃO INICIADA
+F6 NÃO INICIADA
+```
+
+**Próximo passo: revisão técnica independente e adversarial da F4 sobre a árvore exata produzida nesta execução.** A F5 não deve ser iniciada antes da homologação e integração da F4.
+
+## 6-K. Etapa 2.3D-B / F4 — fatia corretiva pós-revisão independente
+
+**Estado: CORRIGIDA E REMEDIDA EM BRANCH PRÓPRIA — permanece NÃO HOMOLOGADA / NÃO INTEGRADA.** Executada em 28/08/2026 sobre a MESMA baseline `main` = `origin/main` = `a9be742`, na mesma branch `agent/fase2-etapa2.3d-f4-rbac`, sobre a working tree não commitada que a revisão examinou. **Publicação não autorizada: sem commit, push, PR, merge, rebase, tag, release ou deploy.**
+
+**Nenhuma decisão normativa foi criada, alterada, renumerada ou reaberta.** `D-2.3D-01`..`D-2.3D-13` seguem exatamente como homologadas; **`docs/12` NÃO foi tocado**; `D-2.3D-09` permanece intacta; **nenhuma `D-2.3D-14` foi criada**; `docs/09` §12 não foi reaberto; a Base Imutável permanece intacta. §6-J é preservada como registro histórico da execução inicial, com as afirmações que a revisão provou incorretas marcadas **[RETIFICADO — §6-K]** e nenhuma medição reescrita.
+
+### 6-K.1 Parecer recebido
+
+A revisão técnica independente e adversarial devolveu **`B — APTO COM CORREÇÕES OBJETIVAS`**: nenhum achado BLOQUEANTE ou ALTO, nenhum bypass de autorização alcançável pelo cliente HTTP, zero drift real, bateria verde e 7/7 mutações independentes próprias detectadas. Quatro achados MÉDIOS e quatro BAIXOS.
+
+| ID | Sev. | Situação após esta fatia |
+| --- | --- | --- |
+| `R4-01` | MÉDIO | **CORRIGIDO** (§6-K.2) — a identidade validada passa a ser autoritativa |
+| `R4-02` | MÉDIO | **RETIFICADO** (§6-K.4) — cobertura declarada como PARCIAL; AUT-005 aberta |
+| `R4-03` | MÉDIO | **CORRIGIDO ESTRUTURALMENTE** (§6-K.3) — o decorator instala as guards |
+| `R4-04` | MÉDIO | **ELIMINADO POR REMOÇÃO DE SUPERFÍCIE** (§6-K.3) — não há metadata de classe |
+| `R4-05` | BAIXO | **RETIFICADO** (§6-K.5) — justificativa do re-export agora é factual |
+| `R4-06` | BAIXO | **CONFERIDO** (§6-K.6) — erro só existiu no relatório em chat |
+| `R4-07` | BAIXO | **RETIFICADO** (§6-K.6) — comentário do serviço distingue os dois casos |
+| `R4-08` | BAIXO | **RETIFICADO** (§6-K.6) — rotas funcionais × `/openapi.json` |
+
+### 6-K.2 `R4-01` — a identidade validada passa a prevalecer
+
+**O defeito, medido pela revisão.** `anexarContextoAutenticado` retornava cedo quando já havia contexto na requisição, sob a premissa de que "duas gravações só poderiam vir de duas validações de sessão". A premissa não é garantida. A revisão mediu, em três passos: o símbolo privado é recuperável por `Object.getOwnPropertySymbols` a partir de qualquer requisição já processada; um contexto **semeado** antes da guard **sobrevivia** à gravação da identidade validada; e a `PermissoesGuard` então decidia sobre a identidade semeada — autorizando como a vítima.
+
+Não era alcançável pelo cliente HTTP (essa proteção sempre valeu e continua valendo). O defeito era a **política**: das duas alternativas, foi adotada a menos segura, e um teste a consolidava.
+
+**A correção.** A regra passa a ser a inversa e explícita: **a identidade recém-validada pelo `SessaoService` substitui qualquer valor previamente colocado na requisição.** A propriedade é redefinida a cada gravação (`configurable: true`, mantendo `writable: false` e `enumerable: false`). Duas validações legítimas escrevem a mesma identidade; uma contaminação anterior é descartada.
+
+**O limite do modelo de confiança passa a ser declarado no próprio código**, em vez de implícito: a chave de símbolo protege contra o **cliente HTTP** e **não** contra código arbitrário do mesmo processo — um símbolo não registrado continua enumerável em objetos que já o carregam. A garantia que sustenta a autorização não é o sigilo da chave: é a sobrescrita.
+
+**Testes.** O teste `"não sobrescreve um contexto já gravado"` **deixou de existir**. No lugar, três provas: contexto inexistente → identidade validada gravada; contexto semeado com outra identidade → **sobrescrito**; e a guard consulta o dono REAL da sessão (com controle positivo em que o dono real, permissionado, passa).
+
+### 6-K.3 `R4-03` e `R4-04` — decorator único que instala as guards
+
+**Os dois defeitos tinham a mesma raiz:** o decorator era só metadata, e a proteção dependia de um segundo ato manual. A revisão mediu o resultado: uma rota anotada com a permissão e **sem** `@UseGuards` respondia `200` a uma requisição **sem sessão alguma** (`R4-03`). E a composição classe+método, criada para impedir que um método enfraquecesse o controller, **não valia sob herança**: uma subclasse com decorator próprio descartava a exigência da classe-base (`R4-04`).
+
+**A correção é uma redução de superfície**, não código novo:
+
+| Antes | Depois |
+| --- | --- |
+| `@RequerPermissoes(A, B, …)` — lista | `@RequerPermissao(P)` — **exatamente uma**, garantida pelo tipo |
+| metadata de classe + método, unidas por `Reflector.getAll` | metadata **somente do handler**, lida por `reflector.get` |
+| composição `AND` (decisão local `L-F4-01`) | **não existe composição** — nada a compor |
+| `@UseGuards(...)` manual, obrigatório e esquecível | `applyDecorators(SetMetadata, UseGuards(sessão, permissões))` |
+| `MethodDecorator | ClassDecorator` implícito | **`MethodDecorator` explícito** — aplicar a classe é erro de compilação |
+
+**`L-F4-01` deixa de existir — e não por decisão normativa.** A revisão mediu o dado que dissolveu a questão: **não há, na matriz de `docs/04` §4 nem na tabela §8, nenhuma operação que exija duas permissões nomeadas simultaneamente** — toda operação homologada mapeia para exatamente um identificador de §5. A cardinalidade > 1 era abstração antecipada (TLF-BASE-V1 §4.5) que *criava* uma decisão comportamental evitável. Removida a abstração, não há `AND` nem `OR` a homologar. **Nenhuma decisão nova foi pedida a Bruno, e nenhuma foi tomada em nome dele.** Quando a primeira operação real exigir composição, ela virá com fonte e com decisão própria.
+
+Arquivo novo `permissao-exigida.metadata.ts`: existe para que o decorator possa importar as guards sem ciclo (o decorator importa as guards; a guard importa só a metadata).
+
+**Consequência estrutural:** "declarar sem proteger" deixou de ser expressável. A fixture de integração comprova — suas rotas protegidas usam **exclusivamente** `@RequerPermissao(P)`, sem nenhum `@UseGuards` ao lado.
+
+### 6-K.4 `R4-02` — usuário inativo: cobertura PARCIAL e AUT-005 aberta
+
+**O que a fonte exige.** AUT-002 inclui "inativação do usuário" entre os gatilhos de encerramento. AUT-005: "ao inativar, **revogar sessões ativas**"; invariante "usuário inativo não cria sessão **nem mantém sessão utilizável**". RN-001: "sessões existentes **devem ser revogadas**".
+
+**O que existe hoje — medido.** Não há, em `apps/api/src/`, fluxo de ativação/inativação de **usuário** (a única inativação implementada é a de `profissional`, entidade distinta). `SessaoService.validar` **não** consulta `usuario.ativo`. Consequências medidas pela revisão contra PostgreSQL real: uma sessão de conta inativada **continua válida**, permanece **`ATIVA`** no banco, e uma rota **apenas autenticada** responde **`200`**; só onde a `PermissoesGuard` está aplicada há negação (`403`).
+
+**Enquadramento correto, que substitui a redação anterior.** `L-F4-02` é **defesa em profundidade de cobertura PARCIAL** contra um estado inconsistente. Ela **não** materializa AUT-005, **não** substitui a obrigação de revogar as sessões na inativação e **não** protege rotas apenas autenticadas.
+
+**Declaração expressa:**
+
+```text
+AUT-005: NÃO MATERIALIZADA / NÃO ENCERRADA
+RN-001:  APLICÁVEL e NÃO SATISFEITO fora do alcance do RBAC
+```
+
+A revogação por inativação deverá ser materializada **junto ao fluxo que implementar a ativação/inativação de usuários**, usando os estados terminais de `D-2.3D-05`. Este documento **não** fixa em qual fatia isso ocorrerá — atribuir a fatia seria decisão que a documentação ainda não tomou.
+
+**Nada foi alterado no comportamento.** O `403` do RBAC permanece; `SessaoService.validar` **não** foi tocado; nenhuma semântica nova de sessão foi introduzida. O que mudou foi a honestidade do registro — e o teste, que agora declara no próprio corpo que o estado é **artificial** (escrito diretamente na persistência, inalcançável por rota de produção), que **não** prova AUT-005, que a sessão **não** foi revogada e que a cobertura é parcial. Uma asserção nova mede explicitamente o limite: a mesma sessão inativada continua obtendo `200` na rota apenas autenticada.
+
+### 6-K.5 `R4-05` — justificativa do re-export, agora factual
+
+A revisão mediu as três configurações possíveis:
+
+| Alternativa | Resultado medido |
+| --- | --- |
+| não exportar nada além dos próprios providers | **falha** — `Nest can't resolve dependencies of the SessaoAutenticadaGuard` |
+| exportar providers específicos vindos de módulos importados | **rejeitado pelo framework** — `Nest cannot export a provider/module that is not a part of the currently processed module` |
+| não reexportar; cada consumidor importa `AuthzModule` + `AuthModule` + `DatabaseModule` | **funciona** |
+
+A configuração vigente foi **mantida** — ela é simples, testada e deixa o consumidor com um único import. O que mudou é a redação: deixou de alegar "necessidade medida do NestJS" e passou a declarar que é **a opção adotada para encapsular as dependências exigidas pelas guards**, com o **trade-off explícito**: o consumidor passa a enxergar também `CredencialService`, `AutenticacaoService`, `SessaoService`, `POLITICA_COOKIE_SESSAO` e `DatabaseService`. Nenhuma abstração foi criada.
+
+### 6-K.6 `R4-06`, `R4-07` e `R4-08`
+
+**`R4-06` — 645 × 745.** Conferido **na árvore PRÉ-correção**: `apps/api/src/authz/` tinha **745** linhas em **8** arquivos (66+118+23+84+126+138+108+82 na medição da primeira revisão independente). A discrepância existiu **apenas no relatório em chat da execução inicial** — as strings `645` e `745` **não constam** de `docs/10` em nenhum momento, e **nenhum arquivo foi omitido** do inventário. Nada foi alterado na documentação para incluir contagem de linhas.
+
+> **[RETIFICAÇÃO — `R4R2-01`, 28/08/2026]** A redação anterior deste parágrafo afirmava, em tempo presente, que `apps/api/src/authz/` "tem **745** linhas", e remetia a §6-K.7 para "a contagem vigente" — mas §6-K.7 é tabela `Arquivo | Situação` e **não contém contagem alguma**. A **segunda** revisão técnica independente adversarial mediu o estado real da árvore corrigida e registrou o finding `R4R2-01` (**BAIXO**, documental, sem impacto de comportamento ou de segurança). Medição vigente, conferida por `wc -l apps/api/src/authz/*.ts`:
+>
+> ```text
+> apps/api/src/authz/ — árvore corrigida e HOMOLOGADA
+> 9 arquivos · 798 linhas
+> authz.module.ts .................  80
+> contexto-autenticado.ts ......... 141
+> erro-autorizacao.ts .............  23
+> permissao-exigida.metadata.ts ...  44
+> permissoes.catalogo.ts ..........  84
+> permissoes.guard.ts ............. 114
+> permissoes.service.ts ........... 148
+> requer-permissao.decorator.ts ...  82
+> sessao-autenticada.guard.ts .....  82
+> ```
+>
+> As **745** linhas em **8** arquivos permanecem registradas acima como o valor **histórico** da árvore pré-correção, e **não** foram reescritas: a fatia corretiva acrescentou `permissao-exigida.metadata.ts` e substituiu `requer-permissoes.decorator.ts` por `requer-permissao.decorator.ts` (§6-K.7). A correção desta retificação é **exclusivamente documental** — nenhuma linha de runtime ou de teste foi tocada por ela.
+
+**`R4-07` — identificador não UUID.** Nenhuma validação nova, nenhuma biblioteca. Apenas o comentário do `PermissoesService` passou a distinguir os dois casos: ausente, vazio ou de tipo inválido → recusa **antes** do banco; string não vazia que não seja UUID → o driver rejeita, a exceção **sobe** e vira `500` — fail-closed, e inalcançável pelo cliente, porque o `usuarioId` vem sempre de `sessao_autenticacao.usuario_id`.
+
+**`R4-08` — rotas publicadas.** A redação passou a distinguir **rotas funcionais** (`/health`, `/auth/login`, `/auth/logout`) de `/openapi.json`, que não é rota funcional e é servida apenas conforme a política de ambiente homologada na F3.
+
+### 6-K.7 Componentes após a correção
+
+| Arquivo | Situação |
+| --- | --- |
+| `apps/api/src/authz/requer-permissao.decorator.ts` | **NOVO** — `@RequerPermissao(P)`: metadata + guards, `MethodDecorator` |
+| `apps/api/src/authz/permissao-exigida.metadata.ts` | **NOVO** — chave de metadata e normalização fail-closed |
+| ~~`apps/api/src/authz/requer-permissoes.decorator.ts`~~ | **REMOVIDO** |
+| `apps/api/src/authz/permissoes.guard.ts` | leitura de UMA permissão, somente do handler; sem `getAll` |
+| `apps/api/src/authz/contexto-autenticado.ts` | sobrescrita da identidade validada; limite do modelo de confiança declarado |
+| `apps/api/src/authz/permissoes.service.ts` | comentário de `R4-07`; comportamento **inalterado** |
+| `apps/api/src/authz/authz.module.ts` | justificativa do re-export retificada; wiring **inalterado** |
+| `apps/api/src/authz/permissoes.catalogo.ts` · `erro-autorizacao.ts` · `sessao-autenticada.guard.ts` | inalterados (exceto um exemplo textual no catálogo) |
+
+Fluxo vigente:
+
+```text
+@RequerPermissao("usuarios.gerenciar")
+  -> SessaoAutenticadaGuard   cookie D-2.3D-07 -> SessaoService.validar
+                              inválida -> 401 { "erro": "SESSAO_INVALIDA" }
+                              válida   -> grava a identidade VALIDADA (sobrescreve)
+  -> PermissoesGuard          lê UMA permissão do handler
+                              metadata ausente/inválida     -> 403
+                              contexto ausente              -> 403
+                              usuário inexistente/inativo   -> 403
+                              permissão ausente do conjunto -> 403
+  -> handler
+```
+
+### 6-K.8 Provas medidas
+
+**Unitárias — 42 provas** (`test:api` **19 suites · 479 passed**, mesmo total da execução inicial por coincidência de composição):
+
+| Suíte | Antes | Depois | O que mede agora |
+| --- | ---: | ---: | --- |
+| `permissoes.catalogo.spec.ts` | 8 | **8** | inalterada — catálogo ≡ `docs/04` §5 |
+| ~~`requer-permissoes.decorator.spec.ts`~~ → `requer-permissao.decorator.spec.ts` | 13 | **12** | aridade 1; recusa de lista; **guards instaladas e na ordem**; método vizinho não decorado sem guard; **nenhuma metadata de classe** |
+| `permissoes.guard.spec.ts` | 21 | **22** | sem composição; **`R4-01`** (3 provas + controle positivo); fail-closed incl. metadata em lista; `403` nunca `401`; falha técnica → exceção |
+
+**Integração com PostgreSQL 18 real — 33 provas** (`verify:api-integration` **7 suites · 239 passed**). Removidas as 2 provas de conjunção `L-F4-01`; acrescentadas 2 de exigência por operação (duas rotas independentes; possuir a permissão de uma não abre a outra) e asserções novas dentro de casos existentes. As rotas protegidas da fixture passaram a usar **só** o decorator — se ele deixar de instalar as guards, 16 provas caem.
+
+Cenários preservados e verdes: autorizado (inclusive a partir do **login real**), sem permissão, múltiplos papéis (união, duplicidade), zero papel, papel vazio, isolamento entre usuários, identidade forjada por header/query/body, sessão ausente/malformada/inexistente/segredo errado, revogada, expirada absoluta e ociosa, usuário inativado (agora com limite declarado), guard à mão sem metadata, guard à mão sem sessão, resolução determinística, código fora do catálogo, e as rotas de autenticação sem RBAC com `/health` público.
+
+### 6-K.9 Mutation challenges — 9 aplicados, 9 detectados, 9 revertidos
+
+| # | Mutação | Unitária | Integração | Reversão |
+| --- | --- | --- | --- | --- |
+| `C-F4C-01` | contexto já gravado volta a NÃO ser sobrescrito (regressão de `R4-01`) | **2 falhas** | 33 passed | SHA idêntico |
+| `C-F4C-02` | decorator deixa de instalar `SessaoAutenticadaGuard` | 2 falhas | **16 falhas** | SHA idêntico |
+| `C-F4C-03` | decorator deixa de instalar `PermissoesGuard` | 3 falhas | **12 falhas** | SHA idêntico |
+| `C-F4C-04` | ordem invertida das guards | 3 falhas | **16 falhas** | SHA idêntico |
+| `C-F4C-05` | `PermissoesGuard` sempre permite | **14 falhas** | **14 falhas** | SHA idêntico |
+| `C-F4C-06` | consulta sem filtro por `usuario_id` | — | **5 falhas** | SHA idêntico |
+| `C-F4C-07` | remove a negação por `usuario.ativo` | — | **1 falha** | SHA idêntico |
+| `C-F4C-08` | remove permissão do catálogo | **3 falhas** | — | SHA idêntico |
+| `C-F4C-09` | metadata em LISTA volta a ser aceita (reintroduz composição) | **2 falhas** | — | SHA idêntico |
+
+**Registro honesto de `C-F4C-01`:** ele é detectado **apenas pela suíte unitária**; a de integração passa `33/33`. Isso é esperado e não é lacuna — a contaminação de contexto **não é produzível por HTTP**, apenas por código dentro do processo. A prova pertence, corretamente, ao nível unitário.
+
+### 6-K.10 Bateria integral
+
+| Comando | Exit | Resultado |
+| --- | ---: | --- |
+| `npm run typecheck` | 0 | — |
+| `npm run test:api` | 0 | **19 suites · 479 passed** |
+| `npm run verify:api-integration` | 0 | **7 suites · 239 passed** |
+| `npm run verify:from-scratch` | 0 | 10 suites · 87 passed |
+| `npm run build` | 0 | — |
+| `npm run smoke:api` | 0 | 6 provas |
+| `npm run verify:argon2-runtime` | 0 | 15/15 |
+| `npm run verify:openapi-runtime` | 0 | 17/17 |
+| `npm run lint:migrations` (Guarda 1) | 0 | 10 migrations · 37 objetos |
+| `npm run schema:verify` (Guarda 3) | 0 | golden byte a byte **60 169 bytes**; `migrate diff --exit-code` 0 |
+| `git diff --check` | 0 | — |
+
+Guarda 2 executada dentro de `verify:from-scratch`, verde.
+
+### 6-K.11 Regressão, drift e fronteiras
+
+F1/F2/F3 reexecutadas integralmente e verdes; nenhum arquivo de `auth/` foi tocado nesta fatia corretiva — a única alteração em artefato da F3 continua sendo o export aditivo de `POLITICA_COOKIE_SESSAO` (§6-J.6), inalterado. Contrato REST e OpenAPI intactos (`verify:openapi-runtime` 17/17; `openapi.spec.ts` exigindo exatamente `["/auth/login","/auth/logout","/health"]`).
+
+```text
+git diff a9be742 -- packages/database ........ 0 linhas
+schema.prisma / schema.golden.sql / protected-objects.json ... hashes IDÊNTICOS
+migrations .................................. 10
+prisma format / migrate dev / db push / db pull ... NÃO executados
+package.json / apps/api/package.json / package-lock.json ... diff VAZIO
+```
+
+```text
+F5 NÃO INICIADA
+F6 NÃO INICIADA
+AUT-005 NÃO MATERIALIZADA / NÃO ENCERRADA
+autorização clínica contextual NÃO INICIADA (P2.2-05)
+frontend NÃO INICIADO · JWT / refresh token / Redis NÃO INTRODUZIDOS
+schema NÃO ALTERADO · nenhum endpoint de negócio novo
+nenhuma ação de auditoria nova · nenhuma whitelist ampliada
+```
+
+### 6-K.12 Riscos e observações mantidos
+
+| Item | Situação |
+| --- | --- |
+| Cobertura parcial do usuário inativo | **BAIXO — DECLARADO** (§6-K.4). AUT-005 aberta |
+| TOCTOU da autorização | **OBSERVAÇÃO** — a decisão representa o estado no instante da guard; permissão removida depois não interrompe o handler. Aceito no MVP; operações sensíveis futuras poderão exigir revalidação na própria transação de negócio. Nenhum lock, cache ou serialização global foi introduzido |
+| Transação interativa para leitura única | **OBSERVAÇÃO** — `DatabaseService.transacao` é a API pública disponível (o cliente é privado). Nenhum problema de custo medido; nenhuma abstração criada |
+| CSRF não composta pelas guards da F4 | **OBSERVAÇÃO** — registrada para futuras mutações HTTP; a F3 não foi alterada |
+| Anti-drift protege sincronia, não estabilidade | **OBSERVAÇÃO** — remoção coordenada em documento **e** código passaria; `docs/04` é controle superior e o risco não justifica mecanismo adicional |
+| Guard não aplicada a rota de produção | **OBSERVAÇÃO** — nenhuma rota publicada tem permissão exigida pela matriz de `docs/04` §4 |
+
+### 6-K.13 Estado
+
+```text
+F4 CORRIGIDA E REMEDIDA EM BRANCH PRÓPRIA
+NÃO HOMOLOGADA
+NÃO INTEGRADA
+```
+
+**Próximo passo: NOVA revisão técnica independente e adversarial sobre a árvore corrigida.** A F5 não deve ser iniciada antes da homologação e integração da F4.
+
+> **[ESTADO SUPERADO — §6-L]** O bloco acima é o registro **histórico** do estado ao término da fatia corretiva e **não foi reescrito**. A segunda revisão técnica independente adversarial foi executada sobre esta mesma árvore e devolveu **`A — APTO À HOMOLOGAÇÃO E VERSIONAMENTO`**. O estado vigente da F4 está em **§6-L**.
+
+## 6-L. Etapa 2.3D-B / F4 — homologação e rito de versionamento
+
+**Estado: HOMOLOGADA POR BRUNO MENEZES NORONHA em 28/08/2026** (TLF-BASE-V1 §15, item 1), após **duas** revisões técnicas independentes adversariais e uma fatia corretiva, sobre a árvore técnica de `main` = `origin/main` = `a9be742c150ebe43df0d03ef9ec1529cff5d780a`, na branch `agent/fase2-etapa2.3d-f4-rbac`. **APTA AO RITO DE VERSIONAMENTO/INTEGRAÇÃO.**
+
+A homologação abrange **exatamente** a árvore revisada, mais a correção **documental** `R4R2-01`. **Nenhuma linha de runtime ou de teste foi alterada nesta execução** — o manifesto SHA-256 dos 14 arquivos de runtime/teste da F4 é idêntico ao conferido pela segunda revisão.
+
+**Nenhuma decisão normativa foi criada, alterada, renumerada ou reaberta.** `D-2.3D-01`..`D-2.3D-13` seguem exatamente como homologadas; `D-2.3D-09` permanece intacta; **nenhuma `D-2.3D-14` foi criada**; `docs/09` §12 não foi reaberto; a Base Imutável permanece intacta.
+
+### 6-L.1 Escopo homologado
+
+O **mecanismo** de autorização RBAC — não funcionalidade nova, e nenhuma rota de negócio:
+
+| Componente | Papel |
+| --- | --- |
+| `SessaoAutenticadaGuard` | ponte com a autenticação vigente (F2/F3); `401` e somente `401` |
+| `PermissoesGuard` | decisão de acesso; `403` e nunca `401` |
+| `PermissoesService` | resolução das permissões efetivas — união dos papéis, consulta única |
+| `permissoes.catalogo.ts` | catálogo tipado das **29** permissões de `docs/04` §5 |
+| `contexto-autenticado.ts` | identidade da requisição sob chave de símbolo privada |
+| `permissao-exigida.metadata.ts` | chave de metadata e normalização fail-closed |
+| `@RequerPermissao(P)` | porta pública **singular**, `MethodDecorator`, que **instala** as duas guards na ordem |
+| `AuthzModule` | módulo **sem controller**, registrado no `AppModule` |
+| suítes da F4 | 3 unitárias + fixture + integração contra PostgreSQL 18 real |
+
+Propriedades homologadas: metadata **exclusivamente por handler**; composição automática `SessaoAutenticadaGuard → PermissoesGuard`; comportamento **fail-closed**; **união de múltiplos papéis**; **ausência de bypass por nome de papel**; **separação entre RBAC e autorização contextual por recurso**.
+
+**A homologação NÃO significa que:**
+
+```text
+AUT-005 está implementada
+autorização clínica contextual (P2.2-05) está implementada
+F5 está iniciada
+F6 está iniciada
+```
+
+### 6-L.2 Base técnica da decisão — segunda revisão independente
+
+```text
+veredito: A — APTO À HOMOLOGAÇÃO E VERSIONAMENTO
+0 BLOQUEANTES
+0 ALTOS
+0 MÉDIOS
+1 BAIXO documental — R4R2-01 (corrigido nesta execução, §6-K.6)
+```
+
+| Rodada | Veredito | Desfecho |
+| --- | --- | --- |
+| 1ª — F4 implementada (§6-J) | `B` | `R4-01`..`R4-08` — corrigidos em §6-K |
+| 2ª — F4 corrigida (§6-K) | **`A`** | Nenhum BLOQUEANTE/ALTO/MÉDIO. Um BAIXO (`R4R2-01`), corrigido em §6-K.6 |
+
+**Confirmação independente de `R4-01`..`R4-08`** — cada um reproduzido com evidência própria da revisão, não aceito por descrição:
+
+| Finding | Estado confirmado |
+| --- | --- |
+| `R4-01` contexto sobrescrito | **CONFIRMADAMENTE CORRIGIDO** — contexto semeado é substituído pela identidade validada; descritor medido `{enumerable:false, writable:false, configurable:true}`; descritor adversarial `configurable:false` faz a guard **lançar** (handler inalcançado), nunca aceitar o contexto falso |
+| `R4-02` usuário inativo / AUT-005 | **CONFIRMADAMENTE CORRIGIDO** (retificação documental) — RBAC `403`, rota apenas autenticada não protegida, sessão permanece `ATIVA` |
+| `R4-03` composição das guards | **CONFIRMADAMENTE CORRIGIDO** — metadata `[SessaoAutenticadaGuard, PermissoesGuard]` **e** ordem de **runtime** medida por instrumentação; sem sessão, a `PermissoesGuard` **não é sequer alcançada** |
+| `R4-04` metadata de classe/herança | **CONFIRMADAMENTE CORRIGIDO** — zero ocorrências de `getAll*`/`RequerPermissoes`/`CHAVE_PERMISSOES_EXIGIDAS`; aplicar a classe é **erro de compilação** |
+| `R4-05` justificativa do re-export | **CONFIRMADAMENTE CORRIGIDO** — as três configurações reproduzidas pela revisão, com as mensagens do Nest idênticas às documentadas |
+| `R4-06` contagem de linhas | **PARCIALMENTE CORRIGIDO** → gerou `R4R2-01`, **encerrado** por §6-K.6 |
+| `R4-07` identificador não-UUID | **CONFIRMADAMENTE CORRIGIDO** |
+| `R4-08` rotas publicadas | **CONFIRMADAMENTE CORRIGIDO** |
+
+**Perguntas de falsificação da revisão — todas respondidas `NÃO`:** cliente sem sessão não alcança o handler; autenticado sem permissão não alcança o handler; papel chamado "Administrador" não bypassa; identidade falsa pré-carregada não sobrevive; guards executam na ordem alegada; o decorator sozinho instala toda a proteção; não há metadata de classe/herança oculta; múltiplos papéis concedem apenas suas permissões reais; permissão de outro usuário não vaza; erro técnico não abre acesso; a F4 não alega implementar AUT-005; nenhuma correção anterior criou regressão.
+
+### 6-L.3 Mutation challenges independentes da segunda revisão
+
+**15 mutações**, construídas pela revisão (não reaproveitadas do executor), **15 detectadas**, **15 revertidas com conferência de hash**:
+
+| ID | Mutação | Detectada por |
+| --- | --- | --- |
+| `M-F4R2-01` | remove `SessaoAutenticadaGuard` do decorator | 2 unit · 16 integração |
+| `M-F4R2-02` | remove `PermissoesGuard` do decorator | 3 unit · 12 integração |
+| `M-F4R2-03` | inverte a ordem das guards | 3 unit · 16 integração |
+| `M-F4R2-04` | metadata em array volta a ser aceita | 2 unit |
+| `M-F4R2-05` | considera somente o primeiro papel | 3 integração |
+| `M-F4R2-06` | remove o filtro por `usuario_id` | 5 integração |
+| `M-F4R2-07` | `catch` do resolvedor retorna allow | 1 unit |
+| `M-F4R2-08` | remove uma permissão do catálogo | 3 unit |
+| `M-F4R2-09` | metadata ausente ⇒ rota liberada | 2 unit · 2 integração |
+| `M-F4R2-10` | `anexarContextoAutenticado` preserva contexto antigo | 2 unit |
+| `M-F4R2-11` | concede se a permissão existir para qualquer usuário | 5 integração |
+| `M-F4R2-12` | usuário inativo deixa de ser negado | 1 integração |
+| `M-F4R2-13` | metadata gravada na classe, não no handler | 10 unit · 13 integração |
+| `M-F4R2-14` | decorator deixa de instalar guards | 3 unit · 16 integração |
+| `M-F4R2-15` | RBAC lê identidade da query se faltar contexto | 1 unit |
+
+Nenhuma mutação perigosa sobreviveu. `M-F4R2-10` e `M-F4R2-15` são mortas apenas pela suíte unitária — ambas descrevem contaminação **intraprocesso**, inalcançável por cliente HTTP, o que é consistente com o modelo de confiança declarado em `contexto-autenticado.ts`.
+
+### 6-L.4 Bateria de homologação — medida pela revisão independente
+
+| Comando | Exit | Resultado |
+| --- | ---: | --- |
+| `npm run typecheck` | 0 | — |
+| `npm run test:api` | 0 | **19 suites · 479 tests** |
+| `npm run verify:api-integration` | 0 | **7 suites · 239 tests** |
+| `npm run verify:from-scratch` | 0 | **10 suites · 87 tests** |
+| `npm run build` | 0 | — |
+| `npm run smoke:api` | 0 | 10 migrations aplicadas |
+| `npm run verify:argon2-runtime -w @techlab-fisio/api` | 0 | **15/15** |
+| `npm run verify:openapi-runtime -w @techlab-fisio/api` | 0 | **17/17** |
+| `npm run lint:migrations` (Guarda 1) | 0 | — |
+| `npm run schema:verify` (Guarda 3) | 0 | golden byte a byte **60 169 bytes**; `migrate diff --exit-code` 0 |
+| `git diff --check` | 0 | — |
+
+Guarda 2 verde dentro de `verify:from-scratch`. As contagens foram **medidas novamente** pela revisão, não copiadas do relatório do executor.
+
+**Catálogo de permissões** — extração mecânica de `docs/04` §5 × TypeScript: **29 × 29**, zero faltantes, zero extras, zero duplicatas, **ordem idêntica**.
+
+**Matriz `401` × `403`** medida por HTTP real contra PostgreSQL 18: sem sessão, cookie irrelevante, sessão malformada, sessão inexistente, segredo errado, sessão revogada e sessão expirada → **`401`**; sessão válida sem a permissão → **`403`**; sessão válida com a permissão → **`200`** com handler efetivamente alcançado. O `403` não é oráculo: causas distintas produzem corpo idêntico `{"erro":"ACESSO_NEGADO"}`, sem nome de papel, permissão, token ou cookie em corpo ou cabeçalho.
+
+### 6-L.5 Zero drift, dependências e fronteiras
+
+```text
+packages/database/prisma/schema.prisma ....... zero alteração
+packages/database/prisma/migrations/** ....... zero alteração · 10 migrations
+packages/database/schema.golden.sql .......... zero alteração · 60 169 bytes
+packages/database/protected-objects.json ..... zero alteração
+package.json · apps/api/package.json · package-lock.json ... intactos
+```
+
+```text
+zero drift
+zero migration nova
+zero dependência nova
+```
+
+Rotas publicadas pela aplicação: **`/auth/login`, `/auth/logout`, `/health`** — asserção de igualdade exata inalterada e verde. O `AuthzModule` **não publica rota alguma**; `ModuloFixtureF4` não é referenciado por nenhum arquivo de `src/`.
+
+Nada de F5, seed de papéis/permissões, bootstrap do primeiro Administrador, recuperação de senha, JWT, refresh token, Redis, multitenancy, frontend, `apps/web`, autorização clínica contextual, migration, schema novo, ação nova de auditoria ou ampliação de whitelist entrou nesta fatia.
+
+### 6-L.6 Riscos e limites declarados, aceitos na homologação
+
+| Item | Situação |
+| --- | --- |
+| **AUT-005** | `NÃO MATERIALIZADA / NÃO ENCERRADA`. `L-F4-02` é defesa em profundidade de cobertura **PARCIAL**: nega sob a `PermissoesGuard`, **não** protege rotas apenas autenticadas e **não** revoga a sessão. `RN-001` segue `APLICÁVEL e NÃO SATISFEITO` fora do alcance do RBAC (§6-K.4, §9) |
+| **Autorização clínica contextual (`P2.2-05`)** | `NÃO INICIADA`. A F4 responde apenas à pergunta abstrata "o usuário possui a permissão?", sem escopo por recurso, e **não cria bypass** para a fatia futura |
+| **TOCTOU** | A autorização é **snapshot no instante da guard**. Nenhuma fonte homologada exige revalidação transacional nesta fatia; registrado como observação arquitetural para operações sensíveis futuras |
+| **Modelo de confiança do símbolo** | Protege contra o **cliente HTTP**; **não** isola contra código arbitrário do mesmo processo. A garantia que sustenta a autorização é a **sobrescrita** da identidade validada, não o sigilo do símbolo |
+| **Custo** | Uma consulta por requisição protegida, sem cache — deliberado (`docs/12` §16) |
+| **Re-export do `AuthzModule`** | **Opção simples válida**, não necessidade técnica; trade-off declarado em `authz.module.ts`. A alternativa "consumidor importa os três módulos" também funciona |
+
+### 6-L.7 Estado
+
+```text
+F4 — HOMOLOGADA POR BRUNO MENEZES NORONHA
+F4 — APTA AO RITO DE VERSIONAMENTO/INTEGRAÇÃO
+F5 — NÃO INICIADA
+F6 — NÃO INICIADA
+```
+
+O registro **factual** do merge — SHA do merge commit, número do PR e medições sobre a `main` integrada — pertence a **execução documental posterior**, seguindo o precedente `MEDIR → REGISTRAR` das integrações F0/F2/F3 (§6-I.8, REV. 15, REV. 20). Este documento **não** afirma, neste momento, que a F4 está integrada na `main`.
+
 ## 7. Auditoria — `P-BACK-01`
 
 ### 7.1 Estado
@@ -1204,6 +1801,7 @@ Registrada no relatório de consolidação da 2.3A: `npm ci`; `db:generate`; `db
 | Validação semântica das demais whitelists positivas | **PENDENTE** — `data_referencia_anterior`/`data_referencia_nova` (datas) e `registro_original_id` (uuid) sem regra de formato homologada; definir quando os emissores forem implementados ou por decisão expressa (sem reabrir D-AUD-07) |
 | `R-BL-02` | **ENCERRADO** (§8.2) — smoke adaptado na 2.3B para banco descartável (provider eager), com todas as verificações preservadas (§6-A.6) |
 | `T-AUD-CONTEXTO` | **EXECUTADO / PASSED** (§8.1) |
+| **AUT-005 / RN-001 — revogação de sessões na inativação de usuário** | **NÃO MATERIALIZADA / NÃO ENCERRADA** (§6-K.4). AUT-002 lista a inativação entre os gatilhos de encerramento; AUT-005 exige "ao inativar, revogar sessões ativas" e que o inativo "não mantenha sessão utilizável"; RN-001 repete a obrigação. Não existe fluxo de ativação/inativação de **usuário** em `apps/api/src/`, e `SessaoService.validar` não consulta `usuario.ativo`. A negação do RBAC (`L-F4-02`) é defesa em profundidade PARCIAL e **não** substitui a obrigação. Deverá ser materializada junto ao fluxo que implementar a ativação/inativação de usuários, com os estados terminais de `D-2.3D-05`; **este documento não fixa a fatia** |
 | RBAC / `profissionais.gerenciar` | **NÃO IMPLEMENTADO** — obrigatório antes de expor `profissional.situacao.alterada` (§6-A.4); "ator existente/ativo" ≠ "ator autorizado" |
 | `L-05`..`L-08` | **ADIADAS** — nenhuma decidida; exigem decisão própria homologada |
 | `configuracao.alterada` (granularidade/abrangência) | **PENDENTE** |
@@ -1233,6 +1831,10 @@ Registrada no relatório de consolidação da 2.3A: `npm ci`; `db:generate`; `db
 | `F-12` (guarda de cliente transacional em `emitirEm`/`revogarEm`) | **BAIXO — ACEITO nesta fatia** (§6-G.9): a verificação existente é função privada não exportada de `audit-writer.ts`, e `packages/database` — intocável por zero drift — expõe apenas o tipo. Corrigir exigiria acoplamento `auth → audit`, alteração de `packages/`, duplicação ou abstração prematura |
 | Saturação transitória do limitador (~~`L-11`~~ → **`D-2.3D-13`**) | **HOMOLOGADA COMO NORMA em 28/08/2026 — deixou de ser decisão local** (`F3R-08`). A segunda revisão independente classificou o comportamento como decisão comportamental, e Bruno o homologou: a fonte normativa é **`D-2.3D-13`** (`docs/12` §5.13, REV. 3), e **`L-11` permanece apenas como alias/referência histórica** ao registro de implementação em §6-G.2. O risco residual está declarado e aceito como **`R-2.3D-08`** (`docs/12` §8). O conteúdo material da decisão não é reproduzido aqui: `docs/12` é a fonte |
 | Amostra de despejo do limitador (`AMOSTRA_DE_DESPEJO`) | **DECISÃO LOCAL declarada** (§6-G.3): o despejo examina uma amostra limitada em vez do mapa inteiro, porque a varredura total era O(n) por requisição e transformava a saturação em amplificador de CPU. Pode recusar admissão havendo candidato seguro fora da amostra — conservador por desenho |
+| ~~`L-F4-01`~~ — semântica de composição de múltiplas permissões | **ENCERRADA POR ELIMINAÇÃO em 28/08/2026** (§6-K.3) — e **não** por decisão normativa. A revisão independente mediu que nenhuma operação de `docs/04` §4/§8 exige duas permissões simultâneas; a cardinalidade > 1 era abstração antecipada (TLF-BASE-V1 §4.5). O decorator passou a aceitar **exatamente uma** permissão, e com isso não há `AND` nem `OR` a homologar. **Nenhuma decisão foi pedida nem tomada em nome de Bruno.** Quando existir operação que exija composição, ela virá com fonte e decisão própria |
+| `L-F4-02` — sessão viva de usuário inativado | **DECISÃO LOCAL da F4, com COBERTURA PARCIAL declarada** (§6-K.4): o RBAC **nega** a autorização, como defesa em profundidade contra estado inconsistente. **NÃO materializa AUT-005** e **não** protege rotas apenas autenticadas — medido: uma sessão de conta inativada permanece `ATIVA`, continua válida para o `SessaoService` e obtém `200` em rota sem RBAC. `SessaoService` **não** foi alterado. Reversível sem tocar decisão homologada |
+| RBAC aplicado a rota de produção | **OBSERVAÇÃO da F4** (§6-J.4): nenhuma rota publicada tem permissão exigida pela matriz de `docs/04` §4 — `/health` é infraestrutura e login/logout são explicitamente permitidos a todos os papéis. O mecanismo está provado por integração sobre controller exclusivamente de teste; o primeiro uso real ocorrerá com o primeiro endpoint de domínio |
+| Custo da consulta de autorização por requisição | **OBSERVAÇÃO da F4** (§6-J.13): uma consulta por requisição autorizada, **sem cache**, por decisão de escopo (`docs/12` §16). Nenhum problema de custo foi medido; se vier a ser, é evidência para decisão posterior, nunca licença para introduzir cache por antecipação |
 | Higiene de formatação do `schema.prisma` | **PENDENTE — fora da F0 por decisão** — `prisma format` reformataria 7 modelos alheios ao escopo (condição **preexistente** à F0); merece PR próprio de formatação isolada, nunca misturado a uma fatia funcional |
 
 ## 10. Próximas etapas
@@ -1246,13 +1848,18 @@ Sujeitas a autorização própria, nesta ordem provável:
 5. ~~**`F1 — CredencialService / Argon2id`**~~ — implementação **EXECUTADA em 27/08/2026** (§6-D), na branch `agent/fase2-etapa2.3d-f1-credenciais` a partir de `04aa01f`; `D-2.3D-02` e `D-2.3D-03` materializadas; `argon2@0.45.1` instalada apenas em `@techlab-fisio/api`; `P-2.3D-02` medida e encerrada (§6-D.5); **INTEGRADA NA `main` em 27/08/2026** (commit `f642b62`, PR [#11](https://github.com/BrunoMNoronha/techlab-fisio/pull/11), merge commit `f4c2466`; registro pós-medição em §11, REV. 12).
 6. ~~**`F2 — SessaoService`**~~ — implementação **EXECUTADA em 27/08/2026** (§6-E), revisão técnica independente com veredito **B** e correções `C-01`/`C-02` aplicadas (§6-E.9); `R-2.3D-03` **ENCERRADO** por decisão de Bruno (§9); **HOMOLOGADA e INTEGRADA NA `main` em 27/08/2026** (commit `289a94b`, PR [#12](https://github.com/BrunoMNoronha/techlab-fisio/pull/12), merge commit `70b30ae`; registro pós-medição em §11, REV. 15).
 7. ~~**`F3 — endpoints REST de autenticação`**~~ — **CONCLUÍDA / HOMOLOGADA / INTEGRADA NA `main`** (§6-F a §6-I). Implementação executada em 27/08/2026 na branch `agent/fase2-etapa2.3d-f3-auth-http` a partir de `9a22262`; `D-2.3D-06`, `D-2.3D-07`, `D-2.3D-11`, `D-2.3D-12` e `D-2.3D-13` materializadas. **Três** revisões técnicas independentes adversariais — vereditos `B`, `B` e **`A`** — com duas fatias corretivas (§6-G, §6-H); `L-11` devolvida a Bruno e homologada como **`D-2.3D-13`**. Homologada em 28/08/2026 e integrada por **merge commit `3556972`**, PR [#14](https://github.com/BrunoMNoronha/techlab-fisio/pull/14), com os commits `362aefe`, `c755fcb` e `c20cf1c`. CI verde sobre o HEAD integrado (206 provas de integração) e validação local pós-merge verde; zero drift. Registro pós-medição em §6-I.8 e §11, REV. 20.
-8. **`F4 — guards e decorators de autorização (RBAC)`** — **NÃO INICIADA**, sujeita a autorização expressa própria e à conclusão da revisão da F3 (`D-2.3D-09`).
-9. Decisões normativas adiadas (`L-05`..`L-08`, `configuracao.alterada`, `prontuario.exportado`, eventual `autor_original_usuario_id`) e RBAC (`profissionais.gerenciar`) — cada uma por decisão expressa de Bruno, nunca por implicação de implementação.
+8. **`F4 — guards e decorators de autorização (RBAC)`** — **IMPLEMENTADA, REVISADA DE FORMA INDEPENDENTE (veredito `B`), CORRIGIDA E REMEDIDA em branch própria em 28/08/2026 — NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-J, §6-K). Executada na branch `agent/fase2-etapa2.3d-f4-rbac` a partir de `main` = `a9be742`; `D-2.3D-09` e a parte de RBAC de `AUT-003` materializadas; zero drift de persistência; nenhuma dependência nova; nenhuma rota nova publicada. **Próximo passo: NOVA revisão técnica independente e adversarial sobre a árvore corrigida** — e não a F5.
+9. **`F5 — seed de papéis/permissões + bootstrap do primeiro Administrador`** — **NÃO INICIADA**, sujeita a autorização expressa própria e à homologação e integração da F4 (`D-2.3D-09`, `D-2.3D-10`).
+10. **`F6 — recuperação de senha`** — **NÃO INICIADA** (`D-2.3D-06`, `D-2.3D-08`).
+11. Decisões normativas adiadas (`L-05`..`L-08`, `configuracao.alterada`, `prontuario.exportado`, eventual `autor_original_usuario_id`) e RBAC (`profissionais.gerenciar`) — cada uma por decisão expressa de Bruno, nunca por implicação de implementação.
 
 ## 11. Histórico de revisões
 
 | REV. | Data | Conteúdo |
 | --- | --- | --- |
+| **23** | **28/08/2026** | **ETAPA 2.3D-B / F4 (guards e decorators de autorizacao — RBAC) HOMOLOGADA POR BRUNO MENEZES NORONHA — rito de versionamento/integracao** (§6-L). **(a) Veredito recebido:** a **segunda** revisao tecnica independente adversarial, executada sobre a arvore corrigida de §6-K, devolveu **`A — APTO A HOMOLOGACAO E VERSIONAMENTO`** com **0 BLOQUEANTES, 0 ALTOS, 0 MEDIOS** e **1 BAIXO documental (`R4R2-01`)**. **(b) Autoridade:** homologacao explicita de **Bruno Menezes Noronha** (TLF-BASE-V1 §15, item 1), sobre a MESMA baseline `main` = `origin/main` = `a9be742`, branch `agent/fase2-etapa2.3d-f4-rbac`. **(c) Unica correcao desta execucao — `R4R2-01`, EXCLUSIVAMENTE DOCUMENTAL** (§6-K.6): a redacao afirmava em presente que `apps/api/src/authz/` tem 745 linhas e remetia a §6-K.7, que nao contem contagem; medicao real `wc -l` = **798 linhas em 9 arquivos**. O valor historico (**745 em 8 arquivos**, arvore pre-correcao) foi **preservado**, com retificacao explicita acrescentada. **(d) Zero mudanca tecnica:** manifesto SHA-256 dos 14 arquivos de runtime/teste da F4 **identico** ao conferido pela revisao — nenhuma linha de runtime ou de teste alterada. **(e) Confirmacoes independentes:** `R4-01`..`R4-08` reproduzidos com evidencia propria da revisao; **15 mutation challenges independentes aplicados, 15 detectados, 15 revertidos por hash**; catalogo **29 x 29** com ordem identica; matriz `401` x `403` medida por HTTP real (7 cenarios `401`, `403` sem permissao, `200` com permissao e handler alcancado), sem oraculo. **(f) Bateria independente verde:** `typecheck` 0; `test:api` **19 · 479**; `verify:api-integration` **7 · 239**; `verify:from-scratch` **10 · 87**; `build` 0; `smoke:api` 0; Argon2 runtime **15/15**; OpenAPI runtime **17/17**; Guardas 1-3; golden byte a byte **60 169 bytes**; `git diff --check` 0. **(g) Fronteiras:** **zero drift**, **zero migration**, **zero dependencia nova**; rotas seguem `/auth/login`, `/auth/logout`, `/health`; `AuthzModule` sem controller. **(h) Limites declarados e aceitos:** **AUT-005 NAO MATERIALIZADA / NAO ENCERRADA** (`L-F4-02` e defesa em profundidade PARCIAL; `RN-001` aplicavel e nao satisfeito fora do RBAC); autorizacao clinica contextual (`P2.2-05`) **NAO INICIADA**; TOCTOU declarado como snapshot no instante da guard. **(i) Governanca:** nenhuma decisao normativa criada, alterada, renumerada ou reaberta; `D-2.3D-09` intacta; **nenhuma `D-2.3D-14`**; `docs/09` §12 nao reaberto; Base Imutavel intacta. **F5 e F6 permanecem NAO INICIADAS.** **(j) Publicacao:** nenhum deploy, tag ou release. **Este registro NAO afirma integracao na `main`** — o registro factual do merge (SHA, PR, medicoes sobre a `main` integrada) pertence a execucao documental posterior, pelo precedente `MEDIR -> REGISTRAR` (REV. 15, REV. 20). |
+| **22** | **28/08/2026** | **ETAPA 2.3D-B / F4 CORRIGIDA APOS REVISAO TECNICA INDEPENDENTE ADVERSARIAL (veredito `B — APTO COM CORRECOES OBJETIVAS`); permanece NAO HOMOLOGADA / NAO INTEGRADA** (§6-K). Executada sobre a MESMA baseline `main` = `origin/main` = `a9be742`, na mesma branch `agent/fase2-etapa2.3d-f4-rbac`, sobre a working tree nao commitada que a revisao examinou. **Publicacao nao autorizada: sem commit, push, PR, merge, rebase, tag, release ou deploy.** **Nenhuma decisao normativa foi criada, alterada, renumerada ou reaberta — `docs/12` NAO foi tocado, `D-2.3D-09` permanece intacta, NENHUMA `D-2.3D-14` foi criada, `docs/09` §12 nao foi reaberto e a Base Imutavel permanece intacta.** A REV. 21 e a §6-J sao preservadas como registro do estado que foi revisado; as afirmacoes que a revisao provou incorretas ficaram marcadas **[RETIFICADO — §6-K]** e **nenhuma medicao foi reescrita**. **(a) Veredito recebido:** nenhum achado BLOQUEANTE ou ALTO; nenhum bypass alcancavel pelo cliente HTTP; zero drift real; bateria verde; 7/7 mutacoes independentes da propria revisao detectadas. Quatro MEDIOS e quatro BAIXOS. **(b) `R4-01` (MEDIO) CORRIGIDO:** `anexarContextoAutenticado` PRESERVAVA um contexto preexistente, e a revisao mediu a consequencia — o simbolo privado e recuperavel por `Object.getOwnPropertySymbols` de qualquer requisicao ja processada, um contexto SEMEADO sobrevivia a gravacao, e a guard decidia sobre a identidade semeada. Agora a **identidade validada pelo `SessaoService` SEMPRE substitui** o que estiver na requisicao. O teste que exigia nao sobrescrever — e que travava a correcao — **deixou de existir**, substituido por tres provas com controle positivo. O limite do modelo de confianca passou a ser DECLARADO no codigo: a chave de simbolo protege contra o cliente HTTP, **nao** contra codigo do mesmo processo. **(c) `R4-03` e `R4-04` (MEDIOS) ELIMINADOS POR REDUCAO DE SUPERFICIE:** o decorator plural foi **removido** e substituido por **`@RequerPermissao(P)`** — aridade EXATAMENTE 1 garantida pelo tipo, `MethodDecorator` explicito, metadata lida SOMENTE do handler, e `applyDecorators` fundindo metadata + `UseGuards(SessaoAutenticadaGuard, PermissoesGuard)` NA ORDEM. Com isso, declarar sem proteger deixou de ser expressavel (a revisao mediu `200` sem sessao numa rota anotada sem `@UseGuards`), e a superficie de metadata de classe — que sob HERANCA descartava a exigencia da classe-base — deixou de existir. Arquivo novo `permissao-exigida.metadata.ts` para quebrar o ciclo decorator/guard. **(d) `L-F4-01` ENCERRADA POR ELIMINACAO, e NAO por decisao normativa:** a revisao mediu que **nenhuma operacao de `docs/04` §4/§8 exige duas permissoes nomeadas simultaneamente**; a cardinalidade > 1 era abstracao antecipada (TLF-BASE-V1 §4.5) que criava uma decisao comportamental evitavel. Sem a abstracao nao ha `AND` nem `OR` a homologar. **Nenhuma decisao foi pedida nem tomada em nome de Bruno.** **(e) `R4-02` (MEDIO) RETIFICADO, sem mudanca de comportamento:** a redacao que dizia o risco tratado por `L-F4-02` passou a declarar **cobertura PARCIAL** — medido: sessao de conta inativada permanece `ATIVA`, continua valida para o `SessaoService` e obtem `200` em rota apenas autenticada; so onde a `PermissoesGuard` esta aplicada ha `403`. **`AUT-005` permanece NAO MATERIALIZADA e NAO ENCERRADA** e **RN-001 segue aplicavel**, agora com linha propria na tabela viva de §9. `SessaoService.validar` **nao** foi alterado e nenhum `403` virou `401`. O teste declara no proprio corpo que o estado e ARTIFICIAL (escrito direto na persistencia, inalcancavel por rota de producao) e mede explicitamente o limite. **A fatia em que a revogacao por inativacao sera materializada NAO foi fixada por este documento.** **(f) BAIXOS tratados:** `R4-05` — a justificativa do re-export deixou de alegar necessidade medida e passou a declarar a opcao adotada, as tres alternativas medidas e o trade-off de superficie exportada, sem redesenho; `R4-06` — a discrepancia 645 x 745 existiu **apenas no relatorio em chat**, nao contaminou `docs/10` e nenhum arquivo foi omitido; `R4-07` — o comentario do servico passou a distinguir rejeicao antes do banco de string nao-UUID que faz o driver lancar (`500`, fail-closed, inalcancavel pelo cliente), sem validacao nova nem biblioteca; `R4-08` — a redacao distingue rotas FUNCIONAIS de `/openapi.json`. **(g) Bateria integral verde:** typecheck 0; `test:api` **19 suites · 479 passed**; `verify:api-integration` **7 suites · 239 passed**; `verify:from-scratch` 10 suites · 87; build 0; `smoke:api` 6 provas; `verify:argon2-runtime` 15/15; `verify:openapi-runtime` 17/17; Guardas 1, 2 e 3 (golden **60 169 bytes**, `migrate diff --exit-code` 0); `git diff --check` limpo. Os totais coincidem com os da REV. 21 por composicao: a suite do decorator passou de 13 para 12 provas e a da guard de 21 para 22; na integracao, 2 provas de conjuncao sairam e 2 de exigencia por operacao entraram. **(h) 9 mutation challenges** (`C-F4C-01`..`C-F4C-09`) aplicados, **todos detectados**, todos revertidos com **SHA-256 identico** — incluindo regressao de `R4-01`, decorator sem cada uma das guards, ordem invertida, guard sempre permissiva, perda do filtro por `usuario_id`, remocao da negacao por `usuario.ativo`, drift do catalogo e reintroducao de metadata em lista. Registrado com honestidade que `C-F4C-01` e detectado **apenas pela suite unitaria** — a contaminacao de contexto nao e produzivel por HTTP. **(i) Zero drift reconfirmado:** `git diff a9be742 -- packages/database` vazio; tres hashes identicos; 10 migrations; `prisma format`/`migrate dev`/`db push`/`db pull` nao executados. **Nenhuma dependencia nova** — tres `package*.json` com diff vazio. **(j) F1/F2/F3 sem regressao:** nenhum arquivo de `auth/` foi tocado nesta fatia; a unica alteracao em artefato da F3 continua sendo o export aditivo de `POLITICA_COOKIE_SESSAO`. **(k) Fronteiras:** F5 e F6 NAO INICIADAS; AUT-005 NAO ENCERRADA; autorizacao clinica contextual (`P2.2-05`) fora; sem JWT, refresh token, Redis, cache, multitenancy ou frontend; schema nao alterado; nenhum endpoint de negocio novo; nenhuma acao de auditoria nova. **Proximo passo: NOVA revisao tecnica independente e adversarial sobre a arvore corrigida — a F4 NAO esta homologada nem versionavel.** |
+| **21** | **28/08/2026** | **ETAPA 2.3D-B / F4 (guards e decorators de autorização — RBAC) IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA — NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-J). Executada na branch `agent/fase2-etapa2.3d-f4-rbac` a partir de `main` = `origin/main` = `a9be742c150ebe43df0d03ef9ec1529cff5d780a`, com árvore limpa e nada staged no gate inicial. **Publicação não autorizada nesta execução: sem commit, push, PR, merge, rebase de publicação, tag, release ou deploy.** **Nenhuma decisão normativa foi criada, alterada, renumerada ou reaberta — `D-2.3D-01`..`D-2.3D-13` seguem exatamente como homologadas, `docs/12` NÃO foi tocado, `docs/09` §12 não foi reaberto e a Base Imutável permanece intacta.** **(a) Materializados:** `D-2.3D-09` e a parte de RBAC de `AUT-003` — catálogo **tipado** dos 29 identificadores de `docs/04` §5 (materialização, não catálogo paralelo, no mesmo precedente de `audit.catalog.ts`); resolução das permissões efetivas por **união** dos papéis, deduplicada, ordenada e determinística; decorator declarativo `@RequerPermissoes(...)`, que apenas declara metadata; `PermissoesGuard` integrada ao mecanismo padrão do NestJS; `SessaoAutenticadaGuard`, que **consome** o `SessaoService` da F2 e a política de cookie de `D-2.3D-07` sem reimplementar nenhum dos dois; e o param decorator `@UsuarioAutenticado()`. **(b) Identidade não controlável pelo cliente:** o contexto autenticado vive sob símbolo **não registrado**, privado do módulo — nenhum corpo, query ou cabeçalho produz propriedade de símbolo no objeto de requisição. Medido com corpo, query string e sete cabeçalhos forjados. **(c) `401` e `403` não se confundem:** a guard de sessão é a única que emite `401`; a de RBAC é a única que emite `403` e nunca autentica. **Falha técnica NÃO é maquiada como negação** — sobe como exceção e vira `500`, preservando a observabilidade, no mesmo racional já homologado do `FiltroErroAutenticacao`. **(d) Onde o RBAC foi aplicado:** em **nenhuma** rota de produção, e nenhuma podia ser — `/health` é infraestrutura, e login/logout são as operações que `docs/04` §4 marca como permitidas a todos os papéis. A guard é provada por integração sobre **controller exclusivamente de teste**, fora de `rootDir: "src"`, ausente do `dist/`, do `AppModule` e do OpenAPI. **As rotas publicadas continuam sendo exatamente `/health`, `/auth/login` e `/auth/logout`** — asserção mecânica, verde. **(e) Cinco decisões locais declaradas** (`L-F4-01`..`L-F4-05`, §6-J.5). **`L-F4-01` — a semântica de composição de múltiplas permissões — é registrada como PENDENTE DE DECISÃO DE BRUNO:** nenhuma fonte a define, adotou-se a **conjunção** por ser a única alternativa conservadora sob a lacuna, e a alternativa oposta **amplia acesso**. **(f) Única alteração em artefato da F3, aditiva e sem mudança de comportamento:** `AuthModule` passou a **exportar** `POLITICA_COOKIE_SESSAO` — provider que já existia — para que a guard de sessão leia o cookie pela fonte única, em vez de resolver uma segunda cópia da mesma configuração de segurança. `imports` e `controllers` do `AuthModule` inalterados; nenhum arquivo de serviço, controller, DTO, filtro, limitador ou OpenAPI da F3 foi tocado. Duas asserções de `auth.module.integration.spec.ts` acompanharam a mudança, ambas mantidas como **igualdade exata**, e um título de teste que a F4 tornou falso foi renomeado. **(g) Bateria integral verde:** typecheck 0; `test:api` **19 suites · 479 passed** (era 16 · 437); `verify:api-integration` **7 suites · 239 passed** (era 6 · 206); `verify:from-scratch` 10 suites · 87 passed; build 0; `smoke:api` 6 provas; `verify:argon2-runtime` 15/15; `verify:openapi-runtime` 17/17; Guarda 1 (10 migrations · 37 objetos), Guarda 2 e Guarda 3 (golden byte a byte **60 169 bytes**, `migrate diff --exit-code` 0) verdes; `git diff --check` limpo. **(h) 13 mutation challenges** (`C-F4-01`..`C-F4-13`) aplicados, **todos detectados**, todos revertidos com reversão **provada por SHA-256** idêntico e `git status` sem resíduo — inclusive guard sempre `true`, negação invertida, papéis ignorados, metadata vazia como permissão irrestrita, permissão lida de cabeçalho, identidade fixa, `AND`→`OR`, perda do filtro por `usuario_id`, `403`→`401`, fail-open em erro técnico, drift do catálogo, identidade lida de propriedade de string e decorator aceitando lista vazia. **(i) Não vacuidade assegurada:** cada caso de integração conta no banco os vínculos `usuario_papel`/`papel_permissao` antes de asserir, lê a resolução efetiva do serviço e confirma, por controle positivo, que o handler é alcançado quando autorizado — nenhum `403` esperado passa por engano de fixture, `404` ou erro anterior ao RBAC. **(j) Regressão de F1/F2/F3 ausente:** as 437 provas unitárias e as 206 de integração anteriores continuam passando, ao lado das 42 e 33 novas; login, logout, sessão, expiração, revogação, rate limiting, cookies, CSRF, contrato de erros, auditoria de autenticação e contrato OpenAPI inalterados. **(k) Zero drift:** `git diff a9be742 -- packages/database` vazio; `schema.prisma`, `schema.golden.sql` e `protected-objects.json` com hash idêntico; **10 migrations**, nenhuma nova; `prisma format`, `migrate dev`, `db push` e `db pull` **não** executados. **(l) Nenhuma dependência nova:** `package.json`, `package-lock.json` e `apps/api/package.json` com diff vazio — NestJS e TypeScript bastaram, e nenhum framework de autorização foi introduzido. **(m) Fronteiras:** **F5 NÃO INICIADA** (nenhum seed, associação automática papel↔permissão, bootstrap ou usuário Administrador, senha inicial, comando/endpoint de setup ou variável de bootstrap); **F6 NÃO INICIADA** (a presença de `senha.recuperar_terceiro` no catálogo reproduz o documento e não materializa fluxo); **autorização clínica contextual NÃO INICIADA** (`P2.2-05` fora); sem JWT, refresh token, permission token, Redis, cache, snapshot de permissão na sessão, revogação de sessão de terceiro, CORS cross-origin, multitenancy ou `apps/web`; **nenhuma ação de auditoria nova e nenhuma whitelist ampliada** — `autorizacao.negada` permanece fora do catálogo por `D-AUD-04`/`D-AUD-05`. **(n) Pendências herdadas não alteradas:** `P-2.3D-01`, `P-2.3D-03`..`P-2.3D-06`, `R-2.3D-04`, `R-2.3D-05`, `R-2.3D-06`, `R-2.3D-08`, `F-12`, `F3R-06`, `F3R-07`, `P-BACK-01`, `R2.2-04`, `P2.2-05`, `L-05`..`L-08`. **Próximo passo: revisão técnica independente e adversarial da F4 sobre a árvore exata produzida nesta execução — e NÃO a F5.** |
 | **20** | **28/08/2026** | **REGISTRO PÓS-MEDIÇÃO DA INTEGRAÇÃO DA ETAPA 2.3D-B / F3 NA `main`** (§6-I.8) — registro **exclusivamente factual**, no precedente MEDIR → REGISTRAR das REV. 10 e REV. 15. **Nenhuma decisão foi criada, alterada, renumerada ou reaberta** — `D-2.3D-01`..`D-2.3D-13` e `D-AUD-01`..`D-AUD-08` permanecem exatamente como estão — e **nenhuma medição histórica foi reescrita**. **(a) Integração executada em 28/08/2026:** PR [#14](https://github.com/BrunoMNoronha/techlab-fisio/pull/14) (`agent/fase2-etapa2.3d-f3-auth-http` → `main`), **merge commit `35569727789f6f73b4f81fec3cc94c34d4cb0038`** às 13:39:36Z — método `merge` (sem squash, sem rebase, sem force-push); a `main` passou de **`9a22262`** para **`3556972`**. Os três commits foram preservados como ancestrais: `362aefe` (implementação), `c755fcb` (homologação documental) e `c20cf1c` (correção do harness). **HEAD homologado e validado pela CI: `c20cf1c05ab7a9e306f2df8fd96c009dac9d2fd0`.** **(b) Proteção contra corrida confirmada:** imediatamente antes do merge, HEAD local, HEAD remoto da branch e `headRefOid` do PR coincidiam em `c20cf1c` — o mesmo SHA que atravessou a CI —, `origin/main` permanecia em `9a22262` desde a homologação e `merge-base` = `origin/main`. **(c) Incidente de CI, e sua natureza:** a primeira execução reprovou com `21 failed, 182 passed, 203 total`, **todas as 21 com `getaddrinfo ENOTFOUND [::1]` e nenhuma alcançando a aplicação** — os clientes `node:http` da suíte derivavam o destino de `new URL(baseUrl).hostname`, que preserva os colchetes do IPv6 e falha no Linux enquanto conecta no Windows. Era esse mascaramento por plataforma que fazia a bateria passar `203/203` na máquina de desenvolvimento durante as três revisões. Corrigido em `c20cf1c` com `urlToHttpOptions`, preservando origin-form, query e absolute-form, **sem nenhuma alteração de runtime, controller, service, guard, filtro, limitador, persistência ou contrato REST/OpenAPI** — um único arquivo de teste, `+79 −7`, mais três provas de regressão. **É fato de execução do harness: não cria requisito, não altera decisão e não reabre finding.** **(d) CI verde sobre o HEAD integrado** — run [33176130292](https://github.com/BrunoMNoronha/techlab-fisio/actions/runs/33176130292), `pass`: E-15 + Guarda 2 **87 passed**; Guarda 3 golden byte a byte e `migrate diff --exit-code` 0; suíte de `apps/api` **16 suites · 437 passed**; **integração com PostgreSQL 18 real 6 suites · 206 passed**; provas de runtime do Argon2id e do OpenAPI verdes. As **21 provas antes bloqueadas passaram a alcançar efetivamente a aplicação**. **(e) Validação local pós-merge integralmente verde:** typecheck 0; `test:api` **16 suites · 437**; `verify:api-integration` **6 suites · 206**; build 0; `smoke:api` **6 provas**; `verify:argon2-runtime` **15/15**; `verify:openapi-runtime` **17/17**; Guardas 1 e 3 verdes; `git diff --check` limpo. Os **206** são as **203** provas anteriores mais **3** regressões do harness — as medições históricas de 203 seguem corretas para os estados em que foram tomadas. **(f) Zero drift na `main` integrada:** `git diff 9a22262 3556972 -- packages/database` vazio; `schema.prisma`, `schema.golden.sql` e `protected-objects.json` com hash idêntico; **10 migrations**, nenhuma nova; `prisma format`, `migrate dev`, `db push` e `db pull` não executados. **(g) Estados mantidos:** riscos residuais aceitos `R-2.3D-08` (BAIXO), `F-12` (BAIXO), `F3R-06` e `F3R-07` (OBSERVAÇÃO); pendências `P-2.3D-03`, `P-2.3D-04`, `P-2.3D-05`, `P-2.3D-06`, `R-2.3D-04`, `R-2.3D-05` e `R-2.3D-06` **não** encerradas por implicação. **(h) `docs/12` não foi tocado** nesta revisão — ele já registra `D-2.3D-01`..`D-2.3D-13`, REV. 4 e a fatia F3 como CONCLUÍDA, e delega a evidência do rito de integração a este documento. **(i) F4, F5 e F6 permanecem NÃO INICIADAS**; nenhum deploy, tag ou release. Este registro entra na `main` por branch documental curta + PR com merge commit (MEDIR → REGISTRAR). |
 | **19** | **28/08/2026** | **ETAPA 2.3D-B / F3 HOMOLOGADA — rito de versionamento e integração** (§6-I). **(a) Veredito recebido:** a terceira revisão técnica independente adversarial devolveu **`A — APTO À HOMOLOGAÇÃO E VERSIONAMENTO`**, sem achado BLOQUEANTE, ALTO ou MÉDIO, e confirmou por reprodução própria — não por leitura do relatório — que `F3R-01` e `F3R-03` estão materialmente encerrados. **(b) `F3R-08` (BAIXO) corrigido:** a linha de §9 que ainda classificava a saturação transitória do limitador como “DECISÃO LOCAL declarada” passou a registrar **`D-2.3D-13`** como fonte normativa, com `L-11` explicitamente rebaixada a alias/referência histórica e o risco residual apontado para `R-2.3D-08`. O conteúdo material da decisão **não** foi duplicado em `docs/10`: `docs/12` §5.13 continua sendo a fonte. **(c) Homologação registrada em §6-I**, com escopo, decisões materializadas, as três rodadas de revisão, findings encerrados, riscos residuais aceitos, zero drift e fronteiras. Os cabeçalhos de estado de §6-F, §6-G e §6-H foram atualizados para refletir que aquelas execuções são registro histórico e que a fatia foi homologada — **nenhum fato medido naquelas seções foi alterado**. **(d) Nenhuma decisão `D-2.3D-01`..`D-2.3D-13` foi alterada, renumerada ou reaberta**; a Base Imutável permanece intacta. **(e) Pendências NÃO encerradas por implicação:** `P-2.3D-03`, `P-2.3D-04`, `P-2.3D-05`, `P-2.3D-06`, `R-2.3D-04`, `R-2.3D-05`, `R-2.3D-06`. **(f) Riscos residuais aceitos:** `R-2.3D-08` (BAIXO), `F-12` (BAIXO), `F3R-06` e `F3R-07` (OBSERVAÇÃO). **(g) F4, F5 e F6 NÃO INICIADAS.** **(h) Deploy, tag e release NÃO autorizados e não realizados.** O registro pós-medição da integração na `main` — SHAs do commit, do PR e do merge — segue o precedente das REV. 10 e REV. 15 e será feito em atualização factual própria. |
 | **18** | **28/08/2026** | **ETAPA 2.3D-B / F3 — SEGUNDA FATIA CORRETIVA PÓS-REVISÃO INDEPENDENTE; permanece NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-H). Executada sobre a mesma baseline `main` = `9a22262`, na branch `agent/fase2-etapa2.3d-f3-auth-http`. **Publicação não autorizada: sem commit, push, PR, merge, tag ou deploy.** A REV. 17 é preservada como registro do estado que foi revisado. **(a) Veredito recebido:** `B — APTO COM CORREÇÕES OBJETIVAS`, sem nenhum achado BLOQUEANTE ou ALTO; a revisão **reproduziu independentemente** e confirmou `F-01` (concorrência assíncrona real), `F-04` (corrida do rehash contra PostgreSQL real, inclusive com espera de lock e rollback da transação concorrente) e `F-05`. **(b) `F3R-01` (MÉDIO) CORRIGIDO:** o RFC 7230 §5.3.2 obriga a aceitar o request-target absoluto, e o Express o ROTEIA para o login, mas o filtro comparava a URL crua — por essa porta o corpo cru do parser voltava a vazar e o `413` produzia log de nível ERROR com stack trace, acionável SEM cabeçalho algum. O reconhecimento passou a usar o **pathname efetivo** da plataforma (`req.path`, o `pathname` de `parseurl`), medido contra 18 variantes: reproduz EXATAMENTE a decisão do roteador. `new URL()` foi deliberadamente REJEITADO por normalizar demais (colapsa dot segments e transforma `//auth/login` em `/login`), o que faria o filtro capturar rota que o roteador devolve como `404`. **(c) `F3R-02` RESOLVIDO POR DECISÃO DE BRUNO:** a revisão classificou `L-11` como decisão comportamental e recusou homologá-la em nome dele (TLF-BASE-V1 §15); Bruno homologou a opção recomendada e ela virou **`D-2.3D-13`** (`docs/12` §5.13, REV. 3), com o risco residual declarado e aceito como **`R-2.3D-08`**. **Nenhuma decisão anterior foi modificada ou renumerada; `D-2.3D-06` permanece intacta**; `L-11` vira alias histórico. **(d) `F3R-03` (MÉDIO) CORRIGIDO:** a amostra de despejo recomeçava sempre na cabeça do `Map`, onde os bloqueados se fixavam — 2 000/2 000 identificadores novos recusados havendo 49 936 candidatos seguros; e a elegibilidade lia `falhas.length` sem podar. Agora há **cursor persistente** por dimensão (iterador vivo, `next()` O(1), jamais skip-desde-o-início) e **poda local** do candidato amostrado com o instante monotônico da operação. `AMOSTRA_DE_DESPEJO = 64`, as duas guardas de indespejabilidade e o critério de seleção permanecem. **(e) `F3R-04` e `F3R-05` CORRIGIDOS:** `.env.example` deixou de documentar um default/fallback que não existe (a variável é obrigatória e o bootstrap aborta sem ela), e a contagem do smoke foi retificada de 7 para **6**, confirmada por reexecução — mesma classe do achado `A-03` da F2. **(f) NÃO tratados, por estarem fora do escopo autorizado:** `F3R-06` (OBSERVAÇÃO — `Origin` comparada ao `Host` sem allowlist) e `F3R-07` (OBSERVAÇÃO — corrida do rehash consome uma falha do orçamento); **`F-12` permanece BAIXO ACEITO**, agora com a concordância material da revisão. **(g) Testes acrescentados:** 9 em `F3R-01` (incluindo prova de não-vacuidade de que a forma absoluta alcança o handler, ausência de log ERROR, e que a correção não passou a capturar as 10 variantes que o roteador devolve como `404`) e 5 em `F3R-03` (prefixo bloqueado, prefixo maior que a amostra, poda por expiração, reserva em voo intocável, custo limitado). **(h) Bateria integral verde:** typecheck 0; `test:api` **16 suites · 437 passed** (era 432); `verify:api-integration` **6 suites · 203 passed** (era 194); `verify:from-scratch` **10 suites · 87 passed**; build 0; `smoke:api` **6 provas**; `verify:argon2-runtime` **15/15**; `verify:openapi-runtime` **17/17**; Guardas 1 e 3 verdes; `git diff --check` limpo. **(i) 3 mutation challenges novos** (`C-18`..`C-20`) aplicados, **todos detectados**, todos revertidos com verificação por hash. **(j) Defeito de TESTE encontrado pelo próprio challenge `C-20`** — repetindo a lição de `C-03`: a primeira versão do teste de poda era **vacuamente verdadeira**, porque o cursor já alcançava região segura do mapa sem precisar da poda; foi reescrita com buckets **parcialmente vencidos**, que eliminam tanto o cursor quanto a varredura periódica como causas alternativas. **(k) Regressão de F1/F2 ausente** — `credencial.service.ts` e `sessao.service.ts` não foram tocados. **(l) Zero drift** reconfirmado por diff e por hash. **(m) F4/F5/F6 NÃO INICIADAS.** **Próximo passo: NOVA revisão técnica independente adversarial da F3 corrigida — a F3 NÃO está homologada nem versionável.** |
