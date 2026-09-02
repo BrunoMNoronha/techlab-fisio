@@ -26,8 +26,8 @@
 //   - a existência de um identificador aqui NÃO materializa o fluxo que ele
 //     governa: `senha.recuperar_terceiro` está no catálogo e a recuperação de
 //     senha (F6) permanece NÃO INICIADA;
-//   - nenhum seed, nenhuma associação papel↔permissão e nenhum registro de
-//     banco nasce deste arquivo (F5 permanece NÃO INICIADA).
+//   - o seed da F5 consome este catálogo como fonte tipada; o catálogo por si
+//     só não escreve banco nem cria associação papel↔permissão.
 
 /**
  * `docs/04` §5 — as 29 permissões funcionais homologadas. Exaustivo por

@@ -2,8 +2,10 @@
 
 > **Arquivo:** `docs/10-backend-implementacao.md`
 > **Natureza:** documento **MUTÁVEL** — registro vivo de implementação da frente de backend (`apps/api`)
+> **Revisão vigente:** REV. 28 (01/09/2026) — **SEGUNDA FATIA CORRETIVA DA F5, PÓS-HOMOLOGAÇÃO TÉCNICA; FATIA NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-O). A revisão técnica independente e adversarial sobre a árvore corrigida devolveu **`B — APTA COM RESSALVAS NÃO BLOQUEANTES`** (0 BLOQUEANTES, 0 ALTOS), reproduziu todas as medições da REV. 27 e provou por mutação a eficácia do advisory lock. As duas ressalvas foram tratadas, e **somente** elas: **`F5H-01`** — as asserções de §6-N que ainda negavam a existência de `D-2.3D-14` e a alteração de `docs/12` foram **datadas e retificadas**, sem reescrever §6-M, que é registro histórico; **`F5H-02`** — o comando composto `provisionar` ganhou **regressão automatizada** (7 provas novas, processos reais contra PostgreSQL 18), incluindo a prova de que `provisionar --estrito` sobre banco divergente termina em **saída 3 com o bootstrap NÃO executado**, validada por **dois mutantes, ambos mortos**. **Nenhuma decisão normativa criada, alterada ou reaberta; `docs/12` NÃO foi tocado nesta rodada; `src/` intocado; nenhuma dependência nova.** Medições: typecheck e build verdes; `test:api` **21 · 526** (inalterado); integração da API **9 suítes · 327 aprovados + 2 sinais POSIX pulados** (era 320 + 2); persistência/from-scratch **10 · 87**; Argon2 **15/15**; OpenAPI **17/17**; Guardas 1–3 e golden **60 169 bytes**; smoke ESM real verde; zero resíduo descartável. Sem commit, push, PR, merge, tag, release ou deploy. **Próximo passo: decisão de Bruno sobre a homologação da fatia e, somente após autorização própria, versionamento/integração.**
+> **Estado anterior preservado:** REV. 27 (01/09/2026) — **DECISÕES NORMATIVAS DA F5 HOMOLOGADAS E CORREÇÕES OBJETIVAS REMEDIDAS; FATIA NÃO INTEGRADA.** Por autorização expressa de Bruno Menezes Noronha, `D-2.3D-14` fixa o seed RBAC aditivo e convergente — inclusive em `--estrito`, que aplica/completa a matriz canônica, preserva excedentes e termina com saída 3 — e `D-2.3D-15` fixa `ator_usuario_id = NULL` no bootstrap inaugural, sem identidade sintética, com justificativa operacional obrigatória. Corrigidos o contrato textual que prometia incorretamente modo estrito somente leitura e o rodapé vivo desatualizado; acrescentada regressão de banco simultaneamente parcial e divergente. Medições desta árvore: typecheck e build verdes; `test:api` **21 suítes · 526**; integração da API no host Windows **9 suítes · 320 aprovados + 2 sinais POSIX pulados**; persistência/from-scratch **10 · 87**; Argon2 **15/15**; OpenAPI **17/17**; Guardas 1–3 e golden **60 169 bytes**; smoke ESM real verde; zero resíduo descartável. Sem commit, push, PR, merge, tag, release ou deploy. **Próximo passo: homologação técnica final da árvore exata e, somente após autorização própria, versionamento/integração.**
 > **Status:** backend **EM CONSTRUÇÃO** — Etapa 2.3A **CONCLUÍDA/HOMOLOGADA/INTEGRADA** (REV. 2); Etapa 2.3B **CONCLUÍDA/HOMOLOGADA/INTEGRADA NA `main`** (revisão independente veredito B; correções `F-REV-01`/`F-REV-02` aplicadas — REV. 4; integração por merge commit `5aae8de`, PR [#5](https://github.com/BrunoMNoronha/techlab-fisio/pull/5), 27/08/2026 — registro pós-medição em §11, REV. 5) — provider de persistência + primeiro fluxo transacional real de auditoria (`profissional.situacao.alterada`, fatia técnica INTERNA, sem endpoint/RBAC)
-> **Revisão vigente:** REV. 24 (28/08/2026) — **REGISTRO POS-MEDICAO DA INTEGRACAO DA ETAPA 2.3D-B / F4 NA `main`** (§6-L.8). Registro **exclusivamente factual**, no precedente `MEDIR -> REGISTRAR` das REV. 10, REV. 15 e REV. 20: **nenhuma decisao normativa criada, alterada, renumerada ou reaberta; nenhuma `D-2.3D-14`; `docs/12` NAO foi alterado; `docs/09` §12 nao reaberto; Base Imutavel intacta; nenhuma linha de runtime, teste, persistencia ou dependencia tocada.** **ETAPA 2.3D-B / F4 (guards e decorators de autorizacao — RBAC): CONCLUIDA / HOMOLOGADA / VERSIONADA / INTEGRADA NA `main`** — commit da fatia `ea8c74d`, PR [#16](https://github.com/BrunoMNoronha/techlab-fisio/pull/16), merge commit **`fce62d9`** sobre a baseline `a9be742` (merge commit; sem squash, sem rebase, sem force-push). CI do PR **verde** (run [33222908307](https://github.com/BrunoMNoronha/techlab-fisio/actions/runs/33222908307), 2m26s) e validacao integral **pos-merge verde sobre a `main` integrada**: `typecheck` 0; `test:api` **19 · 479**; `verify:api-integration` **7 · 239**; `verify:from-scratch` **10 · 87**; `build` 0; `smoke:api` 0; Argon2 runtime **15/15**; OpenAPI runtime **17/17**; Guardas 1-3; golden byte a byte **60 169 bytes**. **Zero drift; zero migration nova; zero dependencia nova** (`git diff a9be742 fce62d9 -- packages/database` = 0 linhas; manifests inalterados). **Pendencias vivas preservadas: AUT-005 NAO MATERIALIZADA / NAO ENCERRADA** e sem fatia atribuida; **RN-001** aplicavel e nao satisfeito fora do alcance parcial da `PermissoesGuard`; **`P2.2-05`** (autorizacao clinica contextual) **NAO INICIADA**; `R2.2-04` **ABERTO / MITIGADO PARCIALMENTE**; `P-2.3D-03` **MEDIDA E VERDE, encerramento formal PENDENTE**. **F5 e F6 permanecem NAO INICIADAS.** Nenhum deploy, tag ou release. Estado anterior preservado: REV. 23 (28/08/2026) — **ETAPA 2.3D-B / F4 (guards e decorators de autorização — RBAC) HOMOLOGADA POR BRUNO MENEZES NORONHA; APTA AO RITO DE VERSIONAMENTO/INTEGRACAO** (§6-L). Homologada sobre a MESMA baseline `main` = `origin/main` = `a9be742`, na branch `agent/fase2-etapa2.3d-f4-rbac`, apos a **segunda** revisao tecnica independente adversarial devolver **`A — APTO A HOMOLOGACAO E VERSIONAMENTO`** com **0 BLOQUEANTES, 0 ALTOS, 0 MEDIOS** e **1 BAIXO documental (`R4R2-01`)**. **`R4R2-01` corrigido nesta execucao e EXCLUSIVAMENTE documental** (§6-K.6): `apps/api/src/authz/` tem **798 linhas em 9 arquivos** na arvore corrigida; as **745 em 8 arquivos** ficam preservadas como valor **historico** da arvore pre-correcao. **Nenhuma linha de runtime ou de teste foi alterada** — manifesto SHA-256 dos 14 arquivos de runtime/teste identico ao conferido pela revisao. **Nenhuma decisao normativa criada, alterada ou reaberta; `D-2.3D-09` intacta; nenhuma `D-2.3D-14`; Base Imutavel intacta.** `R4-01`..`R4-08` confirmados por evidencia independente; **15 mutation challenges independentes, 15 detectados, 15 revertidos por hash**. Bateria independente verde: `test:api` **19 · 479**; `verify:api-integration` **7 · 239**; `verify:from-scratch` **10 · 87**; Argon2 runtime **15/15**; OpenAPI runtime **17/17**; Guardas 1-3; golden **60 169 bytes**. **Zero drift; zero migration; zero dependencia nova.** **AUT-005 permanece NAO MATERIALIZADA / NAO ENCERRADA**; autorizacao clinica contextual (`P2.2-05`) **NAO INICIADA**; **F5 e F6 NAO INICIADAS**. Nenhum deploy, tag ou release. O registro factual do merge pertence a execucao documental posterior (`MEDIR -> REGISTRAR`). Estado anterior preservado: REV. 22 (28/08/2026) — **ETAPA 2.3D-B / F4 CORRIGIDA APOS REVISAO TECNICA INDEPENDENTE ADVERSARIAL (veredito `B — APTO COM CORRECOES OBJETIVAS`); permanece NAO HOMOLOGADA / NAO INTEGRADA** (§6-K). Mesma baseline `a9be742`, mesma branch, mesma working tree nao commitada. **Nenhuma decisao normativa criada, alterada ou reaberta; `docs/12` NAO foi tocado; `D-2.3D-09` intacta; nenhuma `D-2.3D-14`.** **Corrigidos:** `R4-01` — a identidade validada pelo `SessaoService` passa a SOBRESCREVER qualquer contexto preexistente (a revisao mediu que um contexto semeado prevalecia e a guard decidia sobre ele), e o limite do modelo de confianca passou a ser declarado; `R4-03`/`R4-04` — o decorator plural foi **substituido** por **`@RequerPermissao(P)`**, singular, somente metodo, que INSTALA `SessaoAutenticadaGuard` + `PermissoesGuard` na ordem, tornando declarar-sem-proteger inexpressavel e eliminando a superficie de classe/heranca que podia reduzir exigencia. **`L-F4-01` ENCERRADA POR ELIMINACAO** — nao por decisao normativa: nenhuma operacao de `docs/04` §4/§8 exige duas permissoes, logo a composicao era abstracao antecipada e nao ha `AND`/`OR` a homologar. **`R4-02` retificado sem mudar comportamento:** a cobertura do usuario inativo e **PARCIAL** (defesa em profundidade apenas sob a `PermissoesGuard`); **AUT-005 permanece NAO MATERIALIZADA / NAO ENCERRADA** e RN-001 segue aplicavel, com linha propria em §9. **BAIXOS** `R4-05`..`R4-08` retificados. Bateria integral verde (`test:api` **19 · 479**; integracao **7 · 239**; from-scratch 87; Guardas 1–3; runtime 15/15 e 17/17); **9 mutation challenges detectados e revertidos por hash**; **zero drift**; **nenhuma dependencia nova**; F5/F6 nao iniciadas. Proximo passo: **NOVA revisao independente adversarial sobre a arvore corrigida**. Estado anterior preservado: REV. 21 (28/08/2026) — **ETAPA 2.3D-B / F4 (guards e decorators de autorização — RBAC) IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA (`agent/fase2-etapa2.3d-f4-rbac`), a partir de `main` = `origin/main` = `a9be742` — NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-J). Publicação **não autorizada** nesta execução: sem commit, push, PR, merge, tag, release ou deploy. `D-2.3D-09` e a parte de RBAC de `AUT-003` materializadas: catálogo **tipado** dos 29 identificadores de `docs/04` §5 (materialização, não catálogo paralelo — provado por comparação mecânica contra o documento), resolução das permissões efetivas por **união** dos papéis, decorator declarativo `@RequerPermissoes(...)`, `PermissoesGuard` (`403`) e `SessaoAutenticadaGuard` (`401`), que **consome** a autenticação vigente sem substituí-la. **Nenhuma decisão foi criada, alterada, renumerada ou reaberta; `docs/12` NÃO foi tocado; `docs/09` §12 não foi reaberto; a Base Imutável permanece intacta.** Identidade não controlável pelo cliente (contexto sob símbolo privado); `401` e `403` não se confundem; falha técnica **não** é maquiada como negação. **Nenhuma rota de produção foi protegida — e nenhuma podia ser**, pois as três publicadas não têm permissão exigida pela matriz de `docs/04` §4; a guard é provada por integração sobre **controller exclusivamente de teste**, e as rotas publicadas continuam sendo exatamente `/health`, `/auth/login` e `/auth/logout`. Cinco decisões locais declaradas (`L-F4-01`..`L-F4-05`), das quais **`L-F4-01` — semântica de composição de múltiplas permissões — fica PENDENTE DE DECISÃO DE BRUNO** (adotada a conjunção, alternativa conservadora sob lacuna de fonte). Bateria integral verde (`test:api` **19 suites · 479**; integração **7 suites · 239**; from-scratch 87; Guardas 1–3; runtime Argon2 15/15 e OpenAPI 17/17); **13 mutation challenges detectados e revertidos com prova por hash**; **zero drift** de `packages/database` (10 migrations, hashes idênticos); **nenhuma dependência nova**. **F5 e F6 permanecem NÃO INICIADAS**; autorização clínica contextual (`P2.2-05`) permanece fora. Próximo passo: **revisão técnica independente e adversarial da F4**. Estado anterior preservado: REV. 20 (28/08/2026) — **REGISTRO PÓS-MEDIÇÃO DA INTEGRAÇÃO DA ETAPA 2.3D-B / F3 NA `main`.** Registro **exclusivamente factual**, no precedente MEDIR → REGISTRAR das REV. 10 e REV. 15: **nenhuma decisão foi criada, alterada ou reaberta** e **nenhuma medição histórica foi reescrita**. Estado: **Etapa 2.3D-B / F3 CONCLUÍDA / HOMOLOGADA / VERSIONADA / INTEGRADA NA `main`** — PR [#14](https://github.com/BrunoMNoronha/techlab-fisio/pull/14), HEAD homologado e corrigido `c20cf1c`, **merge commit `35569727789f6f73b4f81fec3cc94c34d4cb0038`**; a `main` passou de `9a22262` para `3556972`. A CI do PR ficou **verde sobre o HEAD integrado**, com **206 provas de integração** (as 203 anteriores mais 3 regressões do harness), depois de uma correção de portabilidade restrita ao cliente HTTP dos testes (§6-I.8) — **sem nenhuma alteração de runtime, contrato ou persistência**. Validação local pós-merge integralmente verde; **zero drift** de `packages/database`; 10 migrations. **F4, F5 e F6 permanecem NÃO INICIADAS**; deploy, tag e release não foram realizados. Estado anterior preservado: REV. 19 (28/08/2026) — **Etapa 2.3D-B / F3 HOMOLOGADA por Bruno Menezes Noronha e submetida ao rito de versionamento e integração** (§6-I). A **terceira** revisão técnica independente adversarial devolveu **`A — APTO À HOMOLOGAÇÃO E VERSIONAMENTO`**, sem nenhum achado BLOQUEANTE, ALTO ou MÉDIO, tendo reproduzido de forma independente as correções `F3R-01` e `F3R-03` (29 variantes de request-target com zero incoerências entre roteador e filtro; oito propriedades do iterador de `Map` sob mutação; saturação a 50 000 buckets). Único achado, **`F3R-08` (BAIXO)** — a tabela viva de §9 ainda rotulava `L-11` como decisão local —, **corrigido nesta revisão**: a linha passa a apontar **`D-2.3D-13`** como fonte normativa e `L-11` como alias histórico. **Nenhuma decisão `D-2.3D-*` foi alterada ou reaberta.** Riscos residuais aceitos e registrados: `R-2.3D-08`, `F-12`, `F3R-06`, `F3R-07`. Bateria integral verde; zero drift; F4/F5/F6 não iniciadas. Estado anterior preservado: REV. 18 (28/08/2026) — **Etapa 2.3D-B / F3 CORRIGIDA PELA SEGUNDA VEZ, após a segunda revisão técnica independente adversarial (veredito `B — APTO COM CORREÇÕES OBJETIVAS`); permanece NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-H). A segunda revisão **confirmou por reprodução própria** que `F-01`, `F-04` e `F-05` estão de fato corrigidos, e não encontrou achado BLOQUEANTE ou ALTO. Corrigidos agora: `F3R-01` (MÉDIO — request-target *absolute-form* reabria o vazamento do parser e o log de ERRO acionável sem autenticação), `F3R-03` (MÉDIO — inanição da amostragem de despejo ancorada na cabeça do `Map`, medida em 2 000/2 000 recusas), `F3R-04` e `F3R-05` (BAIXOS, documentais). **`F3R-02` foi resolvido por DECISÃO DE BRUNO**: `L-11` passou a norma como **`D-2.3D-13`** em `docs/12` REV. 3 — acréscimo de decisão nova, **sem alterar, renumerar ou reabrir `D-2.3D-01`..`D-2.3D-12`**. `F3R-06`, `F3R-07` permanecem OBSERVAÇÃO não tratada e `F-12` permanece BAIXO aceito. Bateria integral verde (`test:api` 437; integração 203); 3 mutation challenges novos (`C-18`..`C-20`) detectados e revertidos; zero drift; F4/F5/F6 não iniciadas. Próximo passo: **nova revisão independente adversarial**. Estado anterior preservado: REV. 17 (28/08/2026) — **Etapa 2.3D-B / F3 CORRIGIDA após revisão técnica independente adversarial (veredito `B — APTO COM CORREÇÕES OBJETIVAS`); permanece NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-G). Doze dos catorze achados corrigidos, `F-07` resolvido por consequência e `F-12` mantido BAIXO com racional. Destaques: o gate de `D-2.3D-06` passou a valer sob **concorrência** (reserva de tentativa em voo — `F-01`, ALTO); `TLF_AMBIENTE` tornou-se **obrigatória**, fechando o cenário principal de `R-2.3D-04` (`F-02`); o **rehash** exigido por `D-2.3D-02` foi materializado no login com escrita condicionada ao digest verificado (`F-04`); o despejo do limitador deixou de sacrificar bloqueios vigentes (`F-05`); erro 4xx do parser deixou de virar `500` (`F-03`). **Nenhuma decisão `D-2.3D-*` alterada; `docs/12` intocado.** Bateria integral verde; 17 mutation challenges detectados e revertidos; zero drift; F4/F5/F6 não iniciadas. Próximo passo: **nova revisão independente adversarial**. Estado anterior preservado: REV. 16 (27/08/2026) — **Etapa 2.3D-B / F3 (endpoints REST de autenticação) IMPLEMENTADA E MEDIDA em branch própria (`agent/fase2-etapa2.3d-f3-auth-http`), a partir de `main` = `9a22262` — NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-F). Publicação **não autorizada** nesta execução: sem commit, push, PR, merge, tag ou deploy. `D-2.3D-06`, `D-2.3D-07`, `D-2.3D-11` e `D-2.3D-12` materializadas; **nenhuma decisão foi criada, alterada ou reaberta** e **`docs/12` não foi tocado**. `P-2.3D-03` **medida e verde** pelo Caminho A (`@nestjs/swagger@11.4.7` compatível com ESM/`nodenext`), com encerramento formal deixado a decisão de Bruno. `T-AUTH-ENUMERATION` provado estruturalmente; `R-2.3D-04` protegido por fail-fast testado em três níveis; 14 challenges de mutação detectados e revertidos; bateria integral verde; zero drift de persistência. Estado corrente: **F0, F1 e F2 INTEGRADAS; F3 IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA, NÃO INTEGRADA; F4/F5/F6 NÃO INICIADAS**. Próximo passo: **revisão técnica independente adversarial da F3**. Estado anterior preservado: REV. 15 (27/08/2026) — **registro pós-medição da INTEGRAÇÃO da Etapa 2.3D-B / F2 na `main`**: commit da fatia `289a94b`, PR [#12](https://github.com/BrunoMNoronha/techlab-fisio/pull/12), **merge commit `70b30aebf09368200343d6a5672b267811f337ee`**; `main` passou de `f4c2466` para `70b30ae`. CI verde no PR e na `main` pós-merge; bateria local pós-merge integralmente verde; zero drift de persistência. Registro **exclusivamente factual** — nenhuma decisão criada, alterada ou reaberta. Estado corrente: **F0, F1 e F2 INTEGRADAS; F3 — endpoints REST de autenticação NÃO INICIADA**. Estado anterior preservado: REV. 14 (27/08/2026) — **F2 HOMOLOGADA por Bruno Menezes Noronha** (TLF-BASE-V1 §15, item 1) e **`R-2.3D-03` ENCERRADO NA F2** (§9): o risco sai de aberto porque a obrigação de monotonicidade atômica de `D-2.3D-04` foi materializada e provada — `UPDATE` condicional atômico, `GREATEST`, predicado de throttle que também barra atividade regressiva, testes concorrentes contra PostgreSQL real, mutation challenge de last-writer-wins detectado, e confirmação de que `C-01` não enfraqueceu a proteção. **`D-2.3D-04` NÃO foi alterada e nenhuma decisão normativa nova foi criada.** Os limites da evidência (`READ COMMITTED`, PostgreSQL autoritativo compartilhado) permanecem registrados como **limites da prova**, não como risco aberto. Esta REV. acompanha o **rito de versionamento e integração da F2**. Estado anterior preservado: REV. 13 (27/08/2026) — Etapa **2.3D-B / F2 (`SessaoService`) REVISADA DE FORMA INDEPENDENTE, CORRIGIDA E REMEDIDA — permanece NÃO INTEGRADA** (§6-E.9): revisão adversarial com veredito **`B — APTO COM CORREÇÕES OBJETIVAS`**; correções obrigatórias **`C-01`** (achado `A-01` — logout que podia informar encerramento deixando a sessão `ATIVA` e utilizável) e **`C-02`** (precisão documental do `verify:argon2-runtime`) aplicadas, com teste de regressão determinístico contra PostgreSQL real. Nenhuma decisão normativa criada ou reaberta; `docs/12` e a Base Imutável **não foram tocados**. `R-2.3D-03` permanece **MITIGADO**, com encerramento **pendente de decisão de Bruno**. Publicação continua **não autorizada**: sem commit, push, PR, merge, tag ou deploy. Estado corrente: **F1 INTEGRADA; F2 CORRIGIDA E MEDIDA EM BRANCH PRÓPRIA, NÃO INTEGRADA; F3 NÃO INICIADA**. Estado anterior preservado: REV. 12 (27/08/2026) — **duas atualizações, uma factual e uma de execução.** (1) **Correção factual:** a Etapa **2.3D-B / F1 (`CredencialService` / Argon2id) foi INTEGRADA NA `main`** por merge commit `f4c246648e436c3a50121c371147768bd8403657`, PR [#11](https://github.com/BrunoMNoronha/techlab-fisio/pull/11) (commit da fatia: `f642b6259b0c916b42d8f8bc77d25258592805a6`) — a REV. 11 a registrava como "não integrada" porque a publicação ainda não havia ocorrido àquela altura; nenhuma decisão foi alterada por esta correção. (2) **Execução:** Etapa **2.3D-B / F2 (`SessaoService`) IMPLEMENTADA E MEDIDA em branch própria (`agent/fase2-etapa2.3d-f2-sessao`), NÃO INTEGRADA** (§6-E): publicação não autorizada nesta execução — sem commit, push, PR, merge, tag ou deploy. Estado anterior preservado: REV. 10 (27/08/2026) — Etapa **2.3D-B / F0 CONCLUÍDA/HOMOLOGADA/INTEGRADA NA `main`** (merge `f612fa7`, PR [#9](https://github.com/BrunoMNoronha/techlab-fisio/pull/9)): decisões `D-2.3D-01`..`D-2.3D-12` registradas em **`docs/12`** e única reabertura física controlada da persistência (`sessao_autenticacao`: +2 colunas, +1 CHECK). Etapa 2.3C permanece **CONCLUÍDA/HOMOLOGADA/INTEGRADA** (merge `58a6e4b`, PR [#7](https://github.com/BrunoMNoronha/techlab-fisio/pull/7) — REV. 9). `R2.2-04` permanece **ABERTO / MITIGADO PARCIALMENTE** (§7.2); ressalvas `F-2.3C-REV-02`/`F-2.3C-REV-03` preservadas sem correção (§9). Estado corrente: **F1 INTEGRADA; F2 IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA, NÃO INTEGRADA; F3 — endpoints REST de autenticação NÃO INICIADA**
+> **Estado anterior preservado:** REV. 26 (29/08/2026) — **ETAPA 2.3D-B / F5 CORRIGIDA E REMEDIDA APOS DUAS REVISOES TECNICAS INDEPENDENTES ADVERSARIAIS (veredito consolidado `C — NAO APTO`); permanece NAO HOMOLOGADA / NAO INTEGRADA** (§6-N). Mesma baseline `main` = `origin/main` = `9140620`, mesma branch, mesma working tree nao commitada. Publicacao **nao autorizada**: sem commit, push, PR, merge, tag, release ou deploy. **Achado ALTO corrigido:** as revisoes reproduziram, em processos CLI reais contra PostgreSQL real sob `READ COMMITTED`, **DOIS "primeiros Administradores" criados simultaneamente, ambos com saida 0** — a verificacao era TOCTOU e a PK `(usuario_id, papel_id)` nao impede identidades distintas. A correcao serializa o provisionamento com **advisory lock transacional unico** (`pg_advisory_xact_lock(2337, 5)`) adquirido antes de qualquer leitura decisoria, com releituras sob o lock e o digest Argon2 fora da transacao — **sem migration e sem dependencia nova**. **Demais correcoes:** divergencias do seed deixam de ser silenciosas (deteccao, relato e `--estrito` com saida 3, sempre nao destrutivo); `TLF_BOOTSTRAP_ADMIN_JUSTIFICATIVA` **obrigatoria** na trilha de auditoria, sem ampliar a whitelist e sem inventar ator; fronteira de erros do CLI fechada; senha recusa caractere de controle e tem precedencia deterministica; `SIGINT`/`SIGTERM` tratados; contextos de seed e bootstrap separados, com o bootstrap importado **dinamicamente** — e por isso **`seed` funciona com o Argon2 indisponivel**, provado com sabotador e controle positivo. **Retificacao factual:** a afirmacao de §6-M.5 de que os agrupamentos de linhas eram "sem efeito" **era falsa** para "Ver observacao administrativa" — efeito medido **37 x 38 associacoes (Fisioterapeuta 8 x 9)** —, e esta corrigida. **A matriz NAO mudou:** 4 papeis, 29 permissoes, 37 associacoes, 18/3/8/8. **Nenhuma decisao normativa criada, alterada ou reaberta; `docs/12` NAO foi tocado; nenhuma `D-2.3D-14`; catalogo e whitelist de auditoria NAO ampliados; Base Imutavel intacta.** **Medicoes — bateria INTEGRALMENTE VERDE nos DOIS ambientes:** conteiner Linux isolado — `test:api` **21 · 526**, integracao da API **9 · 321**, Argon2 15/15, OpenAPI 17/17; host Windows — `test:api` **21 · 526**, `verify:api-integration` **9 · 319 + 2 pulados**, persistencia **10 · 87**, from-scratch **10 · 87**, Argon2 15/15, OpenAPI 17/17, **`smoke:api` 0**, Guardas 1-3, golden **60 169 bytes**. **MUDANCA DE AMBIENTE registrada:** o bloqueio de Application Control do addon Argon2 **deixou de ocorrer no host** (arquivo ainda `NotSigned`; carregamento medido 3/3) — **nenhuma politica da maquina foi alterada por esta execucao**; com isso `smoke:api` e as verificacoes de runtime, antes NAO EXECUTADOS, passaram a ser medidos e estao verdes. Os **2 casos pulados** no host sao as provas de `SIGINT`/`SIGTERM`, **puladas explicitamente** porque sinais POSIX nao existem no Windows; elas **passam no Linux** (alvo real; CI em `ubuntu-latest`). **Ressalva honesta:** uma execucao isolada de `test:api` no conteiner acusou 525/526; a falha **nao se reproduziu em 7 execucoes** e fica registrada como **transitorio nao identificado** (§6-N.11). **Zero drift; 10 migrations; nenhuma dependencia nova; nenhuma rota nova.** **DUAS DECISOES PERMANECEM RESERVADAS A BRUNO:** a literalidade de `D-2.3D-09` diante de um seed aditivo (§6-N.3) e a qualificacao de um bootstrap manual como "acao de sistema" para `ator_usuario_id = NULL` (§6-N.4). **AUT-005 NAO MATERIALIZADA / NAO ENCERRADA e sem fatia atribuida; RN-001 nao satisfeita; `P2.2-05` NAO INICIADA; F6 NAO INICIADA.** Proximo passo: **NOVA revisao tecnica independente e adversarial sobre a arvore corrigida**. Estado anterior preservado: REV. 25 (29/08/2026) — **ETAPA 2.3D-B / F5 (seed de papéis/permissões + bootstrap do primeiro Administrador) IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA (`agent/fase2-etapa2.3d-f5-seed-bootstrap-admin`), a partir de `main` = `origin/main` = `9140620` — NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-M). Publicação **não autorizada** nesta execução: sem commit, push, PR, merge, tag, release ou deploy. `D-2.3D-09` e `D-2.3D-10` materializadas: seed **idempotente** dos **4** papéis de `docs/04` §3, das **29** permissões de §5 (por REÚSO do catálogo tipado da F4 — nenhum catálogo paralelo) e das **37** associações derivadas célula a célula da matriz de §4 por **regra de derivação declarada** e executada pelo próprio teste, que lê o documento do disco; bootstrap **manual** (o `AppModule` não resolve os serviços — provado), **idempotente**, **fail-closed**, **atômico** e auditado com **`usuario.papeis.alterados`** (`SUCESSO`, `alvo_tipo = usuario`, `contexto` vazio, `ator_usuario_id` **NULL** como **ação de sistema**, por `docs/07` §22.3/RN-061 e precedente de `D-2.3D-12`). **Nenhuma decisão foi criada, alterada, renumerada ou reaberta; `docs/12` NÃO foi tocado; `D-2.3D-09` e `D-2.3D-10` intactas; nenhuma `D-2.3D-14`; `docs/09` §12 não reaberto; `ACOES_AUDITORIA` e `WHITELIST_CONTEXTO` não ampliadas; Base Imutável intacta.** Matriz semeada: Administrador **18** (zero `prontuario.*` — PERM-T01, e **não** as 29), Gestor **3** somente leitura (**HOM-01** preservado), Recepcionista **8**, Fisioterapeuta **8**; **8 das 29** permissões sem papel algum, todas `P` na fonte. Sete decisões locais declaradas (`L-F5-01`..`L-F5-07`), das quais **`L-F5-03` (conflito de Administrador preexistente)** fica **DESTACADA PARA A REVISÃO INDEPENDENTE**. Bateria: `test:api` **21 · 519** (era 19 · 479); integração da API **8 · 273** (era 7 · 239); persistência **10 · 87**; Argon2 runtime **15/15**; OpenAPI runtime **17/17**; Guardas 1–3; golden **60 169 bytes** byte a byte. **13 mutation challenges aplicados, 13 detectados, 13 revertidos** com prova por SHA-256. **Zero drift** (`git diff main -- packages/` = 0 linhas; 10 migrations continuam 10); **nenhuma dependência nova**; **nenhuma rota nova**. **LIMITAÇÃO DE AMBIENTE declarada, preexistente e alheia à F5:** uma política de **Application Control** da máquina local bloqueou o addon nativo não assinado do Argon2, derrubando **no host** `test:api` (5 de 21 suites, **4 intocadas pela fatia**), `verify:api-integration`, `verify:argon2-runtime`, `verify:openapi-runtime` e **`smoke:api`**; tudo que depende de Argon2 foi **medido em contêiner Linux** com `npm ci` limpo e PostgreSQL 18 real, e **nenhuma configuração de segurança da máquina foi alterada**. **AUT-005 permanece NÃO MATERIALIZADA / NÃO ENCERRADA e SEM FATIA ATRIBUÍDA**; **RN-001** não é declarada satisfeita; **`P2.2-05` NÃO INICIADA**; `R2.2-04` e `P-2.3D-03` com estado vigente preservado; **F6 NÃO INICIADA**. Próximo passo: **revisão técnica independente e adversarial da F5**. Estado anterior preservado: REV. 24 (28/08/2026) — **REGISTRO POS-MEDICAO DA INTEGRACAO DA ETAPA 2.3D-B / F4 NA `main`** (§6-L.8). Registro **exclusivamente factual**, no precedente `MEDIR -> REGISTRAR` das REV. 10, REV. 15 e REV. 20: **nenhuma decisao normativa criada, alterada, renumerada ou reaberta; nenhuma `D-2.3D-14`; `docs/12` NAO foi alterado; `docs/09` §12 nao reaberto; Base Imutavel intacta; nenhuma linha de runtime, teste, persistencia ou dependencia tocada.** **ETAPA 2.3D-B / F4 (guards e decorators de autorizacao — RBAC): CONCLUIDA / HOMOLOGADA / VERSIONADA / INTEGRADA NA `main`** — commit da fatia `ea8c74d`, PR [#16](https://github.com/BrunoMNoronha/techlab-fisio/pull/16), merge commit **`fce62d9`** sobre a baseline `a9be742` (merge commit; sem squash, sem rebase, sem force-push). CI do PR **verde** (run [33222908307](https://github.com/BrunoMNoronha/techlab-fisio/actions/runs/33222908307), 2m26s) e validacao integral **pos-merge verde sobre a `main` integrada**: `typecheck` 0; `test:api` **19 · 479**; `verify:api-integration` **7 · 239**; `verify:from-scratch` **10 · 87**; `build` 0; `smoke:api` 0; Argon2 runtime **15/15**; OpenAPI runtime **17/17**; Guardas 1-3; golden byte a byte **60 169 bytes**. **Zero drift; zero migration nova; zero dependencia nova** (`git diff a9be742 fce62d9 -- packages/database` = 0 linhas; manifests inalterados). **Pendencias vivas preservadas: AUT-005 NAO MATERIALIZADA / NAO ENCERRADA** e sem fatia atribuida; **RN-001** aplicavel e nao satisfeito fora do alcance parcial da `PermissoesGuard`; **`P2.2-05`** (autorizacao clinica contextual) **NAO INICIADA**; `R2.2-04` **ABERTO / MITIGADO PARCIALMENTE**; `P-2.3D-03` **MEDIDA E VERDE, encerramento formal PENDENTE**. **F5 e F6 permanecem NAO INICIADAS.** Nenhum deploy, tag ou release. Estado anterior preservado: REV. 23 (28/08/2026) — **ETAPA 2.3D-B / F4 (guards e decorators de autorização — RBAC) HOMOLOGADA POR BRUNO MENEZES NORONHA; APTA AO RITO DE VERSIONAMENTO/INTEGRACAO** (§6-L). Homologada sobre a MESMA baseline `main` = `origin/main` = `a9be742`, na branch `agent/fase2-etapa2.3d-f4-rbac`, apos a **segunda** revisao tecnica independente adversarial devolver **`A — APTO A HOMOLOGACAO E VERSIONAMENTO`** com **0 BLOQUEANTES, 0 ALTOS, 0 MEDIOS** e **1 BAIXO documental (`R4R2-01`)**. **`R4R2-01` corrigido nesta execucao e EXCLUSIVAMENTE documental** (§6-K.6): `apps/api/src/authz/` tem **798 linhas em 9 arquivos** na arvore corrigida; as **745 em 8 arquivos** ficam preservadas como valor **historico** da arvore pre-correcao. **Nenhuma linha de runtime ou de teste foi alterada** — manifesto SHA-256 dos 14 arquivos de runtime/teste identico ao conferido pela revisao. **Nenhuma decisao normativa criada, alterada ou reaberta; `D-2.3D-09` intacta; nenhuma `D-2.3D-14`; Base Imutavel intacta.** `R4-01`..`R4-08` confirmados por evidencia independente; **15 mutation challenges independentes, 15 detectados, 15 revertidos por hash**. Bateria independente verde: `test:api` **19 · 479**; `verify:api-integration` **7 · 239**; `verify:from-scratch` **10 · 87**; Argon2 runtime **15/15**; OpenAPI runtime **17/17**; Guardas 1-3; golden **60 169 bytes**. **Zero drift; zero migration; zero dependencia nova.** **AUT-005 permanece NAO MATERIALIZADA / NAO ENCERRADA**; autorizacao clinica contextual (`P2.2-05`) **NAO INICIADA**; **F5 e F6 NAO INICIADAS**. Nenhum deploy, tag ou release. O registro factual do merge pertence a execucao documental posterior (`MEDIR -> REGISTRAR`). Estado anterior preservado: REV. 22 (28/08/2026) — **ETAPA 2.3D-B / F4 CORRIGIDA APOS REVISAO TECNICA INDEPENDENTE ADVERSARIAL (veredito `B — APTO COM CORRECOES OBJETIVAS`); permanece NAO HOMOLOGADA / NAO INTEGRADA** (§6-K). Mesma baseline `a9be742`, mesma branch, mesma working tree nao commitada. **Nenhuma decisao normativa criada, alterada ou reaberta; `docs/12` NAO foi tocado; `D-2.3D-09` intacta; nenhuma `D-2.3D-14`.** **Corrigidos:** `R4-01` — a identidade validada pelo `SessaoService` passa a SOBRESCREVER qualquer contexto preexistente (a revisao mediu que um contexto semeado prevalecia e a guard decidia sobre ele), e o limite do modelo de confianca passou a ser declarado; `R4-03`/`R4-04` — o decorator plural foi **substituido** por **`@RequerPermissao(P)`**, singular, somente metodo, que INSTALA `SessaoAutenticadaGuard` + `PermissoesGuard` na ordem, tornando declarar-sem-proteger inexpressavel e eliminando a superficie de classe/heranca que podia reduzir exigencia. **`L-F4-01` ENCERRADA POR ELIMINACAO** — nao por decisao normativa: nenhuma operacao de `docs/04` §4/§8 exige duas permissoes, logo a composicao era abstracao antecipada e nao ha `AND`/`OR` a homologar. **`R4-02` retificado sem mudar comportamento:** a cobertura do usuario inativo e **PARCIAL** (defesa em profundidade apenas sob a `PermissoesGuard`); **AUT-005 permanece NAO MATERIALIZADA / NAO ENCERRADA** e RN-001 segue aplicavel, com linha propria em §9. **BAIXOS** `R4-05`..`R4-08` retificados. Bateria integral verde (`test:api` **19 · 479**; integracao **7 · 239**; from-scratch 87; Guardas 1–3; runtime 15/15 e 17/17); **9 mutation challenges detectados e revertidos por hash**; **zero drift**; **nenhuma dependencia nova**; F5/F6 nao iniciadas. Proximo passo: **NOVA revisao independente adversarial sobre a arvore corrigida**. Estado anterior preservado: REV. 21 (28/08/2026) — **ETAPA 2.3D-B / F4 (guards e decorators de autorização — RBAC) IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA (`agent/fase2-etapa2.3d-f4-rbac`), a partir de `main` = `origin/main` = `a9be742` — NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-J). Publicação **não autorizada** nesta execução: sem commit, push, PR, merge, tag, release ou deploy. `D-2.3D-09` e a parte de RBAC de `AUT-003` materializadas: catálogo **tipado** dos 29 identificadores de `docs/04` §5 (materialização, não catálogo paralelo — provado por comparação mecânica contra o documento), resolução das permissões efetivas por **união** dos papéis, decorator declarativo `@RequerPermissoes(...)`, `PermissoesGuard` (`403`) e `SessaoAutenticadaGuard` (`401`), que **consome** a autenticação vigente sem substituí-la. **Nenhuma decisão foi criada, alterada, renumerada ou reaberta; `docs/12` NÃO foi tocado; `docs/09` §12 não foi reaberto; a Base Imutável permanece intacta.** Identidade não controlável pelo cliente (contexto sob símbolo privado); `401` e `403` não se confundem; falha técnica **não** é maquiada como negação. **Nenhuma rota de produção foi protegida — e nenhuma podia ser**, pois as três publicadas não têm permissão exigida pela matriz de `docs/04` §4; a guard é provada por integração sobre **controller exclusivamente de teste**, e as rotas publicadas continuam sendo exatamente `/health`, `/auth/login` e `/auth/logout`. Cinco decisões locais declaradas (`L-F4-01`..`L-F4-05`), das quais **`L-F4-01` — semântica de composição de múltiplas permissões — fica PENDENTE DE DECISÃO DE BRUNO** (adotada a conjunção, alternativa conservadora sob lacuna de fonte). Bateria integral verde (`test:api` **19 suites · 479**; integração **7 suites · 239**; from-scratch 87; Guardas 1–3; runtime Argon2 15/15 e OpenAPI 17/17); **13 mutation challenges detectados e revertidos com prova por hash**; **zero drift** de `packages/database` (10 migrations, hashes idênticos); **nenhuma dependência nova**. **F5 e F6 permanecem NÃO INICIADAS**; autorização clínica contextual (`P2.2-05`) permanece fora. Próximo passo: **revisão técnica independente e adversarial da F4**. Estado anterior preservado: REV. 20 (28/08/2026) — **REGISTRO PÓS-MEDIÇÃO DA INTEGRAÇÃO DA ETAPA 2.3D-B / F3 NA `main`.** Registro **exclusivamente factual**, no precedente MEDIR → REGISTRAR das REV. 10 e REV. 15: **nenhuma decisão foi criada, alterada ou reaberta** e **nenhuma medição histórica foi reescrita**. Estado: **Etapa 2.3D-B / F3 CONCLUÍDA / HOMOLOGADA / VERSIONADA / INTEGRADA NA `main`** — PR [#14](https://github.com/BrunoMNoronha/techlab-fisio/pull/14), HEAD homologado e corrigido `c20cf1c`, **merge commit `35569727789f6f73b4f81fec3cc94c34d4cb0038`**; a `main` passou de `9a22262` para `3556972`. A CI do PR ficou **verde sobre o HEAD integrado**, com **206 provas de integração** (as 203 anteriores mais 3 regressões do harness), depois de uma correção de portabilidade restrita ao cliente HTTP dos testes (§6-I.8) — **sem nenhuma alteração de runtime, contrato ou persistência**. Validação local pós-merge integralmente verde; **zero drift** de `packages/database`; 10 migrations. **F4, F5 e F6 permanecem NÃO INICIADAS**; deploy, tag e release não foram realizados. Estado anterior preservado: REV. 19 (28/08/2026) — **Etapa 2.3D-B / F3 HOMOLOGADA por Bruno Menezes Noronha e submetida ao rito de versionamento e integração** (§6-I). A **terceira** revisão técnica independente adversarial devolveu **`A — APTO À HOMOLOGAÇÃO E VERSIONAMENTO`**, sem nenhum achado BLOQUEANTE, ALTO ou MÉDIO, tendo reproduzido de forma independente as correções `F3R-01` e `F3R-03` (29 variantes de request-target com zero incoerências entre roteador e filtro; oito propriedades do iterador de `Map` sob mutação; saturação a 50 000 buckets). Único achado, **`F3R-08` (BAIXO)** — a tabela viva de §9 ainda rotulava `L-11` como decisão local —, **corrigido nesta revisão**: a linha passa a apontar **`D-2.3D-13`** como fonte normativa e `L-11` como alias histórico. **Nenhuma decisão `D-2.3D-*` foi alterada ou reaberta.** Riscos residuais aceitos e registrados: `R-2.3D-08`, `F-12`, `F3R-06`, `F3R-07`. Bateria integral verde; zero drift; F4/F5/F6 não iniciadas. Estado anterior preservado: REV. 18 (28/08/2026) — **Etapa 2.3D-B / F3 CORRIGIDA PELA SEGUNDA VEZ, após a segunda revisão técnica independente adversarial (veredito `B — APTO COM CORREÇÕES OBJETIVAS`); permanece NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-H). A segunda revisão **confirmou por reprodução própria** que `F-01`, `F-04` e `F-05` estão de fato corrigidos, e não encontrou achado BLOQUEANTE ou ALTO. Corrigidos agora: `F3R-01` (MÉDIO — request-target *absolute-form* reabria o vazamento do parser e o log de ERRO acionável sem autenticação), `F3R-03` (MÉDIO — inanição da amostragem de despejo ancorada na cabeça do `Map`, medida em 2 000/2 000 recusas), `F3R-04` e `F3R-05` (BAIXOS, documentais). **`F3R-02` foi resolvido por DECISÃO DE BRUNO**: `L-11` passou a norma como **`D-2.3D-13`** em `docs/12` REV. 3 — acréscimo de decisão nova, **sem alterar, renumerar ou reabrir `D-2.3D-01`..`D-2.3D-12`**. `F3R-06`, `F3R-07` permanecem OBSERVAÇÃO não tratada e `F-12` permanece BAIXO aceito. Bateria integral verde (`test:api` 437; integração 203); 3 mutation challenges novos (`C-18`..`C-20`) detectados e revertidos; zero drift; F4/F5/F6 não iniciadas. Próximo passo: **nova revisão independente adversarial**. Estado anterior preservado: REV. 17 (28/08/2026) — **Etapa 2.3D-B / F3 CORRIGIDA após revisão técnica independente adversarial (veredito `B — APTO COM CORREÇÕES OBJETIVAS`); permanece NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-G). Doze dos catorze achados corrigidos, `F-07` resolvido por consequência e `F-12` mantido BAIXO com racional. Destaques: o gate de `D-2.3D-06` passou a valer sob **concorrência** (reserva de tentativa em voo — `F-01`, ALTO); `TLF_AMBIENTE` tornou-se **obrigatória**, fechando o cenário principal de `R-2.3D-04` (`F-02`); o **rehash** exigido por `D-2.3D-02` foi materializado no login com escrita condicionada ao digest verificado (`F-04`); o despejo do limitador deixou de sacrificar bloqueios vigentes (`F-05`); erro 4xx do parser deixou de virar `500` (`F-03`). **Nenhuma decisão `D-2.3D-*` alterada; `docs/12` intocado.** Bateria integral verde; 17 mutation challenges detectados e revertidos; zero drift; F4/F5/F6 não iniciadas. Próximo passo: **nova revisão independente adversarial**. Estado anterior preservado: REV. 16 (27/08/2026) — **Etapa 2.3D-B / F3 (endpoints REST de autenticação) IMPLEMENTADA E MEDIDA em branch própria (`agent/fase2-etapa2.3d-f3-auth-http`), a partir de `main` = `9a22262` — NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-F). Publicação **não autorizada** nesta execução: sem commit, push, PR, merge, tag ou deploy. `D-2.3D-06`, `D-2.3D-07`, `D-2.3D-11` e `D-2.3D-12` materializadas; **nenhuma decisão foi criada, alterada ou reaberta** e **`docs/12` não foi tocado**. `P-2.3D-03` **medida e verde** pelo Caminho A (`@nestjs/swagger@11.4.7` compatível com ESM/`nodenext`), com encerramento formal deixado a decisão de Bruno. `T-AUTH-ENUMERATION` provado estruturalmente; `R-2.3D-04` protegido por fail-fast testado em três níveis; 14 challenges de mutação detectados e revertidos; bateria integral verde; zero drift de persistência. Estado corrente: **F0, F1 e F2 INTEGRADAS; F3 IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA, NÃO INTEGRADA; F4/F5/F6 NÃO INICIADAS**. Próximo passo: **revisão técnica independente adversarial da F3**. Estado anterior preservado: REV. 15 (27/08/2026) — **registro pós-medição da INTEGRAÇÃO da Etapa 2.3D-B / F2 na `main`**: commit da fatia `289a94b`, PR [#12](https://github.com/BrunoMNoronha/techlab-fisio/pull/12), **merge commit `70b30aebf09368200343d6a5672b267811f337ee`**; `main` passou de `f4c2466` para `70b30ae`. CI verde no PR e na `main` pós-merge; bateria local pós-merge integralmente verde; zero drift de persistência. Registro **exclusivamente factual** — nenhuma decisão criada, alterada ou reaberta. Estado corrente: **F0, F1 e F2 INTEGRADAS; F3 — endpoints REST de autenticação NÃO INICIADA**. Estado anterior preservado: REV. 14 (27/08/2026) — **F2 HOMOLOGADA por Bruno Menezes Noronha** (TLF-BASE-V1 §15, item 1) e **`R-2.3D-03` ENCERRADO NA F2** (§9): o risco sai de aberto porque a obrigação de monotonicidade atômica de `D-2.3D-04` foi materializada e provada — `UPDATE` condicional atômico, `GREATEST`, predicado de throttle que também barra atividade regressiva, testes concorrentes contra PostgreSQL real, mutation challenge de last-writer-wins detectado, e confirmação de que `C-01` não enfraqueceu a proteção. **`D-2.3D-04` NÃO foi alterada e nenhuma decisão normativa nova foi criada.** Os limites da evidência (`READ COMMITTED`, PostgreSQL autoritativo compartilhado) permanecem registrados como **limites da prova**, não como risco aberto. Esta REV. acompanha o **rito de versionamento e integração da F2**. Estado anterior preservado: REV. 13 (27/08/2026) — Etapa **2.3D-B / F2 (`SessaoService`) REVISADA DE FORMA INDEPENDENTE, CORRIGIDA E REMEDIDA — permanece NÃO INTEGRADA** (§6-E.9): revisão adversarial com veredito **`B — APTO COM CORREÇÕES OBJETIVAS`**; correções obrigatórias **`C-01`** (achado `A-01` — logout que podia informar encerramento deixando a sessão `ATIVA` e utilizável) e **`C-02`** (precisão documental do `verify:argon2-runtime`) aplicadas, com teste de regressão determinístico contra PostgreSQL real. Nenhuma decisão normativa criada ou reaberta; `docs/12` e a Base Imutável **não foram tocados**. `R-2.3D-03` permanece **MITIGADO**, com encerramento **pendente de decisão de Bruno**. Publicação continua **não autorizada**: sem commit, push, PR, merge, tag ou deploy. Estado corrente: **F1 INTEGRADA; F2 CORRIGIDA E MEDIDA EM BRANCH PRÓPRIA, NÃO INTEGRADA; F3 NÃO INICIADA**. Estado anterior preservado: REV. 12 (27/08/2026) — **duas atualizações, uma factual e uma de execução.** (1) **Correção factual:** a Etapa **2.3D-B / F1 (`CredencialService` / Argon2id) foi INTEGRADA NA `main`** por merge commit `f4c246648e436c3a50121c371147768bd8403657`, PR [#11](https://github.com/BrunoMNoronha/techlab-fisio/pull/11) (commit da fatia: `f642b6259b0c916b42d8f8bc77d25258592805a6`) — a REV. 11 a registrava como "não integrada" porque a publicação ainda não havia ocorrido àquela altura; nenhuma decisão foi alterada por esta correção. (2) **Execução:** Etapa **2.3D-B / F2 (`SessaoService`) IMPLEMENTADA E MEDIDA em branch própria (`agent/fase2-etapa2.3d-f2-sessao`), NÃO INTEGRADA** (§6-E): publicação não autorizada nesta execução — sem commit, push, PR, merge, tag ou deploy. Estado anterior preservado: REV. 10 (27/08/2026) — Etapa **2.3D-B / F0 CONCLUÍDA/HOMOLOGADA/INTEGRADA NA `main`** (merge `f612fa7`, PR [#9](https://github.com/BrunoMNoronha/techlab-fisio/pull/9)): decisões `D-2.3D-01`..`D-2.3D-12` registradas em **`docs/12`** e única reabertura física controlada da persistência (`sessao_autenticacao`: +2 colunas, +1 CHECK). Etapa 2.3C permanece **CONCLUÍDA/HOMOLOGADA/INTEGRADA** (merge `58a6e4b`, PR [#7](https://github.com/BrunoMNoronha/techlab-fisio/pull/7) — REV. 9). `R2.2-04` permanece **ABERTO / MITIGADO PARCIALMENTE** (§7.2); ressalvas `F-2.3C-REV-02`/`F-2.3C-REV-03` preservadas sem correção (§9). Estado corrente: **F1 INTEGRADA; F2 IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA, NÃO INTEGRADA; F3 — endpoints REST de autenticação NÃO INICIADA**
 
 ---
 
@@ -1838,6 +1840,854 @@ tag/release ........ NÃO
 
 **Nenhuma decisão normativa foi criada, alterada, renumerada ou reaberta por este registro.** `D-2.3D-01`..`D-2.3D-13` seguem exatamente como homologadas; `D-2.3D-09` e `D-2.3D-10` intactas; **nenhuma `D-2.3D-14`**; `docs/09` §12 não reaberto; `docs/12` **não foi alterado** por esta execução — ele já registra a F4 como `CONCLUÍDA` desde a REV. 5; a Base Imutável permanece **intacta**.
 
+## 6-M. Etapa 2.3D-B / F5 — seed de papéis/permissões + bootstrap do primeiro Administrador
+
+**Estado: IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA — NÃO HOMOLOGADA / NÃO INTEGRADA.** Executada em 29/08/2026 na branch `agent/fase2-etapa2.3d-f5-seed-bootstrap-admin`, criada a partir de `main` = `origin/main` = `91406203cbecb148f395a58adcfeb6b39f825337` (merge da F4 + registro pós-integração; §6-L.8, §11 REV. 24). Working tree limpa no gate inicial. **Publicação não autorizada nesta execução: sem commit, push, PR, merge, rebase, tag, release ou deploy.**
+
+**Nenhuma decisão normativa foi criada, alterada, renumerada ou reaberta.** `D-2.3D-01`..`D-2.3D-13` seguem exatamente como homologadas; **`docs/12` NÃO foi tocado**; `D-2.3D-09` e `D-2.3D-10` permanecem intactas; **nenhuma `D-2.3D-14` foi criada**; `docs/09` §12 não foi reaberto; **nenhuma ação de auditoria foi acrescentada e nenhuma whitelist de `contexto` foi ampliada**; a Base Imutável permanece intacta.
+
+> **[SEÇÃO HISTÓRICA — leia antes de citar.]** §6-M registra a execução de **29/08/2026** e **não é o estado corrente da F5**. O parágrafo acima era verdadeiro naquela data. **[SUPERADO — REV. 27, 31/08/2026]** `D-2.3D-14` e `D-2.3D-15` foram homologadas por Bruno Menezes Noronha e `docs/12` (REV. 6) passou a integrar o conjunto de alterações da F5. O estado corrente está em **§6-O**; a fatia corretiva intermediária, em §6-N. Segue verdadeiro, e não foi superado: **nenhuma decisão anterior** foi alterada, renumerada, reduzida ou reaberta, e catálogo e whitelist de auditoria continuam **não ampliados**.
+
+### 6-M.1 Objetivo e escopo materializado
+
+A F5 entrega os DADOS que o mecanismo da F4 já sabia consumir: os papéis, as permissões, a matriz que os liga e a primeira identidade administrativa. Nenhuma rota nova, nenhum endpoint, nenhuma funcionalidade de usuário final.
+
+| Elemento | Fonte que o governa | Como foi materializado |
+| --- | --- | --- |
+| Quatro papéis do MVP | `docs/04` §3 | `catalogo-rbac.ts` — `PAPEIS`, com `nome` idêntico ao título de §3 |
+| Identificadores de permissão | `D-2.3D-09`; `docs/04` §5 | **Reúso** do catálogo tipado da F4 (`authz/permissoes.catalogo.ts`). Nenhum segundo catálogo nasce nesta fatia |
+| `permissao.nome` | `docs/04` §5 | Descrição funcional da fonte, **verbatim** — provada contra o documento lido em disco |
+| Matriz papel↔permissão | `D-2.3D-09`; `docs/04` §4 | `MATRIZ_RBAC`, derivada célula a célula por regra declarada (§6-M.4) e provada contra a tabela do documento |
+| Seed idempotente | `D-2.3D-09` | `SeedRbacService.executar()` — lê o estado vigente e escreve só o que falta |
+| Bootstrap manual e idempotente | `D-2.3D-10` | `BootstrapAdministradorService` + CLI dedicado; `ProvisionamentoModule` **fora** do `AppModule` |
+| Credencial por ambiente/stdin | `D-2.3D-10` | `cli.ts` — stdin redirecionado ou `TLF_BOOTSTRAP_ADMIN_SENHA`; **nunca** `argv` |
+| Argon2id | `D-2.3D-02` | **Reúso** do `CredencialService` da F1. A política não é redeclarada em lugar algum desta fatia |
+| Auditoria da atribuição | `D-2.3D-10`; `docs/09` §12 | `usuario.papeis.alterados`, `SUCESSO`, `alvo_tipo = usuario`, `contexto` vazio, na MESMA transação |
+
+### 6-M.2 Arquivos criados e alterados
+
+| Arquivo | Situação | Motivo |
+| --- | --- | --- |
+| `apps/api/src/provisionamento/catalogo-rbac.ts` | **NOVO** | `PAPEIS`, `DESCRICAO_PERMISSAO`, `MATRIZ_RBAC`, `ASSOCIACOES_SEED`, `ehCodigoPapel` e a regra de derivação declarada |
+| `apps/api/src/provisionamento/seed-rbac.service.ts` | **NOVO** | Seed idempotente e transacional das três tabelas |
+| `apps/api/src/provisionamento/bootstrap-administrador.service.ts` | **NOVO** | Bootstrap idempotente, fail-closed e auditado do primeiro Administrador |
+| `apps/api/src/provisionamento/provisionamento.module.ts` | **NOVO** | Módulo sem controller, **não** registrado no `AppModule` |
+| `apps/api/src/provisionamento/cli.ts` | **NOVO** | Único acionador — processo dedicado, sem servidor HTTP |
+| `apps/api/test/catalogo-rbac.spec.ts` | **NOVO** | 26 provas — o catálogo e a matriz **são** `docs/04`, lido do disco |
+| `apps/api/test/provisionamento.fronteira.spec.ts` | **NOVO** | 14 provas — bootstrap manual, acoplamento e segredo não versionado |
+| `apps/api/test/integration/provisionamento-rbac.integration.spec.ts` | **NOVO** | 34 provas contra PostgreSQL 18 real |
+| `apps/api/package.json` | **ALTERADO** — 3 linhas | `provisionar`, `provisionar:seed` e `provisionar:admin`, os comandos deliberados do operador. É a alteração mínima que expõe a operação; nenhuma dependência foi acrescentada |
+
+**Nenhum outro arquivo do repositório foi tocado.** `app.module.ts`, `main.ts`, `auth/**`, `authz/**`, `audit/**`, `database/**`, `packages/database/**`, `scripts/**` e `docs/12` têm diff vazio contra a baseline.
+
+### 6-M.3 Onde o seed vive — e por quê
+
+O seed vive em **`apps/api`**, não em `packages/database`. A escolha foi feita depois de inspecionar o grafo real, e as duas alternativas foram descartadas por razões objetivas:
+
+- **duplicar o catálogo em `packages/database`** criaria as duas fontes divergentes que `D-2.3D-09` existe para impedir — exatamente o defeito que a fatia deve provar ausente;
+- **inverter a dependência** (`packages/database` → `apps/api`) contraria a arquitetura vigente: o pacote de persistência é consumido pela aplicação, nunca o contrário.
+
+Em `apps/api` estão, simultaneamente, o catálogo tipado das 29 permissões (F4), a política Argon2id (F1), o `AuditWriter` (2.3B) e a fronteira transacional única (`DatabaseService`). Nenhum deles é replicado.
+
+### 6-M.4 A matriz materializada — regra de derivação declarada
+
+`D-2.3D-09` manda o seed refletir **exatamente** a matriz de `docs/04`. A matriz de §4, porém, é uma tabela de SÍMBOLOS por operação, e §5 é um catálogo de PERMISSÕES: a tradução exigia uma regra. Ela foi declarada, aplicada sem exceção e é executada pelo próprio teste, que lê a tabela do documento:
+
+| Símbolo da célula | Decisão | Fundamento |
+| --- | --- | --- |
+| `✓` | **CONCEDE** | permitido por padrão para o papel (legenda de §4) |
+| `C`, `C relacionado`, `C próprio`, `C próprio/relacionado` | **CONCEDE** | a legenda distingue `C` de `P`: `C` é "condicionado a escopo, relação com recurso ou configuração operacional", e **não** "exige permissão específica adicional". O papel possui a permissão; o estreitamento é enforcement e pertence a `P2.2-05` |
+| `C mínimo`, `C leitura mínima` | **NEGA** | a célula autoriza um subconjunto REDUZIDO que o identificador de §5 não expressa; conceder o identificador inteiro daria **mais** do que a matriz permite |
+| qualquer célula com `P` (`P`, `P excepcional`, `✓/P`, `P/✓ conforme política`, `C próprio se autorizado`) | **NEGA** | `P` é permissão específica ADICIONAL, nunca padrão do papel — **HOM-01**, §2.1, §2.2, §6.2. Célula ambígua resolve-se pelo lado que **não** amplia privilégio |
+| `—`, `—*` | **NEGA** | `—*` é a marca expressa de que o Administrador não possui capacidade clínica |
+
+**Combinação de linhas múltiplas: INTERSEÇÃO, nunca união.** Quando mais de uma linha de §4 mapeia para a mesma permissão de §5, o papel só a recebe se **todas** concederem. A união faria a linha mais permissiva apagar a mais restritiva do mesmo documento. Duas consequências medidas, ambas desejadas:
+
+- a Recepcionista **não** recebe `financeiro.relatorio.ler`: "financeiro operacional do paciente" é `C`, mas "Consultar financeiro global" é `—`;
+- o Fisioterapeuta **não** recebe `pacientes.administrativo.gerenciar`: "Cadastrar/Editar paciente administrativo" é `C`, mas "Ver observação administrativa" é `C mínimo`. Coerente com §3.3 (o cadastro administrativo é da Recepcionista) e §3.4 (não consta das responsabilidades do Fisioterapeuta).
+
+**Matriz efetivamente semeada — 37 associações:**
+
+```text
+ADMINISTRADOR (18)  agenda.bloqueio · agenda.checkin · agenda.falta · agenda.gerenciar ·
+                    auditoria.ler · clinica.configurar · financeiro.cobranca.gerenciar ·
+                    financeiro.pagamento.registrar · financeiro.relatorio.ler ·
+                    indicadores.globais.ler · pacientes.administrativo.gerenciar ·
+                    pacientes.localizar · pacotes.gerenciar · permissoes.gerenciar ·
+                    profissionais.gerenciar · senha.recuperar_terceiro ·
+                    sessoes.revogar_terceiro · usuarios.gerenciar
+
+GESTOR (3)          financeiro.relatorio.ler · indicadores.globais.ler · pacientes.localizar
+
+RECEPCIONISTA (8)   agenda.checkin · agenda.falta · agenda.gerenciar ·
+                    financeiro.cobranca.gerenciar · financeiro.pagamento.registrar ·
+                    pacientes.administrativo.gerenciar · pacientes.localizar · pacotes.gerenciar
+
+FISIOTERAPEUTA (8)  agenda.bloqueio · agenda.checkin · agenda.falta · agenda.gerenciar ·
+                    pacientes.localizar · prontuario.escrever · prontuario.finalizar ·
+                    prontuario.ler
+```
+
+**Permissões concedidas a NENHUM papel — 8 de 29,** todas por serem `P` na fonte:
+
+```text
+prontuario.retificar_proprio · prontuario.retificar_terceiro · prontuario.exportar
+pacotes.ajustar_sessao · financeiro.desconto.aplicar · financeiro.cobranca.cancelar
+financeiro.pagamento.estornar · indicadores.proprios.ler
+```
+
+Propriedades que a matriz satisfaz e que os testes exigem, uma a uma:
+
+- **o Administrador NÃO recebe as 29 permissões** — recebe 18, e a conversão automática que o enunciado da fatia proíbe não ocorreu em nenhum ponto;
+- **o Administrador não recebe NENHUMA permissão `prontuario.*`** (PERM-T01). Capacidade clínica continua vindo do papel Fisioterapeuta, e as restrições clínicas de §6.3 seguem prevalecendo;
+- **o Gestor recebe SOMENTE leitura** — HOM-01 preservado: nenhuma permissão de mutação, em nenhuma área;
+- as quatro operações que `docs/04` §8 marca como exigindo "permissão específica" (desconto, cancelamento de cobrança, estorno, ajuste de sessão) **não pertencem a papel algum**;
+- `indicadores.proprios.ler` não é concedida — `docs/04` §3.4 a condiciona expressamente ("apenas se essa permissão for prevista").
+
+### 6-M.5 Lacunas de tradução — declaradas, não preenchidas por invenção
+
+Seis linhas de `docs/04` §4 **não** possuem identificador objetivamente determinável em §5. Nenhuma associação foi inventada para elas; a lacuna e seu impacto ficam registrados:
+
+| Linha de §4 | Por que não é traduzível | Impacto |
+| --- | --- | --- |
+| "Autenticar/logout próprio"; "Recuperar própria senha via fluxo autorizado" | §5 não cataloga permissão para operação sobre a PRÓPRIA identidade | **Nenhum.** A F4 já registrou que essas rotas não exigem permissão alguma (§6-J.4) |
+| "Consultar profissionais" (`✓ ✓ ✓ ✓`) | §5.2 só cataloga `profissionais.gerenciar` (gestão) | Leitura de profissionais ficará sem permissão própria até que exista endpoint e decisão. Conceder gestão a todos contradiria a linha anterior (`✓ — — —`) |
+| "Iniciar/Concluir atendimento clínico" | §5 não cataloga permissão de atendimento | O endpoint clínico, quando existir, precisará de identificador decidido |
+| "Consultar saldo administrativo de pacote"; "Consultar histórico detalhado de movimentos" | §5.6 só cataloga permissões de mutação | Leitura de pacote sem permissão própria |
+| "Emitir recibo simples" | §5.7 não cataloga permissão de recibo | Idem |
+| "Consultar indicadores operacionais" | a linha significa coisas diferentes por coluna: `indicadores.proprios.ler` para o Fisioterapeuta (e ali a célula é `C próprio SE AUTORIZADO`), `indicadores.globais.ler` para Administrador/Gestor, e um `C` reduzido para a Recepcionista | `indicadores.proprios.ler` fica sem papel — coerente com §3.4 |
+
+> **[RETIFICAÇÃO — `F5-R-05`, 29/08/2026]** A redação anterior deste parágrafo afirmava que os **três** agrupamentos eram "**sem efeito** sobre o conjunto concedido (as linhas agrupadas têm a mesma coluna de símbolos)". **A afirmação era FALSA para um dos três**, e a revisão técnica independente a mediu: "Ver observação administrativa" é `✓ — ✓ C mínimo`, enquanto "Cadastrar/Editar paciente administrativo" é `✓ — ✓ C` — as colunas **diferem** na do Fisioterapeuta. A afirmação também **contradizia o próprio §6-M.4**, que declara a consequência. O texto correto é o abaixo.
+
+Três agrupamentos de linhas em um mesmo identificador foram feitos **com base em fonte**. **Dois** deles não têm efeito sobre o conjunto concedido, porque as linhas agrupadas têm de fato a mesma coluna de símbolos: serviços/formas de pagamento/motivos de cancelamento → `clinica.configurar` (`✓ — — —` nas quatro linhas; TLF-BASE-V1 §5.2 os lista como configuração da clínica) e "Anexar documento clínico" → `prontuario.escrever` (`—* — — C relacionado`, idêntica a "Criar evolução").
+
+**O terceiro TEM efeito material e é decisão interpretativa, não agrupamento neutro:** "Ver observação administrativa" → `pacientes.administrativo.gerenciar`. Como essa linha é `C mínimo` na coluna do Fisioterapeuta e a regra de interseção nega `C mínimo`, o agrupamento **retira** `pacientes.administrativo.gerenciar` do Fisioterapeuta. Medição, reproduzida de forma independente pela revisão:
+
+```text
+com o agrupamento (adotado) ....... 37 associações · Fisioterapeuta 8
+tratando a linha como lacuna ...... 38 associações · Fisioterapeuta 9
+```
+
+A escolha é defensável — `docs/04` §3.3 atribui o cadastro administrativo à Recepcionista e §3.4 não o lista entre as responsabilidades do Fisioterapeuta —, mas é **decisão local com efeito medido** (`L-F5-09`, §6-N.7), e não um detalhe inócuo.
+
+### 6-M.6 Desenho do seed
+
+- **Determinístico e repetível.** A ordem é a da fonte (papéis de §3; permissões de §5). A saída não depende da ordem devolvida pelo banco.
+- **Idempotente por leitura-e-completação**, não por `upsert`: o serviço lê o estado vigente das três tabelas e escreve somente o que falta. A segunda execução emite **zero** `INSERT` e **zero** `UPDATE`, devolve todas as contagens em zero e `jaConforme: true` — a idempotência é medida, não afirmada. `upsert` com `update: {}` escreveria a cada execução ou dependeria de comportamento não contratado do driver.
+- **Convergência de `nome`, e só dela:** `papel`/`permissao` preexistente com o mesmo `codigo` e `nome` divergente da fonte tem o `nome` atualizado — apenas quando de fato difere.
+- **ADITIVO, nunca destrutivo.** O seed garante que a matriz homologada esteja presente; ele **não** garante que nada mais exista. A razão é normativa: `docs/04` §4 marca como `P` operações cuja concessão é ato posterior de um Administrador, e um seed destrutivo as revogaria em silêncio a cada execução. **Propriedade declarada e medida em teste** — e o limite correspondente está em §6-M.13.
+- **Transacional**, na fronteira única (`DatabaseService.transacao`), pelo mesmo padrão de `ProfissionalService`/`CobrancaService`. Nenhuma abstração nova.
+- **Sem auditoria**, e por fronteira: o seed não altera papéis de usuário algum. `usuario.papeis.alterados` tem o usuário por alvo, e aqui não há usuário. Emitir evento para a criação do catálogo exigiria ação nova — vedado por `D-AUD-04`/`D-AUD-05` sem decisão própria.
+
+### 6-M.7 Desenho do bootstrap
+
+**Manual — e a propriedade é estrutural, não uma promessa de comentário:**
+
+```text
+ProvisionamentoModule NÃO pertence ao AppModule
+  -> node dist/main.js NÃO resolve SeedRbacService
+  -> node dist/main.js NÃO resolve BootstrapAdministradorService
+  -> único acionador: node dist/provisionamento/cli.js <comando>
+     (createApplicationContext — sem servidor HTTP, sem porta, sem rota)
+```
+
+Diferença deliberada em relação ao precedente da F4: `AuthzModule` **é** registrado no `AppModule` porque suas guards precisam existir no processo que atende requisições; o provisionamento precisa exatamente do contrário.
+
+**Entrada da credencial**, na ordem de precedência: **stdin redirecionado** (recomendada) e, na ausência dele, **`TLF_BOOTSTRAP_ADMIN_SENHA`** — as duas formas que `D-2.3D-10` admite. `argv` é usado **apenas** para o nome do comando, e isso é provado mecanicamente (`process.argv[2]` é a única ocorrência de `argv` no CLI). Não existe senha padrão, senha embutida, credencial versionada nem senha em log, erro ou auditoria.
+
+**Argon2id reutilizado, não reimplementado:** o digest vem do `CredencialService` da F1, com a `POLITICA_ARGON2` de `D-2.3D-02`. Nenhum parâmetro é redeclarado nesta fatia.
+
+**Desfechos e recusas:**
+
+| Situação | Desfecho | Escritas |
+| --- | --- | --- |
+| Banco semeado, sem Administrador, identidade inexistente | `USUARIO_CRIADO` | usuário + vínculo + 1 evento |
+| Identidade já é o Administrador | `JA_CONFORME` | **nenhuma** — e nenhum evento |
+| Identidade existe, ativa, sem o papel, sem outro Administrador | `PAPEL_ATRIBUIDO` | vínculo + 1 evento. Senha, nome e situação preexistentes **não** são tocados |
+| Existe OUTRO Administrador | recusa `ADMINISTRADOR_JA_EXISTE` | nenhuma |
+| Identidade existe e está INATIVA | recusa `USUARIO_ALVO_INATIVO` | nenhuma |
+| Papel Administrador inexistente (seed não rodou) | recusa `PAPEL_ADMINISTRADOR_AUSENTE` | nenhuma |
+| E-mail/nome/senha ausentes ou vazios | recusa `EMAIL_INVALIDO`/`NOME_INVALIDO`/`SENHA_AUSENTE` | nenhuma — validação **antes** de Argon2 e de banco |
+
+O identificador é normalizado por `D-2.3D-03` (`trim` + `lowercase`) antes de qualquer consulta — sem isso o bootstrap poderia criar uma identidade inalcançável pelo login.
+
+**O que o bootstrap NÃO faz:** não cria sessão, não emite cookie, token ou segredo de recuperação, não ativa nem inativa usuário, não altera identidade preexistente, não concede permissão avulsa e não amplia a matriz.
+
+### 6-M.8 Atomicidade
+
+Leitura de estado, criação/obtenção do usuário, criação do vínculo `usuario_papel` e evento de auditoria ocorrem em **UMA** transação da fronteira única. Nenhum estado parcial sobrevive, e isso é medido contra PostgreSQL real: com a auditoria falhando **depois** de usuário e vínculo já escritos, o banco volta a zero em `usuario`, `usuario_papel` e `evento_auditoria` — com controle positivo imediato, na mesma prova, de que sem a falha tudo persiste.
+
+Registra-se uma propriedade arquitetural observada durante os mutation challenges: **"remover a transação" não é expressável** nesta arquitetura sem alterar `DatabaseService`, porque o cliente de persistência é privado e o único caminho ao banco é `transacao()`. A defesa em profundidade do `AuditWriter` (recusa de cliente **não** transacional) também foi reexercida nesta fatia.
+
+### 6-M.9 Auditoria — e a autoria do primeiro bootstrap
+
+Campos do evento, medidos no banco:
+
+```text
+acao            = usuario.papeis.alterados     (D-AUD-01 — ação já homologada)
+resultado       = SUCESSO                      (D-AUD-02)
+alvo_tipo       = "usuario"                    (D-AUD-03 — nome físico da tabela)
+alvo_id         = usuario.id                   (o alvo é quem teve papéis alterados)
+justificativa   = NULL                         (nenhuma fonte a exige)
+contexto        = {} — coluna NULL             (whitelist VAZIA, D-AUD-07)
+ator_usuario_id = NULL                         (ação de sistema — ver abaixo)
+correlacao_id   = uma por operação
+```
+
+**Nenhuma ação nova foi criada** (`usuario.criado` continua inexistente e `P-2.3D-05` continua ABERTA); **`ACOES_AUDITORIA` não foi ampliada**; **`WHITELIST_CONTEXTO` não foi ampliada**; `papeis_anteriores`/`papeis_novos` **não** aparecem — continuam não homologadas (`docs/09` §12.6). `contexto` é **omitido** em vez de enviado como `{}`: o validator trata ausente e vazio identicamente e a coluna fica `NULL` — precedente já vigente em `usuario.autenticacao` (que `D-2.3D-12` também descreve como "contexto = {}"), no logout e em `profissional.situacao.alterada`.
+
+**A autoria — o ponto que a fatia foi mandada verificar com rigor.** O bootstrap cria o primeiro Administrador; por construção, não existe Administrador autenticado no instante em que o evento é emitido. As fontes **resolvem** o caso, e por isso ele **não** foi tratado como lacuna de decisão:
+
+- `docs/07` §22.3 define a coluna literalmente como **"`NULL` só em ação de sistema; RN-061"**, e o `schema.prisma` reproduz a mesma anotação em `evento_auditoria.ator_usuario_id`;
+- `AuditWriter` já tipa `atorUsuarioId: string | null` com o mesmo comentário normativo;
+- existe **precedente homologado idêntico**: `usuario.autenticacao`/`FALHA` grava `ator_usuario_id = NULL` justamente porque "não há ator autenticado" (`D-2.3D-12`; §6-F.6).
+
+O bootstrap é uma operação administrativa executada fora de qualquer sessão — é exatamente a "ação de sistema" que a coluna prevê. As alternativas foram examinadas e descartadas por falta de fundamento, não por conveniência:
+
+| Alternativa | Avaliação |
+| --- | --- |
+| **(a) `ator_usuario_id = NULL`** — adotada | Único valor com base normativa direta. Rastreabilidade preservada: `alvo_id`, `correlacao_id`, `ocorrido_em` e `acao` identificam integralmente o que aconteceu, e a operação é manual, deliberada e local ao operador com credenciais de banco |
+| (b) o usuário recém-criado como ator da própria elevação | Afirmaria uma decisão administrativa que ninguém tomou. Nenhuma fonte a autoriza, e ela degrada a trilha: um leitor futuro concluiria que houve ato de um administrador autenticado |
+| (c) ator sintético dedicado | Criaria identidade sem fonte — e uma linha em `usuario` que nada mais usa. Invenção pura |
+| (d) recusar o bootstrap por ausência de ator | Tornaria `D-2.3D-10` inimplementável |
+
+**Nenhuma decisão normativa foi tomada aqui:** (a) é a aplicação do que `docs/07` §22.3 já determina. Destaca-se o ponto para a revisão independente por ser o item mais sensível da fatia.
+
+### 6-M.10 Decisões locais — reversíveis, **não** são norma
+
+| ID | Problema | Alternativas | Escolha | Por que não é decisão normativa |
+| --- | --- | --- | --- | --- |
+| `L-F5-01` | `papel.codigo` não é catalogado por fonte alguma — `docs/09` §12.1 (item 2) registra expressamente essa ausência | (a) nome em CAIXA ALTA sem acentos; (b) minúsculas pontilhadas, como as permissões; (c) UUID opaco | **(a)** `ADMINISTRADOR`/`GESTOR`/`RECEPCIONISTA`/`FISIOTERAPEUTA` — segue o precedente de forma já vigente no schema homologado para todo identificador técnico enumerado (`ATIVA`, `EXPIRADA`, `EM_ELABORACAO`, ...) | É forma de identificador técnico, não semântica de papel. Os quatro papéis e seus nomes vêm de `docs/04` §3, byte a byte. Renomear o código é migração de dados trivial, sem tocar decisão homologada |
+| `L-F5-02` | `permissao.nome` é NOT NULL e §5 não oferece "nome curto" | (a) descrição de §5 verbatim; (b) rótulo curto autoral; (c) repetir o `codigo` | **(a)** — a única alternativa que não INVENTA texto. Provada contra o documento, parágrafo a parágrafo | (b) seria autoria nova em registro governado pela matriz homologada; (c) tornaria a coluna redundante. Reversível |
+| `L-F5-03` | Conflito: já existe OUTRO Administrador. Nenhuma fonte homologada fixa o comportamento | (a) recusar (fail-closed); (b) criar assim mesmo; (c) transferir o papel | **(a) recusar** — a alternativa conservadora sob lacuna declarada. Nunca se cria um segundo "primeiro Administrador" em silêncio | Lacuna real de fonte, resolvida pelo lado que **não** amplia privilégio. **Destacada para a revisão independente.** (b) e (c) alteram privilégio e exigiriam decisão expressa |
+| `L-F5-04` | Identidade preexistente ATIVA, sem o papel, sem outro Administrador | (a) convergir atribuindo o papel, sem tocar a identidade; (b) recusar; (c) sobrescrever senha/nome com os valores informados | **(a)** — é o caso de estado PARCIAL que a idempotência precisa cobrir. **(c) foi recusada**: sobrescrever a senha de uma conta preexistente é tomada de credencial | Comportamento de convergência sob lacuna; a alternativa adotada é a que menos altera estado alheio. Reversível |
+| `L-F5-05` | Identidade preexistente INATIVA | (a) recusar; (b) ativar e atribuir | **(a) recusar** — elevar conta inativa contraria AUT-001/AUT-005 e RN-001, e **não existe** fluxo de ativação de usuário (AUT-005 NÃO MATERIALIZADA) | Fail-closed sob lacuna. (b) materializaria parte de AUT-005 sem fatia atribuída |
+| `L-F5-06` | O CLI precisa de `CredencialService`; `AuthModule` o exporta | (a) importar `AuthModule`; (b) prover a MESMA classe em `ProvisionamentoModule` | **(b)** — (a) arrastaria para um processo de linha de comando o `AuthController`, o `APP_FILTER` de erros HTTP, o `LimitadorLogin` e a fábrica `POLITICA_COOKIE_SESSAO`, que faz fail-fast exigindo `TLF_AMBIENTE` (`R-2.3D-04`). O provisionamento não emite cookie | **Não há duplicação de política:** é a mesma classe e a mesma constante `POLITICA_ARGON2` de `D-2.3D-02`. É fronteira de módulo, reversível |
+| `L-F5-07` | O seed removeria associações fora da matriz? | (a) aditivo; (b) destrutivo/convergente total | **(a) aditivo** — (b) revogaria em silêncio, a cada execução, as concessões `P` que `docs/04` §4 prevê como ato posterior do Administrador | Consequência direta da fonte, mas a escolha é de implementação e está declarada com seu limite (§6-M.13) |
+
+### 6-M.11 Provas medidas
+
+**Unitárias — 40 provas novas** (`test:api` passou de 19 suites · 479 para **21 suites · 519**):
+
+| Suíte | Provas | O que mede |
+| --- | ---: | --- |
+| `catalogo-rbac.spec.ts` | 26 | Os quatro papéis **são** os títulos de `docs/04` §3; `permissao.nome` **é** a descrição de §5, byte a byte; e — a prova central — a matriz do código **é** a expectativa DERIVADA da tabela de §4, lida do disco e classificada pela regra declarada, com controle de exaustividade (toda linha mapeada, todo mapeamento existente na tabela), controle de não vacuidade e controle contra tautologia |
+| `provisionamento.fronteira.spec.ts` | 14 | O `AppModule` **não** resolve os serviços da fatia (com controle positivo de que o grafo montado é o real); `ProvisionamentoModule` importa exatamente dois módulos e não publica controller; nenhum arquivo de `src/` fora da fatia a importa; o CLI não é importado por ninguém; `argv` só carrega o nome do comando; nenhum arquivo da fatia contém senha embutida ou default; nenhum escreve em `console`; os serviços não escrevem em stdout/stderr |
+
+**Integração com PostgreSQL 18 real — 34 provas novas** (`verify:api-integration` passou de 7 suites · 239 para **8 suites · 273**), em `provisionamento-rbac.integration.spec.ts`. Caminho provado inteiro, sem mock no meio: serviço do container Nest real → `DatabaseService` → cliente real → `tlf_app` → PostgreSQL 18 → `papel`/`permissao`/`papel_permissao`/`usuario`/`usuario_papel` → `AuditContextValidator` → `evento_auditoria`.
+
+| Grupo | O que foi medido |
+| --- | --- |
+| Seed sobre banco vazio | 4 papéis, 29 permissões, 37 associações; papéis persistidos **iguais** a §3; permissões persistidas **iguais** ao catálogo, com as descrições da fonte; matriz persistida **igual** à homologada, papel a papel |
+| Restrições da matriz | Administrador com **zero** `prontuario.*`; Gestor com exatamente as três leituras (HOM-01); as 8 permissões `P` sem vínculo algum — com controle positivo de que elas **existem** na tabela |
+| Idempotência | 2ª execução: contagens todas zero, `jaConforme`, banco byte a byte igual; 3ª execução estável; banco **parcialmente** semeado converge (+3 papéis, +26 permissões, +36 associações) sem duplicar; `nome` divergente converge e a execução seguinte volta a ser no-op |
+| Seed aditivo | Concessão `P` acrescentada por fora **não** é revogada pela execução seguinte |
+| **Cadeia inteira** | Um usuário com papel Administrador resolve, pelo `PermissoesService` **da F4**, exatamente as 18 permissões semeadas; cada um dos quatro papéis resolve exatamente sua linha; igualdade de **conjunto** nos dois sentidos entre o catálogo persistido e o catálogo tipado — não `29 == 29` |
+| Bootstrap — caminho feliz | `USUARIO_CRIADO`; usuário ativo; vínculo **é** `ADMINISTRADOR`; **zero** sessão criada |
+| Bootstrap — segredo | `senha_hash` é PHC `$argon2id$` com `m=19456`, `t=2`, `p=1`; `precisaRehash` falso; a senha correta verifica e a incorreta não; a senha em claro **não** aparece em coluna alguma nem no evento serializado |
+| Bootstrap — auditoria | Exatamente 1 evento, com todos os campos de §6-M.9; nenhuma chave proibida no serializado (e-mail, senha, digest, `papeis_anteriores`, `papeis_novos`) |
+| Bootstrap — idempotência | 2ª execução `JA_CONFORME` com **zero** escrita e **zero** evento novo; 3ª estável; e-mail com maiúsculas e espaços reconhece a MESMA identidade (`D-2.3D-03`); estado parcial converge para `PAPEL_ATRIBUIDO` sem tocar senha/nome preexistentes |
+| Bootstrap — falha segura | Outro Administrador → recusa, banco **inalterado**, e o único administrador continua sendo o primeiro; papel ausente → recusa sem criar usuário; alvo inativo → recusa sem vínculo; entradas malformadas → recusa antes de qualquer escrita; **nenhuma mensagem de erro carrega e-mail, nome ou senha** |
+| Bootstrap — atomicidade | Falha da auditoria → **rollback integral** de usuário e vínculo, com controle positivo; violação do vínculo → zero usuário e zero evento; `AuditWriter` recusa cliente não transacional |
+| Fronteira | Zero sessão, zero segredo de recuperação, zero usuário inativado; a **única** ação de auditoria da fatia é `usuario.papeis.alterados`; o seed **não** emite evento algum |
+
+**Prova do PROCESSO REAL — o CLI compilado, contra PostgreSQL 18, em banco descartável:**
+
+```text
+1ª execução (senha por stdin)
+  seed: papeis +4 ~0 · permissoes +29 ~0 · associacoes +37
+  bootstrap-admin: USUARIO_CRIADO · usuario=01a04b2b-… · correlacao=44f746e4-…
+
+2ª execução (senha por stdin)
+  seed: … +0 ~0 · JA_CONFORME (nenhuma escrita)
+  bootstrap-admin: JA_CONFORME · usuario=01a04b2b-…      (mesmo id)
+
+3ª execução (TLF_BOOTSTRAP_ADMIN_SENHA; e-mail "  ADMIN.BOOTSTRAP@CLINICA.LOCAL  ")
+  bootstrap-admin: JA_CONFORME · usuario=01a04b2b-…      (D-2.3D-03 confirmada)
+
+outra identidade, com Administrador já existente
+  provisionamento: Bootstrap do primeiro Administrador recusado: ADMINISTRADOR_JA_EXISTE.
+
+sem stdin e sem variável de ambiente
+  provisionamento: Senha do Administrador não fornecida: redirecione-a pelo stdin
+                   ou defina TLF_BOOTSTRAP_ADMIN_SENHA. Senha por argumento de
+                   linha de comando não é aceita.
+```
+
+Estado lido do banco após as três execuções:
+
+```text
+papel 4 · permissao 29 · papel_permissao 37 · usuario 1 · usuario_papel 1
+evento_auditoria 1 · sessao_autenticacao 0
+usuario ....... email "admin.bootstrap@clinica.local" (normalizado), ativo=true
+senha_hash .... $argon2id$v=19$m=19456,p=1,t=2$…  (97 bytes)
+evento ........ usuario.papeis.alterados · SUCESSO · alvo_tipo=usuario
+                alvo_id = o usuário criado · ator_usuario_id NULL
+                justificativa NULL · contexto NULL
+senha em claro no banco ........ 0 ocorrências
+senha em claro na auditoria .... 0 ocorrências
+```
+
+**Prova de que o start normal NÃO faz bootstrap** — processo real `node apps/api/dist/main.js`, banco recém-migrado e vazio, com **todas** as variáveis `TLF_BOOTSTRAP_ADMIN_*` definidas no ambiente:
+
+```text
+GET /health -> {"status":"ok"}
+após o start e o encerramento por SIGTERM:
+  papel 0 · permissao 0 · papel_permissao 0 · usuario 0 · usuario_papel 0 · evento 0
+```
+
+### 6-M.12 Mutation challenges — 13 aplicados, 13 detectados, 13 revertidos
+
+Cada mutação foi aplicada ao código-fonte, medida pela suíte detectora, revertida e teve a reversão **provada por SHA-256** idêntico ao valor anterior à aplicação. Nenhuma sobreviveu; `git status` sem resíduo ao final.
+
+| # | Mutação | Detectada por | Resultado observado |
+| --- | --- | --- | --- |
+| `C-F5-01` | Uma permissão é removida do seed (Administrador perde `auditoria.ler`) | unitária | 4 provas falharam |
+| `C-F5-02` | Permissão de mutação indevida ao Gestor (`agenda.gerenciar`) — viola HOM-01 | unitária | 3 falharam |
+| `C-F5-03` | Permissão clínica indevida ao Administrador (`prontuario.escrever`) | unitária | 4 falharam |
+| `C-F5-04` | Papel auxiliar inventado (`SUPERADMIN`) | unitária | detectado em **compilação** — a suíte não roda (`satisfies` do catálogo) |
+| `C-F5-05` | `permissao.nome` divergente de `docs/04` §5 | unitária | 1 falhou |
+| `C-F5-06` | Idempotência do seed removida (associações recriadas sempre) | integração | 5 falharam |
+| `C-F5-07` | Auditoria obrigatória do bootstrap removida | integração | 6 falharam |
+| `C-F5-08` | Falha de auditoria engolida por `try/catch` — estado parcial | integração | 1 falhou |
+| `C-F5-09` | Bootstrap aceita conflito (segundo Administrador criado em silêncio) | integração | 2 falharam |
+| `C-F5-10` | Senha persistida **em claro** (`senhaHash = comando.senha`) | integração | 1 falhou |
+| `C-F5-11` | CLI passa a admitir senha padrão (`?? "senha-padrao-admin"`) | unitária | 1 falhou |
+| `C-F5-12` | `ProvisionamentoModule` registrado no `AppModule` — bootstrap automático | unitária | 4 falharam |
+| `C-F5-13` | `contexto` não vazio no evento (`papeis_novos`) | integração | 13 falharam |
+
+Verificação final da reversão sobre os arquivos tocados (`catalogo-rbac.ts`, `seed-rbac.service.ts`, `bootstrap-administrador.service.ts`, `cli.ts`, `app.module.ts`): **todos os SHA-256 idênticos aos medidos antes do primeiro challenge**, e `git status` mostrando apenas os arquivos legítimos da fatia.
+
+### 6-M.13 Bateria integral — e a limitação de AMBIENTE medida nesta execução
+
+**Uma condição do ambiente local, PREEXISTENTE e alheia à F5, impede parte da bateria de rodar no host Windows:** uma política de **Application Control** da máquina passou a bloquear o carregamento do addon nativo não assinado do Argon2 (`node_modules/argon2/prebuilds/win32-x64/argon2.glibc.node`, `ERR_DLOPEN_FAILED`). O efeito é **independente da F5** e foi verificado como tal: suítes intocadas por esta fatia (`credencial.service.spec.ts`, `auth.module.integration.spec.ts`, `audit.module.integration.spec.ts`, `openapi.spec.ts`) falham **ao carregar** pelo mesmo motivo, e as mesmas verificações estavam verdes nesta máquina em 28/08/2026 (§6-L.8). O arquivo tem data de 27/08/2026 e não foi tocado. **Nenhuma configuração de segurança da máquina foi alterada para contornar o bloqueio.**
+
+Para medir e não presumir, tudo que depende de Argon2 foi executado em um **contêiner Linux** (`node:24`), com instalação limpa (`npm ci`) e PostgreSQL 18 real — a mesma matriz que a CI usa. A árvore do host **não** foi modificada por essa execução.
+
+| Comando | Onde | Exit | Resultado |
+| --- | --- | ---: | --- |
+| `npm run typecheck` | host **e** contêiner | 0 | — |
+| `npm run build` | host **e** contêiner | 0 | `dist/provisionamento/` emitido (5 arquivos) |
+| `npm run test:api` | contêiner | 0 | **21 suites · 519 passed** (era 19 · 479) |
+| `npm run test:integration -w @techlab-fisio/api` | contêiner | 0 | **8 suites · 273 passed** (era 7 · 239) |
+| `npm run verify:argon2-runtime` | contêiner | 0 | 15/15 · `node v24.20.0 · linux/x64 · argon2 0.45.1` |
+| `npm run verify:openapi-runtime` | contêiner | 0 | 17/17 — contrato REST **inalterado**; nenhuma rota de F5 vazou |
+| `npm run test:integration` (persistência) | host | 0 | **10 suites · 87 passed** |
+| `npm run verify:from-scratch` | host | 0 | 10 suites · 87 passed; Guarda 2 verde |
+| `npm run lint:migrations` (Guarda 1) | host | 0 | 10 migrations · 37 objetos protegidos |
+| `npm run schema:verify` (Guarda 3) | host | 0 | golden byte a byte **60 169 bytes**; `prisma migrate diff --exit-code` **0** |
+| `git diff --check` | host | 0 | — |
+| `npm run test:api` | host | **1** | **BLOQUEADO PELO AMBIENTE** — 5 de 21 suites não carregam (4 delas intocadas pela F5) |
+| `npm run verify:api-integration` | host | **1** | **BLOQUEADO PELO AMBIENTE** — as 8 suites não carregam |
+| `npm run verify:argon2-runtime` | host | **1** | **BLOQUEADO PELO AMBIENTE** |
+| `npm run verify:openapi-runtime` | host | **1** | **BLOQUEADO PELO AMBIENTE** |
+| `npm run smoke:api` | host | **1** | **BLOQUEADO PELO AMBIENTE** — `ERR_DLOPEN_FAILED` no processo real |
+
+> **[ESTADO SUPERADO — §6-N.11]** O bloqueio descrito nesta seção **deixou de ocorrer em 29/08/2026** e o `smoke:api` passou a ser executado no host, com saída 0. O parágrafo abaixo é preservado como **registro histórico do período bloqueado** e não foi reescrito.
+
+**Limite declarado, e não mascarado:** o `smoke:api` versionado — que orquestra sua própria instância descartável a partir do host — **não** foi executado com sucesso nesta execução. A propriedade que ele mede no que interessa à F5 (o processo real sobe, serve `/health`, encerra por sinal, e **não** semeia nada) foi medida diretamente no contêiner, com o artefato compilado e banco real (§6-M.11). As demais verificações do smoke (CSRF, `/openapi.json`, fail-fast de `TLF_AMBIENTE`) permanecem cobertas por `verify:openapi-runtime` (17/17, verde) e pela suíte de integração (verde). **A execução do `smoke:api` no host permanece pendente de destravar o Argon2 na máquina** — ação de ambiente do titular, não da fatia.
+
+### 6-M.14 Zero drift de persistência
+
+```text
+git diff main -- packages/ ........... 0 linhas
+
+schema.prisma .......... 7bee911e75e4742f = 7bee911e75e4742f   IDÊNTICO
+schema.golden.sql ...... c2ad5dc539098f51 = c2ad5dc539098f51   IDÊNTICO
+protected-objects.json . 9b4033a3c2cf3a79 = 9b4033a3c2cf3a79   IDÊNTICO
+migrations ............. 10 -> 10   (nenhuma nova)
+golden ................. 60 169 bytes, byte a byte
+```
+
+`prisma format`, `prisma migrate dev`, `prisma db push` e `prisma db pull` **NÃO** foram executados em momento algum desta fatia. **Nenhuma dependência nova foi instalada**: `package.json` e `package-lock.json` da raiz com diff **vazio**; o único diff em `apps/api/package.json` são as **três linhas** de `scripts` do comando de provisionamento. **Nenhuma rota nova foi publicada** — `verify:openapi-runtime` (17/17) e `openapi.spec.ts` continuam exigindo exatamente `/auth/login`, `/auth/logout` e `/health`.
+
+Registro de higiene desta execução: durante a preparação dos mutation challenges detectou-se que `seed-rbac.service.ts` fora gravado com **dois bytes NUL** no separador da chave de deduplicação (`\`${papelId}\0${permissaoId}\``). O comportamento era idêntico — NUL e espaço são igualmente válidos como separador, e UUID não contém nenhum dos dois —, mas o byte era **não intencional** e tornava o arquivo binário para as ferramentas de texto. Corrigido para espaço, e a bateria integral foi **reexecutada** depois da correção; todos os números registrados acima são posteriores a ela.
+
+### 6-M.15 Fronteira — o que a F5 deliberadamente NÃO fez
+
+- **AUT-005 NÃO MATERIALIZADA**: nenhum endpoint ou serviço de ativação/inativação de usuário, nenhuma alteração de `usuario.ativo`, nenhuma revogação de sessão por inativação, nenhuma alteração de `SessaoService.validar`, nenhuma emissão de `usuario.situacao.alterada`. **Nenhuma fatia foi atribuída a AUT-005 por esta execução.** A recusa `USUARIO_ALVO_INATIVO` do bootstrap **lê** `usuario.ativo`; ela não o altera e não materializa nada.
+- **F6 NÃO INICIADA**: nenhuma recuperação de senha, nenhum segredo, nenhum endpoint, nenhum rate limiting próprio; `D-2.3D-08` continua sem materialização.
+- **Nenhuma reabertura de persistência**: nenhuma migration, coluna, tabela, índice, constraint ou enum; nenhuma edição do golden ou de `protected-objects.json`.
+- **Nenhum endpoint novo, nenhum frontend, nenhum JWT, nenhum refresh token, nenhum Redis, nenhum cache, nenhuma multitenancy.**
+- **Nenhuma ampliação de catálogo ou whitelist de auditoria; nenhuma `D-2.3D-14`; `docs/12` não foi tocado.** — *verdadeiro em 29/08/2026, quando esta seção foi escrita.* **[SUPERADO — REV. 27, 31/08/2026]** `D-2.3D-14` e `D-2.3D-15` foram homologadas por Bruno e `docs/12` (REV. 6) passou a integrar o conjunto de alterações da F5; ver §6-N e §6-O. Catálogo e whitelist de auditoria continuam **não ampliados**, e nenhuma decisão anterior foi alterada ou reaberta.
+- **Autorização clínica contextual (`P2.2-05`) NÃO INICIADA**: conceder `prontuario.ler`/`escrever`/`finalizar` ao papel Fisioterapeuta **não** antecipa nem dispensa a avaliação de escopo/relação, que continua fora desta etapa.
+
+### 6-M.16 Riscos, limites e pendências desta fatia
+
+| Item | Severidade | Situação |
+| --- | --- | --- |
+| Conflito de Administrador preexistente (`L-F5-03`) | **DESTACADO PARA REVISÃO** | Nenhuma fonte fixa o comportamento; adotada a alternativa conservadora (recusa). Aceitar o conflito **amplia privilégio** e exigiria decisão expressa |
+| Seed aditivo não revoga associação fora da matriz (`L-F5-07`) | **LIMITE DECLARADO** | Consequência de `P` ser concessão posterior legítima. Um "modo estrito" que reporte divergências sem removê-las é melhoria futura, não desta fatia |
+| Lacunas de tradução de §4 → §5 (§6-M.5) | **PENDENTE** | Seis linhas sem identificador objetivo. Cada uma exigirá decisão própria quando o endpoint correspondente existir |
+| `ator_usuario_id = NULL` no evento do bootstrap (§6-M.9) | **DESTACADO PARA REVISÃO** | Resolvido por fonte (`docs/07` §22.3 + RN-061 + precedente de `D-2.3D-12`), não por decisão local. Registrado para conferência adversarial |
+| `smoke:api` não executado no host (§6-M.13) | **BLOQUEIO DE AMBIENTE** | Application Control bloqueia o addon nativo do Argon2. Preexistente à F5 e alheio a ela; equivalente medido em contêiner. Destravar a máquina é ação do titular |
+| RBAC aplicado a rota de produção | **OBSERVAÇÃO herdada** | Continua sem rota de domínio; a F5 entrega dados, não endpoints |
+
+Pendências herdadas e **não** alteradas por esta fatia: `AUT-005`/`RN-001`, `P2.2-05`, `R2.2-04`, `P-BACK-01`, `P-2.3D-03`, `P-2.3D-04`, `P-2.3D-05`, `P-2.3D-06`, `L-05`..`L-08`, `R-BL-09`, `V-06.c`, `F-2.3C-REV-02`, `F-2.3C-REV-03`, `F-12`, `F3R-06`, `F3R-07`, RBAC/`profissionais.gerenciar`, higiene de formatação do `schema.prisma`.
+
+### 6-M.17 Estado
+
+```text
+F5 IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA
+NÃO HOMOLOGADA
+NÃO INTEGRADA
+
+commit: NÃO · push: NÃO · PR: NÃO · merge: NÃO · deploy: NÃO · tag/release: NÃO
+
+AUT-005 = NÃO MATERIALIZADA / NÃO ENCERRADA / SEM FATIA ATRIBUÍDA
+RN-001  = NÃO declarada satisfeita pela F5
+P2.2-05 = NÃO INICIADA
+R2.2-04 = estado vigente preservado
+P-2.3D-03 = estado vigente preservado
+F6 = NÃO INICIADA
+```
+
+**[SUPERADO — §6-N]** As duas revisões técnicas independentes ocorreram e devolveram **`C — NÃO APTO`**, com um achado ALTO (corrida que produzia dois "primeiros Administradores"). A fatia corretiva está em **§6-N**; as medições desta seção continuam válidas para o estado em que foram tomadas e **não foram reescritas**.
+
+## 6-N. Etapa 2.3D-B / F5 — fatia corretiva pós-revisões independentes
+
+**Estado: CORRIGIDA E REMEDIDA EM BRANCH PRÓPRIA — permanece NÃO HOMOLOGADA / NÃO INTEGRADA.** Executada em 29/08/2026 sobre a MESMA baseline `main` = `origin/main` = `91406203cbecb148f395a58adcfeb6b39f825337`, na mesma branch `agent/fase2-etapa2.3d-f5-seed-bootstrap-admin`, sobre a working tree não commitada que as revisões examinaram. **Publicação não autorizada: sem commit, push, PR, merge, rebase, tag, release ou deploy.**
+
+**Nenhuma decisão normativa foi criada, alterada, renumerada ou reaberta *pela execução de 29/08/2026*.** `D-2.3D-09` e `D-2.3D-10` intactas; `docs/09` §12 não reaberto; **`ACOES_AUDITORIA` e `WHITELIST_CONTEXTO` NÃO foram ampliadas**; Base Imutável intacta. §6-M é preservada como registro histórico da execução inicial, com a afirmação que a revisão provou incorreta marcada como **[RETIFICAÇÃO — `F5-R-05`]** e **nenhuma medição reescrita**.
+
+> **[ATUALIZAÇÃO — REV. 27, 01/09/2026 — estado CORRENTE desta seção.]** As duas lacunas normativas que esta fatia corretiva devolveu a Bruno (§6-N.3 e §6-N.4) foram **homologadas por Bruno Menezes Noronha em 31/08/2026** como **`D-2.3D-14`** e **`D-2.3D-15`** (`docs/12` §5.14 e §5.15, REV. 6). Em consequência, **`docs/12` PASSOU a integrar o conjunto de alterações da F5** — a redação original desta seção, escrita em 29/08/2026, ainda afirmava o contrário e está retificada aqui. O que permanece verdadeiro: **nenhuma decisão anterior foi alterada, renumerada, reduzida ou reaberta** (`D-2.3D-01`..`D-2.3D-13` seguem exatamente como homologadas, e `D-2.3D-09`/`D-2.3D-10` em particular), `docs/09` §12 não foi reaberto, catálogo e whitelist de auditoria continuam **não ampliados** e a Base Imutável permanece intacta. A **fatia** F5 continua **NÃO HOMOLOGADA e NÃO INTEGRADA**: a homologação de 31/08/2026 alcança as duas decisões normativas, não a fatia.
+
+### 6-N.1 Pareceres recebidos
+
+Duas revisões técnicas independentes e adversariais (Codex e Claude Code) reproduziram, de forma convergente e contra PostgreSQL real, a mesma falha bloqueante. O parecer consolidado devolveu **`C — NÃO APTO`**, com um achado ALTO, quatro MÉDIOS e cinco BAIXOS/INFORMATIVOS.
+
+| ID | Sev. | Situação após esta fatia |
+| --- | --- | --- |
+| `F5-R-01` | **ALTO** | **CORRIGIDO** (§6-N.2) — serialização por advisory lock; corrida reproduzida agora falha em produzir dois Administradores |
+| `F5-R-02` | MÉDIO | **CORRIGIDO** (§6-N.3) — divergências detectadas, relatadas e modo estrito |
+| `F5-R-03` | MÉDIO | **TRATADO** (§6-N.4) — autoria nula mantida por decisão executiva + justificativa operacional obrigatória |
+| `F5-R-04` | MÉDIO | **DOCUMENTADO** (§6-N.6) — runbook de recuperação manual; comando de reparo exige fatia própria |
+| `F5-R-05` | MÉDIO | **RETIFICADO** (§6-M.5, §6-N.7) — a afirmação falsa foi corrigida e o efeito material declarado |
+| `F5-R-06` | BAIXO | **CORRIGIDO** (§6-N.5) — fronteira de erros fechada |
+| `F5-R-07` | BAIXO | **CORRIGIDO** (§6-N.5) — caractere de controle recusado |
+| `F5-R-08` | BAIXO | **REGISTRADO** (§6-N.9) — risco de permissões `C` antes de `P2.2-05` |
+| `F5-R-09` | BAIXO | **CORRIGIDO** (§6-N.7) — inventário de decisões locais completado |
+| `F5-R-10` | INFORMATIVO | **REGISTRADO** (§6-N.9) |
+
+### 6-N.2 `F5-R-01` — a serialização do bootstrap
+
+**O defeito, medido pelas duas revisões.** A verificação "já existe Administrador?" era um `SELECT` puro seguido de decisão em memória. Sob `READ COMMITTED` — isolamento efetivo medido —, duas transações observam legitimamente o mesmo estado vazio:
+
+```text
+Tx A: SELECT ... FROM usuario_papel WHERE papel_id = <admin>   -> vazio
+Tx B: SELECT ... FROM usuario_papel WHERE papel_id = <admin>   -> vazio
+Tx A: cria usuário A + vínculo + evento                        -> COMMIT
+Tx B: cria usuário B + vínculo + evento                        -> COMMIT
+```
+
+Resultado medido em **processos CLI reais**: 2 usuários, 2 vínculos `ADMINISTRADOR`, 2 eventos, **ambos com saída 0**.
+
+**Por que `P2002` jamais resolveria.** A PK de `usuario_papel` é `(usuario_id, papel_id)`: identidades **diferentes** não colidem por unicidade — e é exatamente o caso perigoso. A unicidade só protege o caso do mesmo e-mail, que já funcionava.
+
+**A correção: advisory lock transacional.** `bloqueio-provisionamento.ts` adquire `pg_advisory_xact_lock(2337, 5)` como **primeira operação da transação**, antes de qualquer leitura decisória; **todas** as leituras que sustentam a decisão vêm depois dele. As alternativas foram avaliadas e descartadas com razão declarada:
+
+| Alternativa | Por que não |
+| --- | --- |
+| `SELECT ... FOR UPDATE` na linha do papel | Serve ao bootstrap, mas **não ao seed**: a seção crítica do seed inclui a CRIAÇÃO dessa mesma linha, que no primeiro seed ainda não existe |
+| `SERIALIZABLE` + retry | Espalharia laço de retry pela fronteira transacional única (`DatabaseService.transacao`), compartilhada com fluxos alheios à fatia. Ampliação desproporcional de superfície |
+| Índice único parcial | Exigiria **MIGRATION** — a F5 não reabre a persistência (`docs/12` §7.4) |
+
+**Ordem de locks — e por que não há deadlock:** existe **um único lock** para todo o domínio de provisionamento. Com um só lock não há ordem a definir e, portanto, não há deadlock possível entre as operações da fatia. `provisionar` executa seed e bootstrap em transações **separadas e sequenciais**, jamais aninhadas — nenhuma transação tenta adquiri-lo duas vezes. O lock é **transacional**: liberado no COMMIT, no ROLLBACK, em queda de conexão e em término abrupto do processo; não existe caminho em que vaze.
+
+**Chave estável e documentada:** o par de `int4` `(2337, 5)` — 2337 identifica a Etapa "2.3D" e 5 a fatia "F5". Advisory locks vivem em espaço de nomes próprio do PostgreSQL, por banco; **nenhum objeto do schema é tocado e nada é persistido**.
+
+**Detalhe de implementação medido:** a aquisição usa `$executeRaw`, não `$queryRaw`, porque o retorno de `pg_advisory_xact_lock` é `void` e o desserializador do Prisma rejeita essa coluna (`Failed to deserialize column of type 'void'`). `$executeRaw` não desserializa colunas.
+
+**O hash Argon2 saiu da transação.** Ele é calculado **antes** do lock. Argon2id sob `D-2.3D-02` custa dezenas de milissegundos; mantê-lo na seção crítica multiplicaria o tempo de retenção do lock e de uma transação aberta. O preço é calcular, em alguns caminhos, um digest que não será usado — **custo aceito e deliberado**. A janela TOCTOU **não** é reaberta: a decisão continua inteiramente depois do lock, e há teste específico com hash artificialmente lento.
+
+**Comportamento antes × depois — medido:**
+
+| Cenário concorrente | Antes | Depois |
+| --- | --- | --- |
+| N processos, e-mails **diferentes** | **N Administradores**, todos exit 0 | **1** `USUARIO_CRIADO` (exit 0) + N−1 `ADMINISTRADOR_JA_EXISTE` (exit 1) |
+| N chamadas, **mesmo** e-mail | 1 sucesso + `P2002` **cru** | 1 `USUARIO_CRIADO` + N−1 `JA_CONFORME`, **zero erro técnico** |
+| N variantes de caixa/espaços | não medido | 1 criação; as demais convergem — mesma identidade |
+| N execuções de `seed` | 1 sucesso + `P2002` **cru** | **todas** convergem, exit 0, zero duplicata |
+
+### 6-N.3 `F5-R-02` — divergências deixam de ser silenciosas
+
+**O defeito, medido pela revisão.** Em banco contaminado (papel `SUPERADMIN`, permissão `tudo.liberado`, `GESTOR -> pacotes.ajustar_sessao`), o seed devolvia `+0 ~0 +0` e `jaConforme: true` — que um operador lê como "banco conforme" — **inclusive com HOM-01 violado no estado persistido**.
+
+**Decisão normativa homologada.** `D-2.3D-14` (`docs/12` §5.14) fixa que o seed **continua aditivo e não destrutivo**: um seed destrutivo revogaria em silêncio as concessões que `docs/04` §4 marca como `P` e que só um Administrador concede depois. A divergência é **detectada e relatada**:
+
+- papéis fora do catálogo de `docs/04` §3;
+- permissões fora do catálogo de §5;
+- associações além da matriz homologada.
+
+`jaConforme` passou a significar **"nenhuma escrita E nenhuma divergência"**.
+
+**Modo estrito — convergente e não destrutivo.** `seed --estrito` aplica/completa a matriz canônica, preserva os excedentes e termina com **saída 3** quando divergências persistem, para uso em pipeline. Portanto, não é modo somente leitura. O modo normal executa a mesma convergência, preserva e relata os excedentes e termina com 0.
+
+**Privacidade da saída.** Códigos fora do catálogo são strings escritas por terceiros e podem conter qualquer coisa: eles são **apenas CONTADOS, nunca ecoados**. Somente pares cujos **dois** lados pertencem ao catálogo homologado são nomeados. Provado por teste, inclusive com a asserção de que o código de terceiro não aparece no resultado serializado.
+
+**Pós-condição homologada:** a matriz inicial homologada está PRESENTE **e** as divergências estão RELATADAS; o banco não precisa conter exclusivamente essa matriz. `D-2.3D-14` resolve a literalidade de `D-2.3D-09` sem autorizar remoção silenciosa.
+
+### 6-N.4 `F5-R-03` — autoria e justificativa operacional
+
+**Decisão normativa homologada:** `D-2.3D-15` (`docs/12` §5.15) fixa `ator_usuario_id = NULL`. Não se usa o usuário recém-criado como ator da própria elevação e **não se cria identidade sintética**.
+
+**O que mudou.** A revisão observou, com razão, que um bootstrap **manual** tem autor humano e que TLF-BASE-V1 §4.3 exige atribuibilidade — de modo que classificá-lo como "ação de sistema" é interpretação, não leitura literal. A resposta desta rodada é tornar **obrigatória** a justificativa operacional, via `TLF_BOOTSTRAP_ADMIN_JUSTIFICATIVA`:
+
+- validada **antes** de abrir a transação e antes de qualquer trabalho caro;
+- não vazia (após `trim`);
+- **recusa caractere de controle** (`JUSTIFICATIVA_INVALIDA`);
+- persistida em `evento_auditoria.justificativa` — coluna que `docs/07` §22.3 já prevê como livre;
+- **nunca** impressa em stdout ou stderr;
+- **nunca** colocada em `contexto`;
+- **não amplia** a whitelist de auditoria: `D-AUD-07` governa `contexto`, e `contexto` permanece vazio.
+
+Evento resultante, medido no banco:
+
+```text
+acao            = usuario.papeis.alterados     (D-AUD-01 — ação já homologada)
+resultado       = SUCESSO                      (D-AUD-02)
+alvo_tipo       = "usuario"                    (D-AUD-03)
+alvo_id         = usuario.id
+justificativa   = a justificativa operacional informada     <-- NOVO
+contexto        = {} — coluna NULL             (whitelist VAZIA, D-AUD-07)
+ator_usuario_id = NULL                         (D-2.3D-15; L-F5-08 é alias histórico)
+```
+
+**Lacuna normativa resolvida.** Bruno homologou a combinação de ator nulo com justificativa operacional obrigatória como representação do bootstrap inaugural. `L-F5-08` permanece apenas como alias histórico de `D-2.3D-15`.
+
+### 6-N.5 `F5-R-06` e `F5-R-07` — fronteira de erros e entrada da senha
+
+**Fronteira de erros.** O `catch` global imprimia `Error.message` de qualquer origem, contra o precedente `L-10` (§9), que declara que mensagens do Prisma podem carregar a consulta e seus parâmetros. Agora:
+
+- a saída é **construída** a partir de um `motivo` de conjunto fechado — **nem mesmo a `message` dos erros próprios** é ecoada;
+- erro de origem desconhecida vira `FALHA_INESPERADA (incidente <uuid>)`;
+- a detecção usa `name` + formato do `motivo`, e **não** `instanceof`, porque o erro do bootstrap vem de módulo carregado dinamicamente;
+- códigos de saída previsíveis: `0` ok · `1` falha controlada · `2` uso inválido · `3` divergência em modo estrito · `130` SIGINT · `143` SIGTERM;
+- uma falha em `contexto.close()` **não substitui** a falha original — só propaga quando o corpo terminou bem.
+
+Provado por teste contra processo real: com `DATABASE_URL` inválida, o stderr contém `FALHA_INESPERADA` e **não contém** `prisma`, `SELECT`, `INSERT`, `usuario_papel`, `postgresql://`, `ECONNREFUSED` nem o host.
+
+**Entrada da senha.** Precedência **determinística**, refletida no texto de uso:
+
+1. `TLF_BOOTSTRAP_ADMIN_SENHA`, se definida e não vazia — **o stdin não é lido**, e um pipe ocioso não trava o comando;
+2. stdin não-TTY: leitura limitada a **4096 bytes** e a **10 s** por EOF (`TLF_BOOTSTRAP_STDIN_TIMEOUT_MS` apenas para teste);
+3. caso contrário, erro controlado `SENHA_NAO_FORNECIDA`.
+
+Espaços — inclusive nas bordas — são **preservados**; qualquer **caractere de controle** (NUL, CR, LF) é **recusado** com `SENHA_COM_CARACTERE_DE_CONTROLE`. Isso fecha o defeito medido: um arquivo de senha com linha em branco ao final produzia, antes, uma senha com `\n` embutido que o operador jamais conseguiria digitar. Senha por `argv` continua impossível — qualquer argumento extra é recusado como `OPCAO_DESCONHECIDA` antes de qualquer leitura.
+
+**Encerramento por sinais.** `SIGINT` e `SIGTERM` fecham o contexto de forma **idempotente**, com teto de 5 s e saída forçada em seguida; a transação em curso sofre ROLLBACK ao cair a conexão, e o advisory lock transacional é liberado com ela. Provado por teste: o processo termina com 130/143 e o banco fica **sem** Administrador parcial.
+
+### 6-N.6 `F5-R-04` — recuperação: o que existe, o que não existe e o runbook
+
+**Comportamento mantido, por decisão executiva:** existindo outro Administrador, o bootstrap **recusa** com `ADMINISTRADOR_JA_EXISTE`. **Nenhum comando de transferência, remoção ou reparo de papel administrativo foi implementado nesta rodada.**
+
+**Por que o bootstrap normal não repara esse estado.** Ele é, por desenho, uma operação de **criação do primeiro** Administrador, não de administração de papéis. Reparar significaria remover ou transferir um vínculo `ADMINISTRADOR` — isto é, **reduzir privilégio de uma conta existente** a partir de um comando de linha, sem autenticação, sem autorização por `permissoes.gerenciar` e sem a auditoria de uma operação de gestão. Fazê-lo aqui converteria o bootstrap em ferramenta de escalonamento/desescalonamento arbitrário.
+
+**Risco de bloqueio administrativo — declarado.** Se o primeiro Administrador for criado com uma credencial que o operador não consegue reproduzir (ou se a conta for perdida), então: não há autenticação possível; o bootstrap recusa; **F6 (recuperação de senha) não existe**; **AUT-005 (gestão de usuários) não existe**; não há endpoint administrativo. O sistema fica sem via de recuperação **dentro do produto**. A recusa de controle de caractere (§6-N.5) reduz muito a chance do gatilho mais provável, mas **não elimina o risco**.
+
+**Runbook de recuperação manual — controlado, fora do produto.** Executado por quem detém credencial de banco, com registro operacional próprio:
+
+```text
+1. CONGELAR: interromper execuções de provisionamento em curso.
+2. EVIDENCIAR: registrar o estado atual, por consulta somente leitura —
+     SELECT u.id, u.email, u.ativo
+       FROM usuario u
+       JOIN usuario_papel up ON up.usuario_id = u.id
+       JOIN papel p          ON p.id = up.papel_id
+      WHERE p.codigo = 'ADMINISTRADOR';
+3. DECIDIR e AUTORIZAR: a escolha de qual vínculo remover é decisão de
+   Bruno, não do operador. Registrar a autorização.
+4. BACKUP verificável antes de qualquer escrita.
+5. REMOVER o vínculo excedente (DELETE em `usuario_papel`) — jamais o
+   usuário, jamais o papel, jamais linha de `evento_auditoria`
+   (append-only por E-11).
+6. REGISTRAR o ato no processo operacional. A trilha de auditoria NÃO
+   contém esse DELETE: `usuario_papel` não é auditada e esta fatia não
+   cria ação nova para isso.
+7. REEXECUTAR `bootstrap-admin` para a identidade correta e conferir
+   `count(administradores) = 1`.
+```
+
+**Um comando de reparo exige fatia e autorização próprias**, com decisão sobre autorização, auditoria da remoção e eventual ação de catálogo. Não é desta rodada e **não** foi antecipado.
+
+### 6-N.7 Decisões locais — inventário COMPLETO (`F5-R-09`)
+
+A revisão apurou que o inventário de §6-M.10 omitia resoluções interpretativas com efeito material. O inventário completo passa a ser:
+
+| ID | Situação |
+| --- | --- |
+| `L-F5-01` | Código de papel em CAIXA ALTA — **inalterada** (§6-M.10) |
+| `L-F5-02` | `permissao.nome` = descrição de §5 verbatim — **inalterada** |
+| `L-F5-03` | Conflito de Administrador preexistente → recusa — **mantida**, agora com runbook (§6-N.6) e **eficaz sob concorrência** (§6-N.2) |
+| `L-F5-04` | Identidade preexistente converge sem sobrescrever credencial — **inalterada** |
+| `L-F5-05` | Alvo inativo é recusado — **inalterada** |
+| `L-F5-06` | `CredencialService` provido no módulo do bootstrap — **reforçada**: agora é `BootstrapModule`, e `SeedModule` **não** o alcança (§6-N.8) |
+| ~~`L-F5-07`~~ → `D-2.3D-14` | Seed aditivo com detecção de divergências — **homologada como norma em 31/08/2026**; o identificador local permanece como alias histórico (§6-N.3; `docs/12` §5.14) |
+| ~~`L-F5-08`~~ → `D-2.3D-15` | `ator_usuario_id = NULL` com justificativa operacional obrigatória — **homologada como norma em 31/08/2026**; o identificador local permanece como alias histórico (§6-N.4; `docs/12` §5.15) |
+| **`L-F5-09`** | **NOVA (explicitada)** — agrupamento de "Ver observação administrativa" em `pacientes.administrativo.gerenciar`. **Efeito material medido: 37 × 38 associações; Fisioterapeuta 8 × 9** (§6-M.5 retificada) |
+| **`L-F5-10`** | **NOVA (explicitada)** — regra de **interseção** quando várias linhas de §4 mapeiam para a mesma permissão de §5. Efeitos medidos: Recepcionista sem `financeiro.relatorio.ler`; Fisioterapeuta sem `pacientes.administrativo.gerenciar`. A união produziria 39 associações |
+| **`L-F5-11`** | **NOVA (explicitada)** — resolução de `✓/P` e `P/✓ conforme política` como **negação**. Efeitos medidos: `financeiro.desconto.aplicar`, `financeiro.cobranca.cancelar` e `financeiro.pagamento.estornar` sem papel algum; Recepcionista sem `agenda.bloqueio` |
+| **`L-F5-12`** | **NOVA** — advisory lock **único** `(2337, 5)` para todo o domínio de provisionamento, em vez de locks por operação. Elimina ordem de aquisição e, com ela, a possibilidade de deadlock (§6-N.2) |
+
+`L-F5-07` e `L-F5-08` deixaram de ser decisões locais e permanecem apenas como aliases históricos de `D-2.3D-14` e `D-2.3D-15`. `L-F5-09`, `L-F5-10` e `L-F5-11` **não são decisões novas de comportamento**: são escolhas que já governavam a matriz desde §6-M e que agora estão declaradas como interpretativas, com efeito quantificado. A matriz **não mudou** nesta fatia — permanece 4/29/37 e 18/3/8/8.
+
+### 6-N.8 Separação dos contextos e independência do Argon2
+
+`ProvisionamentoModule` foi **substituído** por dois módulos de contexto mínimo:
+
+| Módulo | Imports | Providers |
+| --- | --- | --- |
+| `SeedModule` | `DatabaseModule` | `SeedRbacService` |
+| `BootstrapModule` | `DatabaseModule`, `AuditModule` | `CredencialService`, `BootstrapAdministradorService` |
+
+O CLI importa `BootstrapModule` de forma **DINÂMICA** (`await import(...)`), dentro do ramo que precisa dele. Sem isso, um `import` estático carregaria o addon nativo do Argon2 já na inicialização e derrubaria o comando `seed` em máquina onde esse addon não carregue.
+
+**Prova, e não promessa.** Um sabotador determinístico (`test/integration/sabota-argon2.cjs`) intercepta `process.dlopen` apenas para o `argon2` e reproduz `ERR_DLOPEN_FAILED`. Sob ele: `seed` conclui com saída 0 e contagens canônicas; e o **controle positivo** confirma que `bootstrap-admin` de fato usa o Argon2 sabotado e falha. Sem o controle positivo, o primeiro teste passaria mesmo que a sabotagem não funcionasse.
+
+**Confirmação no mundo real.** No host Windows, onde o bloqueio é uma política de Application Control **de verdade**, a suíte do CLI compilado executa: **17 de 28 casos passam**, e os 11 que falham são exatamente os que precisam criar o Administrador. Entre os que passam: todo o comando `seed`, o modo estrito, a corrida multiprocesso de `seed`, a recusa de senha por `argv`, a fronteira de erros e a validação de entrada.
+
+`AppModule` **continua sem importar qualquer módulo de provisionamento** — agora provado também por **fecho transitivo** de imports (não por regex de primeiro nível) e **também sobre o artefato compilado** em `dist/`.
+
+### 6-N.9 Riscos registrados
+
+| Item | Severidade | Registro |
+| --- | --- | --- |
+| Permissões `C` semeadas antes de `P2.2-05` (`F5-R-08`) | **BAIXO** | O Fisioterapeuta recebe `prontuario.ler/escrever/finalizar` e `agenda.gerenciar/checkin/falta/bloqueio`. `docs/04` §2.5 exige que o backend considere a relação do usuário com o recurso — e **essa camada não existe**. Hoje inócuo: nenhum endpoint de domínio existe e a guard da F4 é opt-in por rota. Torna-se efetivo no instante em que alguém publicar o primeiro endpoint clínico confiando no seed. **Quem publicar esse endpoint deve materializar o escopo, ou exigir permissão adicional, antes de expô-lo** |
+| Bootstrap eleva identidade preexistente com papel clínico (`F5-R-10`) | **INFORMATIVO** | Medido: um usuário com `FISIOTERAPEUTA` recebe `ADMINISTRADOR` e fica com ambos. Combinação legítima (`docs/04` §6.1), mas o operador informa apenas um e-mail e pode não perceber que o primeiro Administrador ganhou capacidade clínica |
+| Bloqueio administrativo sem via de recuperação (`F5-R-04`) | **MÉDIO — DECLARADO** | §6-N.6, com runbook. Mitigado pela recusa de caractere de controle, não eliminado |
+| Literalidade de `D-2.3D-09` × seed aditivo | **RESOLVIDA — `D-2.3D-14`** | §6-N.3 e `docs/12` §5.14 — matriz canônica integralmente presente; excedentes preservados e relatados; estrito convergente com saída 3 |
+| Autoria do bootstrap inaugural | **RESOLVIDA — `D-2.3D-15`** | §6-N.4 e `docs/12` §5.15 — ator nulo, sem identidade sintética, com justificativa operacional obrigatória |
+
+### 6-N.10 Provas — o que foi medido, e onde
+
+**Unitárias — `test:api` passou de 21 suites · 519 para 21 suites · 526** (+7 provas em `provisionamento.fronteira.spec.ts`, agora com fecho transitivo, artefato compilado e contratos de conjunto).
+
+**Integração — `test:integration -w api` passou de 8 suites · 273 para 9 suites · 322** (+49 provas; no Windows: 320 aprovadas + 2 sinais POSIX pulados):
+
+| Suíte | Provas | O que acrescentou |
+| --- | ---: | --- |
+| `provisionamento-rbac.integration.spec.ts` | 54 (era 34) | 7 cenários de bootstrap concorrente (identidades diferentes, mesma identidade, variantes normalizadas, Administrador preexistente, usuário ativo sem papel, usuário inativo, falha de auditoria, hash lento) **repetidos em 4 rodadas com 4 concorrentes**; 5 cenários de seed concorrente; 4 de divergências; 3 de justificativa |
+| `provisionamento-cli.integration.spec.ts` | 29 (**nova**) | O CLI **compilado**, em processos reais: comandos e códigos de saída, independência do Argon2 com sabotador e controle positivo, precedência da senha, pipe ocioso, CRLF, duas quebras, controles embutidos, espaços preservados, `argv`, fronteira de erros, modo estrito, estado simultaneamente parcial e divergente, `SIGINT`/`SIGTERM` e **a corrida entre processos** |
+
+Os cenários concorrentes são **repetidos** deliberadamente: um verde único poderia ser sorte de escalonamento.
+
+### 6-N.11 Bateria integral — por ambiente, sem confundir os dois
+
+> **[ATUALIZAÇÃO DE AMBIENTE — 29/08/2026, medida nesta rodada]** O bloqueio de
+> Application Control do addon Argon2 **deixou de ocorrer no host Windows**. O
+> arquivo continua `NotSigned`, mas o carregamento passou a ser permitido
+> (medido 3/3 com `import('argon2')`). **Nenhuma política da máquina foi
+> alterada por esta execução** — a mudança é do ambiente, não da fatia. A
+> consequência é boa e é registrada como fato: **a bateria integral passou a
+> ser executável também no host**, incluindo `smoke:api`, `verify:argon2-runtime`
+> e `verify:openapi-runtime`, que as revisões anteriores tiveram de deixar como
+> NÃO EXECUTADOS. As medições abaixo são as vigentes; as anteriores permanecem
+> em §6-M.13 como registro histórico e **não foram reescritas**.
+
+> **[ATUALIZAÇÃO PÓS-DECISÃO — 01/09/2026]** Depois de `D-2.3D-14`/`D-2.3D-15`, a bateria do host foi reexecutada. A integração passou a **320 aprovados + 2 pulados** pelo acréscimo da regressão de banco parcial e divergente; as demais contagens permaneceram. A medição Linux abaixo é o snapshot verde de 29/08/2026, anterior a essa única prova nova, e não é rebatizada como reexecução.
+
+> **[SNAPSHOT SUPERADO — REV. 28, 01/09/2026]** As tabelas desta subseção são o registro da bateria **daquela** rodada e não são reescritas. A bateria **corrente** está em **§6-O.5**: a integração da API passou a **9 suítes · 327 aprovados · 2 pulados** com as 7 provas do comando composto `provisionar` (`F5H-02`), e `provisionamento-cli` passou de 29 para **36** casos. As demais contagens permaneceram idênticas.
+
+**Host Windows** (`node v24.18.0`, win32-x64) — **integralmente verde**:
+
+| Comando | Exit | Resultado |
+| --- | ---: | --- |
+| `npm run typecheck` | 0 | — |
+| `npm run build` | 0 | — |
+| `npm run test:api` | 0 | **21 suites · 526 passed** |
+| `npm run verify:api-integration` | 0 | **9 suites · 320 passed · 2 skipped** (ver nota de plataforma) |
+| `npm run test:integration` (persistência) | 0 | 10 suites · 87 passed |
+| `npm run verify:from-scratch` (Guarda 2) | 0 | 10 suites · 87 passed |
+| `npm run verify:argon2-runtime` | 0 | 15/15 |
+| `npm run verify:openapi-runtime` | 0 | 17/17 |
+| `npm run smoke:api` | 0 | processo real sobe, `/health`, encerra por sinal |
+| `npm run lint:migrations` (Guarda 1) | 0 | 10 migrations · 37 objetos protegidos |
+| `npm run schema:verify` (Guarda 3) | 0 | golden byte a byte **60 169 bytes**; `migrate diff --exit-code` 0 |
+| `git diff --check` | 0 | — |
+
+**Contêiner Linux descartável e próprio — snapshot de 29/08/2026, anterior à regressão nova** (`node:24`, `npm ci` pelo lockfile, PostgreSQL 18 isolado, criado e destruído por aquela execução) — **integralmente verde**:
+
+| Comando | Exit | Resultado |
+| --- | ---: | --- |
+| `npm run typecheck` · `npm run build` | 0 | — |
+| `npm run test:api` | 0 | **21 suites · 526 passed** |
+| `npm run test:integration -w @techlab-fisio/api` | 0 | **9 suites · 321 passed** (nada pulado) |
+| `npm run verify:argon2-runtime` · `verify:openapi-runtime` | 0 | 15/15 · 17/17 |
+
+Suítes da fatia, medidas isoladamente no Linux naquele snapshot: `catalogo-rbac` **26**, `provisionamento.fronteira` **21**, `provisionamento-rbac` **54**, `provisionamento-cli` **28**. A 29ª prova do CLI foi medida no host em 01/09/2026 e não depende de sinais POSIX.
+
+**NOTA DE PLATAFORMA — os 2 casos pulados no host.** As provas de `SIGINT`/`SIGTERM` são **PULADAS no Windows, de forma explícita e visível na saída do Jest**, nunca silenciosamente aprovadas. A razão é de plataforma, não de implementação: **sinais POSIX não existem no Windows** — o Node documenta que `SIGTERM` nunca é entregue ao handler, e `child.kill()` recorre a `TerminateProcess`, que encerra o processo sem executar handler algum. O contrato de encerramento gracioso só é **medível** em POSIX, que é o alvo real: a CI roda em `ubuntu-latest` e a implantação é Linux. **A implementação não é condicional** — `cli.ts` registra os handlers em qualquer plataforma —, e as duas provas **passam no contêiner Linux** (28/28), onde o comportamento é observável.
+
+**Intermitência observada e NÃO reproduzida — registrada como tal.** Em uma execução de `test:api` no contêiner houve **1 falha isolada** (525/526). Não capturei o log daquela execução e, portanto, **não sei nomear o caso**. A falha **não se reproduziu em 7 execuções subsequentes** (4 seguidas, mais 2 repetindo a sequência exata `rm -rf dist` + `build` + `test`, mais a medição final), todas 526/526, no contêiner e no host. Fica registrada como **transitório não identificado**, e não como suíte verde sem ressalva. A suíte com maior sensibilidade temporal do repositório é `limitador-login.spec.ts` (~28 s, contadores de rate limiting), alheia a esta fatia — hipótese, não conclusão.
+
+### 6-N.12 Zero drift, dependências e fronteiras
+
+```text
+git diff main -- packages/ ........... 0 linhas
+schema.prisma / golden / protected ... SHA-256 idênticos a `main`
+migrations ........................... 10 -> 10   (nenhuma nova)
+golden ............................... 60 169 bytes, byte a byte
+package.json + package-lock (raiz) ... 0 linhas
+apps/api/package.json ................ +4 linhas (apenas scripts de provisionamento)
+rotas publicadas ..................... ["/auth/login","/auth/logout","/health"]
+```
+
+**Nenhuma dependência nova.** O advisory lock usa uma função nativa do PostgreSQL por `$executeRaw`; o sabotador de teste usa apenas `process.dlopen`. `prisma format`, `migrate dev`, `db push` e `db pull` **não** foram executados. **Nenhuma sessão é criada pelo bootstrap**; **nenhum provisionamento ocorre no start normal da API** — reprovado nesta rodada com o artefato compilado e todas as variáveis de bootstrap definidas.
+
+### 6-N.13 Fronteira — o que a fatia corretiva deliberadamente NÃO fez
+
+- **AUT-005 NÃO MATERIALIZADA / NÃO ENCERRADA / SEM FATIA ATRIBUÍDA** — nenhum fluxo de ativação/inativação, nenhuma alteração de `usuario.ativo`, `SessaoService.validar` intocado, `usuario.situacao.alterada` não emitida.
+- **F6 NÃO INICIADA.**
+- **Nenhum comando de reparo/transferência de papel administrativo** (§6-N.6).
+- **Nenhuma migration, coluna, índice, constraint ou enum**; golden e objetos protegidos intocados.
+- **Nenhum endpoint, rota, OpenAPI, JWT, Redis, cache ou multitenancy.**
+- **`ACOES_AUDITORIA` e `WHITELIST_CONTEXTO` não ampliadas** — nenhuma ação de auditoria nova, nenhuma chave de `contexto` introduzida. **`docs/12` FOI alterado** (REV. 6) para registrar `D-2.3D-14` e `D-2.3D-15`, homologadas por Bruno em 31/08/2026 (§6-N.3 e §6-N.4); **nenhuma decisão anterior foi alterada, renumerada, reduzida ou reaberta**.
+- **`P2.2-05` NÃO INICIADA** — a matriz não mudou e o escopo clínico continua fora.
+
+### 6-N.14 Estado
+
+```text
+F5 CORRIGIDA E REMEDIDA EM BRANCH PRÓPRIA
+NÃO HOMOLOGADA
+NÃO INTEGRADA
+
+commit: NÃO · push: NÃO · PR: NÃO · merge: NÃO · deploy: NÃO · tag/release: NÃO
+
+AUT-005 = NÃO MATERIALIZADA / NÃO ENCERRADA / SEM FATIA ATRIBUÍDA
+RN-001  = NÃO declarada satisfeita pela F5
+P2.2-05 = NÃO INICIADA
+R2.2-04 = estado vigente preservado
+P-2.3D-03 = estado vigente preservado
+F6 = NÃO INICIADA
+```
+
+**Próximo passo previsto em 29/08/2026:** nova revisão técnica independente e adversarial sobre a árvore corrigida, com atenção prioritária à eficácia do advisory lock sob carga, à política de divergências do seed e às duas decisões então reservadas a Bruno (§6-N.3 e §6-N.4).
+
+> **[ATUALIZAÇÃO — REV. 28, 01/09/2026.]** Esse passo **ocorreu**: as duas decisões foram homologadas em 31/08/2026 (`D-2.3D-14` e `D-2.3D-15`) e a revisão técnica independente final devolveu **`B — APTA COM RESSALVAS NÃO BLOQUEANTES`**, com 0 BLOQUEANTES e 0 ALTOS. As duas ressalvas — `F5H-01` (asserções factuais obsoletas nesta seção) e `F5H-02` (ausência de regressão do comando composto `provisionar`) — foram tratadas na segunda fatia corretiva, **§6-O**. O estado corrente da F5 é o de §6-O.
+
+## 6-O. Etapa 2.3D-B / F5 — segunda fatia corretiva, pós-homologação técnica
+
+**Estado: CORRIGIDA — permanece NÃO HOMOLOGADA COMO FATIA / NÃO INTEGRADA.** Executada em 01/09/2026 sobre a MESMA baseline `main` = `origin/main` = `91406203cbecb148f395a58adcfeb6b39f825337`, na mesma branch `agent/fase2-etapa2.3d-f5-seed-bootstrap-admin`, sobre a mesma working tree não commitada. **Publicação não autorizada: sem commit, push, PR, merge, rebase, tag, release ou deploy.**
+
+**Esta seção é o estado CORRENTE da F5.** §6-M e §6-N permanecem como registro histórico das duas execuções anteriores, com as retificações marcadas no lugar em que a afirmação obsoleta estava.
+
+**Nenhuma decisão normativa foi criada, alterada, renumerada, reduzida ou reaberta por esta fatia.** `D-2.3D-01`..`D-2.3D-15` seguem exatamente como homologadas; **`D-2.3D-14` e `D-2.3D-15` não foram tocadas**; `docs/12` **não** foi alterado nesta rodada; `docs/09` §12 não reaberto; `ACOES_AUDITORIA` e `WHITELIST_CONTEXTO` não ampliadas; Base Imutável intacta.
+
+### 6-O.1 Origem — a revisão técnica final
+
+A revisão técnica independente e adversarial sobre a árvore corrigida devolveu **`B — APTA COM RESSALVAS NÃO BLOQUEANTES`**, com **0 BLOQUEANTES e 0 ALTOS**. Ela reproduziu integralmente as medições declaradas na REV. 27 e provou por **mutação** que a serialização por advisory lock é efetiva: removido o lock do artefato compilado, 4 de 5 rodadas mediram 2 a 4 Administradores; restaurado, 5 rodadas × 6 processos e uma rodada de 12 processos mediram **exatamente 1**, com zero falhas não contratadas.
+
+Esta fatia trata **somente** as duas ressalvas. Nada além delas foi alterado.
+
+| ID | Sev. | Situação após esta fatia |
+| --- | --- | --- |
+| `F5H-01` | MÉDIO | **CORRIGIDO** (§6-O.2) — asserções factuais obsoletas de §6-N retificadas |
+| `F5H-02` | MÉDIO | **CORRIGIDO** (§6-O.3) — regressão automatizada do comando composto `provisionar` |
+| `F5H-03` | BAIXO | **NÃO TRATADO — fora do escopo desta rodada** (diagnosticabilidade de erro de configuração) |
+| `F5H-04` | BAIXO | **NÃO TRATADO — fora do escopo desta rodada** (logger do Nest em stdout) |
+| `F5H-05` | OBSERVAÇÃO | **NÃO TRATADO — fora do escopo** (teto padrão da transação limita a espera pelo lock; medido sem falha a 12 processos) |
+| `F5H-06` | OBSERVAÇÃO | **NÃO TRATADO — fora do escopo** (3 provas condicionadas a `dist/`) |
+| `F5H-07` | OBSERVAÇÃO | **NÃO TRATADO — fora do escopo** (sinais POSIX não medíveis no host Windows) |
+
+### 6-O.2 `F5H-01` — o que era falso, e o que passou a estar escrito
+
+O cabeçalho de §6-N e a lista de fronteira de §6-N.13 foram escritos em **29/08/2026**, quando ainda não existia `D-2.3D-14`. Ambos afirmavam, sem marca de data, que **`docs/12` não fora tocado** e que **não existia `D-2.3D-14`**. A REV. 27 homologou as duas decisões e atualizou §6-N.3 e §6-N.4 — mas não aquelas duas passagens, que passaram a **contradizer a própria seção** e o conjunto real de alterações da F5.
+
+Correção aplicada, sem reescrever história legítima:
+
+- o cabeçalho de §6-N teve a afirmação **datada** (“*pela execução de 29/08/2026*”) e ganhou um bloco **[ATUALIZAÇÃO — REV. 27]** declarando que `docs/12` **passou** a integrar o conjunto de alterações da F5, com `D-2.3D-14` e `D-2.3D-15` homologadas em 31/08/2026;
+- o marcador de §6-N.13 foi reescrito para o estado real: `docs/12` **foi** alterado (REV. 6), **nenhuma decisão anterior** foi alterada, renumerada, reduzida ou reaberta;
+- o “próximo passo” ao fim de §6-N foi datado e complementado com **[ATUALIZAÇÃO — REV. 28]**, que registra o desfecho da revisão e aponta para esta seção.
+
+§6-M **não** foi alterada: ela é registro histórico explícito da execução inicial, e §6-N já a declara como tal.
+
+**Distinção preservada, porque ela é material:** o que foi homologado em 31/08/2026 são as **duas decisões normativas**. A **fatia** F5 continua **não homologada e não integrada**.
+
+### 6-O.3 `F5H-02` — regressão do comando composto `provisionar`
+
+`seed` e `bootstrap-admin` já tinham cobertura exaustiva; a **composição** — o comando que o operador de fato executa, exposto como `npm run provisionar` — não tinha nenhuma. Sete provas novas em `apps/api/test/integration/provisionamento-cli.integration.spec.ts`, no mesmo padrão adversarial da suíte: **processo real** do CLI compilado, estado verificado **no PostgreSQL**, sem `sleep`, reusando a infraestrutura descartável existente.
+
+| Cenário | Saída | Administradores | Estado RBAC | Bootstrap | Resultado |
+| --- | ---: | ---: | --- | --- | --- |
+| Scripts públicos → argv medido | — | — | — | — | `provisionar` e `provisionar:seed:estrito` apontam para o CLI compilado |
+| **P1** banco vazio (senha por stdin) | **0** | 1 | 4 papéis · 29 permissões · 37 associações | executado | usuário criado; evento `usuario.papeis.alterados`, `ator = NULL`, justificativa persistida, `contexto` NULL; senha e justificativa ausentes da saída |
+| **P2** composição repetida | **0** | 1 | 4 · 29 · 37 (inalterado) | executado, `JA_CONFORME` | seed `JA_CONFORME`; nenhum segundo Administrador, nenhum segundo evento; **mesma** identidade |
+| **P3** outro Administrador existe | **1** | 1 | 5 papéis · 29 · **38** | recusado `ADMINISTRADOR_JA_EXISTE` | identidade intrusa **não nasce**; o seed **commitou** (matriz reconvergida, excedentes preservados) — transações separadas |
+| **P4** `provisionar --estrito` divergente | **3** | **0** | 5 · 29 · 38, `nome` reconvergido, excedentes preservados | **NÃO executado** | identidade solicitada **não existe**; zero usuário, zero evento; `stdout` sem qualquer `bootstrap-admin` |
+| **P4b** controle positivo (mesmo banco, sem `--estrito`) | **0** | 1 | idem, excedentes preservados | executado | prova que P4 não passa por vacuidade |
+| **P5** credencial inválida | **1** | 0 | **nada semeado** | não executado | validação da entrada precede o seed; `stdout` vazio |
+
+**Por que P4 é inequívoco.** O banco de P4 **não tem Administrador algum**. Assim, a ausência de Administrador ao final só pode vir do **curto-circuito da saída 3** — nunca de uma recusa `ADMINISTRADOR_JA_EXISTE`, que o teste também exclui explicitamente do `stderr`. **P4b** fecha a única brecha lógica restante: mesmo banco, mesma identidade, única diferença é a opção — e ali o bootstrap **roda** e cria o Administrador.
+
+**Poder de reprovação medido por mutação** (no artefato compilado, git-ignored, restaurado e reconstruído em seguida — SHA-256 idêntico ao build limpo):
+
+| Mutante | O que muda | Efeito medido |
+| --- | --- | --- |
+| M-1 | remove o `return` do curto-circuito | **P4 reprova** (`status` 0, esperado 3); P4b segue verde |
+| M-2 | preserva a saída 3, mas executa o bootstrap antes de retornar | **P4 reprova** pela asserção de que `stdout` **não** contém `bootstrap-admin`; P4b segue verde |
+
+M-2 é o que importa: ele prova que a regressão detecta a **execução do bootstrap**, e não apenas o código de saída. O curto-circuito **antes** do bootstrap está provado automaticamente.
+
+**Nenhuma alteração de comportamento produtivo.** `cli.ts` e os serviços da fatia não foram tocados; nenhum código de saída foi alterado; nenhuma dependência foi instalada.
+
+### 6-O.4 Arquivos alterados nesta fatia
+
+| Arquivo | Situação | Motivo |
+| --- | --- | --- |
+| `docs/10-backend-implementacao.md` | **ALTERADO** | `F5H-01` (§6-O.2) + esta seção + REV. 28 |
+| `apps/api/test/integration/provisionamento-cli.integration.spec.ts` | **ALTERADO** — +7 provas | `F5H-02` (§6-O.3); o arquivo passa de **29** para **36** casos |
+
+**Nenhum outro arquivo foi tocado.** `src/` intocado; `docs/12` intocado; `packages/` intocado; `package.json` intocado.
+
+### 6-O.5 Bateria integral — host Windows, 01/09/2026
+
+| Comando | Exit | Resultado |
+| --- | ---: | --- |
+| `npm run typecheck` | 0 | — |
+| `npm run build` | 0 | — |
+| `npm run test:api` | 0 | **21 suites · 526 passed** (inalterado) |
+| `npm run test:integration -w @techlab-fisio/api` | 0 | **9 suites · 327 passed · 2 skipped** (era 320 + 2 — as 7 provas novas) |
+| `npm run test:integration` (persistência) | 0 | 10 suites · 87 passed |
+| `npm run verify:from-scratch` (Guarda 2) | 0 | 10 suites · 87 passed; 0 descartáveis remanescentes |
+| `npm run verify:argon2-runtime` | 0 | 15/15 |
+| `npm run verify:openapi-runtime` | 0 | 17/17 |
+| `npm run smoke:api` | 0 | processo real, `/health`, encerramento por sinal |
+| `npm run lint:migrations` (Guarda 1) | 0 | 10 migrations · 37 objetos protegidos |
+| `npm run schema:verify` (Guarda 3) | 0 | golden byte a byte **60 169 bytes**; `migrate diff --exit-code` 0 |
+| `git diff --check` | 0 | — |
+
+Os 2 casos pulados continuam sendo **exclusivamente** as provas de `SIGINT`/`SIGTERM`, pela mesma razão de plataforma de §6-N.11 — nota inalterada e ainda vigente.
+
+### 6-O.6 Zero drift e fronteiras
+
+```text
+git diff main -- packages/ ........... 0 linhas
+git diff main -- apps/api/src/ ....... 0 linhas nesta fatia (src intocado)
+schema.prisma / golden / protected ... SHA-256 idênticos a `main`
+migrations ........................... 10 -> 10   (nenhuma nova)
+golden ............................... 60 169 bytes, byte a byte
+package.json (raiz e apps/api) ....... inalterados nesta fatia
+dependências novas ................... nenhuma
+rotas publicadas ..................... ["/auth/login","/auth/logout","/health"]
+```
+
+Fora do escopo desta fatia e **não** tratados: `F5H-03`, `F5H-04`, `F5H-05`, `F5H-06` e `F5H-07` (§6-O.1). **AUT-005** permanece NÃO MATERIALIZADA / NÃO ENCERRADA / SEM FATIA ATRIBUÍDA; **F6** NÃO INICIADA; **`P2.2-05`** NÃO INICIADA; **`R2.2-04`** e **`P-2.3D-03`** com estado vigente preservado.
+
+### 6-O.7 Estado
+
+```text
+F5 CORRIGIDA (2ª fatia corretiva) EM BRANCH PRÓPRIA
+FATIA: NÃO HOMOLOGADA · NÃO INTEGRADA
+DECISÕES D-2.3D-14 e D-2.3D-15: HOMOLOGADAS em 31/08/2026 (docs/12 REV. 6)
+
+commit: NÃO · push: NÃO · PR: NÃO · merge: NÃO · deploy: NÃO · tag/release: NÃO
+
+F5H-01 = CORRIGIDO      F5H-02 = CORRIGIDO
+F5H-03, F5H-04, F5H-05, F5H-06, F5H-07 = FORA DO ESCOPO, EM ABERTO
+```
+
+**Próximo passo: decisão de Bruno Menezes Noronha sobre a homologação da fatia e, somente após autorização própria, o rito de versionamento/integração.** Este documento **não** afirma integração, publicação ou merge.
+
 ## 7. Auditoria — `P-BACK-01`
 
 ### 7.1 Estado
@@ -1943,6 +2793,15 @@ Registrada no relatório de consolidação da 2.3A: `npm ci`; `db:generate`; `db
 | `L-F4-02` — sessão viva de usuário inativado | **DECISÃO LOCAL da F4, com COBERTURA PARCIAL declarada** (§6-K.4): o RBAC **nega** a autorização, como defesa em profundidade contra estado inconsistente. **NÃO materializa AUT-005** e **não** protege rotas apenas autenticadas — medido: uma sessão de conta inativada permanece `ATIVA`, continua válida para o `SessaoService` e obtém `200` em rota sem RBAC. `SessaoService` **não** foi alterado. Reversível sem tocar decisão homologada |
 | RBAC aplicado a rota de produção | **OBSERVAÇÃO da F4** (§6-J.4): nenhuma rota publicada tem permissão exigida pela matriz de `docs/04` §4 — `/health` é infraestrutura e login/logout são explicitamente permitidos a todos os papéis. O mecanismo está provado por integração sobre controller exclusivamente de teste; o primeiro uso real ocorrerá com o primeiro endpoint de domínio |
 | Custo da consulta de autorização por requisição | **OBSERVAÇÃO da F4** (§6-J.13): uma consulta por requisição autorizada, **sem cache**, por decisão de escopo (`docs/12` §16). Nenhum problema de custo foi medido; se vier a ser, é evidência para decisão posterior, nunca licença para introduzir cache por antecipação |
+| `L-F5-03` — conflito de Administrador preexistente no bootstrap | **MANTIDA E AGORA EFICAZ SOB CONCORRÊNCIA** (§6-N.2); risco de bloqueio administrativo e runbook manual registrados em §6-N.6; um comando de reparo exige fatia e autorização próprias. Registro histórico (§6-M.10): nenhuma fonte homologada fixa o comportamento quando já existe outro usuário com o papel Administrador. Adotada a alternativa conservadora e fail-closed — **recusa** (`ADMINISTRADOR_JA_EXISTE`), medida contra PostgreSQL real. Aceitar o conflito **amplia privilégio** e exige decisão expressa de Bruno |
+| ~~`L-F5-07`~~ → **`D-2.3D-14`** — seed aditivo, nunca destrutivo | **HOMOLOGADA COMO NORMA em 31/08/2026** (§6-N.3; `docs/12` §5.14). A matriz canônica deve ficar integralmente presente; excedentes são preservados e relatados. `seed --estrito` também converge o estado canônico e termina com saída 3 quando divergências persistem — não é somente leitura. `L-F5-07` permanece apenas como alias histórico |
+| Lacunas de tradução `docs/04` §4 → §5 | **PENDENTES** (§6-M.5): seis linhas da matriz não possuem identificador objetivamente determinável em §5 — "Consultar profissionais", "Iniciar/Concluir atendimento clínico", "Consultar saldo administrativo de pacote", "Consultar histórico detalhado de movimentos", "Emitir recibo simples" e "Consultar indicadores operacionais". **Nenhuma associação foi inventada.** Cada uma exigirá decisão própria quando o endpoint correspondente existir; `indicadores.proprios.ler` permanece sem papel |
+| Autoria do evento do primeiro bootstrap (~~`L-F5-08`~~ → **`D-2.3D-15`**) | **HOMOLOGADA COMO NORMA em 31/08/2026** (§6-N.4; `docs/12` §5.15). O evento usa `ator_usuario_id = NULL`, sem identidade sintética e sem atribuir ao alvo a autoria da própria elevação; `TLF_BOOTSTRAP_ADMIN_JUSTIFICATIVA` é obrigatória, persistida em `evento_auditoria.justificativa` e não amplia a whitelist. `L-F5-08` permanece apenas como alias histórico |
+| Argon2 bloqueado por Application Control no host Windows | **DEIXOU DE OCORRER em 29/08/2026 — medido 3/3** (§6-N.11). O arquivo segue `NotSigned`, mas o carregamento passou a ser permitido; **nenhuma política da máquina foi alterada**. Consequência: a bateria integral, inclusive `smoke:api`, `verify:argon2-runtime` e `verify:openapi-runtime`, **passou a ser executável e está verde no host**. Mitigação estrutural da F5 permanece válida e é o que torna o risco não recorrente para o `seed`: ele deixou de depender do Argon2 (§6-N.8). **Como a causa é política de ambiente e pode voltar, o item permanece MONITORADO, não encerrado.** Registro histórico do período bloqueado: §6-M.13 |
+| `F5-R-01` — corrida do primeiro Administrador | **CORRIGIDO em 29/08/2026** (§6-N.2). Duas revisões independentes reproduziram, em processos CLI reais, DOIS "primeiros Administradores" com ambos os processos em saída 0, sob `READ COMMITTED`. Correção: advisory lock transacional único `pg_advisory_xact_lock(2337, 5)` adquirido ANTES de qualquer leitura decisória, com todas as releituras sob o lock; hash Argon2 movido para fora da transação. Sem migration, sem dependência nova. Provado por cenários concorrentes repetidos, in-process e **entre processos** |
+| `L-F5-08`..`L-F5-12` — inventário interpretativo | **ATUALIZADO** (§6-N.7): `L-F5-08` foi homologada como `D-2.3D-15` e permanece alias histórico; `L-F5-09`..`L-F5-12` seguem registradas com efeito quantificado. Nenhuma altera a matriz vigente (4/29/37, 18/3/8/8) |
+| Permissões `C` semeadas antes de `P2.2-05` | **RISCO BAIXO REGISTRADO** (§6-N.9): o Fisioterapeuta possui `prontuario.ler/escrever/finalizar` e `agenda.*` sem que a camada de escopo de `docs/04` §2.5 exista. Inócuo hoje (nenhum endpoint de domínio; guard opt-in). **Quem publicar o primeiro endpoint clínico deve materializar o escopo, ou exigir permissão adicional, antes de expô-lo** |
+| Bloqueio administrativo sem via de recuperação | **RISCO MÉDIO DECLARADO** (§6-N.6): recusa `ADMINISTRADOR_JA_EXISTE` mantida; sem F6 e sem AUT-005, não há recuperação dentro do produto. Runbook manual controlado registrado. Um comando de reparo exige **fatia e autorização próprias** |
 | Higiene de formatação do `schema.prisma` | **PENDENTE — fora da F0 por decisão** — `prisma format` reformataria 7 modelos alheios ao escopo (condição **preexistente** à F0); merece PR próprio de formatação isolada, nunca misturado a uma fatia funcional |
 
 ## 10. Próximas etapas
@@ -1957,7 +2816,7 @@ Sujeitas a autorização própria, nesta ordem provável:
 6. ~~**`F2 — SessaoService`**~~ — implementação **EXECUTADA em 27/08/2026** (§6-E), revisão técnica independente com veredito **B** e correções `C-01`/`C-02` aplicadas (§6-E.9); `R-2.3D-03` **ENCERRADO** por decisão de Bruno (§9); **HOMOLOGADA e INTEGRADA NA `main` em 27/08/2026** (commit `289a94b`, PR [#12](https://github.com/BrunoMNoronha/techlab-fisio/pull/12), merge commit `70b30ae`; registro pós-medição em §11, REV. 15).
 7. ~~**`F3 — endpoints REST de autenticação`**~~ — **CONCLUÍDA / HOMOLOGADA / INTEGRADA NA `main`** (§6-F a §6-I). Implementação executada em 27/08/2026 na branch `agent/fase2-etapa2.3d-f3-auth-http` a partir de `9a22262`; `D-2.3D-06`, `D-2.3D-07`, `D-2.3D-11`, `D-2.3D-12` e `D-2.3D-13` materializadas. **Três** revisões técnicas independentes adversariais — vereditos `B`, `B` e **`A`** — com duas fatias corretivas (§6-G, §6-H); `L-11` devolvida a Bruno e homologada como **`D-2.3D-13`**. Homologada em 28/08/2026 e integrada por **merge commit `3556972`**, PR [#14](https://github.com/BrunoMNoronha/techlab-fisio/pull/14), com os commits `362aefe`, `c755fcb` e `c20cf1c`. CI verde sobre o HEAD integrado (206 provas de integração) e validação local pós-merge verde; zero drift. Registro pós-medição em §6-I.8 e §11, REV. 20.
 8. ~~**`F4 — guards e decorators de autorização (RBAC)`**~~ — **CONCLUÍDA / HOMOLOGADA / VERSIONADA / INTEGRADA NA `main`** (§6-J a §6-L). Implementação executada em 28/08/2026 na branch `agent/fase2-etapa2.3d-f4-rbac` a partir de `main` = `a9be742`; `D-2.3D-09` e a parte de RBAC de `AUT-003` materializadas. **Duas** revisões técnicas independentes adversariais — vereditos `B` e **`A`** — com uma fatia corretiva (§6-K); `L-F4-01` **encerrada por eliminação da abstração**, não por decisão normativa. Homologada por Bruno Menezes Noronha em 28/08/2026 e integrada por **merge commit `fce62d9`**, PR [#16](https://github.com/BrunoMNoronha/techlab-fisio/pull/16), a partir do commit único `ea8c74d`. CI verde (run `33222908307`) e validação integral pós-merge verde sobre a `main` integrada; zero drift de persistência; nenhuma migration nova; nenhuma dependência nova; nenhuma rota nova publicada. Limites preservados: **AUT-005 NÃO MATERIALIZADA / NÃO ENCERRADA**, sem fatia atribuída, e autorização clínica contextual (`P2.2-05`) **NÃO INICIADA**. Registro pós-medição em §6-L.8 (REV. 24).
-9. **`F5 — seed de papéis/permissões + bootstrap do primeiro Administrador`** — **NÃO INICIADA**, sujeita a autorização expressa própria e à homologação e integração da F4 (`D-2.3D-09`, `D-2.3D-10`).
+9. **`F5 — seed de papéis/permissões + bootstrap do primeiro Administrador`** — **IMPLEMENTADA, REVISADA, CORRIGIDA E REMEDIDA EM BRANCH PRÓPRIA; DECISÕES NORMATIVAS HOMOLOGADAS; NÃO INTEGRADA** (§6-M implementação; §6-N fatia corretiva). Branch `agent/fase2-etapa2.3d-f5-seed-bootstrap-admin` a partir de `main` = `9140620`; `D-2.3D-09`, `D-2.3D-10`, `D-2.3D-14` e `D-2.3D-15` materializadas. **Duas** revisões técnicas independentes adversariais devolveram **`C — NÃO APTO`**, por corrida que produzia dois "primeiros Administradores"; a fatia corretiva serializou o provisionamento por advisory lock, tornou as divergências do seed visíveis, exigiu justificativa operacional na auditoria, fechou a fronteira de erros do CLI e separou os contextos de seed e bootstrap. A revisão independente posterior confirmou a correção da corrida e apontou duas ambiguidades, agora resolvidas por `D-2.3D-14`/`D-2.3D-15`, além de uma regressão documental/contratual corrigida com prova específica de estado parcial e divergente. **Próximo passo: reexecutar a bateria e submeter a árvore exata à homologação técnica final/versionamento.**
 10. **`F6 — recuperação de senha`** — **NÃO INICIADA** (`D-2.3D-06`, `D-2.3D-08`).
 11. Decisões normativas adiadas (`L-05`..`L-08`, `configuracao.alterada`, `prontuario.exportado`, eventual `autor_original_usuario_id`) e RBAC (`profissionais.gerenciar`) — cada uma por decisão expressa de Bruno, nunca por implicação de implementação.
 
@@ -1965,6 +2824,10 @@ Sujeitas a autorização própria, nesta ordem provável:
 
 | REV. | Data | Conteúdo |
 | --- | --- | --- |
+| **28** | **01/09/2026** | **SEGUNDA FATIA CORRETIVA DA ETAPA 2.3D-B / F5, pós-homologação técnica — `F5H-01` e `F5H-02` TRATADOS; a FATIA permanece NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-O). Mesma baseline `main` = `origin/main` = `91406203cbecb148f395a58adcfeb6b39f825337`, mesma branch `agent/fase2-etapa2.3d-f5-seed-bootstrap-admin`, mesma working tree não commitada, staging vazio. **Publicação não autorizada: sem commit, push, PR, merge, rebase, tag, release ou deploy.** **Nenhuma decisão normativa criada, alterada, renumerada, reduzida ou reaberta** — `D-2.3D-01`..`D-2.3D-15` seguem exatamente como homologadas, **`D-2.3D-14` e `D-2.3D-15` não foram tocadas** e **`docs/12` NÃO foi alterado nesta rodada**; `docs/09` §12 não reaberto; catálogo e whitelist de auditoria não ampliados; Base Imutável intacta. **(a) Origem:** a revisão técnica independente e adversarial sobre a árvore corrigida devolveu **`B — APTA COM RESSALVAS NÃO BLOQUEANTES`**, com **0 BLOQUEANTES e 0 ALTOS**; reproduziu todas as medições da REV. 27 com números idênticos e provou por **mutação** que a serialização é efetiva — removido o advisory lock do artefato compilado, 4 de 5 rodadas mediram 2 a 4 Administradores; restaurado, 5 rodadas × 6 processos e uma de 12 processos mediram exatamente 1, com zero falhas não contratadas. **(b) `F5H-01` CORRIGIDO** (§6-O.2): o cabeçalho de §6-N e o marcador de §6-N.13 afirmavam, sem marca de data, que `docs/12` não fora tocado e que não existia `D-2.3D-14` — escritos em 29/08/2026 e tornados falsos pela homologação de 31/08/2026, contradizendo §6-N.3 e §6-N.4 na mesma seção. As afirmações foram **datadas** e **retificadas** com blocos de atualização explícitos; **§6-M não foi alterada**, por ser registro histórico declarado da execução inicial. Preservada a distinção material: o que foi homologado em 31/08/2026 são as **duas decisões**, não a fatia. **(c) `F5H-02` CORRIGIDO** (§6-O.3): o comando composto `provisionar` — exposto como `npm run provisionar` e até então sem regressão alguma — ganhou **7 provas** em `provisionamento-cli.integration.spec.ts` (de 29 para **36** casos no arquivo), com processo real do CLI compilado e verificação de estado no PostgreSQL: **P1** banco vazio (saída 0, 1 Administrador, evento com `ator = NULL` e justificativa persistida); **P2** composição idempotente (saída 0, `JA_CONFORME` nos dois estágios, mesma identidade); **P3** outro Administrador existente (saída 1, identidade intrusa não nasce, e o seed **commitou** — transações separadas); **P4** `provisionar --estrito` sobre banco divergente (**saída 3, bootstrap NÃO executado**, identidade solicitada inexistente, matriz canônica aplicada e excedentes preservados por `D-2.3D-14`); **P4b** controle positivo contra vacuidade; **P5** credencial inválida recusada **antes** do seed. **(d) Poder de reprovação medido:** dois mutantes aplicados ao artefato compilado, **ambos mortos** — remover o `return` do curto-circuito derruba P4 pelo código de saída, e preservar a saída 3 executando o bootstrap derruba P4 pela asserção de que `stdout` não contém `bootstrap-admin`; o segundo prova que a regressão detecta a **execução do bootstrap**, não apenas o código de saída. Artefato compilado restaurado e reconstruído, com SHA-256 idêntico ao build limpo. **(e) Nenhuma alteração de comportamento produtivo:** `src/` intocado, códigos de saída inalterados, advisory lock inalterado, nenhuma dependência instalada, `package.json` inalterado nesta rodada. **(f) Bateria integral verde** (§6-O.5): typecheck 0; build 0; `test:api` **21 · 526** (inalterado); integração da API **9 suítes · 327 passed · 2 skipped**; persistência **10 · 87**; `verify:from-scratch` (Guarda 2) 10 · 87; `verify:argon2-runtime` 15/15; `verify:openapi-runtime` 17/17; `smoke:api` verde; Guarda 1 (10 migrations · 37 objetos); Guarda 3 (golden byte a byte **60 169 bytes**, `migrate diff --exit-code` 0); `git diff --check` 0. **(g) Zero drift:** `packages/` com diff vazio; schema, golden e objetos protegidos com hash idêntico; 10 migrations continuam 10. **(h) Fora do escopo e EM ABERTO:** `F5H-03`, `F5H-04`, `F5H-05`, `F5H-06` e `F5H-07`. **(i) Estados preservados:** **AUT-005 NÃO MATERIALIZADA / NÃO ENCERRADA / SEM FATIA ATRIBUÍDA**; **RN-001** não declarada satisfeita; **`P2.2-05` NÃO INICIADA**; **`R2.2-04`** e **`P-2.3D-03`** com estado vigente preservado; **F6 NÃO INICIADA**. **Próximo passo: decisão de Bruno Menezes Noronha sobre a homologação da fatia e, somente após autorização própria, o rito de versionamento/integração.** |
+| **27** | **01/09/2026** | **DECISÕES NORMATIVAS DA F5 HOMOLOGADAS E CORREÇÕES OBJETIVAS REMEDIDAS; FATIA NÃO INTEGRADA.** Por autorização expressa de Bruno Menezes Noronha, foram acrescentadas a `docs/12` REV. 6: **`D-2.3D-14`**, que fixa a matriz canônica integralmente presente com seed aditivo, preservação/relato de excedentes e `--estrito` convergente com saída 3; e **`D-2.3D-15`**, que fixa `ator_usuario_id = NULL` no bootstrap inaugural, sem identidade sintética e com justificativa operacional obrigatória fora de `contexto`. `L-F5-07` e `L-F5-08` permanecem apenas como aliases históricos. Corrigida a promessa textual incorreta de que o modo estrito não alteraria banco; acrescentada prova de estado simultaneamente parcial e divergente, que confirma reparo da matriz, preservação do excedente e ausência da mensagem “nada foi alterado”; atualizado o rodapé vivo que ainda parava na REV. 20/F4 não iniciada/F5 não iniciada. Medições: typecheck/build verdes; API unit **21 · 526**; integração no host **9 · 320 aprovados + 2 sinais POSIX pulados**; persistência/from-scratch **10 · 87**; Argon2 15/15; OpenAPI 17/17; Guardas 1–3; golden **60 169 bytes**; smoke real verde; `git diff --check` limpo; zero container/volume/banco descartável residual. Nenhum commit, push, PR, merge, tag, release ou deploy. Próximo passo: homologação técnica final da árvore exata e autorização própria para versionamento/integração. |
+| **26** | **29/08/2026** | **FATIA CORRETIVA DA ETAPA 2.3D-B / F5, apos DUAS revisoes tecnicas independentes adversariais (veredito consolidado `C — NAO APTO`); permanece NAO HOMOLOGADA / NAO INTEGRADA** (§6-N). Mesma baseline `main` = `origin/main` = `91406203cbecb148f395a58adcfeb6b39f825337`, mesma branch, mesma working tree nao commitada. **Nenhuma decisao normativa criada, alterada, renumerada ou reaberta; `docs/12` NAO foi tocado; `D-2.3D-09` e `D-2.3D-10` intactas; nenhuma `D-2.3D-14`; `docs/09` §12 nao reaberto; `ACOES_AUDITORIA` e `WHITELIST_CONTEXTO` NAO ampliadas; Base Imutavel intacta.** **(a) `F5-R-01` (ALTO) CORRIGIDO** — as duas revisoes reproduziram, em processos CLI reais contra PostgreSQL real e sob `READ COMMITTED`, **DOIS "primeiros Administradores" com ambos os processos em saida 0**: a verificacao era TOCTOU e a PK `(usuario_id, papel_id)` nao impede identidades distintas. Correcao: **advisory lock transacional unico** `pg_advisory_xact_lock(2337, 5)`, adquirido como PRIMEIRA operacao da transacao, com todas as releituras decisorias sob ele; o digest Argon2 saiu da transacao. Um unico lock para todo o dominio elimina ordem de aquisicao e, com ela, deadlock. **Sem migration e sem dependencia nova.** **(b) `F5-R-02` (MEDIO) CORRIGIDO** — o seed segue **aditivo e nao destrutivo**, mas passa a DETECTAR e RELATAR papeis/permissoes fora do catalogo e associacoes excedentes; `jaConforme` passou a significar "nenhuma escrita **E** nenhuma divergencia"; `seed --estrito` termina com **saida 3** sem alterar o banco. Codigos de terceiros sao **contados, nunca ecoados**. **(c) `F5-R-03` (MEDIO) TRATADO** — `ator_usuario_id = NULL` **mantido** por decisao executiva (sem ator sintetico, sem responsabilizar o usuario recem-criado); passa a constar como **decisao local `L-F5-08`**, e nao como "resolvida por fonte". Mitigacao: `TLF_BOOTSTRAP_ADMIN_JUSTIFICATIVA` **obrigatoria**, validada antes da transacao, sem caractere de controle, persistida em `evento_auditoria.justificativa`, **nunca impressa** e **fora de `contexto`**. **A qualificacao normativa permanece DECISAO PENDENTE de Bruno.** **(d) `F5-R-04` (MEDIO) DOCUMENTADO** — recusa mantida; risco de bloqueio administrativo declarado e **runbook manual controlado** registrado; comando de reparo exige fatia e autorizacao proprias. **(e) `F5-R-05` (MEDIO) RETIFICADO** — §6-M.5 afirmava que os tres agrupamentos eram "sem efeito"; **era falso para um deles** e contradizia §6-M.4. Efeito medido e agora declarado: **37 x 38 associacoes; Fisioterapeuta 8 x 9**. **(f) `F5-R-06`/`F5-R-07` (BAIXOS) CORRIGIDOS** — fronteira de erros do CLI fechada (saida construida a partir de motivo de conjunto fechado; `FALHA_INESPERADA` + incidente para origem desconhecida; nada de `message`/`stack`/`code`); senha recusa **caractere de controle**, precedencia deterministica (ambiente antes de stdin, sem travar em pipe ocioso), leitura limitada a 4096 bytes e 10 s; `SIGINT`/`SIGTERM` com fechamento idempotente e saidas 130/143. **(g) Contextos separados** — `SeedModule` (banco) e `BootstrapModule` (banco + auditoria + credencial); o CLI importa o bootstrap **dinamicamente**, e por isso **`seed` funciona com o runtime Argon2 indisponivel** — provado por sabotador deterministico **com controle positivo** e confirmado no host realmente bloqueado (17 de 28 casos do CLI passam ali). **(h) `L-F5-08`..`L-F5-12`** explicitadas como decisoes locais interpretativas, com efeito quantificado; **a matriz NAO mudou** (4/29/37; 18/3/8/8). **(i) Medicoes — bateria INTEGRALMENTE VERDE nos dois ambientes:** conteiner Linux isolado — `test:api` **21 · 526** (era 21 · 519), integracao da API **9 · 321** (era 8 · 273), Argon2 15/15, OpenAPI 17/17, typecheck e build 0. Host Windows — `test:api` **21 · 526**, `verify:api-integration` **9 · 319 + 2 pulados**, persistencia **10 · 87**, `verify:from-scratch` **10 · 87**, Argon2 15/15, OpenAPI 17/17, **`smoke:api` 0**, Guardas 1-3, golden **60 169 bytes**, `git diff --check` 0. **MUDANCA DE AMBIENTE:** o bloqueio de Application Control do addon Argon2 **deixou de ocorrer no host** (arquivo ainda `NotSigned`; carregamento medido 3/3) — **nenhuma politica da maquina foi alterada**; `smoke:api` e as verificacoes de runtime, antes NAO EXECUTADOS, agora sao medidos e estao verdes. Os **2 pulados** sao `SIGINT`/`SIGTERM`, **pulados explicitamente** por sinais POSIX nao existirem no Windows, e **passam no Linux** (CI em `ubuntu-latest`). **Ressalva:** uma execucao isolada de `test:api` no conteiner acusou 525/526; **nao reproduzida em 7 execucoes**, registrada como transitorio nao identificado (§6-N.11). **(j) Zero drift:** `git diff main -- packages/` **0 linhas**; hashes de schema/golden/objetos protegidos identicos; **10 migrations continuam 10**; manifests da raiz com diff vazio; `apps/api/package.json` +4 linhas de scripts; rotas continuam `/auth/login`, `/auth/logout`, `/health`. **(k) Estados preservados:** **AUT-005 NAO MATERIALIZADA / NAO ENCERRADA / SEM FATIA ATRIBUIDA**; **RN-001** nao declarada satisfeita; **`P2.2-05` NAO INICIADA**; `R2.2-04` e `P-2.3D-03` inalterados; **F6 NAO INICIADA**. **Proximo passo: NOVA revisao tecnica independente e adversarial sobre a arvore corrigida.** |
+| **25** | **29/08/2026** | **IMPLEMENTAÇÃO DA ETAPA 2.3D-B / F5 — seed de papéis/permissões e bootstrap do primeiro Administrador** (§6-M), em branch própria `agent/fase2-etapa2.3d-f5-seed-bootstrap-admin`, a partir de `main` = `origin/main` = `91406203cbecb148f395a58adcfeb6b39f825337`. **NÃO HOMOLOGADA / NÃO INTEGRADA; sem commit, push, PR, merge, tag, release ou deploy.** **Nenhuma decisão normativa criada, alterada, renumerada ou reaberta:** `D-2.3D-01`..`D-2.3D-13` intactas; **`docs/12` NÃO foi tocado**; `D-2.3D-09` e `D-2.3D-10` intactas; **nenhuma `D-2.3D-14`**; `docs/09` §12 não reaberto; **`ACOES_AUDITORIA` e `WHITELIST_CONTEXTO` não ampliadas**; Base Imutável intacta. **(a) Materializado:** seed idempotente dos **4** papéis de `docs/04` §3, das **29** permissões de §5 (por REÚSO do catálogo tipado da F4 — nenhum catálogo paralelo) e das **37** associações derivadas célula a célula da matriz de §4 por regra declarada e mecanicamente executada pelo teste; bootstrap **manual**, **idempotente**, **fail-closed**, **atômico** e auditado com `usuario.papeis.alterados` (`SUCESSO`, `alvo_tipo = usuario`, `contexto` vazio, `ator_usuario_id` NULL como **ação de sistema** — `docs/07` §22.3/RN-061, com precedente de `D-2.3D-12`). **(b) Matriz semeada:** Administrador **18** (zero `prontuario.*` — PERM-T01), Gestor **3** somente leitura (**HOM-01** preservado), Recepcionista **8**, Fisioterapeuta **8**; **8 das 29** permissões sem papel algum, todas `P` na fonte. O Administrador **não** recebeu as 29. **(c) Arquivos:** 5 novos em `apps/api/src/provisionamento/`, 3 suítes novas, e **3 linhas** de `scripts` em `apps/api/package.json`. Nenhum outro arquivo tocado. **(d) Provas:** `test:api` **21 · 519** (era 19 · 479); integração da API **8 · 273** (era 7 · 239); persistência **10 · 87**; `verify:argon2-runtime` 15/15; `verify:openapi-runtime` 17/17; Guardas 1–3 verdes; golden **60 169 bytes** byte a byte; `migrate diff --exit-code` 0. Prova do **processo real**: CLI compilado executado três vezes contra PostgreSQL 18 (criação, `JA_CONFORME`, `JA_CONFORME` com identificador normalizado), recusa de conflito e recusa por ausência de senha; e `node dist/main.js` subindo com todas as variáveis de bootstrap definidas **sem semear nada** (todas as tabelas em 0). **(e) Mutation challenges:** **13 aplicados, 13 detectados, 13 revertidos**, com reversão provada por SHA-256. **(f) Zero drift:** `git diff main -- packages/` **0 linhas**; `schema.prisma`, `schema.golden.sql` e `protected-objects.json` com SHA-256 idênticos; **10 migrations continuam 10**; nenhuma dependência nova; nenhuma rota nova. **(g) LIMITAÇÃO DE AMBIENTE, preexistente e alheia à F5:** uma política de **Application Control** da máquina local passou a bloquear o addon nativo não assinado do Argon2, derrubando **no host** `test:api` (5 de 21 suites, **4 delas intocadas pela fatia**), `verify:api-integration`, `verify:argon2-runtime`, `verify:openapi-runtime` e `smoke:api`. Tudo que depende de Argon2 foi **medido em contêiner Linux** com `npm ci` limpo e PostgreSQL real; **nenhuma configuração de segurança da máquina foi alterada**. O `smoke:api` versionado **não** foi executado com sucesso no host e isso fica declarado, não mascarado (§6-M.13). **(h) Higiene:** dois bytes NUL não intencionais no separador de chave de `seed-rbac.service.ts` foram detectados e corrigidos; a bateria integral foi **reexecutada** depois da correção. **(i) Estados preservados:** **AUT-005 NÃO MATERIALIZADA / NÃO ENCERRADA / SEM FATIA ATRIBUÍDA**; **RN-001 não declarada satisfeita**; **P2.2-05 NÃO INICIADA**; **R2.2-04** e **P-2.3D-03** com estado vigente preservado; **F6 NÃO INICIADA**. **Próximo passo: revisão técnica independente e adversarial da F5.** |
 | **24** | **28/08/2026** | **REGISTRO POS-MEDICAO DA INTEGRACAO DA ETAPA 2.3D-B / F4 NA `main`** (§6-L.8) — registro **exclusivamente factual**, no precedente `MEDIR -> REGISTRAR` das REV. 10, REV. 15 e REV. 20. **Nenhuma decisao normativa criada, alterada, renumerada ou reaberta; nenhuma `D-2.3D-14`; `D-2.3D-09` e `D-2.3D-10` intactas; `docs/09` §12 nao reaberto; `docs/12` NAO foi alterado** (ja registra a F4 como `CONCLUIDA` desde a REV. 5); **Base Imutavel intacta**; **nenhuma linha de runtime, teste, persistencia ou dependencia tocada** — o unico arquivo alterado por esta execucao e `docs/10`. **(a) Fatos registrados:** `main` antes `a9be742c150ebe43df0d03ef9ec1529cff5d780a`; commit unico da fatia `ea8c74dc89b9aae3aba7ca45d3fc597e0253e484` (`feat(authz): implement RBAC guards and decorators`); PR [#16](https://github.com/BrunoMNoronha/techlab-fisio/pull/16); merge commit **`fce62d9a2b79a59a40487c64cc913b2d98049683`**; `main` depois `fce62d9`; metodo **merge commit**, sem squash, sem rebase, sem force-push. Genealogia conferida: parent 1 = `a9be742`, parent 2 = `ea8c74d`. **(b) Commit unico:** ao contrario da F3, nao houve incidente de CI nem correcao de harness — o manifesto SHA-256 dos **17** arquivos de runtime/teste permaneceu identico ao conferido pela segunda revisao independente, do gate inicial ate o commit. **(c) Protecao contra corrida:** HEAD local = HEAD remoto = `headRefOid` = `ea8c74d` (o mesmo SHA validado pela CI); `origin/main` permaneceu em `a9be742`; `merge-base` = `origin/main`; PR `MERGEABLE` / `CLEAN`. **(d) CI verde:** run [33222908307](https://github.com/BrunoMNoronha/techlab-fisio/actions/runs/33222908307), job `E-16`, **success** em 2m26s sobre `ea8c74d`, com `test:api` **19 · 479**, integracao **7 · 239**, from-scratch **10 · 87**, Guardas 1-3 e golden **60 169 bytes** — contagens **identicas** as medidas localmente, sem divergencia por plataforma. **(e) Validacao pos-merge verde sobre a `main` integrada:** `typecheck` 0; `test:api` **19 · 479**; `verify:api-integration` **7 · 239**; `verify:from-scratch` **10 · 87**; `build` 0; `smoke:api` 0; Argon2 **15/15**; OpenAPI **17/17**; `lint:migrations` e `schema:verify` verdes; arvore limpa. **(f) Zero drift:** `git diff a9be742 fce62d9 -- packages/database` = **0 linhas**; `schema.prisma`, `schema.golden.sql` e `protected-objects.json` com hashes **identicos** aos da integracao da F3; **10 migrations**; **zero dependencia nova**. **(g) Pendencias vivas preservadas, sem encerramento implicito:** **AUT-005 NAO MATERIALIZADA / NAO ENCERRADA** e **sem fatia atribuida**; **RN-001** aplicavel e nao satisfeito fora do alcance parcial da `PermissoesGuard` (`L-F4-02` e defesa em profundidade PARCIAL); **`P2.2-05`** (autorizacao clinica contextual) **NAO INICIADA**; `R2.2-04` **ABERTO / MITIGADO PARCIALMENTE**; `P-2.3D-03` **MEDIDA E VERDE, encerramento formal PENDENTE de decisao de Bruno**; TOCTOU mantido como observacao arquitetural. **(h) Fronteiras:** **F5 e F6 permanecem NAO INICIADAS** — nenhum artefato de seed, bootstrap de Administrador ou recuperacao de senha existe em `apps/api/src`; `apps/web` nao existe. **Nenhum deploy, tag ou release.** **(i) Preservacao historica:** §6-L.7 (estado no ato da homologacao, anterior ao merge) e §6-K.13 permanecem **integros e nao reescritos**, marcados como estado superado com remissao explicita. |
 | **23** | **28/08/2026** | **ETAPA 2.3D-B / F4 (guards e decorators de autorizacao — RBAC) HOMOLOGADA POR BRUNO MENEZES NORONHA — rito de versionamento/integracao** (§6-L). **(a) Veredito recebido:** a **segunda** revisao tecnica independente adversarial, executada sobre a arvore corrigida de §6-K, devolveu **`A — APTO A HOMOLOGACAO E VERSIONAMENTO`** com **0 BLOQUEANTES, 0 ALTOS, 0 MEDIOS** e **1 BAIXO documental (`R4R2-01`)**. **(b) Autoridade:** homologacao explicita de **Bruno Menezes Noronha** (TLF-BASE-V1 §15, item 1), sobre a MESMA baseline `main` = `origin/main` = `a9be742`, branch `agent/fase2-etapa2.3d-f4-rbac`. **(c) Unica correcao desta execucao — `R4R2-01`, EXCLUSIVAMENTE DOCUMENTAL** (§6-K.6): a redacao afirmava em presente que `apps/api/src/authz/` tem 745 linhas e remetia a §6-K.7, que nao contem contagem; medicao real `wc -l` = **798 linhas em 9 arquivos**. O valor historico (**745 em 8 arquivos**, arvore pre-correcao) foi **preservado**, com retificacao explicita acrescentada. **(d) Zero mudanca tecnica:** manifesto SHA-256 dos 14 arquivos de runtime/teste da F4 **identico** ao conferido pela revisao — nenhuma linha de runtime ou de teste alterada. **(e) Confirmacoes independentes:** `R4-01`..`R4-08` reproduzidos com evidencia propria da revisao; **15 mutation challenges independentes aplicados, 15 detectados, 15 revertidos por hash**; catalogo **29 x 29** com ordem identica; matriz `401` x `403` medida por HTTP real (7 cenarios `401`, `403` sem permissao, `200` com permissao e handler alcancado), sem oraculo. **(f) Bateria independente verde:** `typecheck` 0; `test:api` **19 · 479**; `verify:api-integration` **7 · 239**; `verify:from-scratch` **10 · 87**; `build` 0; `smoke:api` 0; Argon2 runtime **15/15**; OpenAPI runtime **17/17**; Guardas 1-3; golden byte a byte **60 169 bytes**; `git diff --check` 0. **(g) Fronteiras:** **zero drift**, **zero migration**, **zero dependencia nova**; rotas seguem `/auth/login`, `/auth/logout`, `/health`; `AuthzModule` sem controller. **(h) Limites declarados e aceitos:** **AUT-005 NAO MATERIALIZADA / NAO ENCERRADA** (`L-F4-02` e defesa em profundidade PARCIAL; `RN-001` aplicavel e nao satisfeito fora do RBAC); autorizacao clinica contextual (`P2.2-05`) **NAO INICIADA**; TOCTOU declarado como snapshot no instante da guard. **(i) Governanca:** nenhuma decisao normativa criada, alterada, renumerada ou reaberta; `D-2.3D-09` intacta; **nenhuma `D-2.3D-14`**; `docs/09` §12 nao reaberto; Base Imutavel intacta. **F5 e F6 permanecem NAO INICIADAS.** **(j) Publicacao:** nenhum deploy, tag ou release. **Este registro NAO afirma integracao na `main`** — o registro factual do merge (SHA, PR, medicoes sobre a `main` integrada) pertence a execucao documental posterior, pelo precedente `MEDIR -> REGISTRAR` (REV. 15, REV. 20). |
 | **22** | **28/08/2026** | **ETAPA 2.3D-B / F4 CORRIGIDA APOS REVISAO TECNICA INDEPENDENTE ADVERSARIAL (veredito `B — APTO COM CORRECOES OBJETIVAS`); permanece NAO HOMOLOGADA / NAO INTEGRADA** (§6-K). Executada sobre a MESMA baseline `main` = `origin/main` = `a9be742`, na mesma branch `agent/fase2-etapa2.3d-f4-rbac`, sobre a working tree nao commitada que a revisao examinou. **Publicacao nao autorizada: sem commit, push, PR, merge, rebase, tag, release ou deploy.** **Nenhuma decisao normativa foi criada, alterada, renumerada ou reaberta — `docs/12` NAO foi tocado, `D-2.3D-09` permanece intacta, NENHUMA `D-2.3D-14` foi criada, `docs/09` §12 nao foi reaberto e a Base Imutavel permanece intacta.** A REV. 21 e a §6-J sao preservadas como registro do estado que foi revisado; as afirmacoes que a revisao provou incorretas ficaram marcadas **[RETIFICADO — §6-K]** e **nenhuma medicao foi reescrita**. **(a) Veredito recebido:** nenhum achado BLOQUEANTE ou ALTO; nenhum bypass alcancavel pelo cliente HTTP; zero drift real; bateria verde; 7/7 mutacoes independentes da propria revisao detectadas. Quatro MEDIOS e quatro BAIXOS. **(b) `R4-01` (MEDIO) CORRIGIDO:** `anexarContextoAutenticado` PRESERVAVA um contexto preexistente, e a revisao mediu a consequencia — o simbolo privado e recuperavel por `Object.getOwnPropertySymbols` de qualquer requisicao ja processada, um contexto SEMEADO sobrevivia a gravacao, e a guard decidia sobre a identidade semeada. Agora a **identidade validada pelo `SessaoService` SEMPRE substitui** o que estiver na requisicao. O teste que exigia nao sobrescrever — e que travava a correcao — **deixou de existir**, substituido por tres provas com controle positivo. O limite do modelo de confianca passou a ser DECLARADO no codigo: a chave de simbolo protege contra o cliente HTTP, **nao** contra codigo do mesmo processo. **(c) `R4-03` e `R4-04` (MEDIOS) ELIMINADOS POR REDUCAO DE SUPERFICIE:** o decorator plural foi **removido** e substituido por **`@RequerPermissao(P)`** — aridade EXATAMENTE 1 garantida pelo tipo, `MethodDecorator` explicito, metadata lida SOMENTE do handler, e `applyDecorators` fundindo metadata + `UseGuards(SessaoAutenticadaGuard, PermissoesGuard)` NA ORDEM. Com isso, declarar sem proteger deixou de ser expressavel (a revisao mediu `200` sem sessao numa rota anotada sem `@UseGuards`), e a superficie de metadata de classe — que sob HERANCA descartava a exigencia da classe-base — deixou de existir. Arquivo novo `permissao-exigida.metadata.ts` para quebrar o ciclo decorator/guard. **(d) `L-F4-01` ENCERRADA POR ELIMINACAO, e NAO por decisao normativa:** a revisao mediu que **nenhuma operacao de `docs/04` §4/§8 exige duas permissoes nomeadas simultaneamente**; a cardinalidade > 1 era abstracao antecipada (TLF-BASE-V1 §4.5) que criava uma decisao comportamental evitavel. Sem a abstracao nao ha `AND` nem `OR` a homologar. **Nenhuma decisao foi pedida nem tomada em nome de Bruno.** **(e) `R4-02` (MEDIO) RETIFICADO, sem mudanca de comportamento:** a redacao que dizia o risco tratado por `L-F4-02` passou a declarar **cobertura PARCIAL** — medido: sessao de conta inativada permanece `ATIVA`, continua valida para o `SessaoService` e obtem `200` em rota apenas autenticada; so onde a `PermissoesGuard` esta aplicada ha `403`. **`AUT-005` permanece NAO MATERIALIZADA e NAO ENCERRADA** e **RN-001 segue aplicavel**, agora com linha propria na tabela viva de §9. `SessaoService.validar` **nao** foi alterado e nenhum `403` virou `401`. O teste declara no proprio corpo que o estado e ARTIFICIAL (escrito direto na persistencia, inalcancavel por rota de producao) e mede explicitamente o limite. **A fatia em que a revogacao por inativacao sera materializada NAO foi fixada por este documento.** **(f) BAIXOS tratados:** `R4-05` — a justificativa do re-export deixou de alegar necessidade medida e passou a declarar a opcao adotada, as tres alternativas medidas e o trade-off de superficie exportada, sem redesenho; `R4-06` — a discrepancia 645 x 745 existiu **apenas no relatorio em chat**, nao contaminou `docs/10` e nenhum arquivo foi omitido; `R4-07` — o comentario do servico passou a distinguir rejeicao antes do banco de string nao-UUID que faz o driver lancar (`500`, fail-closed, inalcancavel pelo cliente), sem validacao nova nem biblioteca; `R4-08` — a redacao distingue rotas FUNCIONAIS de `/openapi.json`. **(g) Bateria integral verde:** typecheck 0; `test:api` **19 suites · 479 passed**; `verify:api-integration` **7 suites · 239 passed**; `verify:from-scratch` 10 suites · 87; build 0; `smoke:api` 6 provas; `verify:argon2-runtime` 15/15; `verify:openapi-runtime` 17/17; Guardas 1, 2 e 3 (golden **60 169 bytes**, `migrate diff --exit-code` 0); `git diff --check` limpo. Os totais coincidem com os da REV. 21 por composicao: a suite do decorator passou de 13 para 12 provas e a da guard de 21 para 22; na integracao, 2 provas de conjuncao sairam e 2 de exigencia por operacao entraram. **(h) 9 mutation challenges** (`C-F4C-01`..`C-F4C-09`) aplicados, **todos detectados**, todos revertidos com **SHA-256 identico** — incluindo regressao de `R4-01`, decorator sem cada uma das guards, ordem invertida, guard sempre permissiva, perda do filtro por `usuario_id`, remocao da negacao por `usuario.ativo`, drift do catalogo e reintroducao de metadata em lista. Registrado com honestidade que `C-F4C-01` e detectado **apenas pela suite unitaria** — a contaminacao de contexto nao e produzivel por HTTP. **(i) Zero drift reconfirmado:** `git diff a9be742 -- packages/database` vazio; tres hashes identicos; 10 migrations; `prisma format`/`migrate dev`/`db push`/`db pull` nao executados. **Nenhuma dependencia nova** — tres `package*.json` com diff vazio. **(j) F1/F2/F3 sem regressao:** nenhum arquivo de `auth/` foi tocado nesta fatia; a unica alteracao em artefato da F3 continua sendo o export aditivo de `POLITICA_COOKIE_SESSAO`. **(k) Fronteiras:** F5 e F6 NAO INICIADAS; AUT-005 NAO ENCERRADA; autorizacao clinica contextual (`P2.2-05`) fora; sem JWT, refresh token, Redis, cache, multitenancy ou frontend; schema nao alterado; nenhum endpoint de negocio novo; nenhuma acao de auditoria nova. **Proximo passo: NOVA revisao tecnica independente e adversarial sobre a arvore corrigida — a F4 NAO esta homologada nem versionavel.** |
@@ -1992,7 +2855,7 @@ Sujeitas a autorização própria, nesta ordem provável:
 
 ---
 
-**Fim — `docs/10-backend-implementacao.md` — REV. 20 — documento mutável; estado vivo das pendências da frente de backend.**
+**Fim — `docs/10-backend-implementacao.md` — REV. 28 — documento mutável; estado vivo das pendências da frente de backend.**
 
 **Estado corrente das etapas.** Etapa 2.3A **INTEGRADA NA `main`** (merge `791e862`); Etapa 2.3B **CONCLUÍDA/HOMOLOGADA/INTEGRADA** (merge `5aae8de`); Etapa 2.3C **CONCLUÍDA/HOMOLOGADA/INTEGRADA** (merge `58a6e4b`; `P-2.3C-01` resolvida por `PROP-RN-2.3C-01`, `docs/11`).
 
@@ -2004,10 +2867,10 @@ Sujeitas a autorização própria, nesta ordem provável:
 | **F1** — `CredencialService` / Argon2id | **CONCLUÍDA / INTEGRADA** | commit `f642b62`, PR #11, merge `f4c2466`; revisão independente veredito **B**, achados `A-01`..`A-04` corrigidos; `P-2.3D-02` ENCERRADA pelo benchmark (§6-D.5) |
 | **F2** — `SessaoService` | **CONCLUÍDA / HOMOLOGADA / INTEGRADA** | commit `289a94b`, PR #12, merge `70b30ae`; revisão independente veredito **B**, correções `C-01`/`C-02`; `R-2.3D-03` **ENCERRADO** (§9) |
 | **F3** — endpoints REST de autenticação | **CONCLUÍDA / HOMOLOGADA / INTEGRADA NA `main`** | commits `362aefe`, `c755fcb`, `c20cf1c`; PR [#14](https://github.com/BrunoMNoronha/techlab-fisio/pull/14), merge **`3556972`**; **três** revisões independentes (`B`, `B`, **`A`**) e duas fatias corretivas; `L-11` homologada como **`D-2.3D-13`** (§6-F a §6-I; REV. 20) |
-| **F4** — guards e decorators de autorização (RBAC) | **NÃO INICIADA** | sujeita a autorização expressa própria (`D-2.3D-09`) |
-| **F5** — seed de papéis/permissões + bootstrap do Administrador | **NÃO INICIADA** | — |
+| **F4** — guards e decorators de autorização (RBAC) | **CONCLUÍDA / HOMOLOGADA / INTEGRADA NA `main`** | commit `ea8c74d`, PR #16, merge `fce62d9`; duas revisões independentes (`B`, `A`) |
+| **F5** — seed de papéis/permissões + bootstrap do Administrador | **IMPLEMENTADA / REVISADA / CORRIGIDA / REMEDIDA; DECISÕES NORMATIVAS HOMOLOGADAS; NÃO INTEGRADA** | `D-2.3D-09`, `D-2.3D-10`, `D-2.3D-14`, `D-2.3D-15`; §6-M/§6-N; REV. 25–27 |
 | **F6** — recuperação de senha | **NÃO INICIADA** | — |
 
 **Pendências vivas:** `P-BACK-01` EM ANDAMENTO; `R2.2-04` ABERTO / MITIGADO PARCIALMENTE (§7.2); `P-2.3D-03`, `P-2.3D-04`, `P-2.3D-05` e `P-2.3D-06` abertas/adiada; `R-2.3D-04`, `R-2.3D-05` e `R-2.3D-06` registrados sem encerramento autodeclarado. **Riscos residuais aceitos:** `R-2.3D-08` (BAIXO), `F-12` (BAIXO), `F3R-06` e `F3R-07` (OBSERVAÇÃO). `L-05`..`L-08` ADIADAS; `R-BL-09` ABERTO/monitorado; `V-06.c` PENDENTE.
 
-**Fontes normativas:** `TECHLAB_FISIO_BASE_IMUTAVEL_V1.md`, `docs/02`..`docs/07`, `docs/08` (baseline técnica), `docs/09` §12 (`D-AUD-01`..`D-AUD-08`), `docs/11` (`PROP-RN-2.3C-01`) e **`docs/12` (`D-2.3D-01`..`D-2.3D-13`)**.
+**Fontes normativas:** `TECHLAB_FISIO_BASE_IMUTAVEL_V1.md`, `docs/02`..`docs/07`, `docs/08` (baseline técnica), `docs/09` §12 (`D-AUD-01`..`D-AUD-08`), `docs/11` (`PROP-RN-2.3C-01`) e **`docs/12` (`D-2.3D-01`..`D-2.3D-15`)**.

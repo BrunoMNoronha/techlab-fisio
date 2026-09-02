@@ -8,6 +8,10 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
+    "provisionar": "node dist/provisionamento/cli.js provisionar",
+    "provisionar:seed": "node dist/provisionamento/cli.js seed",
+    "provisionar:seed:estrito": "node dist/provisionamento/cli.js seed --estrito",
+    "provisionar:admin": "node dist/provisionamento/cli.js bootstrap-admin",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
     "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --config jest.config.mjs",
     "test:integration": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --config jest.integration.config.mjs",

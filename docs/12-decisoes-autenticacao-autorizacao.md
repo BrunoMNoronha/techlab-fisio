@@ -1,12 +1,13 @@
-# Decisões de Autenticação e Autorização — `D-2.3D-01`..`D-2.3D-13`
+# Decisões de Autenticação e Autorização — `D-2.3D-01`..`D-2.3D-15`
 
 > **Documento:** `docs/12-decisoes-autenticacao-autorizacao.md`
 > **Projeto:** TechLab Fisio
 > **Fase:** 2 — Frente de backend (`apps/api`) — Etapa 2.3D-B, fatia **F0**
-> **Status:** **DECIDIDO — `D-2.3D-01`..`D-2.3D-13` homologadas por Bruno Menezes Noronha (`D-2.3D-01`..`D-2.3D-12` em 27/08/2026; `D-2.3D-13` em 28/08/2026 — TLF-BASE-V1 §15, item 1)**
-> **Data:** 27 de agosto de 2026 (REV. 3 e REV. 4 em 28/08/2026)
+> **Status:** **DECIDIDO — `D-2.3D-01`..`D-2.3D-15` homologadas por Bruno Menezes Noronha (`D-2.3D-01`..`D-2.3D-12` em 27/08/2026; `D-2.3D-13` em 28/08/2026; `D-2.3D-14` e `D-2.3D-15` em 31/08/2026 — TLF-BASE-V1 §15, item 1)**
+> **Data:** 27 de agosto de 2026 (REV. 3 a REV. 5 em 28/08/2026; REV. 6 em 31/08/2026)
 > **Natureza:** registro **normativo** das decisões que governam a implementação de autenticação e autorização da Etapa 2.3D. Segue o padrão de `docs/09` §12 e de `docs/11` (registro de decisão com valor normativo próprio). **Não altera** `TECHLAB_FISIO_BASE_IMUTAVEL_V1.md` nem `docs/02`..`docs/07`; **não reabre** `D-AUD-01`..`D-AUD-08` (`docs/09` §12).
-> **Revisão vigente:** REV. 5 (28/08/2026) — atualização **exclusivamente factual**: a fatia **F4** passa a **CONCLUÍDA** em §9, por ter sido homologada por Bruno Menezes Noronha em 28/08/2026 (`docs/10` §6-L; §11, REV. 23). **Nenhuma decisão foi modificada, renumerada, reduzida, acrescentada ou reaberta** — `D-2.3D-01`..`D-2.3D-13` permanecem exatamente como homologadas; **`D-2.3D-09` não foi tocada**; **`D-2.3D-10` não foi tocada** e a **F5 permanece NÃO INICIADA**; **nenhuma `D-2.3D-14` foi criada**. Estado anterior preservado: REV. 4 (28/08/2026) — atualização **exclusivamente factual**: a fatia **F3 passa a CONCLUÍDA** em §9, por ter sido homologada por Bruno Menezes Noronha em 28/08/2026 (`docs/10` §6-I; §11, REV. 19). **Nenhuma decisão foi modificada** — `D-2.3D-01`..`D-2.3D-13` seguem exatamente como homologadas, e nenhuma pendência de §11 foi alterada ou encerrada. Estado anterior preservado: REV. 3 (28/08/2026) — **acréscimo de UMA decisão nova: `D-2.3D-13` — proteção de concorrência em voo do limitador de login** (§5.13), homologada por Bruno Menezes Noronha após a segunda revisão técnica independente adversarial da F3, que a classificou como decisão comportamental e recusou homologá-la em nome dele. **Nenhuma decisão anterior foi modificada, renumerada ou reaberta** — `D-2.3D-01`..`D-2.3D-12` seguem exatamente como homologadas; em particular `D-2.3D-06` permanece intacta, e `D-2.3D-13` a COMPLEMENTA sem alterar a política de falhas/janela. A implementação registrava o comportamento como decisão local `L-11` (`docs/10` §6-G.2); `L-11` passa a ser **alias histórico** de `D-2.3D-13`. Estado anterior preservado: REV. 2 (27/08/2026) — atualização exclusivamente factual: `R-2.3D-03` **ENCERRADO** pela prova de monotonicidade atômica produzida na F2 (`docs/10` §6-E.5/§6-E.9/§9), por decisão de Bruno Menezes Noronha. **Nenhuma decisão foi modificada** — `D-2.3D-01`..`D-2.3D-12` seguem como homologadas; em particular `D-2.3D-04` permanece intacta. REV. 1 (27/08/2026) — atualização exclusivamente factual: `P-2.3D-02` ENCERRADA pelo benchmark da F1 (`docs/10` §6-D.5). **Nenhuma decisão foi modificada** — `D-2.3D-01`..`D-2.3D-12` seguem como homologadas. REV. 0 (27/08/2026): F0 executada — decisões registradas + única reabertura física da persistência de sessão.
+> **Revisão vigente:** REV. 6 (31/08/2026) — acréscimo de **duas decisões novas**, homologadas por Bruno Menezes Noronha: `D-2.3D-14` (§5.14), que fixa a semântica aditiva e convergente do seed RBAC, inclusive no modo estrito; e `D-2.3D-15` (§5.15), que fixa a autoria nula com justificativa operacional obrigatória no bootstrap inaugural. Nenhuma decisão anterior foi modificada, renumerada, reduzida ou reaberta. A F5 permanece não integrada e sujeita à homologação técnica própria.
+> **Estado anterior preservado:** REV. 5 (28/08/2026) — atualização **exclusivamente factual**: a fatia **F4** passa a **CONCLUÍDA** em §9, por ter sido homologada por Bruno Menezes Noronha em 28/08/2026 (`docs/10` §6-L; §11, REV. 23). **Nenhuma decisão foi modificada, renumerada, reduzida, acrescentada ou reaberta** — `D-2.3D-01`..`D-2.3D-13` permanecem exatamente como homologadas; **`D-2.3D-09` não foi tocada**; **`D-2.3D-10` não foi tocada** e a **F5 permanece NÃO INICIADA**; **nenhuma `D-2.3D-14` foi criada**. Estado anterior preservado: REV. 4 (28/08/2026) — atualização **exclusivamente factual**: a fatia **F3 passa a CONCLUÍDA** em §9, por ter sido homologada por Bruno Menezes Noronha em 28/08/2026 (`docs/10` §6-I; §11, REV. 19). **Nenhuma decisão foi modificada** — `D-2.3D-01`..`D-2.3D-13` seguem exatamente como homologadas, e nenhuma pendência de §11 foi alterada ou encerrada. Estado anterior preservado: REV. 3 (28/08/2026) — **acréscimo de UMA decisão nova: `D-2.3D-13` — proteção de concorrência em voo do limitador de login** (§5.13), homologada por Bruno Menezes Noronha após a segunda revisão técnica independente adversarial da F3, que a classificou como decisão comportamental e recusou homologá-la em nome dele. **Nenhuma decisão anterior foi modificada, renumerada ou reaberta** — `D-2.3D-01`..`D-2.3D-12` seguem exatamente como homologadas; em particular `D-2.3D-06` permanece intacta, e `D-2.3D-13` a COMPLEMENTA sem alterar a política de falhas/janela. A implementação registrava o comportamento como decisão local `L-11` (`docs/10` §6-G.2); `L-11` passa a ser **alias histórico** de `D-2.3D-13`. Estado anterior preservado: REV. 2 (27/08/2026) — atualização exclusivamente factual: `R-2.3D-03` **ENCERRADO** pela prova de monotonicidade atômica produzida na F2 (`docs/10` §6-E.5/§6-E.9/§9), por decisão de Bruno Menezes Noronha. **Nenhuma decisão foi modificada** — `D-2.3D-01`..`D-2.3D-12` seguem como homologadas; em particular `D-2.3D-04` permanece intacta. REV. 1 (27/08/2026) — atualização exclusivamente factual: `P-2.3D-02` ENCERRADA pelo benchmark da F1 (`docs/10` §6-D.5). **Nenhuma decisão foi modificada** — `D-2.3D-01`..`D-2.3D-12` seguem como homologadas. REV. 0 (27/08/2026): F0 executada — decisões registradas + única reabertura física da persistência de sessão.
 
 ---
 
@@ -14,12 +15,12 @@
 
 | Campo | Valor |
 | --- | --- |
-| Identificadores | `D-2.3D-01` .. `D-2.3D-13` |
+| Identificadores | `D-2.3D-01` .. `D-2.3D-15` |
 | Autoridade | Bruno Menezes Noronha (TLF-BASE-V1 §15, item 1) |
-| Data da homologação | 27/08/2026 (`D-2.3D-01`..`D-2.3D-12`) · 28/08/2026 (`D-2.3D-13`) |
+| Data da homologação | 27/08/2026 (`D-2.3D-01`..`D-2.3D-12`) · 28/08/2026 (`D-2.3D-13`) · 31/08/2026 (`D-2.3D-14` e `D-2.3D-15`) |
 | Baseline de código na homologação | `main` = `53f9fc5777759388bfb4bcaa429f4f607733b422` |
 | Fatia que materializou este registro | **F0** — decisões normativas + reabertura física controlada da persistência de sessão |
-| Efeito físico nesta fatia | **exclusivamente `D-2.3D-01`**; as demais são normativas e produzem efeito nas fatias F1..F7 (`D-2.3D-13` foi acrescentada em 28/08/2026, REV. 3) |
+| Efeito físico na F0 | **exclusivamente `D-2.3D-01`**; as demais são normativas e produzem efeito nas fatias F1..F7 (`D-2.3D-13` foi acrescentada em 28/08/2026; `D-2.3D-14` e `D-2.3D-15`, em 31/08/2026) |
 
 Este documento é a **baseline normativa da Etapa 2.3D**. Onde uma fatia posterior divergir dele, prevalece este registro até que uma decisão expressa de Bruno o altere.
 
@@ -309,6 +310,29 @@ Retry-After: 1
 
 **Alias histórico.** A implementação registrou este comportamento como decisão local **`L-11`** (`docs/10` §6-G.2). `L-11` permanece citável como referência histórica, mas a fonte normativa passa a ser `D-2.3D-13`.
 
+### 5.14 `D-2.3D-14` — Semântica operacional do seed RBAC *(normativa; complementa `D-2.3D-09`; efeito na F5)*
+
+**Origem.** A revisão independente da F5 encontrou uma ambiguidade entre a expressão “refletir exatamente” de `D-2.3D-09` e a necessidade de não revogar silenciosamente concessões posteriores, inclusive associações marcadas como `P` em `docs/04`. A implementação já adotava convergência aditiva e relatava excedentes; Bruno homologou expressamente essa alternativa em 31/08/2026.
+
+**Regra vinculante.** A matriz canônica inicial de `docs/04` deve ficar **integralmente presente**: os quatro papéis, as 29 permissões, seus nomes canônicos e as 37 associações derivadas da matriz homologada. O seed cria o que faltar e corrige nomes canônicos, de forma idempotente.
+
+**Tratamento dos excedentes.** Papéis, permissões e associações além da matriz canônica **não são removidos pelo seed**. Eles são preservados, contados e relatados sem ecoar identificadores de terceiros. Assim, “exatamente” em `D-2.3D-09` qualifica a composição da **matriz inicial que deve estar presente**, e não autoriza reconciliação destrutiva do estado posterior.
+
+**Estados e saídas:**
+
+- `jaConforme = true` somente quando nenhuma escrita foi necessária **e** não há divergências;
+- no modo normal, a matriz canônica é aplicada, divergências são preservadas e relatadas, e a execução termina com saída 0;
+- `seed --estrito` **também aplica e completa a matriz canônica**; se divergências persistirem, termina com saída 3;
+- portanto, `--estrito` **não é modo somente leitura**. Sua garantia adicional é tornar divergências remanescentes bloqueantes para automação, nunca removê-las.
+
+### 5.15 `D-2.3D-15` — Autoria do bootstrap inaugural *(normativa; complementa `D-2.3D-10`; efeito na F5)*
+
+**Origem.** A revisão independente da F5 apontou que o bootstrap é iniciado manualmente, mas ocorre antes de existir um Administrador autenticado apto a figurar como ator persistido. Bruno decidiu expressamente a representação dessa autoria em 31/08/2026.
+
+**Regra vinculante.** No bootstrap inaugural, o evento `usuario.papeis.alterados` usa **`ator_usuario_id = NULL`**. Não se cria identidade sintética e o usuário recém-criado ou promovido **não é registrado como ator da própria elevação**.
+
+**Atribuibilidade operacional.** A execução exige justificativa operacional não vazia, fornecida por canal seguro, validada antes da transação e persistida em `evento_auditoria.justificativa`. A justificativa não é impressa, não integra `contexto` e não amplia a whitelist de `D-AUD-07`. A trilha conserva ainda ação, resultado, alvo, correlação e instante. A combinação de ator nulo com justificativa obrigatória é a representação homologada para esta operação inaugural e excepcional.
+
 ## 6. Alternativas rejeitadas
 
 | # | Alternativa | Por que foi rejeitada |
@@ -325,6 +349,8 @@ Retry-After: 1
 | A-10 | Synchronizer token CSRF como obrigação desde já | Complexidade antecipada (TLF-BASE-V1 §4.5) antes de existir o frontend real que a justificaria |
 | A-11 | Criar ação de auditoria `usuario.criado` no bootstrap do Administrador | Ampliaria o catálogo de `D-AUD-01` sem decisão própria; `usuario.papeis.alterados` já cobre a atribuição do papel (`D-2.3D-10`) |
 | A-12 | Registrar o e-mail tentado no `contexto` da falha de autenticação | Proibição absoluta de `D-AUD-07`/F-04 e da TLF-BASE-V1 §10 |
+| A-13 | Fazer o seed remover papéis, permissões ou associações excedentes para impor igualdade física | Poderia revogar silenciosamente concessões posteriores legítimas; substituída pela convergência aditiva com relato e modo estrito bloqueante (`D-2.3D-14`) |
+| A-14 | Registrar o usuário criado/promovido ou uma identidade sintética como ator do bootstrap inaugural | Falsearia a autoria da própria elevação ou inventaria uma identidade; substituída por ator nulo com justificativa operacional obrigatória (`D-2.3D-15`) |
 
 ## 7. Impactos
 
@@ -355,7 +381,7 @@ Este documento **não edita** `docs/02`..`docs/07`, seguindo o mesmo precedente 
 
 ### 7.4 Impacto sobre as fatias seguintes
 
-O `token_hash` **habilita** a F1/F2 (credencial e sessão) sem nova reabertura de persistência. Nenhuma das decisões §5.2..§5.12 exige alteração adicional de schema — verificado uma a uma: `D-2.3D-03` dispensa migration por construção; `D-2.3D-08` reutiliza `segredo_recuperacao_senha`; `D-2.3D-09` usa `papel`/`permissao`/`papel_permissao`/`usuario_papel` já existentes; `D-2.3D-06` é memória de processo; `D-2.3D-12` opera dentro de `evento_auditoria`.
+O `token_hash` **habilita** a F1/F2 (credencial e sessão) sem nova reabertura de persistência. Nenhuma das decisões §5.2..§5.15 exige alteração adicional de schema — verificado uma a uma: `D-2.3D-03` dispensa migration por construção; `D-2.3D-08` reutiliza `segredo_recuperacao_senha`; `D-2.3D-09` e `D-2.3D-14` usam `papel`/`permissao`/`papel_permissao`/`usuario_papel` já existentes; `D-2.3D-06` é memória de processo; `D-2.3D-12` e `D-2.3D-15` operam dentro de `evento_auditoria`.
 
 ## 8. Riscos
 
@@ -381,7 +407,7 @@ Riscos herdados e **não** alterados por este registro: `R2.2-04`, `R-BL-09`, `V
 | F2 | `SessaoService` — emissão, verificação, atividade monotônica, estados terminais | `D-2.3D-01`, `D-2.3D-04`, `D-2.3D-05` | **F0 (colunas + CHECK)**, F1 |
 | **F3** | Endpoints REST de autenticação, cookies, CSRF, OpenAPI, rate limiting do login | `D-2.3D-06`, `D-2.3D-07`, `D-2.3D-11`, `D-2.3D-12`, `D-2.3D-13` | **CONCLUÍDA** (homologada em 28/08/2026 — `docs/10` §6-I) |
 | **F4** | Guards e decorators de autorização (RBAC) | `D-2.3D-09` | **CONCLUÍDA** (homologada em 28/08/2026 — `docs/10` §6-L) |
-| F5 | Seed de papéis/permissões + bootstrap do primeiro Administrador | `D-2.3D-09`, `D-2.3D-10` | F4 |
+| **F5** | Seed de papéis/permissões + bootstrap do primeiro Administrador | `D-2.3D-09`, `D-2.3D-10`, `D-2.3D-14`, `D-2.3D-15` | **IMPLEMENTADA, CORRIGIDA E REMEDIDA; aguarda homologação técnica da fatia** (`docs/10` §6-N) |
 | F6 | Recuperação de senha (início e conclusão) + rate limiting próprio | `D-2.3D-06`, `D-2.3D-08` | F1, F2, F5 |
 | F7 | Consolidação, revisão independente e rito de integração | todas | F1..F6 |
 
@@ -486,6 +512,7 @@ Nenhum requisito AUT foi ampliado, reduzido ou reinterpretado por este registro.
 
 | REV. | Data | Alterações |
 | --- | --- | --- |
+| **6** | 31/08/2026 | **ACRÉSCIMO DE DUAS DECISÕES NOVAS — `D-2.3D-14` (§5.14) e `D-2.3D-15` (§5.15), homologadas por Bruno Menezes Noronha.** Nenhuma decisão anterior foi modificada, renumerada, reduzida ou reaberta. `D-2.3D-14` resolve a ambiguidade observada na revisão da F5: a matriz inicial de `D-2.3D-09` deve estar integralmente presente, mas o seed é aditivo e não remove excedentes; o modo estrito também converge o estado canônico e termina com saída 3 quando divergências persistem — não é somente leitura. `D-2.3D-15` resolve a autoria do bootstrap inaugural: `ator_usuario_id = NULL`, sem identidade sintética e sem autoatribuição fictícia, com justificativa operacional obrigatória persistida fora de `contexto`. Acrescentadas as alternativas rejeitadas A-13/A-14 e atualizada a dependência da F5. A implementação da F5 permanece não integrada e sujeita à homologação técnica própria. |
 | **5** | 28/08/2026 | **Atualização exclusivamente FACTUAL — nenhuma decisão modificada.** `D-2.3D-01`..`D-2.3D-13` permanecem exatamente como homologadas, byte a byte em conteúdo normativo; **`D-2.3D-09` não foi tocada nem reaberta**; **`D-2.3D-10` não foi tocada**; nenhuma decisão foi renumerada, reduzida ou acrescentada; **nenhuma `D-2.3D-14` foi criada**. Único campo alterado: a linha da fatia **F4** em §9, que passa a **CONCLUÍDA**, por ter sido homologada por Bruno Menezes Noronha em 28/08/2026 (TLF-BASE-V1 §15, item 1) após a **segunda** revisão técnica independente adversarial devolver **`A — APTO À HOMOLOGAÇÃO E VERSIONAMENTO`** (0 BLOQUEANTES, 0 ALTOS, 0 MÉDIOS; 1 BAIXO documental `R4R2-01`, corrigido antes do commit). Registro em `docs/10` §6-L e §11, REV. 23. **A F5 permanece NÃO INICIADA** e a **F6 permanece NÃO INICIADA**; **AUT-005 permanece NÃO MATERIALIZADA / NÃO ENCERRADA**; a autorização clínica contextual (`P2.2-05`) permanece **NÃO INICIADA**. Esta revisão **não** afirma integração na `main`: o registro factual do merge pertence a execução documental posterior. |
 | **4** | 28/08/2026 | **Atualização exclusivamente FACTUAL — nenhuma decisão modificada.** `D-2.3D-01`..`D-2.3D-13` permanecem exatamente como homologadas. Único campo alterado: a linha da fatia **F3** em §9, que passa a **CONCLUÍDA**, por ter sido homologada por Bruno Menezes Noronha em 28/08/2026 após a terceira revisão técnica independente adversarial (veredito `A`). Mesma forma e mesmo precedente das REV. 1 e REV. 2. **Nenhuma pendência de §11 foi alterada ou encerrada**; em particular `P-2.3D-03`, `P-2.3D-04`, `P-2.3D-05` e `P-2.3D-06` seguem como estavam, e `R-2.3D-08` permanece registrado em §8 como risco aceito. A evidência da homologação e o rito de integração vivem em `docs/10` §6-I — este documento continua sendo apenas o registro normativo das decisões. |
 | **3** | 28/08/2026 | **ACRÉSCIMO DE UMA DECISÃO NOVA — `D-2.3D-13` (§5.13), homologada por Bruno Menezes Noronha.** Nenhuma decisão anterior foi modificada, renumerada, reduzida ou reaberta: `D-2.3D-01`..`D-2.3D-12` permanecem exatamente como homologadas em 27/08/2026, e **`D-2.3D-06` em particular está intacta**. **Fundamento:** a segunda revisão técnica independente adversarial da F3 classificou a proteção de concorrência em voo do limitador — registrada pela implementação como decisão local `L-11` — como **decisão comportamental, e não detalhe de implementação**, por três razões medidas: o teto de simultaneidade (5 e 30) foi acoplado ao limite de falhas sem que fonte alguma o fixasse; `Retry-After: 1` não é derivável de fonte homologada; e o `429` transitório é invisível ao contador de falhas, alterando a semântica de `429` que o próprio OpenAPI descreve. A revisão **recusou-se a homologá-la** em nome de Bruno (TLF-BASE-V1 §15) e a devolveu como decisão pendente, com alternativas e recomendação. Bruno homologou a opção recomendada — manter o comportamento como está — e ela passa a ser normativa como `D-2.3D-13`. **`L-11` vira alias histórico.** Acrescentado também o risco `R-2.3D-08` em §8, declarando e aceitando o risco residual de `429` transitório contra usuário legítimo. `D-2.3D-13` foi acrescentada à linha da F3 em §9. Nenhuma pendência de §11 foi alterada. |
@@ -495,4 +522,4 @@ Nenhum requisito AUT foi ampliado, reduzido ou reinterpretado por este registro.
 
 ---
 
-**Fim — `docs/12-decisoes-autenticacao-autorizacao.md` — `D-2.3D-01`..`D-2.3D-13` registradas; F0 da Etapa 2.3D-B executada em 27/08/2026; `D-2.3D-13` homologada em 28/08/2026.**
+**Fim — `docs/12-decisoes-autenticacao-autorizacao.md` — `D-2.3D-01`..`D-2.3D-15` registradas; F0 da Etapa 2.3D-B executada em 27/08/2026; `D-2.3D-13` homologada em 28/08/2026; `D-2.3D-14` e `D-2.3D-15` homologadas em 31/08/2026.**

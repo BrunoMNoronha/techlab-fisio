@@ -26,8 +26,8 @@
 //
 // AS FIXTURES DE PAPEL/PERMISSÃO SÃO FIXTURES DE TESTE, E SOMENTE ISSO. Elas
 // nascem e morrem dentro desta suíte (limpeza determinística do `setup-db`).
-// NÃO existe seed, script de seed, associação automática papel↔permissão nem
-// bootstrap de Administrador: F5 permanece NÃO INICIADA (`docs/12` §9).
+// Esta suíte não executa seed, associação automática papel↔permissão nem
+// bootstrap de Administrador; a F5 é provada em suítes próprias.
 //
 // Fixtures 100 % sintéticas; nenhum dado real (TLF-BASE-V1 §10).
 
