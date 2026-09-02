@@ -15,7 +15,7 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { afterEach, beforeAll, describe, expect, it } from "@jest/globals";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "@jest/globals";
 
 import { criarClientePersistencia } from "@techlab-fisio/database";
 import type { ClientePersistencia } from "@techlab-fisio/database";
@@ -34,6 +34,16 @@ let cliente: ClientePersistencia;
 
 beforeAll(() => {
   cliente = criarClientePersistencia({ url: urlObrigatoria("DATABASE_URL") });
+});
+
+// O cliente de leitura é um pool `tlf_app` que só fecha conexões ociosas após
+// 10 s. Sem este fechamento explícito, uma conexão `tlf_app` ainda viva no
+// instante do globalTeardown faz `DROP DATABASE ... WITH (FORCE)` — executado
+// como `tlf_migrator`, que não pode terminar sessões de outra role — falhar
+// com "permission denied to terminate process". Medido na CI (Linux) e
+// reproduzido no host rodando esta suíte isolada.
+afterAll(async () => {
+  await cliente.$disconnect();
 });
 
 afterEach(async () => {
