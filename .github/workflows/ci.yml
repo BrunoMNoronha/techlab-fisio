@@ -71,7 +71,10 @@ jobs:
       # nenhuma guarda de persistência acima foi alterada ou reordenada.
       # ------------------------------------------------------------------
 
-      - name: "Backend — build ESM (packages/database → apps/api)"
+      # FRONT-F0 (05/09/2026): `npm run build` passou a incluir apps/web
+      # (`next build`, que também executa a verificação de tipos do Next).
+      # Somente o NOME deste passo mudou; nenhuma guarda anterior foi alterada.
+      - name: "Build dos workspaces (packages/database → apps/api → apps/web)"
         run: npm run build
 
       # Etapa 2.3D-B / F1 (achado A-04 da revisão independente): prova de

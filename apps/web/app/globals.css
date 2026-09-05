@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+/*
+ * Tokens semânticos da identidade visual (FRONT-F0).
+ *
+ * Os valores abaixo são PROVISÓRIOS: a identidade visual final do produto
+ * não foi definida. O objetivo desta camada é único — impedir que cores,
+ * raios e fontes fiquem hardcoded na aplicação. Quando a identidade for
+ * decidida, altera-se este bloco; nenhum componente precisa mudar.
+ *
+ * Um único tema (claro). Dark mode não é requisito vigente.
+ */
+:root {
+  color-scheme: light;
+
+  --background: #f8fafc;
+  --foreground: #0f172a;
+
+  --surface: #ffffff;
+  --surface-foreground: #0f172a;
+
+  --primary: #0f766e;
+  --primary-foreground: #ffffff;
+
+  --secondary: #e2e8f0;
+  --secondary-foreground: #1e293b;
+
+  --muted: #f1f5f9;
+  --muted-foreground: #475569;
+
+  --border: #cbd5e1;
+
+  --destructive: #b91c1c;
+  --destructive-foreground: #ffffff;
+
+  --ring: #0f766e;
+
+  --radius: 0.5rem;
+}
+
+/*
+ * Exposição dos tokens ao Tailwind 4 (utilitários bg-*, text-*, border-*,
+ * rounded-* etc.). `inline` faz o utilitário referenciar a custom property
+ * de :root diretamente — a fonte de verdade continua sendo o bloco acima.
+ * A fonte é a pilha de sistema padrão do Tailwind (--font-sans): nenhuma
+ * fonte externa é carregada.
+ */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-foreground: var(--surface-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-ring: var(--ring);
+  --radius-md: var(--radius);
+}
+
+@layer base {
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Foco visível para qualquer elemento interativo futuro (acessibilidade). */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}

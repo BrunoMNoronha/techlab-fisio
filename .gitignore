@@ -16,3 +16,8 @@ dist/
 # Sistema operacional / editor
 Thumbs.db
 .DS_Store
+
+# Next.js (apps/web): artefatos de dev/build e tipos gerados por `next typegen`/`next build`
+apps/web/.next/
+apps/web/out/
+apps/web/next-env.d.ts
