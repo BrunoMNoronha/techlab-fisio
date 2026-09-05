@@ -1045,6 +1045,76 @@ describe("T-07 — atomicidade, rollback e concorrência", () => {
     expect((await login(alvo.email, SENHA)).status).toBe(401);
     expect((await login(alvo.email, NOVA_SENHA)).status).toBe(200);
   });
+
+  // `M-03` — TOCTOU ENTRE O `verify` DO LOGIN E A EMISSÃO DA SESSÃO.
+  //
+  // O teste acima é SEQUENCIAL: ele prova que, depois de concluída a
+  // recuperação, a senha antiga não autentica. Não prova nada sobre um login
+  // que já estava EM VOO. E era exatamente aí que estava o furo: o login lê o
+  // `senha_hash` corrente, gasta ~40 ms no Argon2 e só então abre a transação
+  // que emite a sessão. Sem rehash a emissão não reconferia o digest, de modo
+  // que uma conclusão de recuperação que coubesse nessa janela trocava a senha
+  // e revogava TODAS as sessões ativas — e o login em voo, já validado contra
+  // a credencial superada, emitia a sua LOGO DEPOIS da revogação em massa.
+  //
+  // O resultado frustrava a finalidade de RN-005/T-07: quem conhecia a senha
+  // antiga ficava com sessão viva depois da recuperação, que é precisamente o
+  // que a revogação existe para impedir.
+  //
+  // O entrelaçamento aqui é DETERMINÍSTICO, não disputado no scheduler: o
+  // login é congelado no ponto exato — depois do `verify`, antes da
+  // transação — e só é liberado quando a conclusão já commitou.
+  it("M-03 — login EM VOO com a senha antiga não obtém sessão que sobreviva à recuperação", async () => {
+    const alvo = await criarUsuario();
+    const { segredo } = await emitirSegredo(alvo);
+
+    let sinalizarNoPonto: () => void = () => undefined;
+    const chegouNoPonto = new Promise<void>((resolver) => {
+      sinalizarNoPonto = resolver;
+    });
+    let liberar: () => void = () => undefined;
+    const liberado = new Promise<void>((resolver) => {
+      liberar = resolver;
+    });
+
+    const verificarReal = credenciais.verificarComCaminhoDummy.bind(credenciais);
+    const espiao = jest
+      .spyOn(credenciais, "verificarComCaminhoDummy")
+      .mockImplementation(async (hashPersistido, senha) => {
+        const confere = await verificarReal(hashPersistido, senha);
+        // Congela o login DEPOIS do Argon2 e ANTES da emissão da sessão.
+        sinalizarNoPonto();
+        await liberado;
+        return confere;
+      });
+
+    try {
+      const loginEmVoo = login(alvo.email, SENHA);
+      await chegouNoPonto;
+
+      // A recuperação conclui INTEIRA enquanto o login está congelado.
+      expect((await concluir(segredo)).status).toBe(204);
+
+      liberar();
+      const resposta = await loginEmVoo;
+
+      // A credencial verificada deixou de ser a corrente: 401 uniforme, sem
+      // cookie de sessão.
+      expect(resposta.status).toBe(401);
+      expect(resposta.cookies.filter((c) => c.startsWith(`${politicaCookie.nome}=`))).toEqual([]);
+    } finally {
+      espiao.mockRestore();
+    }
+
+    // A propriedade que de fato importa (RN-005): terminada a recuperação,
+    // NENHUMA sessão do usuário continua ativa.
+    const sessoesDoAlvo = await lerSessoesDe(alvo.id);
+    expect(sessoesDoAlvo.filter((s) => s.estado === "ATIVA")).toEqual([]);
+
+    // E a senha nova — só ela — autentica.
+    expect((await login(alvo.email, SENHA)).status).toBe(401);
+    expect((await login(alvo.email, NOVA_SENHA)).status).toBe(200);
+  });
 });
 
 // ===========================================================================
