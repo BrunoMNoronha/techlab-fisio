@@ -1,6 +1,6 @@
 # TechLab Fisio
 
-Sistema web de gestão para clínicas de fisioterapia (MVP em desenvolvimento). Monorepositório npm workspaces com a camada de persistência (`packages/database`, **encerrada** na Fase 2) e a fundação do backend (`apps/api`, NestJS 11 em ESM — [`apps/api/README.md`](apps/api/README.md); registro vivo em [`docs/10-backend-implementacao.md`](docs/10-backend-implementacao.md)). Não existe ainda `apps/web`.
+Sistema web de gestão para clínicas de fisioterapia (MVP em desenvolvimento). Monorepositório npm workspaces com a camada de persistência (`packages/database`, **encerrada** na Fase 2) e a fundação do backend (`apps/api`, NestJS 11 em ESM — [`apps/api/README.md`](apps/api/README.md); registro vivo em [`docs/10-backend-implementacao.md`](docs/10-backend-implementacao.md)). O frontend (`apps/web`, Next.js 16 + React 19 + Tailwind CSS 4 — [`apps/web/README.md`](apps/web/README.md)) nasceu na sprint `FRONT-F0` como **fundação técnica**: sem funcionalidade de negócio e sem integração com a API.
 
 Este README é **operacional**: como reproduzir o ambiente e executar as verificações. As decisões de arquitetura, regras de negócio e o plano de implementação vivem em [`docs/`](docs/) — em especial [`docs/07-modelo-persistencia.md`](docs/07-modelo-persistencia.md) (modelo físico homologado) e [`docs/08-baseline-tecnica-plano-implementacao.md`](docs/08-baseline-tecnica-plano-implementacao.md) (baseline técnica e plano `E-01`..`E-18`). A fonte fundamental é [`TECHLAB_FISIO_BASE_IMUTAVEL_V1.md`](TECHLAB_FISIO_BASE_IMUTAVEL_V1.md).
 
@@ -108,11 +108,25 @@ Guarda 3 + alarme: reconstrói uma instância limpa, gera `pg_dump --schema-only
 npm run typecheck
 ```
 
-TypeScript 6.0.x estrito, incluindo os testes.
+TypeScript 6.0.x estrito em todos os workspaces, incluindo os testes; em `apps/web` o comando executa `next typegen` antes do `tsc --noEmit`.
+
+## Frontend (`apps/web`)
+
+Fundação técnica do frontend (sprint `FRONT-F0`): Next.js 16 (App Router), React 19, TypeScript 6 estrito e Tailwind CSS 4 com tokens semânticos. **Nenhuma funcionalidade de negócio e nenhuma integração com `apps/api`** — propósito, limites e decisões locais em [`apps/web/README.md`](apps/web/README.md). O frontend não depende de banco nem de Docker.
+
+```bash
+npm run dev --workspace @techlab-fisio/web
+```
+
+```bash
+npm run build --workspace @techlab-fisio/web
+```
+
+`npm run typecheck` e `npm run build` na raiz já incluem o workspace (`V-06.c` — teto do TypeScript 6.0 × Next.js 16 — foi aprovada nessa combinação; registro em `docs/08` §12.1).
 
 ## CI
 
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml) executa, na ordem barato→caro: `npm ci` → `prisma generate`/`validate` → typecheck → Guarda 1 → `verify:from-scratch` (que É a preparação da suíte integral, incluindo a Guarda 2 `guard-anti-drift.spec.ts`) → Guarda 3 + alarme.
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) executa, na ordem barato→caro: `npm ci` → `prisma generate`/`validate` → typecheck → Guarda 1 → `verify:from-scratch` (que É a preparação da suíte integral, incluindo a Guarda 2 `guard-anti-drift.spec.ts`) → Guarda 3 + alarme → build dos três workspaces (`packages/database` → `apps/api` → `apps/web`) → provas de runtime e suítes do backend.
 
 ## Desligar o ambiente
 

@@ -11,11 +11,12 @@
   "packageManager": "npm@11.16.0",
   "workspaces": [
     "packages/database",
-    "apps/api"
+    "apps/api",
+    "apps/web"
   ],
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json && npm run typecheck --workspaces --if-present",
-    "build": "npm run build --workspace @techlab-fisio/database && npm run build --workspace @techlab-fisio/api",
+    "build": "npm run build --workspace @techlab-fisio/database && npm run build --workspace @techlab-fisio/api && npm run build --workspace @techlab-fisio/web",
     "test": "npm run test:integration && npm run test:api",
     "test:integration": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config packages/database/jest.config.mjs",
     "test:api": "npm run test --workspace @techlab-fisio/api",

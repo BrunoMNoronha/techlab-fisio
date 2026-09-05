@@ -1,0 +1,32 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+
+    // Next.js compila com o SWC e exige resolução de módulos de bundler,
+    // JSX automático e tipos do DOM. Estas são as ÚNICAS chaves que
+    // divergem de tsconfig.base.json; todo o restante (strict,
+    // noUncheckedIndexedAccess, noImplicitOverride, isolatedModules,
+    // esModuleInterop, skipLibCheck=false, noEmit) vem inalterado da base.
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "resolveJsonModule": true,
+    "incremental": true,
+    "plugins": [{ "name": "next" }],
+
+    // Mesma razão de apps/api: fixa o @types/node 24.13.3 deste workspace
+    // e impede que o @types/node flutuante hoisted na raiz (transitivo do
+    // Jest) vaze para o typecheck do frontend.
+    "types": ["node"]
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}
