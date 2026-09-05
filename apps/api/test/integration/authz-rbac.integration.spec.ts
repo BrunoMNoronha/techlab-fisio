@@ -178,6 +178,13 @@ async function darPapel(
   });
 }
 
+/** L-07 (A-11): eventos `autorizacao.negada` persistidos — deve ser ZERO nesta suíte. */
+async function contarNegacoesAuditadas(): Promise<number> {
+  return database.transacao(async (tx) =>
+    tx.eventoAuditoria.count({ where: { acao: "autorizacao.negada" } }),
+  );
+}
+
 /**
  * Controle de não vacuidade das fixtures: confirma NO BANCO que o vínculo
  * usuário↔papel↔permissão existe de fato. Sem isto, um teste que espera `403`
@@ -358,6 +365,42 @@ describe("Caso B — autenticado, com papel, SEM a permissão exigida", () => {
     expect(serializado).not.toContain("permissoes.gerenciar");
     expect(serializado).not.toContain("auditoria.ler");
     expect(serializado).not.toContain(usuario.id);
+  });
+
+  // L-07 (PBACK-AUD-09; docs/13 A-11) — LISTA FECHADA: a auditoria de negação
+  // vale SOMENTE para `senha.recuperar_terceiro`. As rotas desta fixture exigem
+  // `usuarios.gerenciar` e `permissoes.gerenciar`; a negação nelas — inclusive
+  // por usuário INATIVO — continua SEM evento. Se a lista fechada for ampliada
+  // por implicação (ou a filtragem removida), este teste falha.
+  it("L-07 / A-11: negação em permissão FORA da lista fechada NÃO é auditada — zero `autorizacao.negada`", async () => {
+    // PODER DA PROVA: as linhas de `permissao` das rotas negadas EXISTEM no
+    // banco (criadas para OUTRO usuário). Sem isto, uma lista ampliada por
+    // engano falharia em resolver o alvo, cairia no Q2 e este teste ficaria
+    // vacuamente verde. Com elas, ampliar a lista PERSISTE evento — e mata.
+    const outro = await criarUsuario();
+    await darPapel(outro.id, "PapelDoOutro", ["usuarios.gerenciar", "permissoes.gerenciar"]);
+    expect(
+      await database.transacao(async (tx) =>
+        tx.permissao.count({ where: { codigo: { in: ["usuarios.gerenciar", "permissoes.gerenciar"] } } }),
+      ),
+    ).toBe(2);
+
+    const usuario = await criarUsuario();
+    await darPapel(usuario.id, "PapelSemP", ["auditoria.ler"]);
+    const { cookie } = await sessaoDe(usuario.id);
+    expect((await obter("exige-permissao", { cookie })).status).toBe(403);
+    expect((await obter("exige-outra", { cookie })).status).toBe(403);
+    expect((await enviar("exige-permissao", { cookie }, { usuarioId: usuario.id })).status).toBe(403);
+    const semPapel = await criarUsuario();
+    expect((await obter("exige-permissao", { cookie: (await sessaoDe(semPapel.id)).cookie })).status).toBe(403);
+    await database.transacao(async (tx) =>
+      tx.usuario.update({ where: { id: usuario.id }, data: { ativo: false } }),
+    );
+    expect((await obter("exige-permissao", { cookie })).status).toBe(403);
+
+    expect(await contarNegacoesAuditadas()).toBe(0);
+    // A tabela inteira permanece vazia: nenhum outro evento nasce da negação.
+    expect(await database.transacao(async (tx) => tx.eventoAuditoria.count())).toBe(0);
   });
 });
 

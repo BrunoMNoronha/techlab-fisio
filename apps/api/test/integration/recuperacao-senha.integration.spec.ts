@@ -33,6 +33,7 @@ import { randomUUID } from "node:crypto";
 
 import { Test } from "@nestjs/testing";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { Logger } from "@nestjs/common";
 import type { INestApplication } from "@nestjs/common";
 import type { TestingModule } from "@nestjs/testing";
 
@@ -49,12 +50,16 @@ import { CABECALHO_REQUISICAO_TLF } from "../../src/auth/protecao-csrf.guard.js"
 import { RELOGIO_SESSAO } from "../../src/auth/relogio-sessao.js";
 import type { RelogioSessao } from "../../src/auth/relogio-sessao.js";
 import { POLITICA_SESSAO, SessaoService } from "../../src/auth/sessao.service.js";
+import { PermissoesService } from "../../src/authz/permissoes.service.js";
 import { DatabaseService } from "../../src/database/database.service.js";
 import {
   LIMITE_TENTATIVAS_RECUPERACAO_POR_IP,
   LimitadorRecuperacao,
 } from "../../src/recuperacao-senha/limitador-recuperacao.js";
-import { POLITICA_RECUPERACAO } from "../../src/recuperacao-senha/recuperacao-senha.service.js";
+import {
+  POLITICA_RECUPERACAO,
+  RecuperacaoSenhaService,
+} from "../../src/recuperacao-senha/recuperacao-senha.service.js";
 import { calcularHashSegredoRecuperacao } from "../../src/recuperacao-senha/segredo-recuperacao.js";
 import { urlObrigatoria } from "./helpers-integracao.js";
 
@@ -455,6 +460,8 @@ describe("Início — autenticação, autorização e CSRF", () => {
     await sessoes.revogar(token);
     expect((await iniciar(admin.cookie, alvo.email)).status).toBe(401);
     expect(await lerSegredos()).toHaveLength(0);
+    // L-07: `401` NÃO é negação de autorização — nenhum `autorizacao.negada`.
+    expect(await lerEventos()).toHaveLength(0);
   });
 
   it("autenticado SEM senha.recuperar_terceiro => 403 ACESSO_NEGADO — inclusive com usuarios.gerenciar", async () => {
@@ -482,6 +489,9 @@ describe("Início — autenticação, autorização e CSRF", () => {
     expect(resposta.status).toBe(403);
     expect(resposta.corpo).toEqual({ erro: "REQUISICAO_NAO_AUTORIZADA" });
     expect(await lerSegredos()).toHaveLength(0);
+    // L-07 (docs/13 A-04): o `403` do CSRF é proteção de transporte, anterior
+    // à sessão — NÃO é negação de autorização e não gera evento algum.
+    expect(await lerEventos()).toHaveLength(0);
   });
 
   it("o ator do evento é a identidade da SESSÃO — um `atorUsuarioId` no corpo é ignorado", async () => {
@@ -496,6 +506,341 @@ describe("Início — autenticação, autorização e CSRF", () => {
     expect(resposta.status).toBe(201);
     expect((await lerSegredos())[0]?.criado_por_usuario_id).toBe(admin.id);
     expect(eventosDe(await lerEventos(), "usuario.senha.recuperacao_iniciada")[0]?.ator_usuario_id).toBe(admin.id);
+  });
+});
+
+// ===========================================================================
+// L-07 — auditoria RESTRITA da negação de autorização (PBACK-AUD-09,
+// `docs/09` §13.4.1; pacote `docs/13`, decisões D-0..D-6 de Bruno).
+//
+// Caminho provado, inteiro: HTTP real → CSRF → `SessaoAutenticadaGuard` →
+// `PermissoesGuard` (decide negar) → `AuditoriaNegacaoAutorizacao` → transação
+// DEDICADA (`DatabaseService.transacao`) → `SELECT permissao` → `AuditWriter`
+// → `AuditContextValidator` → `evento_auditoria` (`tlf_app`, append-only).
+//
+// O que se mede aqui, caso a caso da matriz de `docs/13` §13:
+//   A-01/A-02  1 evento por negação DELIBERADA (sem permissão; inativo);
+//   A-03/A-04  `401` e CSRF: zero eventos (nos blocos acima);
+//   A-05       autorizado: zero `autorizacao.negada`;
+//   A-06       falha técnica na resolução: `500`, zero eventos;
+//   A-07       Q2: falha na gravação => `403` idêntico, handler não executa,
+//              log técnico seguro, sem unhandled rejection;
+//   A-08       N negações concorrentes => N eventos, N `403`;
+//   A-10       nada do corpo/cookie/e-mail/id do alvo chega ao evento ou log;
+//   corpo      inválido SEMANTICAMENTE (mas JSON válido, para alcançar a
+//              guard) é negado e auditado IGUAL — a negação não depende da
+//              validação do handler;
+//   A-11       lista fechada: `authz-rbac.integration.spec.ts` (fixture com
+//              outra permissão => zero eventos).
+// ===========================================================================
+
+/** Garante a linha de `permissao` (o seed da F5 não roda nesta suíte) e devolve o id. */
+async function idDaPermissao(codigo: string): Promise<string> {
+  return database.transacao(async (tx) => {
+    const existente = await tx.permissao.findUnique({ where: { codigo }, select: { id: true } });
+    if (existente !== null) return existente.id;
+    const criada = await tx.permissao.create({ data: { codigo, nome: codigo }, select: { id: true } });
+    return criada.id;
+  });
+}
+
+interface EventoCompleto extends EventoMedido {
+  correlacao_id: string;
+  ocorrido_em: Date;
+}
+
+async function lerNegacoes(): Promise<EventoCompleto[]> {
+  return database.transacao(async (tx) =>
+    tx.$queryRaw<EventoCompleto[]>`
+      SELECT acao, resultado, ator_usuario_id, alvo_tipo, alvo_id, contexto, justificativa,
+             correlacao_id, ocorrido_em
+        FROM evento_auditoria WHERE acao = 'autorizacao.negada' ORDER BY ocorrido_em, id
+    `,
+  );
+}
+
+async function tabelaInteiraSerializada(): Promise<string> {
+  return JSON.stringify(
+    await database.transacao(async (tx) => tx.$queryRaw<unknown[]>`SELECT * FROM evento_auditoria`),
+  );
+}
+
+/** Captura de `Logger.error` (canal do Q2) e de `console.*` durante `acao`. */
+async function capturandoLogs<T>(acao: () => Promise<T>): Promise<{ resultado: T; erros: string[]; console: string }> {
+  const erros: string[] = [];
+  const consoleCapturado: string[] = [];
+  const espiaErro = jest.spyOn(Logger.prototype, "error").mockImplementation((...args: unknown[]) => {
+    erros.push(args.map((a) => String(a)).join(" "));
+  });
+  const metodos = ["log", "info", "warn", "error", "debug", "trace"] as const;
+  const espiasConsole = metodos.map((m) =>
+    jest.spyOn(console, m).mockImplementation((...args: unknown[]) => {
+      consoleCapturado.push(args.map((a) => String(a)).join(" "));
+    }),
+  );
+  try {
+    return { resultado: await acao(), erros, console: consoleCapturado.join("\n") };
+  } finally {
+    espiaErro.mockRestore();
+    for (const e of espiasConsole) e.mockRestore();
+  }
+}
+
+describe("L-07 — negação deliberada gera EXATAMENTE um `autorizacao.negada` (A-01, A-02)", () => {
+  it("A-01: sem a permissão => 403 ACESSO_NEGADO (corpo idêntico) + 1 evento NEGADO com ator = sessão, alvo = permissao.id, contexto vazio", async () => {
+    const permissaoId = await idDaPermissao("senha.recuperar_terceiro");
+    const alvo = await criarUsuario();
+    const semPapel = await criarUsuario();
+    const comOutras = await criarUsuario();
+    await darPapel(comOutras.id, ["usuarios.gerenciar", "permissoes.gerenciar", "auditoria.ler"]);
+
+    for (const usuario of [semPapel, comOutras]) {
+      const cookie = await cookieDe(usuario.id);
+      const resposta = await iniciar(cookie, alvo.email);
+      // Contrato HTTP INALTERADO — mesmo corpo do teste preexistente (`:460`).
+      expect(resposta.status).toBe(403);
+      expect(resposta.corpo).toEqual({ erro: "ACESSO_NEGADO" });
+      expect(resposta.cookies).toEqual([]);
+    }
+
+    const negacoes = await lerNegacoes();
+    expect(negacoes).toHaveLength(2);
+    expect(negacoes.map((n) => n.ator_usuario_id).sort()).toEqual([semPapel.id, comOutras.id].sort());
+    for (const n of negacoes) {
+      expect(n).toMatchObject({
+        acao: "autorizacao.negada",
+        resultado: "NEGADO",
+        alvo_tipo: "permissao",
+        alvo_id: permissaoId,
+        justificativa: null,
+      });
+      expect(n.contexto ?? {}).toEqual({});
+      expect(n.correlacao_id).toMatch(/^[0-9a-f-]{36}$/);
+    }
+    // Correlação NOVA por negação (docs/13 §5) — não é o id da sessão.
+    expect(new Set(negacoes.map((n) => n.correlacao_id)).size).toBe(2);
+    // A tabela inteira não carrega o alvo pretendido nem qualquer dado do pedido.
+    const tudo = await tabelaInteiraSerializada();
+    expect(tudo).not.toContain(alvo.email);
+    expect(tudo).not.toContain(alvo.id);
+    // Nenhum outro evento e nenhum segredo: o handler NÃO executou.
+    expect(await lerEventos()).toHaveLength(2);
+    expect(await lerSegredos()).toHaveLength(0);
+  });
+
+  it("A-02: usuário INATIVO com sessão viva => 403 + 1 evento (o usuário existe e tentou)", async () => {
+    const permissaoId = await idDaPermissao("senha.recuperar_terceiro");
+    const alvo = await criarUsuario();
+    const admin = await criarAdministrador(); // TEM a permissão — o que nega é a inativação
+    await inativar(admin.id);
+    const resposta = await iniciar(admin.cookie, alvo.email);
+    expect(resposta.status).toBe(403);
+    expect(resposta.corpo).toEqual({ erro: "ACESSO_NEGADO" });
+    const negacoes = await lerNegacoes();
+    expect(negacoes).toHaveLength(1);
+    expect(negacoes[0]).toMatchObject({
+      resultado: "NEGADO",
+      ator_usuario_id: admin.id,
+      alvo_tipo: "permissao",
+      alvo_id: permissaoId,
+    });
+    expect(await lerSegredos()).toHaveLength(0);
+  });
+
+  it("A-05 (controle positivo): AUTORIZADO alcança o handler => 201 e ZERO `autorizacao.negada`", async () => {
+    const alvo = await criarUsuario();
+    const admin = await criarAdministrador();
+    expect((await iniciar(admin.cookie, alvo.email)).status).toBe(201);
+    expect(await lerNegacoes()).toHaveLength(0);
+    expect(eventosDe(await lerEventos(), "usuario.senha.recuperacao_iniciada")).toHaveLength(1);
+  });
+
+  it("A-06: falha TÉCNICA na resolução de permissões => 500 FALHA_INTERNA e ZERO eventos (negação ≠ falha)", async () => {
+    await idDaPermissao("senha.recuperar_terceiro");
+    const alvo = await criarUsuario();
+    const usuario = await criarUsuario();
+    const cookie = await cookieDe(usuario.id);
+    const permissoes = moduleRef.get(PermissoesService);
+    const espia = jest
+      .spyOn(permissoes, "resolverDoUsuario")
+      .mockRejectedValue(new Error("driver indisponivel: SELECT ... FROM usuario"));
+    try {
+      const { resultado: resposta } = await capturandoLogs(() => iniciar(cookie, alvo.email));
+      expect(resposta.status).toBe(500);
+      expect(resposta.corpo).toEqual({ erro: "FALHA_INTERNA" });
+    } finally {
+      espia.mockRestore();
+    }
+    expect(await lerEventos()).toHaveLength(0);
+  });
+
+  it("A-08: N negações CONCORRENTES do mesmo usuário => N `403` e N eventos, sem dedupe e sem deadlock (D-3 V0)", async () => {
+    const permissaoId = await idDaPermissao("senha.recuperar_terceiro");
+    const alvo = await criarUsuario();
+    const usuario = await criarUsuario();
+    const cookie = await cookieDe(usuario.id);
+    const N = 8;
+    const respostas = await Promise.all(Array.from({ length: N }, () => iniciar(cookie, alvo.email)));
+    for (const r of respostas) {
+      expect(r.status).toBe(403);
+      expect(r.corpo).toEqual({ erro: "ACESSO_NEGADO" });
+    }
+    const negacoes = await lerNegacoes();
+    expect(negacoes).toHaveLength(N);
+    expect(negacoes.every((n) => n.ator_usuario_id === usuario.id && n.alvo_id === permissaoId)).toBe(true);
+    expect(new Set(negacoes.map((n) => n.correlacao_id)).size).toBe(N);
+  });
+});
+
+describe("L-07 — o corpo NÃO é confiável e NÃO é lido para auditar (docs/13 F-04; A-10)", () => {
+  const forjado = "99999999-9999-4999-8999-999999999999";
+
+  it.each([
+    ["objeto vazio", {}],
+    ["tipo errado", { identificador: 7 }],
+    ["array", [{ identificador: "a@b.local" }]],
+    ["identidade e permissão forjadas", { identificador: "VITIMA-L07@sintetico.local", atorUsuarioId: forjado, usuarioId: forjado, permissao: "senha.recuperar_terceiro", permissoes: ["senha.recuperar_terceiro"] }],
+  ])("corpo %s (JSON válido, semanticamente inválido/forjado) => 403 + 1 evento sem nada do corpo", async (_rotulo, corpo) => {
+    const permissaoId = await idDaPermissao("senha.recuperar_terceiro");
+    const usuario = await criarUsuario();
+    const cookie = await cookieDe(usuario.id);
+    const { resultado: resposta, erros, console: saida } = await capturandoLogs(() =>
+      postar(ROTA_INICIO, corpo, { cabecalhos: cabecalhosLegitimos({ cookie }) }),
+    );
+    // Negado ANTES da validação do handler: `400` só existe para quem é autorizado.
+    expect(resposta.status).toBe(403);
+    expect(resposta.corpo).toEqual({ erro: "ACESSO_NEGADO" });
+    const negacoes = await lerNegacoes();
+    expect(negacoes).toHaveLength(1);
+    expect(negacoes[0]).toMatchObject({ ator_usuario_id: usuario.id, alvo_tipo: "permissao", alvo_id: permissaoId });
+    expect(negacoes[0]?.contexto ?? {}).toEqual({});
+    const tudo = await tabelaInteiraSerializada();
+    for (const proibido of [forjado, "VITIMA-L07", "a@b.local", "identificador", cookie, JSON.stringify(corpo)]) {
+      expect(tudo).not.toContain(proibido);
+      expect(saida).not.toContain(proibido);
+    }
+    expect(erros).toEqual([]);
+  });
+
+  it("controle: os MESMOS corpos, com a permissão, chegam ao handler e recebem 400 — a validação vive no handler, não na negação", async () => {
+    const admin = await criarAdministrador();
+    for (const corpo of [{}, { identificador: 7 }, [{ identificador: "a@b.local" }]]) {
+      const resposta = await postar(ROTA_INICIO, corpo, { cabecalhos: cabecalhosLegitimos({ cookie: admin.cookie }) });
+      expect(resposta.status).toBe(400);
+    }
+    expect(await lerNegacoes()).toHaveLength(0);
+  });
+
+  it("A-10: e-mail do alvo, cookie, token, ids e cabeçalhos forjados NÃO aparecem no evento nem em log", async () => {
+    await idDaPermissao("senha.recuperar_terceiro");
+    const alvo = await criarUsuario({ email: "alvo-sensivel-l07@sintetico.local" });
+    const usuario = await criarUsuario();
+    const cookie = await cookieDe(usuario.id);
+    const token = cookie.split("=")[1] as string;
+    const { resultado: resposta, erros, console: saida } = await capturandoLogs(() =>
+      postar(
+        ROTA_INICIO,
+        { identificador: alvo.email, senha: "SENHA-NO-CORPO-L07", token: "TOKEN-NO-CORPO-L07" },
+        { cabecalhos: cabecalhosLegitimos({ cookie, "x-usuario-id": alvo.id, "x-forwarded-for": "198.51.100.7", authorization: "Bearer BEARER-L07" }) },
+      ),
+    );
+    expect(resposta.status).toBe(403);
+    expect(await lerNegacoes()).toHaveLength(1);
+    const tudo = await tabelaInteiraSerializada();
+    for (const proibido of [alvo.email, alvo.id, token, "SENHA-NO-CORPO-L07", "TOKEN-NO-CORPO-L07", "BEARER-L07", "198.51.100.7", "alvo-sensivel"]) {
+      expect(tudo).not.toContain(proibido);
+      expect(saida).not.toContain(proibido);
+    }
+    expect(erros).toEqual([]);
+    // O ator (uuid da sessão) é o ÚNICO identificador de usuário no evento.
+    expect(tudo).toContain(usuario.id);
+  });
+});
+
+describe("L-07 — Q2: falha na gravação da auditoria preserva o 403 (A-07)", () => {
+  function contandoRejeicoesSoltas(): { contar: () => number; parar: () => void } {
+    let n = 0;
+    const ouvinte = (): void => {
+      n += 1;
+    };
+    process.on("unhandledRejection", ouvinte);
+    return { contar: () => n, parar: () => process.off("unhandledRejection", ouvinte) };
+  }
+
+  it("writer falha ao gravar `autorizacao.negada` => 403 ACESSO_NEGADO idêntico; handler NÃO executa; 1 log técnico seguro; zero eventos; zero unhandled rejection", async () => {
+    await idDaPermissao("senha.recuperar_terceiro");
+    const alvo = await criarUsuario();
+    const usuario = await criarUsuario();
+    const cookie = await cookieDe(usuario.id);
+    const auditWriter = moduleRef.get(AuditWriter);
+    const recuperacao = moduleRef.get(RecuperacaoSenhaService);
+    const original = auditWriter.registrar.bind(auditWriter);
+    const espiaWriter = jest.spyOn(auditWriter, "registrar").mockImplementation(async (tx, evento) => {
+      if (evento.acao === "autorizacao.negada") {
+        const erro = new Error("falha sintetica: INSERT INTO evento_auditoria ... hash_segredo=NAO-VAZAR");
+        erro.name = "PrismaClientKnownRequestError";
+        throw erro;
+      }
+      return original(tx, evento);
+    });
+    const espiaHandler = jest.spyOn(recuperacao, "iniciar");
+    const soltas = contandoRejeicoesSoltas();
+    try {
+      const { resultado: resposta, erros, console: saida } = await capturandoLogs(() => iniciar(cookie, alvo.email));
+      // Cede alguns turnos para que uma rejeição solta, se existisse, aflorasse.
+      for (let i = 0; i < 5; i += 1) await new Promise((r) => setImmediate(r));
+
+      expect(resposta.status).toBe(403);
+      expect(resposta.corpo).toEqual({ erro: "ACESSO_NEGADO" });
+      expect(resposta.cookies).toEqual([]);
+      expect(espiaHandler).not.toHaveBeenCalled();
+      expect(espiaWriter).toHaveBeenCalledTimes(1); // sem segunda tentativa
+
+      expect(erros).toHaveLength(1);
+      const log = erros[0] as string;
+      expect(log).toContain("autorizacao.negada");
+      expect(log).toContain("classe=PrismaClientKnownRequestError");
+      expect(log).toContain("permissao=senha.recuperar_terceiro");
+      expect(log).toMatch(/correlacao=[0-9a-f-]{36}/);
+      for (const proibido of ["NAO-VAZAR", "hash_segredo", "INSERT", "falha sintetica", "    at ", alvo.email, alvo.id, usuario.id, cookie]) {
+        expect(log).not.toContain(proibido);
+        expect(saida).not.toContain(proibido);
+      }
+      expect(soltas.contar()).toBe(0);
+    } finally {
+      soltas.parar();
+      espiaWriter.mockRestore();
+      espiaHandler.mockRestore();
+    }
+    expect(await lerEventos()).toHaveLength(0);
+    expect(await lerSegredos()).toHaveLength(0);
+  });
+
+  it("falha REAL (sem mock): permissão não provisionada em `permissao` => 403, zero eventos, 1 log técnico — nunca alvo NULL ou sentinela", async () => {
+    // Nesta suíte o seed da F5 não roda e a tabela é truncada entre testes:
+    // sem `idDaPermissao`, a linha de `senha.recuperar_terceiro` NÃO existe.
+    expect(
+      await database.transacao(async (tx) => tx.permissao.count({ where: { codigo: "senha.recuperar_terceiro" } })),
+    ).toBe(0);
+    const alvo = await criarUsuario();
+    const usuario = await criarUsuario();
+    const cookie = await cookieDe(usuario.id);
+    const { resultado: resposta, erros } = await capturandoLogs(() => iniciar(cookie, alvo.email));
+    expect(resposta.status).toBe(403);
+    expect(resposta.corpo).toEqual({ erro: "ACESSO_NEGADO" });
+    expect(await lerEventos()).toHaveLength(0);
+    expect(erros).toHaveLength(1);
+    expect(erros[0]).toContain("classe=ErroPermissaoNaoPersistida");
+    expect(erros[0]).toMatch(/correlacao=[0-9a-f-]{36}/);
+  });
+
+  it("controle positivo: restaurada a gravação, a MESMA sessão volta a gerar evento", async () => {
+    await idDaPermissao("senha.recuperar_terceiro");
+    const alvo = await criarUsuario();
+    const usuario = await criarUsuario();
+    const cookie = await cookieDe(usuario.id);
+    expect((await iniciar(cookie, alvo.email)).status).toBe(403);
+    expect(await lerNegacoes()).toHaveLength(1);
   });
 });
 
@@ -543,6 +888,9 @@ describe("Início — rejeições uniformes", () => {
     expect(b).toBe(c);
     expect(await lerSegredos()).toHaveLength(0);
     expect(eventosDe(await lerEventos(), "usuario.senha.recuperacao_iniciada")).toHaveLength(0);
+    // L-07: o `422` é recusa de NEGÓCIO de um ator AUTORIZADO (D-2.3D-16) —
+    // fora do escopo da auditoria de negação; nenhum `autorizacao.negada`.
+    expect(eventosDe(await lerEventos(), "autorizacao.negada")).toHaveLength(0);
   });
 
   it("falha na auditoria REVERTE o início: 500 FALHA_INTERNA e nenhum segredo persistido", async () => {

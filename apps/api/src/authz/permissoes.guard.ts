@@ -38,10 +38,19 @@
 // incidente parecer erro de configuração de papéis. Mesmo racional já
 // homologado do `FiltroErroAutenticacao` ("falha técnica nunca vira `401`").
 //
-// SEM AUDITORIA DE NEGAÇÃO — fronteira, não esquecimento: `autorizacao.negada`
-// é uma das ações RC/SF que `D-AUD-04`/`D-AUD-05` mantêm EXPRESSAMENTE FORA do
-// catálogo homologado (`docs/09` §12). Emiti-la aqui ampliaria o catálogo sem
-// decisão própria.
+// AUDITORIA RESTRITA DE NEGAÇÃO (L-07 — PBACK-AUD-09, `docs/09` §13.4.1). A
+// fronteira anterior ("sem auditoria de negação") foi revista por decisão
+// expressa sobre o pacote `docs/13`. A guard continua DECIDINDO sozinha; o
+// REGISTRO é delegado ao emissor `AuditoriaNegacaoAutorizacao`, chamado
+// somente nos dois desfechos que são tentativa DELIBERADA de um usuário
+// existente — permissão ausente do conjunto efetivo e usuário inativo —,
+// DEPOIS da decisão de negar e ANTES de lançar. O emissor aplica a lista
+// FECHADA de permissões (hoje só `senha.recuperar_terceiro`), de modo que
+// negações em outras rotas continuam sem evento; e ele NUNCA lança (Q2): a
+// resposta `403` desta guard não depende da disponibilidade da trilha. Os
+// casos de fiação (metadata/contexto ausentes) e o usuário inexistente NÃO
+// emitem: não são tentativa do usuário, e a falha técnica na resolução
+// continua subindo ANTES de qualquer emissão.
 //
 // SEM CACHE: a decisão consulta a persistência a cada requisição. Nenhum
 // snapshot de permissão na sessão, nenhum token com papéis, nenhum Redis
@@ -58,6 +67,7 @@ import { CanActivate, ForbiddenException, Injectable } from "@nestjs/common";
 import type { ExecutionContext } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 
+import { AuditoriaNegacaoAutorizacao } from "./auditoria-negacao-autorizacao.js";
 import { lerContextoAutenticado } from "./contexto-autenticado.js";
 import { ERRO_AUTORIZACAO } from "./erro-autorizacao.js";
 import {
@@ -93,6 +103,7 @@ export class PermissoesGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly permissoes: PermissoesService,
+    private readonly negacoes: AuditoriaNegacaoAutorizacao,
   ) {}
 
   async canActivate(contexto: ExecutionContext): Promise<boolean> {
@@ -105,10 +116,31 @@ export class PermissoesGuard implements CanActivate {
     const autenticado = lerContextoAutenticado(requisicao);
     if (autenticado === null) throw new ForbiddenException(negado());
 
+    // Falha TÉCNICA aqui sobe como exceção (`500`) — antes de qualquer
+    // emissão: negação e falha técnica continuam distintas.
     const resolucao = await this.permissoes.resolverDoUsuario(autenticado.usuarioId);
-    if (!resolucao.resolvido) throw new ForbiddenException(negado());
+    if (!resolucao.resolvido) {
+      // Usuário INATIVO é tentativa deliberada de um usuário existente —
+      // auditável (docs/13 A-02). Usuário INEXISTENTE não é (FK do ator).
+      if (resolucao.motivo === "USUARIO_INATIVO") {
+        await this.registrarNegacao(autenticado.usuarioId, exigida);
+      }
+      throw new ForbiddenException(negado());
+    }
 
-    if (!resolucao.permissoes.includes(exigida)) throw new ForbiddenException(negado());
+    if (!resolucao.permissoes.includes(exigida)) {
+      await this.registrarNegacao(autenticado.usuarioId, exigida);
+      throw new ForbiddenException(negado());
+    }
     return true;
+  }
+
+  /**
+   * Emite `autorizacao.negada` para a negação já DECIDIDA. Aguardado antes de
+   * lançar — nenhuma promessa fica solta — e o emissor não lança (Q2), de
+   * modo que este ponto nunca altera o desfecho `403`.
+   */
+  private async registrarNegacao(atorUsuarioId: string, permissao: Permissao): Promise<void> {
+    await this.negacoes.registrarNegacao({ atorUsuarioId, permissao });
   }
 }

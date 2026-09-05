@@ -17,14 +17,22 @@
 // aplicação é o MESMO coberto pelos testes"). Um módulo montado só dentro de
 // um teste provaria a fixture, não o produto.
 //
-// IMPORTS — os dois mínimos, e por quê:
+// IMPORTS — os três mínimos, e por quê:
 //   `DatabaseModule` .. `PermissoesService` consulta a persistência homologada
 //                       pela fronteira transacional única (`DatabaseService`);
 //   `AuthModule` ...... `SessaoAutenticadaGuard` consome o `SessaoService` e a
 //                       política de cookie da F3. A F4 CONSOME a autenticação
 //                       vigente; não a substitui, não a duplica e não
 //                       reimplementa leitura de cookie, verificação de token
-//                       ou política temporal.
+//                       ou política temporal;
+//   `AuditModule` ..... (L-07 — PBACK-AUD-09) `AuditoriaNegacaoAutorizacao`
+//                       escreve `autorizacao.negada` pelo `AuditWriter`
+//                       existente, em transação dedicada. O emissor vive AQUI,
+//                       e não em `audit/`, porque a lista fechada de permissões
+//                       auditáveis é política de AUTORIZAÇÃO; `audit/` continua
+//                       sem conhecer permissões. Exportado porque a
+//                       `PermissoesGuard` é instanciada no injetor do módulo do
+//                       controller (`R4-05`) e precisa resolvê-lo lá.
 //
 // O QUE ESTE MÓDULO NÃO CONTÉM — e nenhuma linha dele prepara: seed de papéis
 // ou permissões, associação papel↔permissão, bootstrap do primeiro
@@ -35,15 +43,22 @@
 
 import { Module } from "@nestjs/common";
 
+import { AuditModule } from "../audit/audit.module.js";
 import { AuthModule } from "../auth/auth.module.js";
 import { DatabaseModule } from "../database/database.module.js";
+import { AuditoriaNegacaoAutorizacao } from "./auditoria-negacao-autorizacao.js";
 import { PermissoesGuard } from "./permissoes.guard.js";
 import { PermissoesService } from "./permissoes.service.js";
 import { SessaoAutenticadaGuard } from "./sessao-autenticada.guard.js";
 
 @Module({
-  imports: [DatabaseModule, AuthModule],
-  providers: [PermissoesService, SessaoAutenticadaGuard, PermissoesGuard],
+  imports: [DatabaseModule, AuthModule, AuditModule],
+  providers: [
+    PermissoesService,
+    AuditoriaNegacaoAutorizacao,
+    SessaoAutenticadaGuard,
+    PermissoesGuard,
+  ],
   // REEXPORTAÇÃO DE `DatabaseModule` E `AuthModule` — opção adotada para
   // ENCAPSULAR as dependências exigidas pelas guards e evitar que cada módulo
   // consumidor tenha de repeti-las. É uma escolha, não a única possibilidade:
@@ -73,6 +88,7 @@ import { SessaoAutenticadaGuard } from "./sessao-autenticada.guard.js";
     DatabaseModule,
     AuthModule,
     PermissoesService,
+    AuditoriaNegacaoAutorizacao,
     SessaoAutenticadaGuard,
     PermissoesGuard,
   ],
