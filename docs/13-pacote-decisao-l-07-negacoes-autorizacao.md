@@ -3,7 +3,7 @@
 > **Documento:** `docs/13-pacote-decisao-l-07-negacoes-autorizacao.md`
 > **Projeto:** TechLab Fisio
 > **Frente:** backend — `P-BACK-01` (auditoria), pendência `L-07` de `docs/09` §3
-> **Status:** **DECIDIDO POR BRUNO MENEZES NORONHA EM 05/09/2026 (`D-0a`, `D-1R`, `D-2Q2`, `D-3V0`, `D-4R`, `D-5S`, `D-6 NÃO AUTORIZADA`) — REGISTRO NORMATIVO EM `docs/09` §13.4.1 (`PBACK-AUD-09`); IMPLEMENTAÇÃO MATERIALIZADA E MEDIDA EM BRANCH PRÓPRIA (§15); PUBLICAÇÃO NÃO AUTORIZADA.**
+> **Status:** **DECIDIDO POR BRUNO MENEZES NORONHA EM 05/09/2026 (`D-0a`, `D-1R`, `D-2Q2`, `D-3V0`, `D-4R`, `D-5S`, `D-6 NÃO AUTORIZADA`) — REGISTRO NORMATIVO EM `docs/09` §13.4.1 (`PBACK-AUD-09`); IMPLEMENTAÇÃO MATERIALIZADA E MEDIDA (§15) E INTEGRADA NA `main` EM 05/09/2026 — PR #23, MERGE `e1459f6` (§15.5); `D-6` REGISTROU A NÃO AUTORIZAÇÃO DE PUBLICAÇÃO NO ATO DA DECISÃO.**
 > **Data:** 05 de setembro de 2026 (preparação — §§1–14); 05 de setembro de 2026 (decisão e implementação — §15)
 > **Natureza:** §§1–14 são preservados **como a proposta submetida à decisão** (insumo decisório histórico, sem valor normativo próprio — mesmo precedente de `docs/09` §§1–11). **§15 registra a decisão e a materialização.** O valor normativo está em `docs/09` §13.4.1; onde §§1–14 divergirem dele, **`docs/09` §13.4.1 prevalece**. O estado vivo da implementação está em `docs/10` §7.4.
 > **Por que um documento próprio:** o precedente do projeto para pacotes decisórios é o documento dedicado (`docs/09` para `P-E14-01`, `docs/11` para `P-2.3C-01`). A nota de revisão de `docs/09` §13.4 já registrou o achado; um pacote com contrato, desenho técnico, análise de abuso e matriz de testes não cabe numa nota sem confundir proposta com registro homologado.
@@ -355,12 +355,25 @@ Desenho adotado: **P2 + T1** (§6.2/§6.1), como recomendado.
 
 ### 15.4 O que permanece aberto após esta fatia
 
-- **Publicação** (D-6): não autorizada — commit/PR/merge dependem de autorização própria.
+- ~~**Publicação** (D-6): não autorizada — commit/PR/merge dependem de autorização própria.~~ **Superada em 05/09/2026**: a fatia foi integrada na `main` pela PR [#23](https://github.com/BrunoMNoronha/techlab-fisio/pull/23) por ato de Bruno Menezes Noronha (§15.5). `D-6` permanece registrada como decidida no seu momento.
 - **`AUT-002` / `sessoes.revogar_terceiro`**: a resposta administrativa à trilha não existe; risco de V0 aceito e registrado.
 - **H-02/H-03**: volume real e custo do `INSERT` por negação não medidos.
 - **Conflito `422` × `D-2.3D-16`** (§14): registrado, sem decisão — o `422` **não** é auditado.
 - **`L-06`, `R2.2-04`, `P-BACK-01`, `AUT-005`**: estados **inalterados** por esta fatia.
 
+### 15.5 Registro factual pós-integração (05/09/2026)
+
+Registro **exclusivamente factual**, posterior a §15.1–§15.4, que **não altera** nenhuma resposta de §15.1. A publicação que `D-6` não autorizava no ato da decisão ocorreu **depois**, por ato de Bruno Menezes Noronha:
+
+| Item | Fato |
+| --- | --- |
+| PR | [#23](https://github.com/BrunoMNoronha/techlab-fisio/pull/23) — "L-07 — auditoria restrita de negações de autorização (PBACK-AUD-09)"; `agent/p-back-01-d2-auditoria-decisoes` → `main`; aberta e mesclada por `BrunoMNoronha` |
+| Commit da fatia | `62862bf` — CI verde no HEAD da PR (run [33963479328](https://github.com/BrunoMNoronha/techlab-fisio/actions/runs/33963479328)) |
+| Merge | merge commit `e1459f6` sobre `c4c9ba2`, 05/09/2026 11:33:36Z; 12 arquivos — os nove de §15.2 mais `docs/09`, `docs/10` e este documento |
+| O que não muda | `AUT-002`/`sessoes.revogar_terceiro` **não implementada** (risco V0 aceito); H-02/H-03 **não medidos**; conflito `422` × `D-2.3D-16` **sem decisão**; `L-06`, `R2.2-04`, `P-BACK-01`, `AUT-005` **inalterados** |
+
+Registro pós-medição completo em `docs/10` §7.4.8; estado vivo em `docs/10` §7.4 e §9.
+
 ---
 
-**Fim — §§1–14: proposta histórica (05/09/2026); §15: decisão de Bruno Menezes Noronha e materialização (05/09/2026). Registro normativo em `docs/09` §13.4.1 (`PBACK-AUD-09`); estado vivo em `docs/10` §7.4. Publicação NÃO autorizada.**
+**Fim — §§1–14: proposta histórica (05/09/2026); §15: decisão de Bruno Menezes Noronha e materialização (05/09/2026). Registro normativo em `docs/09` §13.4.1 (`PBACK-AUD-09`); estado vivo em `docs/10` §7.4. Publicação: NÃO autorizada no ato da decisão (`D-6`); fatia integrada na `main` em 05/09/2026 — PR #23, merge `e1459f6` (§15.5).**

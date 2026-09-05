@@ -349,6 +349,8 @@ Decidir a regra agora produziria norma vácua (auditar toda leitura, sem mediç�
 | **D-5** — implementação | **AUTORIZADA** | Fatia de implementação, testes e documentação em branch própria (`agent/p-back-01-d2-auditoria-decisoes`); registro em `docs/10` §7.4 |
 | **D-6** — publicação | **NÃO AUTORIZADA** | Sem commit, push, PR, merge, rebase, deploy ou publicação nesta fatia. Será pedida, se cabível, com a evidência de testes |
 
+> **Nota factual posterior à decisão (05/09/2026).** `D-5` e `D-6` registram o estado **no ato da decisão** e **não são alteradas**. A publicação ocorreu **depois**, por ato de Bruno Menezes Noronha: a fatia foi integrada na `main` pela PR [#23](https://github.com/BrunoMNoronha/techlab-fisio/pull/23) (commit `62862bf`, merge commit `e1459f6`, 05/09/2026). Registro pós-medição em `docs/10` §7.4.8.
+
 **Regras de emissão homologadas** (observadas pelo emissor `AuditoriaNegacaoAutorizacao`, `apps/api/src/authz/`):
 
 1. emite **somente** a negação **deliberada** decidida pelo `PermissoesGuard` quando a resolução de permissões teve **sucesso técnico** e resultou em **permissão ausente** ou **usuário inativo** (usuário existe — `ator_usuario_id` respeita a FK);
@@ -444,7 +446,7 @@ E **não** são classificadas como sensíveis para esse gatilho específico: **n
 | --- | --- |
 | `L-05` — transições de agenda | **FECHADA** (§13.2) |
 | `L-06` — acesso a dados clínicos | **ABERTA / BLOQUEADA POR DEPENDÊNCIA FUNCIONAL-TÉCNICA** (§13.3) — vinculada a `P2.2-05` + superfície real de leitura clínica |
-| `L-07` — negações de autorização | **REAVALIADA E DECIDIDA em 05/09/2026** (§13.4.1, `PBACK-AUD-09`): **auditoria RESTRITA** — `autorizacao.negada` homologada (25ª ação, whitelist vazia), emissão limitada à negação deliberada de `senha.recuperar_terceiro`, Q2, V0, alvo = `permissao`. Implementação autorizada (D-5) e materializada em branch própria (`docs/10` §7.4); publicação **não autorizada** (D-6). Histórico de §13.4 e da nota de revisão preservado |
+| `L-07` — negações de autorização | **REAVALIADA E DECIDIDA em 05/09/2026** (§13.4.1, `PBACK-AUD-09`): **auditoria RESTRITA** — `autorizacao.negada` homologada (25ª ação, whitelist vazia), emissão limitada à negação deliberada de `senha.recuperar_terceiro`, Q2, V0, alvo = `permissao`. Implementação autorizada (D-5) e materializada (`docs/10` §7.4); publicação **não autorizada no ato da decisão** (D-6) e ocorrida **posteriormente**, em 05/09/2026, por ato de Bruno — fatia **integrada na `main`** pela PR [#23](https://github.com/BrunoMNoronha/techlab-fisio/pull/23) (merge `e1459f6`; `docs/10` §7.4.8). Histórico de §13.4 e da nota de revisão preservado |
 | `L-08` — alteração sensível do paciente | **POLÍTICA NORMATIVA FECHADA / MATERIALIZAÇÃO TÉCNICA PENDENTE** (§13.5) |
 | `configuracao.alterada` — granularidade | **FECHADA** — ação única (§13.6) |
 | `configuracao.alterada` — abrangência | **FECHADA** — CFG-001..CFG-006 (§13.6) |
@@ -456,7 +458,7 @@ E **não** são classificadas como sensíveis para esse gatilho específico: **n
 ### 13.11 Pendências e dependências que permanecem abertas
 
 - **`L-06`** — aberta e bloqueada; retomada obrigatória antes de qualquer superfície de leitura clínica.
-- ~~**`L-07` — reavaliação pendente de Bruno**~~ — **RESOLVIDA em 05/09/2026** por `PBACK-AUD-09` (§13.4.1). Permanecem abertas as **dependências e riscos aceitos** dali decorrentes: `AUT-002`/`sessoes.revogar_terceiro` (resposta administrativa à trilha) **não implementada**; volume e latência (`docs/13` H-02/H-03) **não medidos**; **publicação da fatia não autorizada** (D-6).
+- ~~**`L-07` — reavaliação pendente de Bruno**~~ — **RESOLVIDA em 05/09/2026** por `PBACK-AUD-09` (§13.4.1). Permanecem abertas as **dependências e riscos aceitos** dali decorrentes: `AUT-002`/`sessoes.revogar_terceiro` (resposta administrativa à trilha) **não implementada**; volume e latência (`docs/13` H-02/H-03) **não medidos**; ~~**publicação da fatia não autorizada** (D-6)~~ — **superada em 05/09/2026**: fatia integrada na `main` (PR [#23](https://github.com/BrunoMNoronha/techlab-fisio/pull/23), merge `e1459f6`).
 - **`P2.2-05`** — relação fisioterapeuta↔paciente / escopo de acesso clínico: **não materializada**; é dependência direta de `L-06`.
 - **Visualizador de auditoria (AUD-004)** — política fechada por §13.9; **implementação pendente**, como unidade própria.
 - **Emissores ausentes** — 17 das 24 ações homologadas seguem sem emissor (G-02); cada uma será materializada com o módulo de domínio correspondente.
@@ -482,4 +484,4 @@ Não são objeto nem consequência deste registro: a implementação do endpoint
 
 ---
 
-**Fim — §§1..11: proposta histórica; §12: decisão homologada em 25/08/2026 (`D-AUD-01`..`D-AUD-08`); §13: decisão homologada em 05/09/2026 (`PBACK-AUD-01`..`PBACK-AUD-08`); §13.4.1: `PBACK-AUD-09` decidida em 05/09/2026 (reavaliação de `L-07` — auditoria restrita, `autorizacao.negada` homologada). `P-E14-01` ENCERRADA; `T-AUD-CONTEXTO` EXECUTADO (`docs/10` §8.1); `L-05` e `L-08` (política) FECHADAS; `L-07` DECIDIDA (§13.4.1) — implementação autorizada e materializada em branch própria, publicação NÃO autorizada; `L-06` ABERTA / BLOQUEADA POR DEPENDÊNCIA FUNCIONAL-TÉCNICA; `R2.2-04` permanece ABERTO / MITIGADO PARCIALMENTE.**
+**Fim — §§1..11: proposta histórica; §12: decisão homologada em 25/08/2026 (`D-AUD-01`..`D-AUD-08`); §13: decisão homologada em 05/09/2026 (`PBACK-AUD-01`..`PBACK-AUD-08`); §13.4.1: `PBACK-AUD-09` decidida em 05/09/2026 (reavaliação de `L-07` — auditoria restrita, `autorizacao.negada` homologada). `P-E14-01` ENCERRADA; `T-AUD-CONTEXTO` EXECUTADO (`docs/10` §8.1); `L-05` e `L-08` (política) FECHADAS; `L-07` DECIDIDA (§13.4.1) — implementação autorizada, materializada e **integrada na `main` em 05/09/2026 (PR #23, merge `e1459f6`)**; `D-6` registrou a não autorização no ato da decisão e a publicação foi ato posterior de Bruno Menezes Noronha; `L-06` ABERTA / BLOQUEADA POR DEPENDÊNCIA FUNCIONAL-TÉCNICA; `R2.2-04` permanece ABERTO / MITIGADO PARCIALMENTE.**
