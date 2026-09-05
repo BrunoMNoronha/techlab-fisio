@@ -16,12 +16,12 @@
 
 | Campo | Valor |
 | --- | --- |
-| Identificadores | `D-2.3D-01` .. `D-2.3D-15` |
+| Identificadores | `D-2.3D-01` .. `D-2.3D-17` |
 | Autoridade | Bruno Menezes Noronha (TLF-BASE-V1 §15, item 1) |
-| Data da homologação | 27/08/2026 (`D-2.3D-01`..`D-2.3D-12`) · 28/08/2026 (`D-2.3D-13`) · 31/08/2026 (`D-2.3D-14` e `D-2.3D-15`) |
+| Data da homologação | 27/08/2026 (`D-2.3D-01`..`D-2.3D-12`) · 28/08/2026 (`D-2.3D-13`) · 31/08/2026 (`D-2.3D-14` e `D-2.3D-15`) · 05/09/2026 (`D-2.3D-16` e `D-2.3D-17`) |
 | Baseline de código na homologação | `main` = `53f9fc5777759388bfb4bcaa429f4f607733b422` |
 | Fatia que materializou este registro | **F0** — decisões normativas + reabertura física controlada da persistência de sessão |
-| Efeito físico na F0 | **exclusivamente `D-2.3D-01`**; as demais são normativas e produzem efeito nas fatias F1..F7 (`D-2.3D-13` foi acrescentada em 28/08/2026; `D-2.3D-14` e `D-2.3D-15`, em 31/08/2026) |
+| Efeito físico na F0 | **exclusivamente `D-2.3D-01`**; as demais são normativas e produzem efeito nas fatias F1..F7 (`D-2.3D-13` foi acrescentada em 28/08/2026; `D-2.3D-14` e `D-2.3D-15`, em 31/08/2026; `D-2.3D-16` e `D-2.3D-17`, em 05/09/2026) |
 
 Este documento é a **baseline normativa da Etapa 2.3D**. Onde uma fatia posterior divergir dele, prevalece este registro até que uma decisão expressa de Bruno o altere.
 
@@ -334,6 +334,41 @@ Retry-After: 1
 
 **Atribuibilidade operacional.** A execução exige justificativa operacional não vazia, fornecida por canal seguro, validada antes da transação e persistida em `evento_auditoria.justificativa`. A justificativa não é impressa, não integra `contexto` e não amplia a whitelist de `D-AUD-07`. A trilha conserva ainda ação, resultado, alvo, correlação e instante. A combinação de ator nulo com justificativa obrigatória é a representação homologada para esta operação inaugural e excepcional.
 
+### 5.16 `D-2.3D-16` — Titularidade do início da recuperação de senha *(normativa; complementa `D-2.3D-08`; efeito na F6)*
+
+**Origem.** `D-2.3D-08` fixa entropia, validade, unicidade do segredo pendente e os efeitos da conclusão, mas **não** diz quem pode iniciar. `docs/04` §4 nomeia a permissão como “Iniciar recuperação de senha **de terceiro**” (✓ somente Administrador) e §5.1 a define como “iniciar D-04 **para outro usuário**”; D-04, item 4, pressupõe que quem inicia **não** define a senha. A F6 implementou a leitura literal e a registrou como decisão local `L-F6-03`, apresentando-a para decisão expressa em vez de homologá-la sozinha (TLF-BASE-V1 §15). Bruno homologou o comportamento vigente em 05/09/2026.
+
+**Regra vinculante.** O início da recuperação de senha é uma operação **sobre terceiro**. O titular da permissão `senha.recuperar_terceiro` **não pode** iniciar a recuperação da própria senha: o alvo do início deve ser um usuário **distinto** do ator autenticado.
+
+**Ator e alvo.** O ator é a identidade da **sessão validada**, nunca um campo do corpo da requisição. O alvo é identificado pelo identificador de acesso normalizado por `D-2.3D-03`. O ator é persistido em `segredo_recuperacao_senha.criado_por_usuario_id` e é o ator do evento `usuario.senha.recuperacao_iniciada`.
+
+**Resposta uniforme — condição da regra, não acessório.** A recusa do auto-início deve ser **indistinguível** da recusa por alvo inexistente e por alvo inativo: mesmo status, mesmo código de erro, mesmo corpo, sem cabeçalho ou latência discriminante. Uma recusa distinguível transformaria a rota num oráculo de existência e situação de contas para o Administrador autenticado, contra RN-006 e TLF-BASE-V1 §10.
+
+**O que esta decisão NÃO faz.** Não cria autosserviço de recuperação (D-04 mantém o início com o Administrador); não altera `D-2.3D-08`; não define canal de entrega do segredo; não cria permissão nova nem altera a matriz de `docs/04`.
+
+**Alias histórico.** A implementação registrou este comportamento como decisão local **`L-F6-03`** (`docs/10` §6-P.7). `L-F6-03` permanece citável como referência histórica, mas a fonte normativa passa a ser `D-2.3D-16`.
+
+### 5.17 `D-2.3D-17` — Semântica de “tentativa” no limite de conclusão da recuperação *(normativa; complementa `D-2.3D-06`; efeito na F6)*
+
+**Origem.** `D-2.3D-06` usa **duas palavras diferentes** nas suas duas metades: “5 **falhas** / 15 minutos” para o login e “10 **tentativas** / 15 minutos” para a conclusão da recuperação. A revisão da F6 apontou que a diferença admitia mais de uma leitura e que a escolha é comportamental. A implementação adotou a leitura literal — a mais restritiva — e a registrou como decisão local `L-F6-05`, apresentando-a para decisão expressa. Bruno homologou o comportamento vigente em 05/09/2026.
+
+**Regra vinculante.** No limite de conclusão de recuperação de senha (por IP), a unidade contada é a **tentativa admitida**, e não a falha. Toda tentativa que atravessa o gate é contabilizada **no ato da admissão**, qualquer que seja o desfecho posterior — inclusive a conclusão **bem-sucedida**.
+
+**Consequências vinculantes:**
+
+- a contagem ocorre **antes** da validação de forma do segredo, da consulta ao banco e do Argon2, preservando a ordem já exigida por `D-2.3D-06`;
+- dentro da janela de 15 minutos, a **10ª** tentativa do mesmo IP ainda é admitida e a **11ª** é bloqueada com `429` e `Retry-After`, **mesmo que o segredo apresentado seja válido**;
+- como a admissão **é** a ocorrência, não existe estado “em voo” separado da contagem: a proteção de concorrência de `D-2.3D-13` **não se aplica** a esta dimensão e não deve ser replicada nela;
+- uma requisição rejeitada pela **validação estrutural do payload**, antes de chegar ao gate, **não** consome a dimensão — ela não custa banco nem Argon2 e não é uma tentativa de conclusão.
+
+**Finalidade declarada.** O segredo tem 256 bits (`D-2.3D-08`) e não é enumerável; este limite **não** existe contra adivinhação, mas contra **abuso de custo** — a operação sensível protegida é o Argon2 da nova senha. Contar tentativas admitidas, e não apenas falhas, limita esse custo de forma estritamente mais eficaz.
+
+**Alcance restrito.** Esta decisão fixa a semântica **exclusivamente** da metade “conclusão de recuperação de senha” de `D-2.3D-06`. A metade do **login** permanece contando **falhas**, exatamente como homologada, e nenhuma outra dimensão ou limitador futuro herda esta leitura sem decisão própria.
+
+**Risco residual — declarado e aceito.** Um IP compartilhado (NAT) pode esgotar as 10 tentativas com conclusões legítimas em 15 minutos e bloquear transitoriamente um usuário de boa-fé. **Aceito nesta fase**: o limite é temporal, não há lockout duro, e a janela libera sozinha — as mesmas garantias já vinculantes em `D-2.3D-06`.
+
+**Alias histórico.** A implementação registrou este comportamento como decisão local **`L-F6-05`** (`docs/10` §6-P.7). `L-F6-05` permanece citável como referência histórica, mas a fonte normativa passa a ser `D-2.3D-17`.
+
 ## 6. Alternativas rejeitadas
 
 | # | Alternativa | Por que foi rejeitada |
@@ -409,7 +444,7 @@ Riscos herdados e **não** alterados por este registro: `R2.2-04`, `R-BL-09`, `V
 | **F3** | Endpoints REST de autenticação, cookies, CSRF, OpenAPI, rate limiting do login | `D-2.3D-06`, `D-2.3D-07`, `D-2.3D-11`, `D-2.3D-12`, `D-2.3D-13` | **CONCLUÍDA** (homologada em 28/08/2026 — `docs/10` §6-I) |
 | **F4** | Guards e decorators de autorização (RBAC) | `D-2.3D-09` | **CONCLUÍDA** (homologada em 28/08/2026 — `docs/10` §6-L) |
 | **F5** | Seed de papéis/permissões + bootstrap do primeiro Administrador | `D-2.3D-09`, `D-2.3D-10`, `D-2.3D-14`, `D-2.3D-15` | **CONCLUÍDA** (homologada e integrada na `main` em 02/09/2026 — `docs/10` §6-O.8; merge `657676b`, PR [#18](https://github.com/BrunoMNoronha/techlab-fisio/pull/18)) |
-| F6 | Recuperação de senha (início e conclusão) + rate limiting próprio | `D-2.3D-06`, `D-2.3D-08` | F1, F2, F5 |
+| **F6** | Recuperação de senha (início e conclusão) + rate limiting próprio | `D-2.3D-06`, `D-2.3D-08`, `D-2.3D-16`, `D-2.3D-17` | **CONCLUÍDA** (integrada na `main` em 05/09/2026 — `docs/10` §6-P.18; merge `cbd02eb`, PR [#20](https://github.com/BrunoMNoronha/techlab-fisio/pull/20)) |
 | F7 | Consolidação, revisão independente e rito de integração | todas | F1..F6 |
 
 `D-2.3D-01` é a **única** dependência de persistência de toda a etapa: nenhuma fatia posterior exige nova reabertura física.
@@ -490,7 +525,7 @@ Pendências herdadas e **não** alteradas por este registro: `P-BACK-01`, `R2.2-
 | **AUT-001** — Autenticar usuário ativo | `D-2.3D-02` (verificação de credencial + caminho dummy), `D-2.3D-03` (localização por identificador normalizado), `D-2.3D-01`/`D-2.3D-04` (criação da sessão), `D-2.3D-12` (evento de autenticação) | A invariante "erros não devem facilitar enumeração" é atendida por `D-2.3D-02` + `D-2.3D-12` em conjunto |
 | **AUT-002** — Encerrar, expirar e revogar sessões | `D-2.3D-01` (janela física), `D-2.3D-04` (expiração absoluta e ociosa), `D-2.3D-05` (estados terminais) | Estados e transições preservados **sem alteração**: `ATIVA -> EXPIRADA`, `ATIVA -> REVOGADA` |
 | **AUT-003** — Autorizar por papel, permissão, escopo e recurso | `D-2.3D-09` | Enforcement no backend (F4). `P2.2-05` (escopo clínico) permanece fora desta etapa |
-| **AUT-004** — Recuperar senha com mecanismo seguro | `D-2.3D-08`, `D-2.3D-06` (limite de conclusão) | Preserva D-04 e T-07: conclusão revoga sessões anteriores |
+| **AUT-004** — Recuperar senha com mecanismo seguro | `D-2.3D-08`, `D-2.3D-06` (limite de conclusão), `D-2.3D-16` (início é sobre terceiro), `D-2.3D-17` (semântica de “tentativa”) | Preserva D-04 e T-07: conclusão revoga sessões anteriores. **MATERIALIZADA** pela F6 (integrada em 05/09/2026) |
 | **AUT-005** — Ativar e inativar usuários | `D-2.3D-05` (revogação), `D-2.3D-10` (papel do Administrador) | A revogação por inativação usa os mesmos estados terminais |
 | **AUT-006** — Auditar ações sensíveis | `D-2.3D-12` | Sem senha, token ou cookie; dentro do catálogo de `docs/09` §12 |
 
@@ -513,6 +548,7 @@ Nenhum requisito AUT foi ampliado, reduzido ou reinterpretado por este registro.
 
 | REV. | Data | Alterações |
 | --- | --- | --- |
+| **8** | 05/09/2026 | **ACRÉSCIMO DE DUAS DECISÕES NOVAS — `D-2.3D-16` (§5.16) e `D-2.3D-17` (§5.17), homologadas por Bruno Menezes Noronha em 05/09/2026 (TLF-BASE-V1 §15, item 1).** Nenhuma decisão anterior foi modificada, renumerada, reduzida ou reaberta: `D-2.3D-01`..`D-2.3D-15` permanecem exatamente como homologadas, e **`D-2.3D-06` e `D-2.3D-08` em particular estão intactas**. Mesmo precedente e mesma forma da REV. 3 (`L-11` → `D-2.3D-13`) e da REV. 6 (`L-F5-07`/`L-F5-08` → `D-2.3D-14`/`D-2.3D-15`): a implementação da F6 registrou os dois comportamentos como decisões locais e **recusou-se a homologá-los** em nome de Bruno, devolvendo-os como pendências com alternativas e recomendação. `D-2.3D-16` fixa que o início da recuperação é operação **sobre terceiro** — o titular de `senha.recuperar_terceiro` não inicia a própria —, com ator vindo da sessão validada e **recusa uniforme** com alvo inexistente e inativo, condição da regra e não acessório. `D-2.3D-17` fixa que a unidade contada no limite de conclusão é a **tentativa admitida**, contabilizada no ato da admissão e inclusive em caso de sucesso, com alcance **restrito** a essa metade de `D-2.3D-06` — a metade do login continua contando **falhas**; declara ainda que `D-2.3D-13` não se aplica a essa dimensão e aceita expressamente o risco residual de IP compartilhado. **`L-F6-03` e `L-F6-05` viram aliases históricos.** Atualizada também, de forma factual, a linha da fatia **F6** em §9, que passa a **CONCLUÍDA** por ter sido integrada na `main` em 05/09/2026 por merge commit `cbd02eb` (PR [#20](https://github.com/BrunoMNoronha/techlab-fisio/pull/20)), com CI verde sobre o HEAD integrado; e a linha de **AUT-004** em §12, que passa a **MATERIALIZADA**. Registro em `docs/10` §6-P.18 e §11, REV. 33. **`L-F6-06` e `L-F6-07` NÃO foram promovidas** — permanecem decisões locais, sustentadas por `D-2.3D-05` e por `docs/09` §5, respectivamente. **AUT-005 permanece NÃO MATERIALIZADA / NÃO ENCERRADA**; `P2.2-05` permanece **NÃO INICIADA**; **a F7 permanece NÃO INICIADA**. Nenhuma pendência de §11 foi alterada ou encerrada. |
 | **7** | 02/09/2026 | **Atualização exclusivamente FACTUAL — nenhuma decisão modificada.** `D-2.3D-01`..`D-2.3D-15` permanecem exatamente como homologadas, byte a byte em conteúdo normativo; **`D-2.3D-14` e `D-2.3D-15` não foram tocadas nem reabertas**; nenhuma decisão foi renumerada, reduzida ou acrescentada. Único campo alterado: a linha da fatia **F5** em §9, que passa a **CONCLUÍDA**, por ter sido homologada por Bruno Menezes Noronha (TLF-BASE-V1 §15, item 1) e integrada na `main` em 02/09/2026 por merge commit `657676b` (PR [#18](https://github.com/BrunoMNoronha/techlab-fisio/pull/18)), com CI verde sobre o HEAD integrado e validação local pós-merge integralmente verde. Registro em `docs/10` §6-O.8 e §11, REV. 29. **AUT-005 permanece NÃO MATERIALIZADA / NÃO ENCERRADA**; `P2.2-05` permanece **NÃO INICIADA**; **a F6 permanece NÃO INICIADA**. Mesma forma e mesmo precedente das REV. 1, 2, 4 e 5. |
 | **6** | 31/08/2026 | **ACRÉSCIMO DE DUAS DECISÕES NOVAS — `D-2.3D-14` (§5.14) e `D-2.3D-15` (§5.15), homologadas por Bruno Menezes Noronha.** Nenhuma decisão anterior foi modificada, renumerada, reduzida ou reaberta. `D-2.3D-14` resolve a ambiguidade observada na revisão da F5: a matriz inicial de `D-2.3D-09` deve estar integralmente presente, mas o seed é aditivo e não remove excedentes; o modo estrito também converge o estado canônico e termina com saída 3 quando divergências persistem — não é somente leitura. `D-2.3D-15` resolve a autoria do bootstrap inaugural: `ator_usuario_id = NULL`, sem identidade sintética e sem autoatribuição fictícia, com justificativa operacional obrigatória persistida fora de `contexto`. Acrescentadas as alternativas rejeitadas A-13/A-14 e atualizada a dependência da F5. A implementação da F5 permanece não integrada e sujeita à homologação técnica própria. |
 | **5** | 28/08/2026 | **Atualização exclusivamente FACTUAL — nenhuma decisão modificada.** `D-2.3D-01`..`D-2.3D-13` permanecem exatamente como homologadas, byte a byte em conteúdo normativo; **`D-2.3D-09` não foi tocada nem reaberta**; **`D-2.3D-10` não foi tocada**; nenhuma decisão foi renumerada, reduzida ou acrescentada; **nenhuma `D-2.3D-14` foi criada**. Único campo alterado: a linha da fatia **F4** em §9, que passa a **CONCLUÍDA**, por ter sido homologada por Bruno Menezes Noronha em 28/08/2026 (TLF-BASE-V1 §15, item 1) após a **segunda** revisão técnica independente adversarial devolver **`A — APTO À HOMOLOGAÇÃO E VERSIONAMENTO`** (0 BLOQUEANTES, 0 ALTOS, 0 MÉDIOS; 1 BAIXO documental `R4R2-01`, corrigido antes do commit). Registro em `docs/10` §6-L e §11, REV. 23. **A F5 permanece NÃO INICIADA** e a **F6 permanece NÃO INICIADA**; **AUT-005 permanece NÃO MATERIALIZADA / NÃO ENCERRADA**; a autorização clínica contextual (`P2.2-05`) permanece **NÃO INICIADA**. Esta revisão **não** afirma integração na `main`: o registro factual do merge pertence a execução documental posterior. |
@@ -524,4 +560,4 @@ Nenhum requisito AUT foi ampliado, reduzido ou reinterpretado por este registro.
 
 ---
 
-**Fim — `docs/12-decisoes-autenticacao-autorizacao.md` — `D-2.3D-01`..`D-2.3D-15` registradas; F0 da Etapa 2.3D-B executada em 27/08/2026; `D-2.3D-13` homologada em 28/08/2026; `D-2.3D-14` e `D-2.3D-15` homologadas em 31/08/2026.**
+**Fim — `docs/12-decisoes-autenticacao-autorizacao.md` — `D-2.3D-01`..`D-2.3D-17` registradas; F0 da Etapa 2.3D-B executada em 27/08/2026; `D-2.3D-13` homologada em 28/08/2026; `D-2.3D-14` e `D-2.3D-15` homologadas em 31/08/2026; `D-2.3D-16` e `D-2.3D-17` homologadas em 05/09/2026.**
