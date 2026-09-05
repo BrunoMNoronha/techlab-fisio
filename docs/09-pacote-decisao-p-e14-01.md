@@ -3,9 +3,9 @@
 > **Documento:** `docs/09-pacote-decisao-p-e14-01.md`
 > **Projeto:** TechLab Fisio
 > **Fase:** 2 — Implementação física — `E-18A`
-> **Status:** **DECIDIDO — DECISÕES `D-AUD-01`..`D-AUD-08` HOMOLOGADAS POR BRUNO MENEZES NORONHA EM 25/08/2026 — REGISTRO NORMATIVO EM §12**
-> **Data:** 25 de agosto de 2026 (proposta e decisão)
-> **Natureza:** §§1..11 são preservados **como a proposta original submetida à decisão** (insumo decisório histórico, sem valor normativo próprio); **§12 é o registro normativo da decisão homologada** de `P-E14-01`. Onde §12 divergir de §§1..11, **§12 prevalece**. Este documento não altera `docs/02`..`docs/07`.
+> **Status:** **DECIDIDO — DECISÕES `D-AUD-01`..`D-AUD-08` HOMOLOGADAS POR BRUNO MENEZES NORONHA EM 25/08/2026 (REGISTRO NORMATIVO EM §12); DECISÕES `PBACK-AUD-01`..`PBACK-AUD-08` HOMOLOGADAS EM 05/09/2026 (REGISTRO NORMATIVO EM §13); `PBACK-AUD-09` — REAVALIAÇÃO DE `L-07` SOBRE O PACOTE `docs/13` — DECIDIDA EM 05/09/2026 (REGISTRO NORMATIVO EM §13.4.1: `autorizacao.negada` HOMOLOGADA COMO 25ª AÇÃO, WHITELIST VAZIA, EMISSÃO RESTRITA A `senha.recuperar_terceiro`). `L-06` PERMANECE ABERTA / BLOQUEADA — §13.3**
+> **Data:** 25 de agosto de 2026 (proposta e decisão de `P-E14-01`); 05 de setembro de 2026 (decisão de `P-BACK-01-D2` — §13; decisão de reavaliação de `L-07` — §13.4.1)
+> **Natureza:** §§1..11 são preservados **como a proposta original submetida à decisão** (insumo decisório histórico, sem valor normativo próprio); **§12 é o registro normativo da decisão homologada** de `P-E14-01`; **§13 é o registro normativo da decisão homologada** de `P-BACK-01-D2`, que cumpre o que `D-AUD-06` adiou. Onde §12 divergir de §§1..11, **§12 prevalece**; §13 **não altera nem reabre** §12. Este documento não altera `docs/02`..`docs/07`.
 
 ---
 
@@ -231,4 +231,255 @@ Consequência sobre `T-AUD-CONTEXTO`: a sugestão de §9 — materializar a whit
 
 ---
 
-**Fim — §§1..11: proposta histórica; §12: decisão homologada em 25/08/2026. `P-E14-01` ENCERRADA; `T-AUD-CONTEXTO` RECLASSIFICADO — PENDENTE DA CAMADA DE APLICAÇÃO; `R2.2-04` transferido para a frente de backend (`P-BACK-01`).**
+## 13. Registro de decisão — `P-BACK-01-D2`: lacunas de auditoria e sub-decisões de catálogo (`PBACK-AUD-01`..`PBACK-AUD-08`, 05/09/2026)
+
+Decisões tomadas por **Bruno Menezes Noronha** em **05/09/2026**, sobre as pendências que `D-AUD-06` adiou para a frente de `apps/api` (`L-05`..`L-08`) e sobre as sub-decisões de catálogo que `D-AUD-01`/`D-AUD-07` deixaram expressamente em aberto.
+
+**Relação com §12.** Esta seção **não altera, não reabre e não reinterpreta** `D-AUD-01`..`D-AUD-08`. Ela **cumpre** o que `D-AUD-06` remeteu à frente de backend. Onde §13 for silente, §12 continua valendo integralmente. §§1..11 permanecem o que sempre foram: proposta histórica sem valor normativo próprio.
+
+**Colisão de identificadores — advertência de leitura.** Neste documento, `L-05`..`L-08` designam **exclusivamente** as lacunas de auditoria enumeradas em §3. Os identificadores homônimos `L-05`..`L-08` que aparecem em `docs/10` são **decisões locais de autenticação** da Etapa 2.3D-B / F3, sem nenhuma relação com esta seção.
+
+### 13.1 Fatos apurados antes da decisão
+
+Medidos mecanicamente sobre a `main` em `c4c9ba2`, e não presumidos:
+
+| # | Fato |
+| --- | --- |
+| G-01 | O catálogo tipado (`apps/api/src/audit/audit.catalog.ts`) contém exatamente as **24 ações** de `D-AUD-01`, na ordem da fonte; a whitelist declara as 24, com **3 positivas** e **21 vazias** |
+| G-02 | **7 das 24 ações possuem emissor real** em `apps/api/src/`: `usuario.autenticacao` (`SUCESSO` e `FALHA`), `usuario.sessao.logout`, `usuario.senha.recuperacao_iniciada`, `usuario.senha.recuperacao_concluida`, `usuario.papeis.alterados`, `profissional.situacao.alterada`, `cobranca.desconto_aplicado`. As **17 restantes não têm emissor** — os módulos de domínio correspondentes (agenda, prontuário, paciente, pacote, configuração) **não existem** em `apps/api/src/` |
+| G-03 | **ERRATA (revisão corretiva de 05/09/2026) — o fato originalmente registrado aqui estava ERRADO.** A redação original afirmava que *nenhuma rota de produção declara `@RequerPermissao`* e que o RBAC estava provado apenas sobre controller de teste. **Fato verificado no código:** `POST /auth/recuperacao-senha` declara **`@RequerPermissao("senha.recuperar_terceiro")`** (`apps/api/src/recuperacao-senha/recuperacao-senha.controller.ts:100`); o `RecuperacaoSenhaModule` está registrado no `AppModule` (`apps/api/src/app.module.ts:35`); a cadeia de guards é `ProtecaoCsrfGuard` (controller) → `SessaoAutenticadaGuard` → `PermissoesGuard` (instaladas por `@RequerPermissao`, `apps/api/src/authz/requer-permissao.decorator.ts:79`); e a negação real é provada por integração em `apps/api/test/integration/recuperacao-senha.integration.spec.ts:460` (`403 ACESSO_NEGADO` para usuário autenticado sem a permissão, inclusive com `usuarios.gerenciar`/`permissoes.gerenciar`) e `:442`/`:451` (`401` sem sessão / sessão revogada), com prova de que **nenhum evento de auditoria é emitido na negação**. A rota está **implementada e integrada na `main`** desde o merge da F6 (`cbd02eb`, PR #20); *implantação em produção* é fato distinto, não presumido aqui. As demais rotas publicadas (`/health`, `/auth/login`, `/auth/logout`, `/auth/recuperacao-senha/concluir`) não exigem permissão. Origem do erro: a apuração da execução de análise grepou decorators de rota sem grepar `RequerPermissao`, e não confrontou `docs/10` §6-P, que já documentava a rota protegida. **Consequência normativa em §13.4 (nota de revisão).** |
+| G-04 | `historico_agendamento` existe fisicamente e já carrega, **tipado**: `operacao`, `estado_anterior`, `estado_novo`, `inicio_anterior`/`inicio_novo`, `fim_anterior`/`fim_novo`, `ator_usuario_id` (`NOT NULL`, FK), `ocorrido_em` e `motivo_cancelamento_id`, com índice `(agendamento_id, ocorrido_em)` — IDX-A6 |
+| G-05 | `registro_clinico.autor_usuario_id` existe (uuid, FK `Restrict/Restrict`), e a migration `20260822151743_append_only` instala `trg_registro_clinico_imutavel_finalizado` (`BEFORE UPDATE OR DELETE`), que impede alteração após a finalização. Como a retificação só existe sobre registro `FINALIZADO` (PRN-005), o autor original é **derivável e imutável** a partir de `registro_original_id` |
+| G-06 | Somente **CFG-001** possui bullet próprio de auditoria ("alterações relevantes devem ser atribuíveis"). CFG-002..CFG-006 **não têm** bullet de auditoria — a extensão a elas apoia-se no termo genérico "configurações estruturais" de AUD-001, exatamente como §12.1 item 3 registrou |
+| G-07 | As configurações estruturais mapeiam para **5 tabelas** existentes: `clinica` (CFG-001 e CFG-006 — `fuso_horario` é coluna de `clinica`), `horario_funcionamento` (CFG-002), `servico` (CFG-003), `forma_pagamento` (CFG-004) e `motivo_cancelamento` (CFG-005) |
+| G-08 | A permissão **`auditoria.ler`** já existe em `docs/04` §5.8 ("Consultar trilha de auditoria conforme escopo administrativo") e no catálogo tipado de permissões — **nenhuma permissão nova é necessária** para a consulta de auditoria |
+| G-09 | `evento_auditoria.alvo_id` é **um único** `uuid ∅` — não representa conjunto |
+| G-10 | Nenhuma seção "Auditoria" de qualquer fluxo de `docs/05` (FC-01, FC-02, FC-05, FC-06) lista **leitura** ou **acesso**. A única leitura clínica que uma fonte manda auditar expressamente é a **exportação** (PRN-007, RN-029) |
+
+### 13.2 `PBACK-AUD-01` — `L-05`: transições de agenda — **FECHADA**
+
+**Decidido.** O "nível de auditoria/histórico definido" a que RN-017 delega é, para as transições de agenda **não** listadas em `D-AUD-01`, o **`historico_agendamento`**. O catálogo de auditoria permanece com as quatro ações de agenda já homologadas: `agendamento.criado`, `agendamento.remarcado`, `agendamento.cancelado` e `atendimento.iniciado`.
+
+**Permanecem FORA do catálogo**, confirmando `D-AUD-04` (e **não** o reabrindo): `agendamento.confirmado`, `agendamento.checkin`, `agendamento.falta_registrada`, `agendamento.concluido` e `bloqueio_agenda.criado`.
+
+**Fundamento.** RN-017 exige que as transições sejam **atribuíveis**, e delega expressamente *qual mecanismo* cumpre essa exigência. `historico_agendamento` a cumpre integralmente (G-04): `ator_usuario_id` é `NOT NULL` com FK para `usuario`, e `ocorrido_em` é obrigatório. `docs/07` §22.4 já desenhou a divisão: histórico **funcional**, com colunas tipadas de antes/depois (AGD-009), versus trilha **de segurança** homogênea e restrita a metadados — "redundância deliberada, não dupla fonte de verdade". Correlação entre as duas tabelas pelo `correlacao_id` compartilhado.
+
+**Limitação declarada.** A investigação de segurança sobre agenda consulta **duas** tabelas. É consequência aceita do desenho de §22.4, não defeito.
+
+**Nenhuma alteração de catálogo, whitelist, schema ou código decorre desta decisão.**
+
+### 13.3 `PBACK-AUD-02` — `L-06`: acesso a dados clínicos — **ABERTA / BLOQUEADA POR DEPENDÊNCIA FUNCIONAL-TÉCNICA**
+
+**`L-06` NÃO está fechada, e NÃO é encerrada por escopo.**
+
+**Decidido.** A lacuna permanece **ABERTA**, formalmente **BLOQUEADA** por dependência funcional-técnica, com retomada **obrigatória** — não facultativa — antes da disponibilização de qualquer superfície real de leitura de prontuário ou de dados clínicos sensíveis.
+
+**Fundamento do não-fechamento.** `TLF-BASE-V1` §10 determina: *"Implementar trilha de auditoria para **acesso** e mudança de dados sensíveis."* É requisito permanente da base imutável e alcança **acesso**, não apenas mutação. Por isso **não é permitido** concluir normativamente que a leitura clínica ordinária ficará sem auditoria no MVP, e **não se registra** que AUD-002 esteja "satisfeita" pelas ações de exportação, finalização e retificação. Essas ações cobrem **mutação e saída** de conteúdo clínico; **não** cobrem acesso de leitura, que é precisamente o objeto de AUD-002 e de `L-06`.
+
+**Fundamento do bloqueio.** Ao mesmo tempo, não existe hoje base suficiente para definir corretamente *quando* e *como* emitir uma futura ação de acesso clínico:
+
+1. o **módulo de prontuário não existe** em `apps/api/src/` (G-02) — não há superfície de leitura sobre a qual a regra incidiria;
+2. **`P2.2-05`** — que definirá tecnicamente a relação fisioterapeuta↔paciente e o escopo de acesso (`docs/04` §2.5, §7.1) — **não foi materializada**; sem ela não existe predicado capaz de distinguir acesso dentro do escopo de acesso excepcional;
+3. **não há superfície real** sobre a qual medir volume, padrão de acesso e comportamento — e `docs/04` §10 adverte expressamente contra volume e ruído excessivos.
+
+Decidir a regra agora produziria norma vácua (auditar toda leitura, sem medição) ou inaplicável (referenciando um escopo que não existe).
+
+**Consequências operacionais desta decisão.**
+
+- **Não** se cria `prontuario.acessado` nesta fatia.
+- **Nenhuma** alteração de catálogo ou whitelist decorre desta decisão.
+- `prontuario.exportado` **permanece** como obrigação concreta já homologada por `D-AUD-01` — e **não** é apresentada como cumprimento de AUD-002.
+- A retomada de `L-06` fica **vinculada explicitamente** a: (i) a materialização de **`P2.2-05`**; e (ii) a implementação das **rotas de leitura clínica**. Ocorrido o que vier primeiro, `L-06` deve ser reaberta e decidida **antes** de a superfície ser disponibilizada a usuários.
+- Enquanto `L-06` permanecer aberta, **`R2.2-04` não pode ser declarado encerrado** por esta via, e nenhuma rota de leitura clínica deve ser publicada sem que esta lacuna seja decidida.
+
+**Estado registrado:** `ABERTA / BLOQUEADA POR DEPENDÊNCIA FUNCIONAL-TÉCNICA`.
+
+### 13.4 `PBACK-AUD-03` — `L-07`: negações de autorização — **FECHADA PARA O ESTADO ATUAL**
+
+**Decidido.** Não se cria `autorizacao.negada` no momento. `D-AUD-05` é confirmada nesse ponto.
+
+**Fundamento.** `docs/04` §10 condiciona a auditoria de rejeições a **utilidade operacional**, advertindo contra volume e ruído. A condição não está satisfeita: **não existe endpoint de produção protegido por `@RequerPermissao`** (G-03); portanto não existe superfície operacional real que a emissão pudesse cobrir. Registram-se ainda dois fatos técnicos apurados, relevantes para a reavaliação futura: (a) o guard executa **antes** do handler e **fora** de qualquer transação de negócio, enquanto o `AuditWriter` recusa cliente não transacional por desenho — auditar ali exigiria um padrão transacional novo, não coberto por decisão homologada; (b) a chave candidata `permissao_requerida` viria da metadata do servidor, nunca da requisição, e portanto **não** seria dado controlado pelo atacante.
+
+**Reavaliação obrigatória.** Esta decisão deve ser **obrigatoriamente reavaliada quando o primeiro endpoint RBAC real de produção for publicado**. Não é fechamento definitivo: é fechamento para o estado atual, e o gatilho de reabertura é objetivo e verificável.
+
+**Preservado sem alteração.** O `PermissoesGuard` **não** passa a emitir auditoria. Permanecem intactos: o corpo único de negação (anti-enumeração), o contrato `401` × `403`, e o invariante de que **falha técnica nunca é convertida em negação**.
+
+**Nota.** O valor `NEGADO` de `D-AUD-02` permanece homologado e sem emissor. Isso é consequência conhecida desta decisão, não inconsistência.
+
+> #### Nota de revisão — 05/09/2026 (revisão corretiva de `P-BACK-01-D2`) — FUNDAMENTO CONTESTADO POR EVIDÊNCIA; REAVALIAÇÃO PENDENTE DE BRUNO MENEZES NORONHA
+>
+> **Pacote decisório completo (PROPOSTA — PENDENTE DE DECISÃO DE BRUNO):** `docs/13-pacote-decisao-l-07-negacoes-autorizacao.md`, preparado em 05/09/2026. Onde esta nota e `docs/13` divergirem em fato, **`docs/13` prevalece** por ser apuração posterior e mais completa; nenhum dos dois tem valor normativo. Errata desta nota: onde abaixo se lê que a tentativa negada "fica visível apenas em log técnico", **o fato verificado é que ela não deixa rastro algum** — nem auditoria nem log (`docs/13` F-07/F-08); e a leitura do gatilho "produção" adotada abaixo é **uma** de três leituras possíveis, submetida a Bruno em `docs/13` §4 (D-0), não declarada satisfeita.
+>
+> **O texto da decisão acima é preservado exatamente como homologado e NÃO foi alterado.** Esta nota registra, de forma separada, que a **premissa factual** em que o fundamento se apoiou — G-03, "não existe endpoint de produção protegido por `@RequerPermissao`" — **está errada** (ver a errata em G-03, §13.1). Existe hoje uma rota integrada na `main` sob RBAC real: `POST /auth/recuperacao-senha`, com `@RequerPermissao("senha.recuperar_terceiro")`, cadeia de guards efetiva e negação provada por teste de integração.
+>
+> **Efeito sobre o gatilho de reavaliação.** A própria decisão fixou como gatilho objetivo *"quando o primeiro endpoint RBAC real de produção for publicado"*. Sendo esse endpoint já existente e integrado desde a F6 — antes mesmo desta decisão —, **a condição de reavaliação está materialmente satisfeita no momento em que a decisão foi tomada**, e a decisão foi tomada sob premissa incorreta. Registra-se, portanto, que **`L-07` volta a exigir reavaliação expressa**. A ressalva sobre *implantação em produção* (deploy) é de fato distinta e não altera este efeito: o gatilho, tal como redigido, é a existência de superfície RBAC real no código integrado, e ela existe.
+>
+> **O que esta nota NÃO faz.** Não cria `autorizacao.negada`; não altera catálogo, whitelist, `PermissoesGuard`, runtime, testes ou contratos; não adota, em nome de Bruno, nenhuma das alternativas abaixo; não reabre `D-AUD-05`. O estado operacional permanece o vigente (nenhuma auditoria de negação é emitida). Os dois fatos técnicos (a) e (b) do fundamento original permanecem verdadeiros e relevantes.
+>
+> **Análise para decisão** — utilidade operacional, limites e impactos da auditoria de negação sobre a rota existente:
+>
+> 1. *Natureza da rota.* É operação administrativa **sobre terceiro** (`D-2.3D-16`, `docs/12` §5.16), guardada por permissão de alto privilégio. Uma tentativa negada de iniciar recuperação de senha de outro usuário é, entre todas as negações imagináveis no MVP, uma das de **maior valor forense**: aponta para escalonamento de privilégio ou uso indevido de sessão. A utilidade operacional exigida por `docs/04` §10 é, aqui, **plausível** — o que antes se afirmava inexistente.
+> 2. *Limites.* Só chega ao `PermissoesGuard` quem **já possui sessão válida** (`SessaoAutenticadaGuard` roda antes) e passou pelo CSRF; o `401` sem sessão **não** é negação de autorização e não deve ser confundido com ela. A negação `403` é tomada **antes** do handler e **fora** de qualquer transação de negócio, e o `AuditWriter` recusa cliente não transacional por desenho — emitir auditoria ali exigiria uma **fronteira transacional própria para a auditoria de negação**, padrão novo e não coberto por decisão homologada.
+> 3. *Catálogo, ator e alvo.* Exigiria criar `autorizacao.negada` (hoje fora por `D-AUD-05`), com `resultado = NEGADO` (dando uso ao valor homologado e ainda sem emissor). **Ator:** o usuário da sessão (existe). **Alvo:** a operação negada ocorre *antes* de o corpo ser lido/validado, logo o alvo pretendido (o usuário-alvo da recuperação) **não está resolvido** no ponto da negação; `alvo_tipo`/`alvo_id` só poderiam designar o recurso-rota de forma abstrata, o que tensiona `D-AUD-03` (nome físico de tabela). Esta é uma **dificuldade de modelagem real**, não detalhe.
+> 4. *Minimização.* A única chave útil, `permissao_requerida`, vem da metadata do servidor — **não** é dado controlado pelo atacante; deve ser restrita ao catálogo fechado de `docs/04` §5. Nenhum identificador tentado, corpo ou cabeçalho pode entrar em `contexto` (`D-AUD-07`, F-04).
+> 5. *Volume e abuso.* Baixo em regime normal (a negação exige sessão válida e permissão ausente). Vetor residual: um usuário **autenticado** em laço sobre a rota negada escreveria auditoria sem limite específico — o limitador de recuperação (`D-2.3D-06`) atua sobre outra dimensão e não cobre este caso por desenho. Precisaria de limitação própria ou aceitação expressa do risco.
+> 6. *Negação × falha técnica.* Invariante preservado em qualquer alternativa: indisponibilidade de banco na resolução de permissões sobe como `500` e **não** é negação; **não** deve gerar `autorizacao.negada`. Só o `403` deliberado da guard seria elegível.
+>
+> **Alternativa A — conservadora (sem implementação).** Manter o estado operacional atual: nenhuma auditoria de negação; **corrigir apenas o fundamento** da decisão, substituindo a premissa falsa por um fundamento verdadeiro — a saber, que a auditoria de negação exige padrão transacional novo, modelagem de alvo ainda não resolvida e limitação de volume própria, custos que não se justificam enquanto houver **uma única** rota RBAC. Novo gatilho de reavaliação proposto: **quando a primeira rota RBAC de domínio clínico ou financeiro for publicada**, ou quando o visualizador de auditoria (§13.9) existir — momento em que uma trilha de negação teria consumidor. *Custo:* zero código. *Risco:* a tentativa de escalonamento na rota existente ~~fica visível apenas em log técnico, não na trilha~~ — **errata (`docs/13` F-08): não deixa rastro algum, nem em log técnico nem na trilha**.
+>
+> **Alternativa B — implementação futura, restrita.** Homologar `autorizacao.negada` como ação nova, emitida **exclusivamente** pelo `403` deliberado do `PermissoesGuard` em rotas de um subconjunto fechado de permissões críticas (`senha.recuperar_terceiro`, `sessoes.revogar_terceiro`, `usuarios.gerenciar`, `permissoes.gerenciar`, `prontuario.retificar_terceiro`, `auditoria.ler`), com `resultado = NEGADO`, whitelist `["permissao_requerida"]`, e **decisão expressa** sobre `alvo_tipo`/`alvo_id` (ver item 3). *Custo:* nova fronteira transacional no guard, nova ação e nova chave (ampliação de `D-AUD-01`/`D-AUD-07` por decisão), limitação de volume, testes unitários + integração + mutation challenge. *Risco:* complexidade no guard, hoje deliberadamente simples; risco de DoS por escrita autenticada se a limitação não for adequada.
+>
+> **Recomendação técnica fundamentada.** **Alternativa A**, com o fundamento corrigido e o novo gatilho. Razões: (i) a rota existente é uma só, e seu risco já é contido por sessão + CSRF + permissão restrita a Administrador; (ii) os três problemas técnicos (transação, alvo, volume) são reais e ainda não têm solução homologada; (iii) uma trilha de negação sem consumidor (o visualizador não existe) tem valor forense apenas potencial. A alternativa B é legítima e deve ser reavaliada com fundamento próprio no novo gatilho. **Isto é recomendação; a decisão é de Bruno.**
+>
+> **Pergunta objetiva para Bruno Menezes Noronha:** *Diante da evidência de que já existe rota RBAC real integrada, como fica `L-07`?* **(A)** Manter `PBACK-AUD-03` sem auditoria de negação, substituindo o fundamento pela justificativa técnica acima e adotando o novo gatilho de reavaliação; **(B)** autorizar a preparação de uma fatia decisória própria para `autorizacao.negada` restrita a permissões críticas, nos termos da Alternativa B; ou **(C)** outra orientação. **Até a resposta, `PBACK-AUD-03` permanece como homologada, com fundamento contestado, e nada é implementado.**
+
+#### 13.4.1 `PBACK-AUD-09` — reavaliação de `L-07` sobre o pacote `docs/13` — **DECIDIDA em 05/09/2026: AUDITORIA RESTRITA DE NEGAÇÕES**
+
+**Natureza deste registro.** A pergunta da nota de revisão acima foi respondida por **Bruno Menezes Noronha em 05/09/2026** sobre o pacote decisório dedicado `docs/13-pacote-decisao-l-07-negacoes-autorizacao.md` (perguntas `D-0`..`D-6` de `docs/13` §12). O texto de `PBACK-AUD-03` (§13.4) e a nota de revisão são **preservados como estavam**; esta subseção é o registro normativo **posterior** que os supera no ponto em que decidem diferente. A errata de §13.1 G-03 e a errata da nota de revisão (a tentativa negada **não deixava rastro algum**, nem em log técnico) permanecem válidas e são o fato que motivou a reavaliação.
+
+**Decisões homologadas** (formato de resposta de `docs/13` §12):
+
+| Pergunta | Decisão | Efeito normativo |
+| --- | --- | --- |
+| **D-0** — leitura do gatilho de `PBACK-AUD-03` | **(a)** — "endpoint RBAC real" = código integrado na `main` com rota funcional | O gatilho de reavaliação de `PBACK-AUD-03` está **satisfeito** por `POST /auth/recuperacao-senha` (F6). **Esta leitura vale para `L-07` e não é definição universal de "produção"** para outras decisões: cada gatilho futuro que use a palavra será lido por decisão própria |
+| **D-1** — política | **R — auditoria RESTRITA** | **`autorizacao.negada` entra em `D-AUD-01` como 25ª ação** (única acrescentada após 25/08/2026), com **whitelist VAZIA** em `D-AUD-07`. **Primeira e única exceção a `D-AUD-05`**, limitada por decisão à negação deliberada de autorização da permissão **`senha.recuperar_terceiro`**. **Não** se generaliza a todo `403`, toda guard ou toda permissão; a lista de permissões auditáveis é **fechada** e contém **um** item; ampliá-la é nova decisão normativa, nunca ajuste técnico |
+| **D-2** — falha na gravação | **Q2 — best-effort com log** | A resposta funcional permanece **`403 ACESSO_NEGADO`**; falha ao persistir o evento **não** vira `500`, **não** é engolida e **não** é repetida: produz **log técnico estruturado seguro** (classe do erro e `correlacao_id`; nunca `message`/`stack`, senha, token, cookie, corpo, e-mail, IP ou dado clínico), no mesmo padrão do `FiltroErroAutenticacao`. **Limitação declarada:** a trilha pode ter lacuna **em falha de infraestrutura**, visível em log — atomicidade "evento acompanha operação" foi desenhada para mutações; uma negação não tem mutação a acompanhar |
+| **D-3** — contenção de volume | **V0 — nenhuma limitação adicional** | Um evento por tentativa efetivamente negada; **sem `DimensaoLimite`**, sem agregação, sem amostragem. Fundamento: não existe medição que sustente um `N`; não se cria regra arbitrária. **Risco aceito e registrado** (`docs/10` §9): insider autenticado em laço escreve auditoria sem limite específico; a resposta administrativa (revogar a sessão de terceiro — `AUT-002`/`sessoes.revogar_terceiro`) **não está implementada** |
+| **D-4** — alvo do evento | **R** | `acao = autorizacao.negada`; `resultado = NEGADO` (`D-AUD-02` — primeiro emissor do valor); **ator** = usuário autenticado da **sessão persistida**; **`alvo_tipo = "permissao"`** (nome físico da tabela — `D-AUD-03`); **`alvo_id = permissao.id`** da permissão exigida pelo handler, resolvido pelo backend; **contexto vazio** — `permissao_requerida` (R′) e `motivo` (R″) **recusadas**; `justificativa = NULL`; `correlacao_id` **novo por negação**. **Proibido** como alvo: usuário/e-mail do corpo, identificador não resolvido, sentinela, UUID fictício, valor controlado pelo cliente. **O corpo não é lido nem validado para produzir o evento** |
+| **D-5** — implementação | **AUTORIZADA** | Fatia de implementação, testes e documentação em branch própria (`agent/p-back-01-d2-auditoria-decisoes`); registro em `docs/10` §7.4 |
+| **D-6** — publicação | **NÃO AUTORIZADA** | Sem commit, push, PR, merge, rebase, deploy ou publicação nesta fatia. Será pedida, se cabível, com a evidência de testes |
+
+**Regras de emissão homologadas** (observadas pelo emissor `AuditoriaNegacaoAutorizacao`, `apps/api/src/authz/`):
+
+1. emite **somente** a negação **deliberada** decidida pelo `PermissoesGuard` quando a resolução de permissões teve **sucesso técnico** e resultou em **permissão ausente** ou **usuário inativo** (usuário existe — `ator_usuario_id` respeita a FK);
+2. **não** emite: `401` de qualquer origem; `403 REQUISICAO_NAO_AUTORIZADA` (CSRF); `422 ALVO_NAO_ELEGIVEL` (recusa de negócio uniforme — `D-2.3D-16`); `500` técnico (falha na resolução sobe **antes** de qualquer emissão); casos de fiação (metadata/contexto ausentes); usuário inexistente; negações em rotas/permissões **fora da lista fechada**;
+3. a emissão ocorre no ponto da **decisão de autorização** (guard), **depois** de decidir negar e **antes** de lançar — nunca no handler, nunca no filtro global de erros;
+4. **fronteira transacional T1** (`docs/13` §6.1): transação **dedicada** e curta pela fronteira única (`DatabaseService.transacao`), reutilizando o `AuditWriter` **sem relaxar** o invariante de cliente transacional; leitura de `permissao.id` e escrita do evento na **mesma** transação;
+5. permissão exigida **sem linha em `permissao`** (estado de provisionamento inconsistente — seed da F5 não aplicado) é falha técnica tratada por **Q2** (log, sem evento) — **nunca** alvo `NULL`, sentinela ou UUID fictício.
+
+**Impactos.** Catálogo tipado: **25** ações (24 de `D-AUD-01` + 1); whitelist: **3** positivas · **22** vazias. `resultado`, `alvo_tipo`, política fail-closed: **inalterados**. **Nenhuma** migration, alteração de schema, enum SQL, dependência nova ou alteração de contrato HTTP/OpenAPI: o `403` e seu corpo são **byte a byte** os mesmos; a auditoria é efeito interno. `PermissoesGuard` ganha **uma** dependência (o emissor) e **nenhuma** política de auditoria própria.
+
+**O que esta decisão NÃO faz.** Não reabre `D-AUD-04`, `D-AUD-05` (fora desta exceção única), `D-AUD-07` ou `D-AUD-08`; não cria `prontuario.acessado`, `auditoria.consultada` nem qualquer outra ação; não altera `PBACK-AUD-01`..`PBACK-AUD-08`; não encerra `L-06`, `R2.2-04`, `P-BACK-01` nem `AUT-005`; não autoriza auditar o `422` (conflito com `D-2.3D-16` registrado em `docs/13` §14, sem decisão); não fixa medições de volume/latência (`docs/13` H-02/H-03 permanecem não medidas).
+
+### 13.5 `PBACK-AUD-04` — `L-08`: alteração sensível do cadastro de paciente — **POLÍTICA NORMATIVA FECHADA / MATERIALIZAÇÃO TÉCNICA PENDENTE**
+
+**Decidido — a política de sensibilidade que PAC-001 remete a "conforme política".** Para efeito do **gatilho de auditoria** de que trata `L-08`, são **alterações sensíveis** do cadastro do paciente:
+
+1. **CPF**;
+2. **responsável legal**;
+3. **consentimentos e bases de tratamento aplicáveis**;
+4. **situação ativo/inativo**.
+
+E **não** são classificadas como sensíveis para esse gatilho específico: **nome**, **data de nascimento**, **telefone**, **e-mail**, **contato de emergência** e **observação administrativa**.
+
+**Advertência normativa de alcance — vinculante.** Esta classificação vale **exclusivamente** para o gatilho de auditoria tratado por `L-08`. Ela **não** significa que os demais dados deixem de ser **dados pessoais**, nem que deixem de exigir proteção, controle de acesso, minimização e as demais garantias de `TLF-BASE-V1` §10, RN-062/063 e `docs/04` §10. Nenhuma leitura em contrário é autorizada por este registro.
+
+**Materialização adiada, por decisão.** **Não** se criam nesta fatia: a ação `paciente.cadastro.alterado`, a ação `paciente.situacao.alterada` (que permanece RC, fora por `D-AUD-04`), nem a chave `campos_alterados`. A forma técnica do evento — nome da ação, `alvo_tipo` e chaves de `contexto` — será decidida **junto da fatia do módulo de pacientes**, quando existir emissor real.
+
+**Fato técnico registrado para essa decisão futura.** A chave candidata `campos_alterados` (nomes de campos, sem valores) **colide** com a política runtime vigente de `contexto`, que aceita **apenas escalares JSON** e rejeita arrays. Essa política é decisão técnica local e reversível (`docs/10` §7.3), **não** integra `D-AUD-07`, e sua eventual revisão exige decisão expressa — não contorno. O registro deste conflito é deliberado, para que a fatia futura não o descubra tarde.
+
+**Nenhuma alteração de catálogo, whitelist, schema ou código decorre desta decisão.**
+
+### 13.6 `PBACK-AUD-05` — `configuracao.alterada`: granularidade, abrangência e whitelist — **FECHADA**
+
+**Decidido.**
+
+- **Granularidade: ação única.** Permanece a ação única `configuracao.alterada`, já homologada por `D-AUD-01`. **Não** se criam ações por entidade.
+- **Entidade concreta identificada por `alvo_tipo`**, conforme `D-AUD-03` (nome físico da tabela), com `alvo_id` apontando a instância. As entidades abrangidas são as cinco de G-07: `clinica`, `horario_funcionamento`, `servico`, `forma_pagamento` e `motivo_cancelamento`.
+- **Abrangência: CFG-001..CFG-006.** Fundamento: CFG-001 por exigência própria de atribuibilidade; CFG-002..CFG-006 pelo termo "configurações estruturais" de AUD-001 (G-06). Isso resolve a abrangência que §12.1 item 3 deixou adiada.
+- **Whitelist: permanece VAZIA.** **Não** se cria `campos_alterados`.
+
+**Fundamento da granularidade.** A distinção por entidade **já é obtida sem criar ação alguma**: o par `(acao="configuracao.alterada", alvo_tipo=<tabela>, alvo_id=<uuid>)` identifica entidade e instância. Criar ações separadas ampliaria o catálogo para obter o que `D-AUD-03` já entrega.
+
+**Limitação conhecida — registrada expressamente.** A trilha registra **quem** alterou, **quando** e **qual entidade/instância** foi alterada, mas **não preserva necessariamente o estado anterior** de cada configuração: diferentemente da agenda, as tabelas de configuração **não possuem histórico funcional**, e o valor anterior se perde no `UPDATE`. Esta limitação é **declarada e aceita** neste registro, e **poderá ser reavaliada** quando existir emissor real e necessidade operacional comprovada — sem reabrir `D-AUD-07` e sem que a reavaliação seja presumida como já autorizada.
+
+**Nenhuma alteração de catálogo, whitelist, schema ou código decorre desta decisão.**
+
+### 13.7 `PBACK-AUD-06` — `prontuario.exportado`: alvo definitivo — **FECHADO COMO `paciente`**
+
+**Decidido.** Para **toda** exportação clínica, uniformemente:
+
+- `alvo_tipo = "paciente"`;
+- `alvo_id = paciente.id`.
+
+**Não** se usa alvo variável conforme a quantidade de registros exportados. **Nenhuma** chave de `contexto` é acrescentada — a whitelist da ação permanece **vazia** (em particular, `formato` **não** é homologada).
+
+**Fundamento.** `evento_auditoria.alvo_id` é **um único** uuid (G-09). Uma exportação pode representar um registro, um conjunto cronológico ou um relatório do paciente; `paciente` é o único alvo que representa fielmente as três formas, sempre existe, e mantém a homogeneidade que `docs/07` §22.4 atribui à trilha de segurança. Alvo variável para uma mesma ação comprometeria a consulta investigativa. Isso resolve a sub-decisão que `D-AUD-01` deixou adiada.
+
+**Limitação declarada.** O evento não identifica *quais* registros clínicos específicos foram exportados. Consequência aceita da cardinalidade de `alvo_id`; representá-los exigiria estrutura composta em `contexto`, vedada pela política vigente de escalares e não homologada.
+
+**Registro de segurança.** `alvo_tipo = "paciente"` **não** amplia exposição: `D-AUD-03`(c) é expressa em que `alvo_tipo` **não concede acesso** ao alvo, e `alvo_id` é um uuid, não dado pessoal.
+
+**Nenhuma alteração de catálogo, whitelist, schema ou código decorre desta decisão.**
+
+### 13.8 `PBACK-AUD-07` — `autor_original_usuario_id` — **REJEIÇÃO CONFIRMADA**
+
+**Decidido.** A rejeição vigente estabelecida por `D-AUD-07` (§12.6) é **confirmada**. A chave `autor_original_usuario_id` **não** é acrescentada à whitelist de `retificacao_clinica.efetivada_terceiro`, que permanece com a chave única `registro_original_id`.
+
+**Fundamento — verificado mecanicamente (G-05).** A informação é **derivável de forma confiável** por `registro_original_id → registro_clinico.autor_usuario_id`, e o valor é **imutável**: a retificação só existe sobre registro `FINALIZADO` (PRN-005), e `trg_registro_clinico_imutavel_finalizado` bloqueia `UPDATE`/`DELETE` após a finalização; `docs/07` §23 garante que nada é apagado. A obrigação de D-01.4 permanece integralmente atendida: o **autor da retificação** é a coluna própria `ator_usuario_id` (F-01), o **registro original** é `registro_original_id`, a **justificativa** usa a coluna própria e a **data/hora** é `ocorrido_em`.
+
+**Efeito.** Esta decisão **preserva a minimização** (`docs/09` §4.2) e **preserva o comportamento existente** — o validator já rejeita a chave, e a rejeição é provada por teste. **Nenhuma alteração de código decorre desta decisão.**
+
+### 13.9 `PBACK-AUD-08` — consulta da trilha de auditoria (AUD-004) — **POLÍTICA FECHADA / IMPLEMENTAÇÃO PENDENTE**
+
+**Decidido — política da futura consulta.** A implementação do visualizador é **unidade de trabalho própria** e **não** pertence a esta fatia. A política abaixo é fixada agora para que a implementação futura não a reinterprete.
+
+- **Permissão:** exclusivamente **`auditoria.ler`**, já homologada em `docs/04` §5.8 (G-08). **Nenhuma permissão nova é criada.** Nenhum papel é alterado.
+- **Usuário autorizado:** Administrador com `auditoria.ler` (AUD-004 — "Administrador autorizado").
+- **Operação:** **somente leitura**. Nenhum caminho de atualização ou exclusão de eventos (AUD-005).
+- **Filtros permitidos — conjunto fechado, exclusivamente sobre colunas próprias de `evento_auditoria`:** período (`ocorrido_em`), `ator_usuario_id`, `acao` (restrito ao catálogo fechado de 24), `alvo_tipo`, `alvo_id`, `correlacao_id` e `resultado`.
+- **Paginação obrigatória**, com limite máximo imposto pelo servidor.
+- **Expressamente vedado:** busca textual livre; filtro por conteúdo de `contexto`; filtro por `justificativa`; **resolver ou expandir** o par `alvo_tipo` + `alvo_id`; qualquer join destinado a retornar dados pessoais ou clínicos do recurso apontado.
+- **`auditoria.consultada` NÃO é criada** — permanece fora por `D-AUD-05`; AUD-004 não exige auditar a consulta.
+
+**Fundamento da vedação de expansão.** `D-AUD-03`(b) e (c): `alvo_tipo` **não autoriza despacho dinâmico de SQL** e **não concede acesso** ao alvo. A vedação impede que o visualizador se torne canal indireto de acesso a dado clínico ou pessoal, e preserva a segregação administrativo × clínico de `docs/04` §2.6.
+
+**Risco residual declarado.** Mesmo restrita a metadados, a trilha permite correlação — por exemplo, inferir que determinado paciente teve prontuário exportado em determinada data. É risco inerente a qualquer trilha de auditoria, mitigado por `auditoria.ler` ser permissão restrita e pela ausência de busca livre. **Declarado e aceito, não eliminado.**
+
+**Fato a verificar na implementação (não é decisão).** `evento_auditoria` não possui, no schema vigente, índice declarado para os filtros de período/ator/alvo. A necessidade de índice deve ser **medida** na fatia do visualizador, não antecipada aqui — e nenhuma migration decorre deste registro.
+
+### 13.10 Estado das lacunas após esta decisão
+
+| Item | Estado |
+| --- | --- |
+| `L-05` — transições de agenda | **FECHADA** (§13.2) |
+| `L-06` — acesso a dados clínicos | **ABERTA / BLOQUEADA POR DEPENDÊNCIA FUNCIONAL-TÉCNICA** (§13.3) — vinculada a `P2.2-05` + superfície real de leitura clínica |
+| `L-07` — negações de autorização | **REAVALIADA E DECIDIDA em 05/09/2026** (§13.4.1, `PBACK-AUD-09`): **auditoria RESTRITA** — `autorizacao.negada` homologada (25ª ação, whitelist vazia), emissão limitada à negação deliberada de `senha.recuperar_terceiro`, Q2, V0, alvo = `permissao`. Implementação autorizada (D-5) e materializada em branch própria (`docs/10` §7.4); publicação **não autorizada** (D-6). Histórico de §13.4 e da nota de revisão preservado |
+| `L-08` — alteração sensível do paciente | **POLÍTICA NORMATIVA FECHADA / MATERIALIZAÇÃO TÉCNICA PENDENTE** (§13.5) |
+| `configuracao.alterada` — granularidade | **FECHADA** — ação única (§13.6) |
+| `configuracao.alterada` — abrangência | **FECHADA** — CFG-001..CFG-006 (§13.6) |
+| `configuracao.alterada` — whitelist | **FECHADA COMO VAZIA NO ESTADO ATUAL** (§13.6) |
+| `prontuario.exportado` — alvo | **FECHADO COMO `paciente`** (§13.7) |
+| `autor_original_usuario_id` | **REJEIÇÃO CONFIRMADA** (§13.8) |
+| Política de consulta de auditoria | **FECHADA; IMPLEMENTAÇÃO PENDENTE** (§13.9) |
+
+### 13.11 Pendências e dependências que permanecem abertas
+
+- **`L-06`** — aberta e bloqueada; retomada obrigatória antes de qualquer superfície de leitura clínica.
+- ~~**`L-07` — reavaliação pendente de Bruno**~~ — **RESOLVIDA em 05/09/2026** por `PBACK-AUD-09` (§13.4.1). Permanecem abertas as **dependências e riscos aceitos** dali decorrentes: `AUT-002`/`sessoes.revogar_terceiro` (resposta administrativa à trilha) **não implementada**; volume e latência (`docs/13` H-02/H-03) **não medidos**; **publicação da fatia não autorizada** (D-6).
+- **`P2.2-05`** — relação fisioterapeuta↔paciente / escopo de acesso clínico: **não materializada**; é dependência direta de `L-06`.
+- **Visualizador de auditoria (AUD-004)** — política fechada por §13.9; **implementação pendente**, como unidade própria.
+- **Emissores ausentes** — 17 das 24 ações homologadas seguem sem emissor (G-02); cada uma será materializada com o módulo de domínio correspondente.
+- **`R2.2-04`** — permanece **ABERTO / MITIGADO PARCIALMENTE**. Esta seção **não** o encerra: a validação semântica de `data_referencia_anterior`/`data_referencia_nova` e de `registro_original_id` continua sem regra homologada e sem emissor.
+- **`L-08` — materialização técnica** — ação, alvo e chaves a decidir com o módulo de pacientes, considerando o conflito `campos_alterados` × política de escalares (§13.5).
+- **`configuracao.alterada` — estado anterior não preservado** — limitação declarada em §13.6, reavaliável com emissor real.
+
+### 13.12 Impactos desta decisão
+
+- **Catálogo de ações:** **inalterado** — permanecem exatamente as **24** ações de `D-AUD-01`. Nenhuma ação acrescentada, nenhuma removida, nenhuma renomeada.
+- **Whitelist de `contexto`:** **inalterada** — permanecem **3** positivas e **21** vazias. Nenhuma chave acrescentada.
+- **Catálogo de `resultado`, `alvo_tipo`, política fail-closed:** **inalterados**.
+- **Schema e migrations:** **nenhuma migration decorre desta seção**, e a razão é estrutural: todas as decisões operam sobre catálogos **da aplicação**, que `docs/07` §22.3/§2.2 determinam expressamente serem documentados e validados na aplicação — nunca em enum SQL, CHECK, trigger ou JSON Schema. Mesmo precedente já registrado por `D-AUD-02`.
+- **Dependências:** **nenhuma** instalada ou atualizada.
+- **Comportamento funcional:** **nenhum** comportamento novo é introduzido. `AuditWriter`, `AuditContextValidator`, `PermissoesGuard`, controllers, services de domínio, RBAC, permissões e OpenAPI permanecem **intactos**.
+- **Código:** apenas **comentários** do catálogo tipado passam a citar estas decisões onde antes descreviam as mesmas matérias como adiadas, e a suíte de não-regressão é fortalecida para travar o estado normativo aqui fixado.
+
+> **Atualização de 05/09/2026 — `PBACK-AUD-09` (§13.4.1).** Os impactos acima descrevem `PBACK-AUD-01`..`PBACK-AUD-08` e permanecem verdadeiros para elas. A reavaliação de `L-07` **altera** o catálogo e a whitelist: **25** ações e **3 positivas · 22 vazias**; **um** comportamento novo (emissão de `autorizacao.negada` pelo caminho da `PermissoesGuard`, restrito a `senha.recuperar_terceiro`). Schema, migrations, dependências, contrato HTTP e OpenAPI continuam **inalterados**. Detalhe da implementação em `docs/10` §7.4.
+
+### 13.13 Expressamente fora do escopo desta seção
+
+Não são objeto nem consequência deste registro: a implementação do endpoint de consulta de auditoria; a criação de `prontuario.acessado`, `autorizacao.negada` *(texto original de 05/09/2026 preservado — a criação de `autorizacao.negada` foi decidida **posteriormente**, na mesma data, por `PBACK-AUD-09`, §13.4.1)*, `auditoria.consultada`, `paciente.cadastro.alterado` ou `paciente.situacao.alterada`; qualquer módulo de domínio (agenda, paciente, prontuário, configuração); a exposição HTTP de `profissional.situacao.alterada` com `profissionais.gerenciar` — que é pendência de **fatia de domínio**, não lacuna normativa de auditoria; `AUT-005`/`RN-001` (revogação de sessões na inativação de usuário); o encerramento de `R2.2-04`; e qualquer revisão da política runtime de escalares.
+
+---
+
+**Fim — §§1..11: proposta histórica; §12: decisão homologada em 25/08/2026 (`D-AUD-01`..`D-AUD-08`); §13: decisão homologada em 05/09/2026 (`PBACK-AUD-01`..`PBACK-AUD-08`); §13.4.1: `PBACK-AUD-09` decidida em 05/09/2026 (reavaliação de `L-07` — auditoria restrita, `autorizacao.negada` homologada). `P-E14-01` ENCERRADA; `T-AUD-CONTEXTO` EXECUTADO (`docs/10` §8.1); `L-05` e `L-08` (política) FECHADAS; `L-07` DECIDIDA (§13.4.1) — implementação autorizada e materializada em branch própria, publicação NÃO autorizada; `L-06` ABERTA / BLOQUEADA POR DEPENDÊNCIA FUNCIONAL-TÉCNICA; `R2.2-04` permanece ABERTO / MITIGADO PARCIALMENTE.**

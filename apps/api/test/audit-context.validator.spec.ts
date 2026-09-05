@@ -37,17 +37,20 @@ function rejeicao(
   );
 }
 
-describe("catálogo homologado (D-AUD-01 / D-AUD-02)", () => {
-  it("contém exatamente as 24 ações homologadas em docs/09 §12.2", () => {
-    expect(ACOES_AUDITORIA).toHaveLength(24);
-    expect(new Set(ACOES_AUDITORIA).size).toBe(24);
+describe("catálogo homologado (D-AUD-01 / D-AUD-02 / PBACK-AUD-09)", () => {
+  it("contém exatamente as 24 ações de docs/09 §12.2 + `autorizacao.negada` (§13.4.1) = 25", () => {
+    expect(ACOES_AUDITORIA).toHaveLength(25);
+    expect(new Set(ACOES_AUDITORIA).size).toBe(25);
+    // A 25ª é a ÚNICA acrescentada depois de D-AUD-01, e fica ao final para
+    // que a ordem da fonte original permaneça reconhecível.
+    expect(ACOES_AUDITORIA[24]).toBe("autorizacao.negada");
   });
 
   it("o catálogo de resultado é exatamente SUCESSO | NEGADO | FALHA", () => {
     expect(RESULTADOS_AUDITORIA).toEqual(["SUCESSO", "NEGADO", "FALHA"]);
   });
 
-  it("a whitelist declara TODAS as 24 ações e somente três não vazias (D-AUD-07)", () => {
+  it("a whitelist declara TODAS as 25 ações e somente três não vazias (D-AUD-07)", () => {
     expect(Object.keys(WHITELIST_CONTEXTO).sort()).toEqual(
       [...ACOES_AUDITORIA].sort(),
     );
@@ -71,14 +74,40 @@ describe("catálogo homologado (D-AUD-01 / D-AUD-02)", () => {
   );
 });
 
+// As ações abaixo estão FORA do catálogo por decisão homologada, e continuam
+// fora após docs/09 §13 (PBACK-AUD-01..PBACK-AUD-04), que fechou as matérias
+// correspondentes sem acrescentar ação alguma. Este bloco é a trava: incluir
+// qualquer uma delas no catálogo faz este teste falhar, de modo que a
+// introdução exige alterar DECISÃO e TESTE — nunca só o código.
+//
+// Isto registra o estado normativo VIGENTE, não uma proibição eterna — e o
+// precedente é `autorizacao.negada`: esteve nesta lista até PBACK-AUD-09
+// (docs/09 §13.4.1, 05/09/2026) decidir sua entrada, com whitelist VAZIA e
+// emissão restrita; saiu daqui por DECISÃO e TESTE, como a trava exige.
 describe("ação desconhecida → rejeição explícita", () => {
   it.each([
     "acao.inexistente",
-    "paciente.cadastro.alterado", // SF — D-AUD-05: fora por decisão
-    "prontuario.acessado", // SF — D-AUD-05
-    "autorizacao.negada", // SF — D-AUD-05
-    "auditoria.consultada", // SF — D-AUD-05
-    "agendamento.confirmado", // RC — D-AUD-04: adiada, não homologada
+    // SF — D-AUD-05, confirmados por docs/09 §13:
+    "paciente.cadastro.alterado", // §13.5 — política de L-08 fechada; ação NÃO criada
+    // `prontuario.acessado`: L-06 permanece ABERTA / BLOQUEADA (docs/09
+    // §13.3). A matéria NÃO foi encerrada — TLF-BASE-V1 §10 exige trilha de
+    // auditoria para ACESSO a dados sensíveis —, mas a ação não pode ser
+    // definida sem `P2.2-05` e sem superfície real de leitura clínica.
+    // Qualquer inclusão futura depende de DECISÃO FORMAL própria; até lá, a
+    // rejeição é o comportamento correto e este teste a protege.
+    "prontuario.acessado",
+    "auditoria.consultada", // §13.9 — expressamente não criada
+    "AUTORIZACAO.NEGADA", // caixa diferente não é a ação homologada por §13.4.1
+    "autorizacao.negada.senha", // variantes não existem: a ação é única e restrita pelo EMISSOR
+    // RC — D-AUD-04, confirmadas por docs/09 §13.2 (PBACK-AUD-01): as
+    // transições de agenda fora das 4 ações homologadas seguem atribuíveis
+    // por `historico_agendamento`, não por evento de auditoria.
+    "agendamento.confirmado",
+    "agendamento.checkin",
+    "agendamento.falta_registrada",
+    "agendamento.concluido",
+    "bloqueio_agenda.criado",
+    "paciente.situacao.alterada", // RC — §13.5: não criada com a política de L-08
     "USUARIO.AUTENTICACAO", // caixa diferente não é a ação homologada
     "",
   ])('rejeita "%s" mesmo com contexto vazio', (acao) => {
@@ -88,13 +117,14 @@ describe("ação desconhecida → rejeição explícita", () => {
   });
 });
 
-describe("whitelist vazia → nenhum contexto não vazio (21 ações)", () => {
+describe("whitelist vazia → nenhum contexto não vazio (22 ações)", () => {
   const acoesComWhitelistVazia = Object.entries(WHITELIST_CONTEXTO)
     .filter(([, chaves]) => chaves.length === 0)
     .map(([acao]) => acao);
 
-  it("são exatamente 21 ações", () => {
-    expect(acoesComWhitelistVazia).toHaveLength(21);
+  it("são exatamente 22 ações (21 de D-AUD-07 + `autorizacao.negada` de PBACK-AUD-09)", () => {
+    expect(acoesComWhitelistVazia).toHaveLength(22);
+    expect(acoesComWhitelistVazia).toContain("autorizacao.negada");
   });
 
   it.each(acoesComWhitelistVazia)(
@@ -111,12 +141,12 @@ describe("whitelist vazia → nenhum contexto não vazio (21 ações)", () => {
   it.each([
     ["usuario.situacao.alterada", "ativo_anterior"],
     ["usuario.situacao.alterada", "ativo_novo"],
-    ["configuracao.alterada", "campos_alterados"],
+    ["configuracao.alterada", "campos_alterados"], // §13.6 — whitelist FECHADA COMO VAZIA
     ["sessao.consumida", "atendimento_id"],
     ["sessao.consumida", "pacote_id"],
     ["agendamento.cancelado", "motivo_cancelamento_id"],
     ["pagamento.estornado", "pagamento_id"],
-    ["prontuario.exportado", "formato"],
+    ["prontuario.exportado", "formato"], // §13.7 — alvo fechado como `paciente`, SEM chave
     ["sessao.ajustada", "tipo"],
     ["sessao.ajustada", "quantidade"],
     ["atendimento.iniciado", "agendamento_id"],
@@ -126,6 +156,38 @@ describe("whitelist vazia → nenhum contexto não vazio (21 ações)", () => {
     const erro = rejeicao(acao, { [chave]: "x" });
     expect(erro.motivo).toBe("CONTEXTO_NAO_VAZIO_EM_WHITELIST_VAZIA");
     expect(erro.chaves).toEqual([chave]);
+  });
+});
+
+// docs/13 A-12 — a 25ª ação entra com whitelist VAZIA. As chaves abaixo foram
+// cogitadas no pacote decisório (R′: `permissao_requerida`; R″: `motivo`) ou
+// são dado pessoal/controlado pelo cliente (`ip`, `identificador`, ...) e
+// PBACK-AUD-09 recusou TODAS: a permissão exigida é o ALVO do evento, não uma
+// chave de contexto. O par positivo (contexto vazio/ausente aceito, no bloco
+// `it.each(ACOES_AUDITORIA)` acima) impede que estas rejeições sejam
+// vacuamente verdes.
+describe("autorizacao.negada (PBACK-AUD-09 — whitelist VAZIA por decisão)", () => {
+  it("aceita contexto vazio e ausente; `resultado` NEGADO é homologado por D-AUD-02", () => {
+    expect(validator.validar("autorizacao.negada", {})).toBe("autorizacao.negada");
+    expect(validator.validar("autorizacao.negada")).toBe("autorizacao.negada");
+    expect(RESULTADOS_AUDITORIA).toContain("NEGADO");
+  });
+
+  it.each([
+    "permissao_requerida",
+    "motivo",
+    "ip",
+    "identificador",
+    "email",
+    "corpo",
+    "rota",
+    "sessao_id",
+    "usuario_alvo_id",
+  ])("rejeita a chave %s — nenhuma chave foi homologada para a ação", (chave) => {
+    const erro = rejeicao("autorizacao.negada", { [chave]: "x" });
+    expect(erro.motivo).toBe("CONTEXTO_NAO_VAZIO_EM_WHITELIST_VAZIA");
+    expect(erro.chaves).toEqual([chave]);
+    expect(erro.message).not.toContain('"x"');
   });
 });
 
@@ -188,7 +250,13 @@ describe("retificacao_clinica.efetivada_terceiro", () => {
     ).toBe("retificacao_clinica.efetivada_terceiro");
   });
 
-  it("rejeita autor_original_usuario_id — chave EXPRESSAMENTE recusada em docs/09 §12.6", () => {
+  // Rejeição confirmada por docs/09 §13.8 (PBACK-AUD-07) após a recusa
+  // original de D-AUD-07 (§12.6): a informação é derivável por
+  // `registro_original_id` -> `registro_clinico.autor_usuario_id`, sobre
+  // valor tornado imutável pelo trigger de append-only. O teste positivo
+  // acima (aceita `registro_original_id`) impede que este par fique
+  // vacuamente verde.
+  it("rejeita autor_original_usuario_id — chave recusada em docs/09 §12.6 e confirmada em §13.8", () => {
     const erro = rejeicao("retificacao_clinica.efetivada_terceiro", {
       registro_original_id: "3f1a2b3c-0000-4000-8000-000000000001",
       autor_original_usuario_id: "9f1a2b3c-0000-4000-8000-000000000002",

@@ -14,13 +14,23 @@
 //   - falha TÉCNICA sobe como exceção e NÃO vira `403`;
 //   - `R4-01`: a identidade VALIDADA sobrescreve qualquer contexto semeado,
 //     e é ela que a guard consulta;
-//   - a identidade não vem do pedido, e não vaza entre usuários.
+//   - a identidade não vem do pedido, e não vaza entre usuários;
+//   - L-07 (PBACK-AUD-09): a guard delega o REGISTRO da negação deliberada ao
+//     emissor — e SOMENTE nos desfechos "permissão ausente" e "usuário
+//     inativo"; nunca em fiação incorreta, usuário inexistente, concessão ou
+//     falha técnica. O emissor é um dublê aqui; a escrita real e a política
+//     Q2 são provadas em `auditoria-negacao-autorizacao.spec.ts` e na
+//     integração.
 
 import { describe, expect, it } from "@jest/globals";
 import { ForbiddenException, UnauthorizedException } from "@nestjs/common";
 import type { ExecutionContext } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 
+import type {
+  AuditoriaNegacaoAutorizacao,
+  NegacaoDeliberada,
+} from "../src/authz/auditoria-negacao-autorizacao.js";
 import {
   anexarContextoAutenticado,
   lerContextoAutenticado,
@@ -63,6 +73,30 @@ function resolvedor(
     },
   } as unknown as PermissoesService;
   return { servico, consultados };
+}
+
+/**
+ * Emissor controlado (L-07). Registra cada negação que a guard lhe entrega —
+ * é assim que se prova QUANDO a guard emite e com QUAIS dados — e registra a
+ * ORDEM: `lancouDepoisDeEmitir` só é verdadeiro se a guard aguardou a emissão
+ * antes de lançar.
+ */
+function emissor(): {
+  servico: AuditoriaNegacaoAutorizacao;
+  negacoes: NegacaoDeliberada[];
+  emissoesConcluidas: () => number;
+} {
+  const negacoes: NegacaoDeliberada[] = [];
+  let concluidas = 0;
+  const servico = {
+    async registrarNegacao(negacao: NegacaoDeliberada): Promise<void> {
+      negacoes.push({ ...negacao });
+      // Cede o turno: se a guard NÃO aguardar, ela lança antes deste ponto.
+      await new Promise((resolver) => setImmediate(resolver));
+      concluidas += 1;
+    },
+  } as unknown as AuditoriaNegacaoAutorizacao;
+  return { servico, negacoes, emissoesConcluidas: () => concluidas };
 }
 
 /** Requisição sintética; `extras` simulam corpo/query/cabeçalhos forjados. */
@@ -116,7 +150,7 @@ describe("`PermissoesGuard` — concede quando, e somente quando, deve", () => {
     const { servico, consultados } = resolvedor({
       [USUARIO_A]: autorizado(["usuarios.gerenciar", "auditoria.ler"]),
     });
-    const guard = new PermissoesGuard(new Reflector(), servico);
+    const guard = new PermissoesGuard(new Reflector(), servico, emissor().servico);
     await expect(
       guard.canActivate(contextoDe(comContexto(USUARIO_A), handlerExigindo("usuarios.gerenciar"))),
     ).resolves.toBe(true);
@@ -127,7 +161,7 @@ describe("`PermissoesGuard` — concede quando, e somente quando, deve", () => {
 
   it("nega com 403: usuário autenticado sem a permissão exigida", async () => {
     const { servico } = resolvedor({ [USUARIO_A]: autorizado(["auditoria.ler"]) });
-    const guard = new PermissoesGuard(new Reflector(), servico);
+    const guard = new PermissoesGuard(new Reflector(), servico, emissor().servico);
     const promessa = guard.canActivate(
       contextoDe(comContexto(USUARIO_A), handlerExigindo("usuarios.gerenciar")),
     );
@@ -142,7 +176,7 @@ describe("`PermissoesGuard` — concede quando, e somente quando, deve", () => {
 
   it("nega: usuário sem papel algum — conjunto efetivo vazio", async () => {
     const { servico } = resolvedor({ [USUARIO_A]: autorizado([]) });
-    const guard = new PermissoesGuard(new Reflector(), servico);
+    const guard = new PermissoesGuard(new Reflector(), servico, emissor().servico);
     await expect(
       guard.canActivate(contextoDe(comContexto(USUARIO_A), handlerExigindo("usuarios.gerenciar"))),
     ).rejects.toBeInstanceOf(ForbiddenException);
@@ -152,7 +186,7 @@ describe("`PermissoesGuard` — concede quando, e somente quando, deve", () => {
     const { servico } = resolvedor({
       [USUARIO_A]: autorizado(["agenda.gerenciar", "agenda.gerenciar"]),
     });
-    const guard = new PermissoesGuard(new Reflector(), servico);
+    const guard = new PermissoesGuard(new Reflector(), servico, emissor().servico);
     await expect(
       guard.canActivate(contextoDe(comContexto(USUARIO_A), handlerExigindo("agenda.gerenciar"))),
     ).resolves.toBe(true);
@@ -162,7 +196,7 @@ describe("`PermissoesGuard` — concede quando, e somente quando, deve", () => {
     const { servico } = resolvedor({
       [USUARIO_A]: autorizado(["auditoria.ler", "agenda.gerenciar", "prontuario.ler"]),
     });
-    const guard = new PermissoesGuard(new Reflector(), servico);
+    const guard = new PermissoesGuard(new Reflector(), servico, emissor().servico);
     await expect(
       guard.canActivate(contextoDe(comContexto(USUARIO_A), handlerExigindo("usuarios.gerenciar"))),
     ).rejects.toBeInstanceOf(ForbiddenException);
@@ -174,7 +208,7 @@ describe("`PermissoesGuard` — fail-closed", () => {
     const { servico, consultados } = resolvedor({
       [USUARIO_A]: autorizado(["usuarios.gerenciar"]),
     });
-    const guard = new PermissoesGuard(new Reflector(), servico);
+    const guard = new PermissoesGuard(new Reflector(), servico, emissor().servico);
     class SemMetadata {
       acao(): void {}
     }
@@ -189,7 +223,7 @@ describe("`PermissoesGuard` — fail-closed", () => {
     const { servico } = resolvedor({
       [USUARIO_A]: autorizado(["usuarios.gerenciar", "permissoes.gerenciar"]),
     });
-    const guard = new PermissoesGuard(new Reflector(), servico);
+    const guard = new PermissoesGuard(new Reflector(), servico, emissor().servico);
     for (const invalida of [
       [],
       ["usuarios.gerenciar"],
@@ -212,7 +246,7 @@ describe("`PermissoesGuard` — fail-closed", () => {
     const { servico, consultados } = resolvedor({
       [USUARIO_A]: autorizado(["usuarios.gerenciar"]),
     });
-    const guard = new PermissoesGuard(new Reflector(), servico);
+    const guard = new PermissoesGuard(new Reflector(), servico, emissor().servico);
     const promessa = guard.canActivate(
       contextoDe(requisicao(), handlerExigindo("usuarios.gerenciar")),
     );
@@ -225,7 +259,7 @@ describe("`PermissoesGuard` — fail-closed", () => {
     const { servico } = resolvedor({
       [USUARIO_A]: { resolvido: false, motivo: "USUARIO_INEXISTENTE" },
     });
-    const guard = new PermissoesGuard(new Reflector(), servico);
+    const guard = new PermissoesGuard(new Reflector(), servico, emissor().servico);
     await expect(
       guard.canActivate(contextoDe(comContexto(USUARIO_A), handlerExigindo("usuarios.gerenciar"))),
     ).rejects.toBeInstanceOf(ForbiddenException);
@@ -237,7 +271,7 @@ describe("`PermissoesGuard` — fail-closed", () => {
     const { servico } = resolvedor({
       [USUARIO_A]: { resolvido: false, motivo: "USUARIO_INATIVO" },
     });
-    const guard = new PermissoesGuard(new Reflector(), servico);
+    const guard = new PermissoesGuard(new Reflector(), servico, emissor().servico);
     await expect(
       guard.canActivate(contextoDe(comContexto(USUARIO_A), handlerExigindo("usuarios.gerenciar"))),
     ).rejects.toBeInstanceOf(ForbiddenException);
@@ -246,7 +280,7 @@ describe("`PermissoesGuard` — fail-closed", () => {
   it("falha TÉCNICA sobe como exceção — não é maquiada como `403`", async () => {
     // Fail-closed é "o handler não é alcançado", não "responde 403 sempre".
     const { servico } = resolvedor({}, { lancar: true });
-    const guard = new PermissoesGuard(new Reflector(), servico);
+    const guard = new PermissoesGuard(new Reflector(), servico, emissor().servico);
     const promessa = guard.canActivate(
       contextoDe(comContexto(USUARIO_A), handlerExigindo("usuarios.gerenciar")),
     );
@@ -286,7 +320,7 @@ describe("`R4-01` — a identidade VALIDADA é autoritativa", () => {
       [USUARIO_A]: autorizado(["usuarios.gerenciar"]), // vítima, permissionada
       [USUARIO_B]: autorizado([]), // dono real da sessão, sem permissão
     });
-    const guard = new PermissoesGuard(new Reflector(), servico);
+    const guard = new PermissoesGuard(new Reflector(), servico, emissor().servico);
 
     const req: Record<string | symbol, unknown> = requisicao();
     req[chave] = { usuarioId: USUARIO_A, sessaoId: "semeada" };
@@ -303,7 +337,7 @@ describe("`R4-01` — a identidade VALIDADA é autoritativa", () => {
     const { servico, consultados } = resolvedor({
       [USUARIO_B]: autorizado(["usuarios.gerenciar"]),
     });
-    const guard = new PermissoesGuard(new Reflector(), servico);
+    const guard = new PermissoesGuard(new Reflector(), servico, emissor().servico);
     await expect(
       guard.canActivate(contextoDe(comContexto(USUARIO_B), handlerExigindo("usuarios.gerenciar"))),
     ).resolves.toBe(true);
@@ -317,7 +351,7 @@ describe("`PermissoesGuard` — a identidade não vem do pedido", () => {
       [USUARIO_A]: autorizado([]),
       [USUARIO_B]: autorizado(["usuarios.gerenciar"]),
     });
-    const guard = new PermissoesGuard(new Reflector(), servico);
+    const guard = new PermissoesGuard(new Reflector(), servico, emissor().servico);
     const req = comContexto(USUARIO_A, {
       body: { usuarioId: USUARIO_B, permissoes: ["usuarios.gerenciar"] },
       query: { usuarioId: USUARIO_B, papel: "Administrador" },
@@ -341,7 +375,7 @@ describe("`PermissoesGuard` — a identidade não vem do pedido", () => {
       [USUARIO_A]: autorizado(["usuarios.gerenciar"]),
       [USUARIO_B]: autorizado([]),
     });
-    const guard = new PermissoesGuard(new Reflector(), servico);
+    const guard = new PermissoesGuard(new Reflector(), servico, emissor().servico);
     const handler = handlerExigindo("usuarios.gerenciar");
     await expect(
       guard.canActivate(contextoDe(comContexto(USUARIO_A), handler)),
@@ -349,6 +383,118 @@ describe("`PermissoesGuard` — a identidade não vem do pedido", () => {
     await expect(
       guard.canActivate(contextoDe(comContexto(USUARIO_B), handler)),
     ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+});
+
+describe("L-07 (PBACK-AUD-09) — a guard entrega ao emissor SOMENTE a negação deliberada", () => {
+  it("permissão AUSENTE: emite UMA negação com o ator da sessão e a permissão do HANDLER, e só lança depois", async () => {
+    const { servico } = resolvedor({ [USUARIO_A]: autorizado(["auditoria.ler"]) });
+    const e = emissor();
+    const guard = new PermissoesGuard(new Reflector(), servico, e.servico);
+    const req = comContexto(USUARIO_A, {
+      // Nada disto pode influenciar o evento (docs/13 §5; D-4).
+      body: { identificador: "vitima@sintetico.local", usuarioId: USUARIO_B, permissao: "usuarios.gerenciar" },
+      query: { usuarioId: USUARIO_B },
+      headers: { "x-usuario-id": USUARIO_B },
+    });
+    await expect(
+      guard.canActivate(contextoDe(req, handlerExigindo("senha.recuperar_terceiro"))),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(e.negacoes).toEqual([{ atorUsuarioId: USUARIO_A, permissao: "senha.recuperar_terceiro" }]);
+    // A guard AGUARDOU a emissão antes de lançar — nenhuma promessa solta.
+    expect(e.emissoesConcluidas()).toBe(1);
+    expect(JSON.stringify(e.negacoes)).not.toContain("vitima");
+    expect(JSON.stringify(e.negacoes)).not.toContain(USUARIO_B);
+  });
+
+  it("usuário INATIVO: emite UMA negação (docs/13 A-02) — o usuário existe e tentou", async () => {
+    const { servico } = resolvedor({
+      [USUARIO_A]: { resolvido: false, motivo: "USUARIO_INATIVO" },
+    });
+    const e = emissor();
+    const guard = new PermissoesGuard(new Reflector(), servico, e.servico);
+    await expect(
+      guard.canActivate(contextoDe(comContexto(USUARIO_A), handlerExigindo("senha.recuperar_terceiro"))),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(e.negacoes).toEqual([{ atorUsuarioId: USUARIO_A, permissao: "senha.recuperar_terceiro" }]);
+    expect(e.emissoesConcluidas()).toBe(1);
+  });
+
+  it("a guard entrega a permissão EXIGIDA tal como declarada — a filtragem por lista fechada é do emissor", async () => {
+    // A guard não conhece a lista fechada: entrega toda negação deliberada e
+    // o emissor decide (provado em `auditoria-negacao-autorizacao.spec.ts`).
+    // Isto mantém a guard sem política de auditoria própria.
+    const { servico } = resolvedor({ [USUARIO_A]: autorizado([]) });
+    const e = emissor();
+    const guard = new PermissoesGuard(new Reflector(), servico, e.servico);
+    await expect(
+      guard.canActivate(contextoDe(comContexto(USUARIO_A), handlerExigindo("usuarios.gerenciar"))),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(e.negacoes).toEqual([{ atorUsuarioId: USUARIO_A, permissao: "usuarios.gerenciar" }]);
+  });
+
+  it("CONCESSÃO não emite nada", async () => {
+    const { servico } = resolvedor({ [USUARIO_A]: autorizado(["senha.recuperar_terceiro"]) });
+    const e = emissor();
+    const guard = new PermissoesGuard(new Reflector(), servico, e.servico);
+    await expect(
+      guard.canActivate(contextoDe(comContexto(USUARIO_A), handlerExigindo("senha.recuperar_terceiro"))),
+    ).resolves.toBe(true);
+    expect(e.negacoes).toEqual([]);
+  });
+
+  it("usuário INEXISTENTE nega SEM emitir — não há ator persistido (FK) nem tentativa de usuário", async () => {
+    const { servico } = resolvedor({
+      [USUARIO_A]: { resolvido: false, motivo: "USUARIO_INEXISTENTE" },
+    });
+    const e = emissor();
+    const guard = new PermissoesGuard(new Reflector(), servico, e.servico);
+    await expect(
+      guard.canActivate(contextoDe(comContexto(USUARIO_A), handlerExigindo("senha.recuperar_terceiro"))),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(e.negacoes).toEqual([]);
+  });
+
+  it("fiação incorreta (metadata ausente/inválida, contexto ausente) nega SEM emitir", async () => {
+    const { servico } = resolvedor({ [USUARIO_A]: autorizado(["senha.recuperar_terceiro"]) });
+    const e = emissor();
+    const guard = new PermissoesGuard(new Reflector(), servico, e.servico);
+    class SemMetadata {
+      acao(): void {}
+    }
+    await expect(
+      guard.canActivate(contextoDe(comContexto(USUARIO_A), SemMetadata.prototype.acao)),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(
+      guard.canActivate(contextoDe(comContexto(USUARIO_A), handlerComMetadataBruta("permissao.inexistente"))),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(
+      guard.canActivate(contextoDe(requisicao(), handlerExigindo("senha.recuperar_terceiro"))),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(e.negacoes).toEqual([]);
+  });
+
+  it("falha TÉCNICA na resolução sobe SEM emitir — negação ≠ falha técnica (docs/13 A-06)", async () => {
+    const { servico } = resolvedor({}, { lancar: true });
+    const e = emissor();
+    const guard = new PermissoesGuard(new Reflector(), servico, e.servico);
+    await expect(
+      guard.canActivate(contextoDe(comContexto(USUARIO_A), handlerExigindo("senha.recuperar_terceiro"))),
+    ).rejects.toBeInstanceOf(FalhaTecnicaSintetica);
+    expect(e.negacoes).toEqual([]);
+  });
+
+  it("N negações do mesmo usuário => N entregas ao emissor (sem dedupe — D-3 V0)", async () => {
+    const { servico } = resolvedor({ [USUARIO_A]: autorizado([]) });
+    const e = emissor();
+    const guard = new PermissoesGuard(new Reflector(), servico, e.servico);
+    const handler = handlerExigindo("senha.recuperar_terceiro");
+    const resultados = await Promise.allSettled(
+      Array.from({ length: 5 }, () => guard.canActivate(contextoDe(comContexto(USUARIO_A), handler))),
+    );
+    expect(resultados.every((r) => r.status === "rejected")).toBe(true);
+    expect(e.negacoes).toHaveLength(5);
+    expect(e.emissoesConcluidas()).toBe(5);
   });
 });
 
