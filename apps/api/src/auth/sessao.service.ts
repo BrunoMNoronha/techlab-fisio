@@ -403,6 +403,55 @@ export class SessaoService {
   }
 
   /**
+   * REVOGAÇÃO EM MASSA das sessões de um usuário (RN-005; T-07; AUT-002:
+   * "recuperação/troca de senha conforme política aprovada" como gatilho),
+   * sobre uma transação JÁ ABERTA pelo chamador — ACRÉSCIMO ADITIVO DA F6,
+   * no mesmo padrão de `emitirEm`/`revogarEm`.
+   *
+   * Dois UPDATEs condicionais, na ORDEM de `C-01` e pelas MESMAS razões:
+   *   1. sessões `ATIVA` já vencidas (absoluta ou ociosa) são fechadas como
+   *      `EXPIRADA` — o estado verdadeiro — e não como `REVOGADA`;
+   *   2. as `ATIVA` restantes passam a `REVOGADA`, com `encerrada_em` no
+   *      instante da operação e `revogada_por_usuario_id = usuario_id`.
+   *
+   * `revogada_por_usuario_id` = o PRÓPRIO usuário — DECISÃO LOCAL `L-F6-06`
+   * (reversível): `D-2.3D-05` fixa o próprio usuário para o logout e nada
+   * fixa para T-07; o ator homologado da conclusão da recuperação é o
+   * usuário (`docs/09` §5), que é quem, ao definir a nova senha, encerra as
+   * sessões anteriores. Nenhuma identidade sintética e nenhum `NULL` que
+   * afirmasse ação de sistema.
+   *
+   * Nenhum statement devolve sessão a `ATIVA`; `expira_em` não é tocado;
+   * `IDX-S1` (`usuario_id, estado`) é exatamente o índice previsto para esta
+   * operação (`docs/07` §10-A: "revogação em massa — T-07").
+   */
+  async revogarTodasDoUsuarioEm(
+    tx: TransacaoPersistencia,
+    usuarioId: string,
+  ): Promise<{ readonly expiradas: number; readonly revogadas: number }> {
+    const agora = this.relogio.agora();
+    const limiteOcioso = new Date(agora.getTime() - POLITICA_SESSAO.timeoutOciosoMs);
+    const expiradas = await tx.$executeRaw`
+      UPDATE sessao_autenticacao
+         SET estado       = 'EXPIRADA',
+             encerrada_em = ${agora}::timestamptz
+       WHERE usuario_id = ${usuarioId}::uuid
+         AND estado     = 'ATIVA'
+         AND (   expira_em           <= ${agora}::timestamptz
+              OR ultima_atividade_em <= ${limiteOcioso}::timestamptz)
+    `;
+    const revogadas = await tx.$executeRaw`
+      UPDATE sessao_autenticacao
+         SET estado                  = 'REVOGADA',
+             encerrada_em            = ${agora}::timestamptz,
+             revogada_por_usuario_id = usuario_id
+       WHERE usuario_id = ${usuarioId}::uuid
+         AND estado     = 'ATIVA'
+    `;
+    return { expiradas, revogadas };
+  }
+
+  /**
    * `R-2.3D-03` — atualização ATOMICAMENTE MONOTÔNICA de atividade.
    *
    * Um único statement carrega TODA a decisão:

@@ -49,6 +49,7 @@ import {
   POLITICA_COOKIE_SESSAO,
 } from "../src/auth/politica-cookie.js";
 import type { PoliticaCookieSessao } from "../src/auth/politica-cookie.js";
+import { RELOGIO_SESSAO } from "../src/auth/relogio-sessao.js";
 import { SessaoService } from "../src/auth/sessao.service.js";
 import { DatabaseModule } from "../src/database/database.module.js";
 import { DatabaseService } from "../src/database/database.service.js";
@@ -241,16 +242,26 @@ describe("AuthModule — fronteira da F1+F2+F3 preservada", () => {
     expect(imports ?? []).toEqual([DatabaseModule, AuditModule]);
   });
 
-  it("as rotas expostas pela aplicação são SÓ /health, /auth/login e /auth/logout", () => {
+  it("as rotas expostas pela aplicação são SÓ as da F3 e as da F6", () => {
     // Prova de fronteira contra o ROUTER real, e não contra metadados: se um
     // endpoint de F4+ (profissionais, pacientes, agenda, recuperação de senha,
     // revogação de terceiro, refresh) entrar acidentalmente no `AppModule`,
     // esta asserção falha.
+    // ATUALIZADO NA F6: as duas rotas de recuperação de senha (AUT-004,
+    // `D-2.3D-08`) foram autorizadas e vivem em módulo PRÓPRIO
+    // (`RecuperacaoSenhaModule`), não neste. A asserção continua sendo de
+    // igualdade exata sobre o ROUTER real.
     const caminhos = Object.keys(documentoDaAplicacao.paths).sort();
-    expect(caminhos).toEqual(["/auth/login", "/auth/logout", "/health"]);
+    expect(caminhos).toEqual([
+      "/auth/login",
+      "/auth/logout",
+      "/auth/recuperacao-senha",
+      "/auth/recuperacao-senha/concluir",
+      "/health",
+    ]);
   });
 
-  it("o AuthModule não absorve provider de F4+ — nem de F5/F6", () => {
+  it("o AuthModule não absorve provider de F4+ — nem de F5, nem de F6", () => {
     // RENOMEADO NA F4, e o motivo é factual: até a F3 o título correto era
     // "nenhum provider de F4+ é resolvível a partir do `AppModule`", porque a
     // F4 não existia. Ela agora existe, foi autorizada, e seus providers
@@ -284,12 +295,18 @@ describe("AuthModule — fronteira da F1+F2+F3 preservada", () => {
     // de segurança. A asserção continua sendo de IGUALDADE EXATA: qualquer
     // outro export — um `PermissoesService`, um `RbacGuard`, um serviço de
     // seed ou de recuperação de senha — continua fazendo esta prova falhar.
+    //
+    // AJUSTE DA F6, pelo MESMO racional: `RELOGIO_SESSAO` é um provider que
+    // JÁ EXISTIA neste módulo desde a F2; exportá-lo não cria artefato nem
+    // muda comportamento — permite que o `RecuperacaoSenhaModule` (módulo
+    // PRÓPRIO) decida validade e consumo do segredo pela mesma fonte de tempo.
     const exports: unknown = Reflect.getMetadata("exports", AuthModule);
     expect(exports ?? []).toEqual([
       CredencialService,
       SessaoService,
       AutenticacaoService,
       POLITICA_COOKIE_SESSAO,
+      RELOGIO_SESSAO,
     ]);
   });
 });

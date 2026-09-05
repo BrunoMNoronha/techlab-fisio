@@ -102,12 +102,19 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
     expect(documento.paths["/health"]).toBeDefined();
   });
 
-  it("nenhuma rota de F4+ vazou para o contrato", () => {
+  it("as rotas publicadas são EXATAMENTE as da F3 e da F6 — nenhuma outra vazou", () => {
+    // ATUALIZADO NA F6: as duas rotas de recuperação de senha (AUT-004) foram
+    // autorizadas e passam a pertencer ao contrato. A asserção continua sendo
+    // de IGUALDADE EXATA — qualquer rota além destas cinco falha aqui.
     const caminhos = Object.keys(documento.paths);
-    expect(caminhos.sort()).toEqual(["/auth/login", "/auth/logout", "/health"]);
+    expect(caminhos.sort()).toEqual([
+      "/auth/login",
+      "/auth/logout",
+      "/auth/recuperacao-senha",
+      "/auth/recuperacao-senha/concluir",
+      "/health",
+    ]);
     for (const proibido of [
-      "recuperacao",
-      "senha",
       "papeis",
       "permissoes",
       "profissionais",
@@ -119,8 +126,13 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
     }
   });
 
-  it("o custom header CSRF é declarado como obrigatório nas duas rotas", () => {
-    for (const caminho of ["/auth/login", "/auth/logout"]) {
+  it("o custom header CSRF é declarado como obrigatório em TODAS as mutações", () => {
+    for (const caminho of [
+      "/auth/login",
+      "/auth/logout",
+      "/auth/recuperacao-senha",
+      "/auth/recuperacao-senha/concluir",
+    ]) {
       const parametros = operacao(caminho, "post")["parameters"] as Array<
         Record<string, unknown>
       >;
@@ -236,12 +248,25 @@ describe("D-2.3D-11 — nenhum campo secreto no contrato", () => {
     ]);
   });
 
-  it("nenhum schema de RESPOSTA tem propriedade com nome secreto", () => {
-    for (const nome of ["LoginRespostaDto", "ErroAutenticacaoDto"]) {
+  it("nenhum schema de RESPOSTA tem propriedade com nome secreto — exceto a ÚNICA exceção homologada", () => {
+    for (const nome of [
+      "LoginRespostaDto",
+      "ErroAutenticacaoDto",
+      "ErroRecuperacaoSenhaDto",
+    ]) {
       for (const propriedade of propriedadesDe(nome)) {
         expect(PROIBIDAS).not.toContain(propriedade.toLowerCase());
       }
     }
+    // A EXCEÇÃO, declarada nominalmente em vez de afrouxar a varredura:
+    // `IniciarRecuperacaoRespostaDto.segredo` é a apresentação ÚNICA do
+    // segredo de recuperação ao Administrador (AUT-004, passo 3; D-04, item
+    // 3). É a única propriedade de resposta de todo o contrato cujo nome
+    // pertence à lista proibida, e a suíte da F6 prova que ela só existe ali.
+    const excecao = propriedadesDe("IniciarRecuperacaoRespostaDto").filter((p) =>
+      PROIBIDAS.includes(p.toLowerCase()),
+    );
+    expect(excecao).toEqual(["segredo"]);
   });
 
   it("`senha` existe SOMENTE na requisição de login, nunca em resposta", () => {
@@ -275,5 +300,106 @@ describe("D-2.3D-11 — nenhum campo secreto no contrato", () => {
     };
     visitar(documento, "raiz");
     expect(suspeitos).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// F6 — recuperação de senha (AUT-004, D-2.3D-08) no contrato
+// ---------------------------------------------------------------------------
+
+describe("F6 — rotas de recuperação de senha documentadas", () => {
+  it("POST /auth/recuperacao-senha (início) está documentado com AUT-004 e exige cookie de sessão", () => {
+    const op = operacao("/auth/recuperacao-senha", "post");
+    expect(op["summary"]).toEqual(expect.stringContaining("AUT-004"));
+    expect(op["tags"]).toEqual(["Autenticação"]);
+    const seguranca = op["security"] as Array<Record<string, unknown>> | undefined;
+    expect(seguranca).toBeDefined();
+    expect(seguranca?.some((s) => NOME_ESQUEMA_SESSAO in s)).toBe(true);
+  });
+
+  it("POST /auth/recuperacao-senha/concluir (conclusão) está documentado SEM exigência de sessão", () => {
+    const op = operacao("/auth/recuperacao-senha/concluir", "post");
+    expect(op["summary"]).toEqual(expect.stringContaining("AUT-004"));
+    expect(op["security"]).toBeUndefined();
+  });
+
+  it("início documenta 201, 400, 401, 403, 413, 422 e 500", () => {
+    expect(Object.keys(respostas("/auth/recuperacao-senha", "post")).sort()).toEqual([
+      "201",
+      "400",
+      "401",
+      "403",
+      "413",
+      "422",
+      "500",
+    ]);
+  });
+
+  it("conclusão documenta 204, 400, 401, 403, 413, 429 e 500 — e o 429 declara Retry-After", () => {
+    const todas = respostas("/auth/recuperacao-senha/concluir", "post");
+    expect(Object.keys(todas).sort()).toEqual([
+      "204",
+      "400",
+      "401",
+      "403",
+      "413",
+      "429",
+      "500",
+    ]);
+    expect((todas["429"] as Record<string, unknown>)["headers"]).toHaveProperty("Retry-After");
+    expect((todas["204"] as Record<string, unknown>)["content"]).toBeUndefined();
+  });
+
+  it("todo erro das duas rotas usa o MESMO schema fechado, ErroRecuperacaoSenhaDto", () => {
+    const referencias = new Set<string>();
+    for (const caminho of ["/auth/recuperacao-senha", "/auth/recuperacao-senha/concluir"]) {
+      for (const [status, corpo] of Object.entries(respostas(caminho, "post"))) {
+        if (status === "201" || status === "204") continue;
+        const conteudo = (corpo as { content?: Record<string, { schema?: { $ref?: string } }> })
+          .content;
+        const ref = conteudo?.["application/json"]?.schema?.$ref;
+        expect(ref).toBeDefined();
+        referencias.add(ref as string);
+      }
+    }
+    expect(referencias.size).toBe(1);
+    expect([...referencias][0]).toContain("ErroRecuperacaoSenhaDto");
+    const schema = documento.components?.schemas?.["ErroRecuperacaoSenhaDto"] as {
+      properties?: Record<string, { enum?: string[] }>;
+    };
+    expect(Object.keys(schema.properties ?? {})).toEqual(["erro"]);
+    expect(schema.properties?.["erro"]?.enum?.sort()).toEqual([
+      "ACESSO_NEGADO",
+      "ALVO_NAO_ELEGIVEL",
+      "FALHA_INTERNA",
+      "RECUPERACAO_INVALIDA",
+      "REQUISICAO_INVALIDA",
+      "REQUISICAO_NAO_AUTORIZADA",
+      "SESSAO_INVALIDA",
+      "TENTATIVAS_EXCEDIDAS",
+    ]);
+  });
+
+  it("a resposta de início expõe SÓ segredo e expiraEm — nunca usuarioId, id ou hash", () => {
+    const schema = documento.components?.schemas?.["IniciarRecuperacaoRespostaDto"] as {
+      properties?: Record<string, unknown>;
+    };
+    expect(Object.keys(schema.properties ?? {}).sort()).toEqual(["expiraEm", "segredo"]);
+  });
+
+  it("`novaSenha` existe SOMENTE na requisição de conclusão, nunca em resposta", () => {
+    const req = documento.components?.schemas?.["ConcluirRecuperacaoRequisicaoDto"] as {
+      properties?: Record<string, unknown>;
+    };
+    expect(Object.keys(req.properties ?? {}).sort()).toEqual(["novaSenha", "segredo"]);
+    for (const [nome, schema] of Object.entries(documento.components?.schemas ?? {})) {
+      if (nome === "ConcluirRecuperacaoRequisicaoDto") continue;
+      const props = Object.keys(
+        (schema as { properties?: Record<string, unknown> }).properties ?? {},
+      );
+      expect(props).not.toContain("novaSenha");
+      expect(props).not.toContain("senhaHash");
+      expect(props).not.toContain("hashSegredo");
+    }
   });
 });

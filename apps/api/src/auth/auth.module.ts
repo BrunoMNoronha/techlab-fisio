@@ -81,11 +81,20 @@ import { SessaoService } from "./sessao.service.js";
   // O que NÃO mudou, e é o que a fronteira da F3 protege: `imports` continuam
   // `[DatabaseModule, AuditModule]`, `controllers` continua `[AuthController]`
   // e nenhum artefato de RBAC, seed ou recuperação de senha nasce aqui.
+  //
+  // ACRÉSCIMO DA F6 — ADITIVO, pelo MESMO racional do acréscimo da F4:
+  // `RELOGIO_SESSAO` passa a ser EXPORTADO para que o serviço de recuperação
+  // de senha (módulo PRÓPRIO, `RecuperacaoSenhaModule`) decida validade e
+  // consumo do segredo pela MESMA fonte de tempo da política de sessão — e
+  // para que a revogação em massa de T-07 e a expiração do segredo compartilhem
+  // um único relógio, inclusive sob o relógio controlado dos testes. Nada é
+  // criado, nada muda de semântica; o provider já existia desde a F2.
   exports: [
     CredencialService,
     SessaoService,
     AutenticacaoService,
     POLITICA_COOKIE_SESSAO,
+    RELOGIO_SESSAO,
   ],
 })
 export class AuthModule {}

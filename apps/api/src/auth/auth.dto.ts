@@ -29,7 +29,7 @@ import { ApiProperty } from "@nestjs/swagger";
  * validação de formato de e-mail: `D-2.3D-03` normaliza (`trim` + `lowercase`)
  * e nada mais, e nenhuma política de formato está homologada.
  */
-const MAXIMO_IDENTIFICADOR = 320;
+export const MAXIMO_IDENTIFICADOR = 320;
 
 /**
  * Limite de tamanho da senha. NÃO é política de senha (nenhuma está
@@ -37,7 +37,7 @@ const MAXIMO_IDENTIFICADOR = 320;
  * uma entrada arbitrariamente grande. Folgado o bastante para qualquer
  * passphrase legítima.
  */
-const MAXIMO_SENHA = 4096;
+export const MAXIMO_SENHA = 4096;
 
 /** Corpo aceito por `POST /auth/login`. */
 export class LoginRequisicaoDto {

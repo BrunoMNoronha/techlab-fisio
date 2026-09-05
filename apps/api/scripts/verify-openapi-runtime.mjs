@@ -59,7 +59,9 @@ for (const alvo of [
 }
 
 const falhas = [];
+let verificacoes = 0;
 function conferir(rotulo, condicao, detalhe = "") {
+  verificacoes += 1;
   if (condicao) {
     console.log(`${ROTULO} OK   — ${rotulo}`);
   } else {
@@ -141,10 +143,38 @@ try {
 
   const caminhos = Object.keys(documento.paths ?? {}).sort();
   conferir(
-    "rotas da F3 presentes e nenhuma rota de F4+ vazou",
+    "rotas da F3 e da F6 presentes e nenhuma outra vazou",
     JSON.stringify(caminhos) ===
-      JSON.stringify(["/auth/login", "/auth/logout", "/health"]),
+      JSON.stringify([
+        "/auth/login",
+        "/auth/logout",
+        "/auth/recuperacao-senha",
+        "/auth/recuperacao-senha/concluir",
+        "/health",
+      ]),
     `caminhos=${caminhos.join(", ")}`,
+  );
+
+  // F6 — as duas rotas de recuperação de senha, com decorators resolvidos.
+  const statusInicio = Object.keys(
+    documento.paths["/auth/recuperacao-senha"]?.post?.responses ?? {},
+  )
+    .sort()
+    .join(",");
+  conferir(
+    "POST /auth/recuperacao-senha documenta 201,400,401,403,413,422,500",
+    statusInicio === "201,400,401,403,413,422,500",
+    `status=${statusInicio}`,
+  );
+  const statusConclusao = Object.keys(
+    documento.paths["/auth/recuperacao-senha/concluir"]?.post?.responses ?? {},
+  )
+    .sort()
+    .join(",");
+  conferir(
+    "POST /auth/recuperacao-senha/concluir documenta 204,400,401,403,413,429,500",
+    statusConclusao === "204,400,401,403,413,429,500",
+    `status=${statusConclusao}`,
   );
 
   const statusLogin = Object.keys(documento.paths["/auth/login"]?.post?.responses ?? {})
@@ -191,13 +221,23 @@ try {
     "cookie",
     "sessaoid",
   ]);
-  const vazamentos = ["LoginRespostaDto", "ErroAutenticacaoDto"].flatMap((nome) =>
-    propriedades(nome).filter((p) => PROIBIDAS.has(p.toLowerCase())),
-  );
+  const vazamentos = [
+    "LoginRespostaDto",
+    "ErroAutenticacaoDto",
+    "ErroRecuperacaoSenhaDto",
+  ].flatMap((nome) => propriedades(nome).filter((p) => PROIBIDAS.has(p.toLowerCase())));
   conferir(
     "nenhum schema de resposta declara campo secreto",
     vazamentos.length === 0,
     vazamentos.join(", "),
+  );
+  // F6 — a ÚNICA exceção homologada (AUT-004, passo 3): a apresentação única
+  // do segredo de recuperação, e nada além de `segredo` + `expiraEm`.
+  conferir(
+    "IniciarRecuperacaoRespostaDto expõe SÓ segredo e expiraEm (apresentação única, AUT-004)",
+    JSON.stringify(propriedades("IniciarRecuperacaoRespostaDto").sort()) ===
+      JSON.stringify(["expiraEm", "segredo"]),
+    propriedades("IniciarRecuperacaoRespostaDto").join(", "),
   );
 
   // 6. A rota é de fato servida — HTTP real, no artefato compilado.
@@ -281,4 +321,4 @@ if (falhas.length > 0) {
   console.error(`${ROTULO} ${String(falhas.length)} verificação(ões) FALHARAM.`);
   process.exit(1);
 }
-console.log(`${ROTULO} PROVA CONCLUÍDA: ${String(17 - falhas.length)} verificações OK.`);
+console.log(`${ROTULO} PROVA CONCLUÍDA: ${String(verificacoes - falhas.length)} verificações OK.`);

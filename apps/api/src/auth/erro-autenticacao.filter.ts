@@ -80,12 +80,25 @@ import { ArgumentsHost, Catch, HttpException, Logger } from "@nestjs/common";
 import { BaseExceptionFilter } from "@nestjs/core";
 import { randomUUID } from "node:crypto";
 
+import { ERRO_AUTORIZACAO } from "../authz/erro-autorizacao.js";
+import { ERRO_RECUPERACAO } from "../recuperacao-senha/recuperacao-senha.dto.js";
 import { ERRO } from "./auth.dto.js";
 
-/** Rotas cujo contrato de erro é fechado — e somente elas. */
+/**
+ * Rotas cujo contrato de erro é fechado — e somente elas.
+ *
+ * ACRÉSCIMO DA F6: as duas rotas de recuperação de senha entram no MESMO
+ * escopo, pela MESMA razão que fez este filtro existir (§ cabeçalho): sem ele,
+ * um JSON malformado ou um corpo acima do limite nessas rotas devolveria o
+ * corpo cru do parser, e não o contrato fechado que o OpenAPI declara. O
+ * escopo continua ESTREITO e enumerado; nada fora destas quatro operações
+ * `POST` é tocado.
+ */
 const ROTAS_DA_FRONTEIRA: ReadonlySet<string> = new Set([
   "/auth/login",
   "/auth/logout",
+  "/auth/recuperacao-senha",
+  "/auth/recuperacao-senha/concluir",
 ]);
 
 /**
@@ -96,8 +109,17 @@ const ROTAS_DA_FRONTEIRA: ReadonlySet<string> = new Set([
  */
 const METODO_DA_FRONTEIRA = "POST";
 
-/** Códigos que a própria fronteira produz e que passam intactos. */
-const CODIGOS_DA_FRONTEIRA: ReadonlySet<string> = new Set(Object.values(ERRO));
+/**
+ * Códigos que a própria fronteira produz e que passam intactos: os da F3, o
+ * código único da autorização (a rota de início da F6 é protegida por
+ * `@RequerPermissao`, cujas guards emitem `SESSAO_INVALIDA`/`ACESSO_NEGADO`)
+ * e os dois da F6. Qualquer outro corpo é normalizado para o contrato.
+ */
+const CODIGOS_DA_FRONTEIRA: ReadonlySet<string> = new Set([
+  ...Object.values(ERRO),
+  ...Object.values(ERRO_AUTORIZACAO),
+  ...Object.values(ERRO_RECUPERACAO),
+]);
 
 interface RequisicaoDaFronteira {
   readonly url?: string | undefined;

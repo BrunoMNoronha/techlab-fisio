@@ -142,12 +142,17 @@ async function main() {
       falhar(`GET /openapi.json respondeu ${documento.status} (esperado 200)`);
     }
     const contrato = await documento.json();
-    for (const rota of ["/auth/login", "/auth/logout"]) {
+    for (const rota of [
+      "/auth/login",
+      "/auth/logout",
+      "/auth/recuperacao-senha",
+      "/auth/recuperacao-senha/concluir",
+    ]) {
       if (contrato?.paths?.[rota]?.post === undefined) {
         falhar(`o documento OpenAPI servido não descreve POST ${rota}`);
       }
     }
-    console.log(`${ROTULO} GET /openapi.json -> 200 com as rotas da F3.`);
+    console.log(`${ROTULO} GET /openapi.json -> 200 com as rotas da F3 e da F6.`);
 
     const semCabecalho = await fetch(`${base}/auth/login`, {
       method: "POST",
