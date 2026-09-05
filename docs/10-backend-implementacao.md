@@ -2,7 +2,8 @@
 
 > **Arquivo:** `docs/10-backend-implementacao.md`
 > **Natureza:** documento **MUTÁVEL** — registro vivo de implementação da frente de backend (`apps/api`)
-> **Revisão vigente:** REV. 29 (02/09/2026) — **REGISTRO PÓS-MEDIÇÃO DA INTEGRAÇÃO DA ETAPA 2.3D-B / F5 NA `main`** (§6-O.8). Registro **exclusivamente factual**, no precedente `MEDIR → REGISTRAR` das REV. 10, REV. 15, REV. 20 e REV. 24: **nenhuma decisão normativa criada, alterada, renumerada ou reaberta; `D-2.3D-14` e `D-2.3D-15` intactas; `docs/09` §12 não reaberto; Base Imutável intacta; nenhuma linha de runtime, persistência ou dependência tocada.** **ETAPA 2.3D-B / F5 (seed de papéis/permissões + bootstrap do primeiro Administrador): CONCLUÍDA / HOMOLOGADA / VERSIONADA / INTEGRADA NA `main`** — commits `f4b3015` (implementação + testes), `11612b4` (documentação) e `39ad197` (correção de harness de teste após incidente de CI), PR [#18](https://github.com/BrunoMNoronha/techlab-fisio/pull/18), merge commit **`657676b`** sobre a baseline `9140620` (merge commit; sem squash, sem rebase, sem force-push), em 02/09/2026 20:45:16Z. **Incidente de CI registrado e corrigido antes do merge:** a primeira run ([33679640038](https://github.com/BrunoMNoronha/techlab-fisio/actions/runs/33679640038)) passou em todas as 329 provas de integração, mas falhou no `globalTeardown` (`DROP DATABASE ... WITH (FORCE)` como `tlf_migrator` contra uma conexão `tlf_app` ainda viva da suíte do CLI); causa reproduzida de forma determinística no host e corrigida com `afterAll(() => cliente.$disconnect())` — **somente harness de teste**. CI do HEAD integrado **verde** (run [33680739691](https://github.com/BrunoMNoronha/techlab-fisio/actions/runs/33680739691), 3m24s) e validação integral **pós-merge verde sobre a `main` integrada**: `typecheck` 0; `build` 0; `test:api` **21 · 526**; `verify:api-integration` **9 · 327 + 2 pulados** (sinais POSIX; **329/329 no Linux da CI**); `test:integration` **10 · 87**; `verify:from-scratch` **10 · 87**; `smoke:api` 0; Argon2 runtime **15/15**; OpenAPI runtime **17/17**; Guardas 1–3; golden byte a byte **60 169 bytes**. **Zero drift; zero migration nova; zero dependência nova** (`git diff 9140620 657676b -- packages/database` = 0 linhas; manifests da raiz inalterados; `apps/api/package.json` +4 scripts). `docs/12` recebeu a REV. 7, **exclusivamente factual** (linha da F5 em §9 → CONCLUÍDA). **Pendências vivas preservadas:** AUT-005 NÃO MATERIALIZADA / NÃO ENCERRADA e sem fatia atribuída; RN-001 não satisfeita; `P2.2-05` NÃO INICIADA; `R2.2-04` e `P-2.3D-03` com estado vigente preservado; `F5H-03`..`F5H-07` em aberto; risco médio de bloqueio administrativo sem via de recuperação (§6-N.6) mantido. **F6 permanece NÃO INICIADA.** Nenhum deploy, tag ou release.
+> **Revisão vigente:** REV. 31 (03/09/2026) — **ETAPA 2.3D-B / F6 (recuperação segura de senha — AUT-004, D-04, RN-005, T-07, `D-2.3D-08`, segunda metade de `D-2.3D-06`): IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA — NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-P). Executada em 03/09/2026 na branch `agent/fase2-etapa2.3d-f6-recuperacao-senha`, a partir de `main` = `origin/main` = `caf2280` (baseline da F5 integrada). **Publicação não autorizada nesta execução: sem commit, push, PR, merge, rebase, tag, release ou deploy** — working tree pronta para staging por caminhos explícitos. **Nenhuma decisão normativa criada, alterada, renumerada ou reaberta; `docs/12` NÃO foi tocado; `docs/09` §12 não reaberto; Base Imutável intacta; ZERO drift de persistência (nenhuma migration, coluna, índice, enum ou constraint); nenhuma dependência nova; nenhum canal de e-mail/SMS/WhatsApp.** Bateria integral verde no host: `typecheck` 0; `build` 0; `test:api` **24 · 595**; `verify:api-integration` **10 · 383 + 2 pulados** (sinais POSIX); `test:integration` **10 · 87**; `verify:from-scratch` **10 · 87**; `verify:argon2-runtime` e `verify:openapi-runtime` (**19/19**) verdes; `smoke:api` verde; `lint:migrations` (10 · 37) e `schema:verify` (golden 60 169 bytes idêntico; `migrate diff` exit 0) verdes; `git diff --check` limpo; **11 mutation challenges aplicados, 8 detectados individualmente, 3 mascarados individualmente e cobertos pelos desafios combinados correspondentes, 11 revertidos com SHA-256 conferido** (§6-P.12), mais **2 mutações da rodada corretiva, ambas mortas** (§6-P.16.4). **RODADA CORRETIVA FINAL (§6-P.16), respondendo à revisão técnica independente:** `M-01` — o deadlock `40P01` entre `iniciar` e `concluir` concorrentes foi eliminado na origem por ordem única de locks (`usuario → segredo_recuperacao_senha → sessões`), com a T-07 abrindo pelo `SELECT ... FOR UPDATE` da linha de `usuario`; `M-02` — a serialização de dois inícios passou a ser provada por barreira e constatação de bloqueio real em `pg_stat_activity`/`pg_blocking_pids`, e não por `Promise.all`; `B-01`/`B-02`/`B-03` — redações inexatas corrigidas. **Sem expansão funcional, sem decisão normativa e sem alteração de contrato; `L-F6-05`, `L-F6-06` e `L-F6-07` seguem pendentes de Bruno, com o comportamento vigente preservado.** Decisões locais `L-F6-01`..`L-F6-11` inventariadas em §6-P.7, quatro delas **destacadas para revisão de Bruno** por terem natureza comportamental (precedente `L-11` → `D-2.3D-13`). AUT-005 permanece NÃO MATERIALIZADA; F7 não iniciada.
+> **Estado anterior preservado:** REV. 29 (02/09/2026) — **REGISTRO PÓS-MEDIÇÃO DA INTEGRAÇÃO DA ETAPA 2.3D-B / F5 NA `main`** (§6-O.8). Registro **exclusivamente factual**, no precedente `MEDIR → REGISTRAR` das REV. 10, REV. 15, REV. 20 e REV. 24: **nenhuma decisão normativa criada, alterada, renumerada ou reaberta; `D-2.3D-14` e `D-2.3D-15` intactas; `docs/09` §12 não reaberto; Base Imutável intacta; nenhuma linha de runtime, persistência ou dependência tocada.** **ETAPA 2.3D-B / F5 (seed de papéis/permissões + bootstrap do primeiro Administrador): CONCLUÍDA / HOMOLOGADA / VERSIONADA / INTEGRADA NA `main`** — commits `f4b3015` (implementação + testes), `11612b4` (documentação) e `39ad197` (correção de harness de teste após incidente de CI), PR [#18](https://github.com/BrunoMNoronha/techlab-fisio/pull/18), merge commit **`657676b`** sobre a baseline `9140620` (merge commit; sem squash, sem rebase, sem force-push), em 02/09/2026 20:45:16Z. **Incidente de CI registrado e corrigido antes do merge:** a primeira run ([33679640038](https://github.com/BrunoMNoronha/techlab-fisio/actions/runs/33679640038)) passou em todas as 329 provas de integração, mas falhou no `globalTeardown` (`DROP DATABASE ... WITH (FORCE)` como `tlf_migrator` contra uma conexão `tlf_app` ainda viva da suíte do CLI); causa reproduzida de forma determinística no host e corrigida com `afterAll(() => cliente.$disconnect())` — **somente harness de teste**. CI do HEAD integrado **verde** (run [33680739691](https://github.com/BrunoMNoronha/techlab-fisio/actions/runs/33680739691), 3m24s) e validação integral **pós-merge verde sobre a `main` integrada**: `typecheck` 0; `build` 0; `test:api` **21 · 526**; `verify:api-integration` **9 · 327 + 2 pulados** (sinais POSIX; **329/329 no Linux da CI**); `test:integration` **10 · 87**; `verify:from-scratch` **10 · 87**; `smoke:api` 0; Argon2 runtime **15/15**; OpenAPI runtime **17/17**; Guardas 1–3; golden byte a byte **60 169 bytes**. **Zero drift; zero migration nova; zero dependência nova** (`git diff 9140620 657676b -- packages/database` = 0 linhas; manifests da raiz inalterados; `apps/api/package.json` +4 scripts). `docs/12` recebeu a REV. 7, **exclusivamente factual** (linha da F5 em §9 → CONCLUÍDA). **Pendências vivas preservadas:** AUT-005 NÃO MATERIALIZADA / NÃO ENCERRADA e sem fatia atribuída; RN-001 não satisfeita; `P2.2-05` NÃO INICIADA; `R2.2-04` e `P-2.3D-03` com estado vigente preservado; `F5H-03`..`F5H-07` em aberto; risco médio de bloqueio administrativo sem via de recuperação (§6-N.6) mantido. **F6 permanece NÃO INICIADA.** Nenhum deploy, tag ou release.
 > **Estado anterior preservado:** REV. 28 (01/09/2026) — **SEGUNDA FATIA CORRETIVA DA F5, PÓS-HOMOLOGAÇÃO TÉCNICA; FATIA NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-O). A revisão técnica independente e adversarial sobre a árvore corrigida devolveu **`B — APTA COM RESSALVAS NÃO BLOQUEANTES`** (0 BLOQUEANTES, 0 ALTOS), reproduziu todas as medições da REV. 27 e provou por mutação a eficácia do advisory lock. As duas ressalvas foram tratadas, e **somente** elas: **`F5H-01`** — as asserções de §6-N que ainda negavam a existência de `D-2.3D-14` e a alteração de `docs/12` foram **datadas e retificadas**, sem reescrever §6-M, que é registro histórico; **`F5H-02`** — o comando composto `provisionar` ganhou **regressão automatizada** (7 provas novas, processos reais contra PostgreSQL 18), incluindo a prova de que `provisionar --estrito` sobre banco divergente termina em **saída 3 com o bootstrap NÃO executado**, validada por **dois mutantes, ambos mortos**. **Nenhuma decisão normativa criada, alterada ou reaberta; `docs/12` NÃO foi tocado nesta rodada; `src/` intocado; nenhuma dependência nova.** Medições: typecheck e build verdes; `test:api` **21 · 526** (inalterado); integração da API **9 suítes · 327 aprovados + 2 sinais POSIX pulados** (era 320 + 2); persistência/from-scratch **10 · 87**; Argon2 **15/15**; OpenAPI **17/17**; Guardas 1–3 e golden **60 169 bytes**; smoke ESM real verde; zero resíduo descartável. Sem commit, push, PR, merge, tag, release ou deploy. **Próximo passo: decisão de Bruno sobre a homologação da fatia e, somente após autorização própria, versionamento/integração.**
 > **Estado anterior preservado:** REV. 27 (01/09/2026) — **DECISÕES NORMATIVAS DA F5 HOMOLOGADAS E CORREÇÕES OBJETIVAS REMEDIDAS; FATIA NÃO INTEGRADA.** Por autorização expressa de Bruno Menezes Noronha, `D-2.3D-14` fixa o seed RBAC aditivo e convergente — inclusive em `--estrito`, que aplica/completa a matriz canônica, preserva excedentes e termina com saída 3 — e `D-2.3D-15` fixa `ator_usuario_id = NULL` no bootstrap inaugural, sem identidade sintética, com justificativa operacional obrigatória. Corrigidos o contrato textual que prometia incorretamente modo estrito somente leitura e o rodapé vivo desatualizado; acrescentada regressão de banco simultaneamente parcial e divergente. Medições desta árvore: typecheck e build verdes; `test:api` **21 suítes · 526**; integração da API no host Windows **9 suítes · 320 aprovados + 2 sinais POSIX pulados**; persistência/from-scratch **10 · 87**; Argon2 **15/15**; OpenAPI **17/17**; Guardas 1–3 e golden **60 169 bytes**; smoke ESM real verde; zero resíduo descartável. Sem commit, push, PR, merge, tag, release ou deploy. **Próximo passo: homologação técnica final da árvore exata e, somente após autorização própria, versionamento/integração.**
 > **Status:** backend **EM CONSTRUÇÃO** — Etapa 2.3A **CONCLUÍDA/HOMOLOGADA/INTEGRADA** (REV. 2); Etapa 2.3B **CONCLUÍDA/HOMOLOGADA/INTEGRADA NA `main`** (revisão independente veredito B; correções `F-REV-01`/`F-REV-02` aplicadas — REV. 4; integração por merge commit `5aae8de`, PR [#5](https://github.com/BrunoMNoronha/techlab-fisio/pull/5), 27/08/2026 — registro pós-medição em §11, REV. 5) — provider de persistência + primeiro fluxo transacional real de auditoria (`profissional.situacao.alterada`, fatia técnica INTERNA, sem endpoint/RBAC)
@@ -2822,6 +2823,401 @@ F6 ................. NÃO INICIADA
 **Nenhuma decisão normativa foi criada, alterada, renumerada ou reaberta por este registro.** `D-2.3D-01`..`D-2.3D-15` seguem exatamente como homologadas; `D-2.3D-14` e `D-2.3D-15` intactas; `docs/09` §12 não reaberto; `docs/12` recebeu apenas a REV. 7, factual (linha da F5 em §9); a Base Imutável permanece **intacta**.
 
 
+## 6-P. Etapa 2.3D-B / F6 — recuperação segura de senha
+
+**Estado: IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA — NÃO HOMOLOGADA / NÃO INTEGRADA.** Executada em 03/09/2026 na branch `agent/fase2-etapa2.3d-f6-recuperacao-senha`, criada a partir de `main` = `origin/main` = `caf22804d8438071932d9abc57904aa428684eac` (merge da F5 + registro pós-integração; §6-O.8, §11 REV. 29). Gate inicial: working tree limpa exceto `AGENTS.md` (artefato não rastreado de ferramenta externa, mantido fora do escopo); `ahead/behind = 0/0`; `merge-base = HEAD`; nenhum contêiner ou banco descartável residual. **Publicação não autorizada nesta execução: sem commit, push, PR, merge, rebase, tag, release ou deploy** (TLF-BASE-V1 §14; precedente das execuções iniciais de F3/F4/F5).
+
+**Nenhuma decisão normativa foi criada, alterada, renumerada ou reaberta.** `D-2.3D-01`..`D-2.3D-15` seguem exatamente como homologadas; **`docs/12` NÃO foi tocado** (o precedente vigente é atualizá-lo apenas na homologação — REV. 4/5/7); `docs/09` §12 não foi reaberto; **nenhuma ação de auditoria foi acrescentada e nenhuma whitelist de `contexto` foi ampliada**; a Base Imutável permanece intacta. **Nenhuma linha de `packages/` foi tocada**: zero migration, zero coluna, zero índice, zero enum, zero constraint (§6-P.13).
+
+### 6-P.1 Identificação do requisito — divergência de numeração registrada
+
+O enunciado desta fatia referia a recuperação de senha como "relacionada a `AUT-005` se essa identificação continuar vigente". **Não continua**: em `docs/02` vigente, **`AUT-004` é "Recuperar senha com mecanismo seguro"** e **`AUT-005` é "Ativar e inativar usuários preservando histórico"**. A F6 materializa **AUT-004**; AUT-005 permanece **NÃO MATERIALIZADA / SEM FATIA ATRIBUÍDA** (§6-K.4; §9). Nenhuma fonte foi reinterpretada: a numeração vigente de `docs/02` prevalece e o enunciado é lido como referência à funcionalidade, não ao número.
+
+### 6-P.2 Fontes e matriz de decisões (Fase B)
+
+| Aspecto | Fonte vigente | Estado |
+| --- | --- | --- |
+| Solicitação de recuperação | AUT-004 fluxo 1; D-04 item 1 ("iniciada por administrador autorizado"); `docs/04` §4 "Iniciar recuperação de senha de terceiro" (✓ só Administrador) | **definido** — sem auto-solicitação |
+| Identificação do usuário | AUT-004 pré-condição "usuário existente"; `D-2.3D-03` (normalização do identificador) | **definido** (identificador normalizado) — a **forma** do campo é decisão local `L-F6-01` |
+| Mecanismo de prova/credencial | AUT-004 fluxo 2; `D-2.3D-08` (256 bits; só o hash persistido) | **definido** |
+| Entrega da credencial | AUT-004 fluxo 3; D-04 item 3 ("apresentado uma única vez para entrega externa segura"); TLF-BASE-V1 §13 (e-mail/SMS/WhatsApp fora do MVP) | **definido** — apresentação única na resposta ao Administrador; **nenhum canal integrado** |
+| Validade | `D-2.3D-08` — 30 minutos | **definido** |
+| Uso único / replay | AUT-004 invariantes; RN-005; `D-2.3D-08` | **definido** |
+| Um pendente por usuário | `D-2.3D-08` ("ao emitir um novo, o anterior é invalidado/expirado") | **definido** — mecanismo (`expira_em = agora`) é local `L-F6-08` |
+| Usuário inexistente | RN-006; `docs/04` §4 (fluxo autorizado) | **definido** por princípio — resposta uniforme (`L-F6-04`) |
+| Usuário inativo | AUT-004 exceções ("usuário inativo"); RN-001 | **definido** |
+| Proteção contra enumeração | RN-006; TLF-BASE-V1 §10; precedente `D-2.3D-12`/`A-05` | **definido** |
+| Proteção contra abuso | `D-2.3D-06`, segunda metade — 10 tentativas / 15 min por IP, `429` + `Retry-After`, antes do Argon2 | **definido** — leitura literal de "tentativas" é `L-F6-05` |
+| Nova senha | AUT-004 fluxo 5; `D-2.3D-02` (Argon2id); nenhuma política de senha homologada | **definido** (hash) / **ausente** (política de senha — não inventada) |
+| Sessões existentes | AUT-004 fluxo 7; D-04 item 5; RN-005; T-07; AUT-002 (gatilho "recuperação/troca de senha"); `D-2.3D-08` ("não cria nova sessão") | **definido** — autoria da revogação é `L-F6-06` |
+| Auditoria | AUT-004 ("início e conclusão, sem registrar segredo"); `docs/09` §5/§12 — `usuario.senha.recuperacao_iniciada` (ator Administrador) e `usuario.senha.recuperacao_concluida` (ator Usuário), whitelist vazia | **definido** — somente sucesso (`L-F6-07`) |
+| Permissões | `docs/04` §5.1 `senha.recuperar_terceiro`; `D-2.3D-09`; mecanismo da F4 | **definido** |
+| API/OpenAPI | `D-2.3D-11`; precedente `L-01`..`L-04` da F3 | rota/status/forma **não fixados** — decisões locais `L-F6-01`/`L-F6-02`/`L-F6-04` |
+| Persistência | `docs/07` §7.1 `segredo_recuperacao_senha` (já existente); `docs/12` §7.4 ("`D-2.3D-08` reutiliza `segredo_recuperacao_senha`") | **definido** — nenhuma alteração necessária |
+| Frontend | `docs/12` §2 ("fora do escopo: frontend") | **fora** — F6 é backend |
+
+**Conclusão da Fase B:** nenhuma lacuna altera materialmente segurança, regra de negócio, persistência ou comportamento público além de forma; todas as lacunas de forma têm precedente homologado de resolução por decisão local declarada. **A F6 não está bloqueada por decisão.** As quatro decisões locais de natureza comportamental estão destacadas em §6-P.7 para que Bruno as homologue ou reverta — nenhuma delas é apresentada como norma.
+
+### 6-P.3 Arquivos criados e alterados
+
+| Arquivo | Situação | Responsabilidade |
+| --- | --- | --- |
+| `apps/api/src/recuperacao-senha/recuperacao-senha.service.ts` | **NOVO** (340) | `iniciar` (lock da linha do usuário, expiração do pendente, hash, evento) e `concluir` (gate por IP, forma, localização pelo hash, aptidão, Argon2 fora da transação, T-07 atômico) |
+| `apps/api/src/recuperacao-senha/recuperacao-senha.controller.ts` | **NOVO** (258) | `POST /auth/recuperacao-senha` (`@RequerPermissao("senha.recuperar_terceiro")`) e `POST /auth/recuperacao-senha/concluir`; decorators OpenAPI; CSRF nas duas |
+| `apps/api/src/recuperacao-senha/recuperacao-senha.dto.ts` | **NOVO** (185) | DTOs, `ERRO_RECUPERACAO` (2 códigos), validação estrutural pura |
+| `apps/api/src/recuperacao-senha/segredo-recuperacao.ts` | **NOVO** (87) | CSPRNG 256 bits, forma, SHA-256, comparação em tempo constante, hash sintético de ausência |
+| `apps/api/src/recuperacao-senha/limitador-recuperacao.ts` | **NOVO** (87) | segunda metade de `D-2.3D-06` sobre `DimensaoLimite` |
+| `apps/api/src/recuperacao-senha/recuperacao-senha.module.ts` | **NOVO** (49) | módulo próprio; imports `[AuthzModule, AuditModule]` |
+| `apps/api/src/auth/dimensao-limite.ts` | **NOVO** (349) | **extração** da mecânica de janela/poda/teto/despejo/reserva de `limitador-login.ts`, sem mudança de contrato (`L-F6-09`) |
+| `apps/api/src/auth/limitador-login.ts` | **ALTERADO** (refatorado: −485/+~130) | passa a compor duas `DimensaoLimite`; API pública, limites, HMAC e semântica de reserva idênticos; suíte da F3 (37 provas) verde sem alteração |
+| `apps/api/src/auth/sessao.service.ts` | **ALTERADO** (+49) | `revogarTodasDoUsuarioEm(tx, usuarioId)` — aditivo, ordem de `C-01` (expira vencidas, revoga ativas) |
+| `apps/api/src/auth/erro-autenticacao.filter.ts` | **ALTERADO** (+28/−2) | as duas rotas da F6 entram no escopo do contrato fechado; códigos aceitos = `ERRO` ∪ `ERRO_AUTORIZACAO` ∪ `ERRO_RECUPERACAO` |
+| `apps/api/src/auth/auth.module.ts` | **ALTERADO** (+9) | exporta `RELOGIO_SESSAO` (aditivo — mesmo racional do export de `POLITICA_COOKIE_SESSAO` na F4) |
+| `apps/api/src/auth/auth.dto.ts` | **ALTERADO** (2 linhas) | `MAXIMO_IDENTIFICADOR` e `MAXIMO_SENHA` passam a exportados (tetos reutilizados) |
+| `apps/api/src/auth/auth.controller.ts` | **ALTERADO** (2 linhas) | `extrairIp` e `RequisicaoAutenticacao` exportados (fonte única de `L-05`) |
+| `apps/api/src/app.module.ts` | **ALTERADO** (+2) | registra `RecuperacaoSenhaModule` |
+| `apps/api/src/openapi/documento-openapi.ts` | **ALTERADO** | contrato `0.1.0 → 0.2.0` (aditivo); descrição |
+| `apps/api/scripts/verify-openapi-runtime.mjs` | **ALTERADO** | rotas da F6; três verificações novas; contagem dinâmica (19) |
+| `scripts/smoke-api.mjs` | **ALTERADO** (+7) | presença das rotas da F6 no documento servido pelo processo real |
+| `apps/api/test/integration/recuperacao-senha.integration.spec.ts` | **NOVO** (1 091) | **53 provas** contra PostgreSQL 18 real (§6-P.11) |
+| `apps/api/test/limitador-recuperacao.spec.ts`, `segredo-recuperacao.spec.ts`, `recuperacao-senha-dto.spec.ts` | **NOVOS** | 69 provas unitárias novas no total de `test:api` (526 → 595), incluindo fronteira do módulo e metadata das rotas |
+| `apps/api/test/openapi.spec.ts`, `auth.module.integration.spec.ts` | **ALTERADOS** | asserções de igualdade exata atualizadas para o conjunto F3 + F6; exceção nominal de `IniciarRecuperacaoRespostaDto.segredo` |
+
+**Nenhum outro arquivo foi tocado.** `packages/**`, `docs/12`, `docs/02`..`docs/09`, `.github/**`, `package.json`/lockfile, `.env.example` e `provisionamento/**` (F5) têm diff vazio contra `caf2280`.
+
+### 6-P.4 Desenho — o fluxo homologado, passo a passo
+
+```text
+INÍCIO — POST /auth/recuperacao-senha           (Administrador; CSRF + sessão + senha.recuperar_terceiro)
+  1. validação estrutural do corpo { identificador }        -> 400 antes de tudo
+  2. normalização D-2.3D-03
+  3. transação:  SELECT id, ativo FROM usuario WHERE email = $1 FOR UPDATE   (serialização por alvo)
+       inexistente | inativo | próprio ator                  -> 422 ALVO_NAO_ELEGIVEL (uniforme)
+       UPDATE segredo_recuperacao_senha SET expira_em = agora
+         WHERE usuario_id = alvo AND consumido_em IS NULL AND expira_em > agora   (D-2.3D-08: um pendente)
+       INSERT segredo (hash SHA-256, expira_em = agora + 30 min, criado_por = ator, criado_em = agora)
+       evento usuario.senha.recuperacao_iniciada / SUCESSO (ator = Administrador, alvo = usuário, contexto omitido)
+  4. 201 { segredo, expiraEm }                                (ÚNICA saída do segredo em claro)
+
+CONCLUSÃO — POST /auth/recuperacao-senha/concluir (usuário; CSRF; SEM sessão)
+  1. validação estrutural { segredo, novaSenha }             -> 400; NÃO conta como tentativa
+  2. LimitadorRecuperacao.tentar(ip)  (10/15 min por IP; admissão = tentativa) -> 429 + Retry-After; sem banco, sem Argon2
+  3. forma do segredo (43 base64url)                          -> 401 RECUPERACAO_INVALIDA
+  4. transação curta: findFirst por hash; comparação em tempo constante; pendente? não expirado? conta ativa?
+                                                              -> 401 RECUPERACAO_INVALIDA (uniforme; sem Argon2)
+  5. Argon2id da nova senha — FORA da transação
+  6. transação T-07:
+       UPDATE segredo SET consumido_em = agora WHERE id = $1 AND consumido_em IS NULL AND expira_em > agora  (count 1 ou aborta)
+       UPDATE usuario SET senha_hash = novo WHERE id = $2 AND ativo = true                                     (count 1 ou aborta)
+       SessaoService.revogarTodasDoUsuarioEm: ATIVA vencidas -> EXPIRADA; ATIVA -> REVOGADA (revogada_por = usuário)
+       evento usuario.senha.recuperacao_concluida / SUCESSO (ator = usuário, alvo = usuário, contexto omitido)
+  7. 204 sem corpo, sem cookie (D-2.3D-08: nenhuma sessão nova)
+```
+
+Consumo, troca de senha, revogação e evento são **uma** transação (T-07, `docs/07` §24.2: "consumo do segredo + revogação atômicos"). Nenhuma decisão de escrita é tomada em memória: os dois `UPDATE` condicionais carregam o predicado inteiro e, sob `READ COMMITTED`, a transação perdedora reavalia sobre a versão commitada e casa zero linhas.
+
+### 6-P.5 Reúso — nada da F1..F5 foi reimplementado
+
+`CredencialService` (Argon2id, `D-2.3D-02`) para a nova senha; `SessaoService` (ganhou apenas a revogação em massa, no padrão de `emitirEm`/`revogarEm`); `AuditWriter` + validator fail-closed (eventos já pertencentes a `D-AUD-01`, whitelist vazia de `D-AUD-07` respeitada por omissão de `contexto`); `DatabaseService` como fronteira transacional única; `@RequerPermissao` + guards da F4; `ProtecaoCsrfGuard`, `lerCookieSessao`/política de cookie, `extrairIp` (`L-05`), `normalizarIdentificadorLogin` (`D-2.3D-03`), `FiltroErroAutenticacao` (escopo ampliado às duas rotas) e o catálogo tipado de permissões. O limitador da conclusão reutiliza a **mesma** mecânica do limitador do login por extração (§6-P.7, `L-F6-09`) — não por cópia.
+
+### 6-P.6 Fronteira — o que a F6 deliberadamente NÃO fez
+
+- **Nenhum canal de entrega**: sem e-mail, SMS, WhatsApp, serviço de terceiros ou fila (TLF-BASE-V1 §13). O segredo é apresentado uma única vez ao Administrador autenticado (AUT-004, passo 3) e a entrega é externa à aplicação (D-04, item 3).
+- **Sem auto-solicitação** ("esqueci minha senha"): D-04 fixa o início pelo Administrador; nada além disso foi criado.
+- **AUT-005 NÃO MATERIALIZADA**: nenhuma ativação/inativação de usuário; a recusa de alvo inativo apenas **lê** `usuario.ativo`. O estado inativo dos testes é artificial e declarado como tal.
+- **Sem revogação administrativa de sessão de terceiro**, sem listagem de usuários, sem política de senha, sem histórico de senhas, sem frontend, sem JWT/refresh, sem Redis, sem multitenancy.
+- **Sem alteração de persistência**: nenhum índice em `hash_segredo`/`usuario_id` (limitação declarada em §6-P.14), nenhuma migration.
+- **Sem ampliação de catálogo/whitelist de auditoria; `docs/12` não tocado; F7 não iniciada.**
+
+### 6-P.7 Decisões locais — reversíveis, **não** são norma
+
+| ID | Decisão | Fundamento / alternativa recusada | Destaque |
+| --- | --- | --- | --- |
+| `L-F6-01` | Rotas `POST /auth/recuperacao-senha` (início) e `POST /auth/recuperacao-senha/concluir`; alvo identificado pelo **identificador** (e-mail normalizado) no corpo do início | Nenhuma fonte fixa rota nem forma; o identificador é o único campo de acesso do modelo e não existe endpoint de listagem que desse ao Administrador um `usuarioId` | — |
+| `L-F6-02` | `201 { segredo, expiraEm }` no início; `204` sem corpo na conclusão | Um recurso foi criado; nada a devolver na conclusão e nenhuma sessão nasce (`D-2.3D-08`) | — |
+| `L-F6-03` | O Administrador **não** pode iniciar a própria recuperação (`422` uniforme) | `docs/04` §4/§5.1: "de terceiro" / "para outro usuário"; D-04 item 4 pressupõe que quem inicia não define a senha. Alternativa (permitir) é inócua mas contraria a letra | **DESTACADA** |
+| `L-F6-04` | `422 ALVO_NAO_ELEGIVEL` (início: inexistente/inativo/próprio, uniforme); `401 RECUPERACAO_INVALIDA` (conclusão: malformado/inexistente/expirado/consumido/inativo, uniforme) | Precedente `L-04` (`401` para credencial); `422` distingue "bem-formado mas recusado" de `400`/`403` sem virar oráculo | — |
+| `L-F6-05` | "10 **tentativas** / 15 min" lidas literalmente: toda tentativa **admitida** conta, no ato da admissão, qualquer que seja o desfecho | A metade do login diz "falhas"; a da recuperação diz "tentativas". Consequência: não há estado "em voo" separado — a admissão síncrona já é a contagem, e o check-then-act de `F-01` não se reproduz. Alternativa (contar só falhas) é mais permissiva e exigiria reserva em voo como `D-2.3D-13` | **DESTACADA** |
+| `L-F6-06` | Na revogação em massa de T-07, `revogada_por_usuario_id` = o **próprio usuário** | `D-2.3D-05` fixa o próprio usuário no logout e nada fixa para T-07; o ator homologado da conclusão é o usuário (`docs/09` §5). Alternativas: `NULL` (afirmaria ação de sistema) ou o Administrador que iniciou (não é quem conclui) | **DESTACADA** |
+| `L-F6-07` | Auditoria **somente de sucesso** nos dois eventos; tentativas recusadas não geram evento; a revogação em massa de T-07 **não** emite `usuario.sessao.revogacao` adicional | `docs/09` §5: "resultado necessário? Não" para as duas ações; AUT-004 exige "início e conclusão"; `usuario.sessao.revogacao` tem ator Administrador e cobre a revogação **administrativa** — emiti-la aqui com ator usuário mudaria seu significado. Precedente do logout ("só sucesso") | **DESTACADA** |
+| `L-F6-08` | Segredo localizado pelo **hash** (SHA-256 determinístico), sem identificador no contrato de conclusão e sem composição `<id>.<segredo>`; segredo pendente anterior é **expirado** (`expira_em = agora`), não "consumido" | `D-2.3D-08` fixa entropia e persistência do hash, não a localização; `docs/07` §7.1/`D-2.3D-01` declaram a disciplina SHA-256 comum. Registrar consumo de um segredo não usado afirmaria fato falso | — |
+| `L-F6-09` | **Extração** de `DimensaoLimite` a partir de `limitador-login.ts`; `LimitadorLogin` passa a compor duas instâncias, com API pública, limites, HMAC e reserva idênticos. Única diferença: a **varredura periódica** de vencidos passa a ser contada/executada por dimensão | Reutilizar o mecanismo revisado da F3 (`F-01`, `F-05`, `F-09`, `F-10`, `F3R-03`) em vez de copiá-lo; usado por exatamente dois consumidores com fonte própria. Suíte da F3 (37) verde sem alteração; cadência de varredura não é parâmetro homologado | — |
+| `L-F6-10` | `RELOGIO_SESSAO` reutilizado como relógio da recuperação (validade, consumo, revogação) e exportado pelo `AuthModule` | Uma única fonte de tempo para sessão e recuperação, inclusive sob relógio controlado em teste; mesmo racional do export de `POLITICA_COOKIE_SESSAO` na F4 | — |
+| `L-F6-11` | Alvo **inativo** é recusado já no início | AUT-004 lista "usuário inativo" entre as exceções; RN-001; um segredo para conta inativa seria inconcluível. Precedente `L-F5-05` | — |
+
+As quatro decisões **DESTACADAS** têm natureza comportamental comparável a `L-11` (homologada como `D-2.3D-13`) e `L-F5-07`/`L-F5-08` (homologadas como `D-2.3D-14`/`D-2.3D-15`). Este registro **não** as homologa em nome de Bruno: elas são apresentadas para decisão expressa, e a implementação é reversível em qualquer uma delas sem tocar decisão homologada.
+
+### 6-P.8 Segurança — evidência por propriedade
+
+| Propriedade | Como é garantida | Onde é provada |
+| --- | --- | --- |
+| Enumeração (RN-006) | Conclusão sem identificador no contrato; `401` uniforme para malformado/inexistente/alterado/expirado/consumido/inativo; início `422` uniforme para inexistente/inativo/próprio, com cabeçalhos idênticos; comparação de hash em tempo constante inclusive no caminho de ausência | integração: "MESMO 401 — sem Argon2", "MESMO 422", "usuário INATIVADO" |
+| Replay / uso único | `UPDATE ... WHERE consumido_em IS NULL AND expira_em > agora`, `count === 1` ou aborta | "REPLAY" + challenge `C-F6-01` |
+| Duplicidade / um pendente | `FOR UPDATE` na linha do usuário + expiração do pendente anterior antes do `INSERT` | "um novo início EXPIRA o anterior" + `C-F6-04`; e, para o `FOR UPDATE` em si, a prova com **barreira** de §6-P.16.2 — que constata em `pg_stat_activity`/`pg_blocking_pids` que o segundo início está de fato esperando o lock. O antigo teste "dois inícios CONCORRENTES" (`Promise.all` sobre HTTP) **não** provava o lock: ele permanecia verde com o `FOR UPDATE` removido, porque o entrelaçamento dependia do scheduler; permanece na suíte como prova de estado final, não de serialização |
+| Expiração | 30 min; borda `expira_em > agora` (exatamente no limite = expirado), em memória **e** no `UPDATE` | "um milissegundo antes conclui; EXATAMENTE em 30 min é recusado" + `C-F6-07b` |
+| Ordem de locks início × conclusão | ordem única `usuario → segredo_recuperacao_senha → sessões` nas duas operações; T-07 abre com `SELECT ... FOR UPDATE` da linha de `usuario` | §6-P.16.3 — as duas transações reais enfileiradas no mesmo lock, sem `40P01` e sem `500` |
+| Concorrência conclusão × conclusão | duas requisições presas numa barreira no Argon2 e liberadas juntas: exatamente uma `204`, uma `401`, uma senha, um evento | "DUAS conclusões SIMULTÂNEAS" |
+| Concorrência conclusão × login | rehash do login já condicionado ao digest verificado (`F-04`) | "login concorrente com a senha ANTIGA" |
+| Sessões (RN-005/T-07) | todas as `ATIVA` → `REVOGADA` na mesma transação; vencidas → `EXPIRADA`; token antigo obtém `401` em rota real; outros usuários intactos | "TODAS as sessões ATIVA anteriores…", "sessão já vencida…" + `C-F6-02`, `C-F6-08` |
+| Abuso (`D-2.3D-06`) | 10/15 min por IP; `429` + `Retry-After`; senha correta também bloqueada; sem banco e sem Argon2 quando bloqueada; janela libera; `X-Forwarded-For` ignorado; payload inválido não conta | bloco "D-2.3D-06 — rate limiting da conclusão" + `C-F6-05` |
+| Argon2 só para segredo apto | forma → hash → aptidão antes de `gerarHash`; espiã prova zero chamadas nos inválidos e uma no válido | "sem Argon2" + "controle positivo" |
+| Atomicidade / rollback | falha da auditoria ou do hashing ⇒ `500`, segredo pendente, senha antiga, sessões `ATIVA`, **e o mesmo segredo conclui depois** | bloco "T-07 — atomicidade" |
+| Segredos fora de log/resposta/auditoria | varredura de todo `console.*` e de `SELECT * FROM evento_auditoria` por segredo, hash, senhas, identificadores e `$argon2`; respostas de erro sem stack/SQL/Prisma | "nenhum segredo em log", "nenhuma resposta de erro carrega…" + `C-F6-06` |
+| Identidade do ator | vem do contexto de sessão sob símbolo privado (F4); `atorUsuarioId`/`usuarioId` no corpo são ignorados | "o ator do evento é a identidade da SESSÃO" |
+| Contrato fechado | filtro cobre as duas rotas: JSON malformado → `400 REQUISICAO_INVALIDA`; corpo gigante → `413`; falha técnica → `500 FALHA_INTERNA` sem detalhe | integração + `openapi.spec` + `verify:openapi-runtime` |
+
+### 6-P.9 OpenAPI (`D-2.3D-11`)
+
+Contrato `0.2.0` (aditivo). Rotas publicadas: exatamente `/auth/login`, `/auth/logout`, `/auth/recuperacao-senha`, `/auth/recuperacao-senha/concluir`, `/health` — asserção de igualdade exata em `openapi.spec.ts`, `auth.module.integration.spec.ts` e `verify-openapi-runtime.mjs`. Início documenta `201,400,401,403,413,422,500` com `security: sessaoCookie`; conclusão documenta `204,400,401,403,413,429,500` com `Retry-After` no `429` e **sem** `security`. Erros das duas rotas usam um único schema fechado (`ErroRecuperacaoSenhaDto`, 8 códigos). **A única propriedade de resposta com nome da lista proibida em todo o contrato é `IniciarRecuperacaoRespostaDto.segredo`** — a apresentação única homologada por AUT-004 — e as provas a declaram nominalmente em vez de afrouxar a varredura. `novaSenha` existe apenas na requisição de conclusão.
+
+### 6-P.10 Provas medidas — unitárias (sem banco)
+
+`test:api`: **24 suítes · 595 provas** (baseline da F5: 21 · 526; +3 suítes, +69 provas). Novas: `segredo-recuperacao.spec.ts` (geração 256 bits, forma fail-closed, SHA-256 determinístico, comparação, hash sintético); `limitador-recuperacao.spec.ts` (limite 10, janela, `Retry-After`, sem lockout progressivo, IPv4-mapped, contagem na admissão, 40 chamadas síncronas admitem exatamente 10, poda, teto sob flooding, isolamento por processo); `recuperacao-senha-dto.spec.ts` (validação estrutural dos dois corpos, tetos, campos extras ignorados, fronteira do módulo — imports/controllers/exports exatos — e metadata das rotas: permissão `senha.recuperar_terceiro` no início, nenhuma guard na conclusão). `limitador-login.spec.ts` (37) permaneceu **inalterado e verde** após a extração.
+
+### 6-P.11 Provas medidas — integração (PostgreSQL 18 real, `tlf_app`, instância descartável)
+
+`verify:api-integration`: **10 suítes · 383 provas + 2 puladas** (baseline: 9 · 327 + 2; +1 suíte, **+56 provas** — todas em `recuperacao-senha.integration.spec.ts`; as três últimas vieram da rodada corretiva de §6-P.16). Cobertura por bloco: início — caminho feliz (5), autenticação/autorização/CSRF (5), rejeições uniformes e rollback (8), um pendente por usuário incluindo concorrência (3); conclusão — caminho feliz (8), replay/expiração/inválido/inativo/uniformidade (11), rate limiting (5), atomicidade/rollback/concorrência (4), log (1), contrato × runtime (2), além do ciclo completo início → conclusão → novo início → nova conclusão e da autenticação real com a nova senha pela fronteira da F3. As 2 puladas são as provas de sinal POSIX já registradas desde a F5 (executam no Linux da CI).
+
+### 6-P.12 Mutation challenges — 11 aplicados, **8 detectados individualmente**, 3 cobertos por desafio combinado, 11 revertidos
+
+Cada mutação foi aplicada ao código de produção, a suíte de integração da F6 executada contra banco descartável, a falha confirmada e o arquivo **restaurado com conferência de SHA-256**.
+
+| # | Mutação | Detectado | Provas que falham |
+| --- | --- | --- | --- |
+| `C-F6-01` | consumo sem `consumido_em IS NULL` | ✅ 1 | duas conclusões simultâneas |
+| `C-F6-02` | conclusão sem revogar sessões | ✅ 4 | sessões REVOGADA; ociosa EXPIRADA; rollback; concorrência |
+| `C-F6-03` | pré-verificação ignora `usuario.ativo` | ⚠️ mascarada pela 2ª barreira (`ativo: true` no `UPDATE`) | — |
+| `C-F6-03b` | `UPDATE` da senha sem `ativo: true` | ⚠️ mascarada pela 1ª barreira | — |
+| `C-F6-03c` | **ambas** as barreiras removidas | ✅ 1 | usuário INATIVADO após a emissão |
+| `C-F6-04` | novo início não expira o pendente anterior | ✅ 2 | um pendente; inícios concorrentes |
+| `C-F6-05` | gate da conclusão desligado | ✅ 5 | todo o bloco de rate limiting |
+| `C-F6-06` | segredo persistido em claro | ✅ 21 | hash persistido + todo caminho de conclusão |
+| `C-F6-07` | borda de expiração `<=` → `<` na pré-verificação | ⚠️ mascarada pelo `expira_em > agora` do `UPDATE` | — |
+| `C-F6-07b` | **ambas** as bordas afrouxadas | ✅ 4 | expiração exata; pendente único; sem evento em recusa |
+| `C-F6-08` | revogação em massa sem fechar vencidas como `EXPIRADA` | ✅ 1 | sessão ociosa fechada como EXPIRADA |
+
+**Leitura exata da matriz, sem arredondamento:** dos 11 desafios aplicados, **8 foram detectados individualmente** (`C-F6-01`, `C-F6-02`, `C-F6-03c`, `C-F6-04`, `C-F6-05`, `C-F6-06`, `C-F6-07b`, `C-F6-08`) e **3 — `C-F6-03`, `C-F6-03b` e `C-F6-07` — foram MASCARADOS individualmente**, isto é, a suíte permaneceu verde com a mutação isolada aplicada. A propriedade que cada um deles ataca só é observada pelos desafios **combinados** correspondentes (`C-F6-03c` para a situação da conta, `C-F6-07b` para a borda de expiração), que removem as duas barreiras ao mesmo tempo. Todos os 11 foram revertidos com conferência de SHA-256.
+
+O mascaramento **não** é, por si, fraqueza das provas — ele mede que aptidão e situação da conta são verificadas em **duas** barreiras independentes (memória e predicado SQL), cada uma suficiente sozinha. Mas também é um fato declarado, e não convertido em "11 detectados": **nenhuma prova desta suíte falha se apenas uma das duas barreiras for removida**, e essa é a informação que um revisor precisa ter.
+
+### 6-P.13 Bateria integral — host Windows, 03/09/2026 (reexecutada por inteiro após a rodada corretiva de §6-P.16)
+
+Ambiente: Node 24.18.0 · npm 11.16.0 · win32-x64 · PostgreSQL 18 em instâncias descartáveis (Docker) · Argon2 nativo carregando no host (estado medido desde 29/08/2026).
+
+| Comando | Exit | Resultado |
+| --- | --- | --- |
+| `npm run typecheck` | 0 | raiz + `packages/database` + `apps/api` (`tsconfig.json` e `tsconfig.test.json`) |
+| `npm run build` | 0 | ESM (`packages/database` → `apps/api`) |
+| `npm run test:api` | 0 | **24 suítes · 595 passed · 0 failed · 0 skipped** |
+| `npm run verify:api-integration` | 0 | **10 suítes · 383 passed · 2 skipped** (sinais POSIX) · 0 failed; 0 bancos/contêineres/volumes remanescentes |
+| `npm run test:integration` | 0 | **10 suítes · 87 passed** (persistência; banco descartável na instância dev, destruído) |
+| `npm run verify:from-scratch` | 0 | **10 suítes · 87 passed** — replay integral do histórico em instância limpa |
+| `npm run verify:argon2-runtime -w @techlab-fisio/api` | 0 | **15/15** verificações sobre o `dist/` ESM |
+| `npm run verify:openapi-runtime -w @techlab-fisio/api` | 0 | **19/19**. A base efetiva anterior era **16** verificações (`conferir(...)` no script), não 17: o literal `17` impresso pelo script era histórico e já divergia da contagem real. A F6 acrescentou **3** (status do início, status da conclusão, propriedades de `IniciarRecuperacaoRespostaDto`) e não removeu nenhuma: **16 + 3 = 19**. A contagem passou a ser **dinâmica** (incrementada em `conferir`), o que elimina a fonte da divergência |
+| `npm run smoke:api` | 0 | processo real `node dist/main.js`: `/health` 200; 404 sem stack; `/openapi.json` com as rotas F3+F6; CSRF 403; fail-closed sem `TLF_AMBIENTE`; encerramento limpo |
+| `npm run lint:migrations` | 0 | Guarda 1 — 10 migrations · 37 objetos protegidos |
+| `npm run schema:verify` | 0 | Guarda 3 — dump byte a byte idêntico ao golden (60 169 bytes); `migrate diff --exit-code` = 0 |
+| `git diff --check` | 0 | limpo |
+
+**Zero drift de persistência**: `git diff caf2280 -- packages/` **vazio**; 10 migrations, nenhuma nova; `schema.prisma`, golden e `protected-objects.json` intactos. `prisma format`, `migrate dev`, `db push` e `db pull` não foram executados. Higiene: nenhum contêiner `techlab-fisio-apiit-*`/`smoke-*`/`e15-*`/`e16-*`, nenhum volume e nenhum banco `techlab_fisio_it_%` remanescentes ao final; o banco de desenvolvimento não foi alterado.
+
+### 6-P.14 Riscos, limites e pendências desta fatia
+
+| Item | Severidade | Situação |
+| --- | --- | --- |
+| Decisões locais `L-F6-03`, `L-F6-05`, `L-F6-06`, `L-F6-07` | **DESTACADAS PARA DECISÃO DE BRUNO** | Natureza comportamental (precedente `L-11`/`L-F5-07`/`L-F5-08`); implementadas na alternativa conservadora e reversíveis |
+| Bloqueio administrativo sem via de recuperação (§6-N.6) | **RISCO MÉDIO — PERMANECE** | A F6 exige um Administrador **autenticado e ativo** para iniciar. Se a única conta administrativa perder a credencial, o produto continua sem via interna; o runbook manual de §6-N.6 segue vigente |
+| Localização do segredo por `hash_segredo` sem índice | **LIMITAÇÃO DECLARADA** | `segredo_recuperacao_senha` tem apenas PK e FKs; a busca por hash é sequencial. Volume esperado: no máximo um pendente por usuário + histórico; inócuo no MVP. Criar índice exigiria migration e decisão própria — não antecipado |
+| Contadores por IP em memória | herdado | `R-2.3D-02`/`P-2.3D-06` — restart zera; atrás de NAT o orçamento de 10/15 min é compartilhado (mesma limitação aceita do login) |
+| Cadência da varredura do limitador por dimensão (`L-F6-09`) | **OBSERVAÇÃO** | Entradas vencidas da dimensão de IP do login podem permanecer mais tempo até a poda por leitura; sem efeito de decisão (poda em toda leitura preservada) |
+| AUT-005 / RN-001 | herdado | NÃO MATERIALIZADA; a recusa de alvo inativo apenas lê `usuario.ativo` |
+| `docs/12` §9 linha F6 | **PENDENTE DE HOMOLOGAÇÃO** | Permanece "NÃO INICIADA" por precedente até a homologação técnica e a decisão de Bruno |
+
+Pendências herdadas e **não** alteradas: `P2.2-05`, `R2.2-04`, `P-BACK-01`, `P-2.3D-03`, `P-2.3D-04`, `P-2.3D-05`, `P-2.3D-06`, `L-05`..`L-08`, `R-BL-09`, `V-06.c`, `F-2.3C-REV-02/03`, `F-12`, `F3R-06/07`, `F5H-03`..`F5H-07`, RBAC/`profissionais.gerenciar`, lacunas de tradução `docs/04` §4 → §5, higiene de formatação do `schema.prisma`.
+
+### 6-P.16 Rodada corretiva final da F6 — deadlock `iniciar × concluir` e poder de mutação das provas de lock (03/09/2026)
+
+Rodada **exclusivamente corretiva**, sobre a mesma working tree não commitada e a mesma baseline `main` = `origin/main` = `caf2280`, respondendo aos achados `M-01`, `M-02` e `B-01`/`B-02`/`B-03` da revisão técnica independente. **Nenhuma expansão funcional, nenhuma decisão normativa, `docs/12` não tocado, Base Imutável intacta, zero drift de persistência, nenhuma dependência nova, nenhum contrato HTTP/OpenAPI alterado.** As decisões pendentes `L-F6-05`, `L-F6-06` e `L-F6-07` **não** foram implementadas nem resolvidas: o comportamento vigente foi preservado.
+
+#### 6-P.16.1 `M-01` — deadlock entre `iniciar` e `concluir` (corrigido)
+
+**Causa.** As duas operações tocam o MESMO par de linhas — a do usuário e a do segredo — e o faziam em ordens **inversas**:
+
+| | 1º lock | 2º lock | 3º lock |
+| --- | --- | --- | --- |
+| `iniciar` (ordem antiga e atual) | `usuario` (`SELECT ... FOR UPDATE`) | `segredo_recuperacao_senha` (`UPDATE ... expira_em`) | — |
+| `concluir` / T-07 — **ordem ANTIGA** | `segredo_recuperacao_senha` (`UPDATE ... consumido_em`) | `usuario` (`updateMany`) | `sessao_autenticacao` |
+| `concluir` / T-07 — **ordem NOVA** | `usuario` (`SELECT ... FOR UPDATE`) | `segredo_recuperacao_senha` | `sessao_autenticacao` |
+
+Com a ordem antiga, um início e uma conclusão simultâneos para o mesmo usuário fechavam o ciclo de espera e o PostgreSQL abortava um dos lados com **`40P01` (deadlock detected)** — que, atravessando o filtro de erro, virava `500 FALHA_INTERNA` para um cliente que não errou em nada.
+
+**Correção.** Ordem **única e global** para o módulo — `usuario → segredo_recuperacao_senha → sessões` —, coincidente com a lista de tabelas de T-07 em `docs/07` §24.2. A transação T-07 passa a abrir com o lock da linha de `usuario`:
+
+```ts
+const travados = await tx.$queryRaw<Array<{ id: string }>>`
+  SELECT id FROM usuario WHERE id = ${candidato.usuarioId}::uuid FOR UPDATE
+`;
+if (travados.length !== 1) throw new ErroSegredoSuperado();
+```
+
+A causa foi removida **na origem**: nenhuma captura de `40P01`, nenhum retry, nenhum `advisory lock`. Preservados sem alteração: segredo de uso único (o `UPDATE` condicional continua sendo o único árbitro), atomicidade integral de T-07, Argon2 fora da transação, desfecho uniforme para segredo inexistente/expirado/consumido/inválido, ausência de enumeração, autoria e auditoria, semântica da revogação de sessões e os contratos HTTP/OpenAPI. A linha ausente (usuário removido entre a pré-verificação e a T-07) colapsa no mesmo `RECUPERACAO_INVALIDA`.
+
+**Reprodução mecânica da causa.** Sonda SQL sobre o schema real, em instância descartável, executando os dois passos de cada lado nas duas ordens, três rodadas:
+
+```text
+rodada 1 — ordem ANTIGA: [40P01:deadlock detected, ok] · ordem NOVA: [ok, ok]
+rodada 2 — ordem ANTIGA: [40P01:deadlock detected, ok] · ordem NOVA: [ok, ok]
+rodada 3 — ordem ANTIGA: [40P01:deadlock detected, ok] · ordem NOVA: [ok, ok]
+```
+
+#### 6-P.16.2 `M-02` — a prova do `FOR UPDATE` de `iniciar`, agora com poder
+
+**Deficiência do teste antigo.** "dois inícios CONCORRENTES" disparava dois `POST` com `Promise.all` e conferia apenas o estado final. O entrelaçamento era decidido pelo scheduler, que na prática serializava as requisições: **a suíte permanecia verde com o `FOR UPDATE` de `iniciar` removido**. O teste continua na suíte — ele mede um estado final legítimo —, mas deixou de ser citado como prova do lock.
+
+**Nova prova, com barreira.** **Ordem de locks — dois INÍCIOS serializam no FOR UPDATE de `usuario`**:
+
+1. o primeiro `iniciar` entra na transação e adquire o `FOR UPDATE` da linha do usuário;
+2. uma **barreira** no `AuditWriter` — último passo de `iniciar`, portanto já sob o lock e antes do commit — impede que ele finalize;
+3. o segundo `iniciar` para o mesmo alvo é disparado;
+4. o teste **constata positivamente o bloqueio**, consultando `pg_stat_activity` com `pg_blocking_pids()` até existir um backend efetivamente à espera de lock, e confere que o segundo não alcançou o próprio evento de auditoria;
+5. a barreira é aberta e ambos terminam com `201`;
+6. estado persistido: dois segredos emitidos, **exatamente um pendente**, dois eventos `usuario.senha.recuperacao_iniciada`.
+
+A espera é **balizada e com mensagem própria** (`Tempo esgotado (3000 ms) esperando ...`): o fracasso é atribuível à condição violada, não ao timeout global do Jest.
+
+#### 6-P.16.3 Prova nova de `iniciar × concluir`
+
+`Ordem de locks — INÍCIO × CONCLUSÃO concorrentes não produzem deadlock (M-01)`, dois testes. O entrelaçamento é **controlado**, não sorteado: uma transação de teste ("porta de largada") detém a linha de `usuario`; as duas operações reais são disparadas em sequência conhecida e o teste espera, de novo por `pg_blocking_pids()`, que cada uma tenha **entrado na fila do lock** antes de disparar a seguinte. Como a fila de espera por lock de linha do PostgreSQL é FIFO, a ordem de saída é determinística.
+
+- **início 1º na fila** — exatamente o entrelaçamento que a ordem antiga transformava em deadlock. Medido: nenhum `40P01`, nenhum `500 FALHA_INTERNA`, `201` para o início e `401 RECUPERACAO_INVALIDA` uniforme para a conclusão (o início expirou o segredo apresentado, e o predicado do `UPDATE` casou zero linhas). Invariantes conferidos: senha inalterada, nenhum segredo consumido, exatamente um pendente, sessão anterior ainda `ATIVA` e utilizável, nenhum evento `usuario.senha.recuperacao_concluida`, nenhuma transação parcialmente aplicada;
+- **conclusão 1ª na fila** — `204` para a conclusão e `201` para o início seguinte; T-07 aplicada por inteiro (nova senha autentica, sessões revogadas, um evento de conclusão) e o início posterior não desfaz nada dela.
+
+#### 6-P.16.4 Desafios de mutação desta rodada
+
+| # | Mutação temporária | Detectada | Como falhou |
+| --- | --- | --- | --- |
+| `C-F6-09` (`R8` revisitado) | `FOR UPDATE` removido do `SELECT` de `iniciar` | ✅ **2 provas** | `Ordem de locks — dois INÍCIOS...` falhou em ~3 s com a mensagem própria da espera balizada ("Tempo esgotado (3000 ms) esperando o segundo início ficar bloqueado na fila do lock de `usuario`") — sem o lock nada bloqueia; e `Ordem de locks — INÍCIO × CONCLUSÃO ... conclusão 1ª na fila` falhou com `500` no início |
+| `C-F6-10` | ordem ANTIGA de locks restaurada em T-07 (lock de `usuario` removido do início da transação) | ✅ **1 prova** | `Ordem de locks — INÍCIO × CONCLUSÃO ... início 1º na fila` falhou em ~3,5 s em `expect(respostaConclusao.status).not.toBe(500)`, com `PrismaClientKnownRequestError` (`40P01`) registrado pela fronteira de autenticação — falha **determinística por violação do invariante**, não por timeout do Jest |
+
+Ambas as mutações foram revertidas com **conferência de SHA-256** do arquivo (`ec00fffeb22b00c841dddd668ee4684412a1622befc5b33be7b1f69bf56ae245`). Nenhuma mutação, spec auxiliar ou arquivo temporário permaneceu na árvore.
+
+#### 6-P.16.5 Correções documentais
+
+| Achado | O que foi corrigido |
+| --- | --- |
+| `B-01` | §6-P.12 deixou de afirmar "11 aplicados, 11 detectados". A redação exata é **11 aplicados, 8 detectados individualmente, 3 mascarados individualmente e cobertos pelos desafios combinados correspondentes, 11 revertidos** — e declara que nenhuma prova falha se apenas uma das duas barreiras for removida |
+| `B-02` | §6-P.13 deixou de afirmar "17 anteriores + 3". A base efetiva anterior era **16** verificações; o literal `17` impresso pelo script era histórico e já divergia da contagem real. `16 + 3 = 19`. Nenhum teste foi alterado para "fazer a conta bater" — a contagem passou a ser dinâmica |
+| `B-03` | §6-P.8 deixou de citar "dois inícios CONCORRENTES" como evidência de que o `FOR UPDATE` estava mecanicamente provado; aponta agora a prova com barreira de §6-P.16.2 e declara que o teste antigo permanecia verde sob a mutação |
+
+`B-04`, `B-05` e `B-06` **não** foram convertidos em alteração de código nesta rodada.
+
+#### 6-P.16.6 Arquivos alterados nesta rodada
+
+| Arquivo | Finalidade |
+| --- | --- |
+| `apps/api/src/recuperacao-senha/recuperacao-senha.service.ts` | `M-01`: lock da linha de `usuario` no início da T-07; bloco "ORDEM DE LOCKS" no cabeçalho e ajuste da ordem vinculante no JSDoc de `concluir`. Nenhuma outra mudança de comportamento |
+| `apps/api/test/integration/recuperacao-senha.integration.spec.ts` | `M-02` + prova de `M-01`: três testes novos com barreira e constatação de bloqueio via `pg_stat_activity`/`pg_blocking_pids`, mais os utilitários `esperarAte`, `backendsBloqueadosEmLock` e `segurarLinhaDoUsuario` (cliente próprio pela fábrica pública, encerrado em `afterAll`) |
+| `docs/10-backend-implementacao.md` | `B-01`, `B-02`, `B-03`, esta §6-P.16 e as contagens remedidas |
+
+Nenhum outro arquivo foi tocado. `AGENTS.md` e as demais alterações preexistentes da working tree foram preservadas.
+
+### 6-P.17 Rodada corretiva pós-PR — `M-03`, credencial superada e emissão de sessão (05/09/2026)
+
+Rodada **exclusivamente corretiva**, sobre a branch já publicada, respondendo ao
+achado **P1** da revisão automatizada (Codex) na PR #20. **Nenhuma expansão
+funcional, nenhuma decisão normativa, `docs/12` não tocado, Base Imutável
+intacta, zero drift de persistência, nenhuma dependência nova, nenhum contrato
+HTTP/OpenAPI alterado.**
+
+#### 6-P.17.1 `M-03` — login em voo emitia sessão sobrevivente à recuperação (corrigido)
+
+**Causa.** `AutenticacaoService.autenticar` lê o `senha_hash` corrente numa
+transação curta, gasta ~40 ms no `verify` Argon2 **fora** de transação e só
+então abre a transação que emite a sessão. A reconferência do digest existia
+**apenas** no caminho de REHASH (`updateMany` condicionado a `senhaHash =
+hashVerificado`, correção `F-04`); o caminho comum — a esmagadora maioria dos
+logins, cujo digest está vigente — emitia a sessão **sem reconferir nada**.
+
+**Efeito medido.** Uma conclusão de recuperação que coubesse nessa janela
+trocava a senha e revogava todas as sessões `ATIVA`; o login em voo, já
+validado contra a credencial **superada**, emitia a sua **logo depois** da
+revogação em massa. Quem conhecesse a senha antiga terminava com sessão viva
+após a recuperação — exatamente o que RN-005/T-07 existem para impedir.
+
+O cabeçalho de `recuperacao-senha.service.ts` afirmava que "uma sessão de login
+concorrente jamais ressuscita a senha antiga". A afirmação era verdadeira
+quanto ao **rehash** (o digest novo nunca era sobrescrito) e **falsa** quanto à
+**emissão da sessão** — que é a propriedade que RN-005 protege. A prova então
+existente (`login concorrente com a senha ANTIGA não ressuscita a credencial
+superada`) é **sequencial**: verifica o estado depois da conclusão e não
+entrelaça nada, de modo que não tinha poder algum sobre este caminho.
+
+**Correção — na origem, sem retry e sem captura de SQLSTATE.** A transação que
+emite a sessão passa a abrir por uma guarda de credencial corrente
+**incondicional**:
+
+```sql
+SELECT id FROM usuario
+ WHERE id = $1 AND ativo = true AND senha_hash = $2
+   FOR UPDATE
+```
+
+`count !== 1` levanta a sentinela `ErroCredencialSuperada` já existente, que o
+fluxo converte no **mesmo `401` uniforme** de qualquer outra rejeição — nenhum
+contrato muda e o cliente não aprende que houve concorrência. O predicado
+inteiro é avaliado pelo PostgreSQL sob o lock da própria linha: sob READ
+COMMITTED, uma transação concorrente que esteja alterando a linha faz o
+`SELECT` esperar e **reavaliar** o predicado sobre a versão commitada. O digest
+não é trazido para a aplicação.
+
+**Ordem de locks preservada.** O login passa a adquirir `usuario →
+sessao_autenticacao`, a **mesma** ordem relativa de `concluir` (`usuario →
+segredo_recuperacao_senha → sessões`). Não há ciclo de espera possível, e as
+duas ordens de chegada são corretas: se o login vence o lock, sua sessão nasce
+antes e é revogada pela recuperação em seguida; se a recuperação vence, o login
+encontra o digest novo e é recusado.
+
+**Escopo.** Um único arquivo de `src/` alterado
+(`apps/api/src/auth/autenticacao.service.ts`), sem tocar schema, contrato,
+OpenAPI, política de sessão nem o caminho de rehash — que permanece como
+defesa em profundidade.
+
+#### 6-P.17.2 Prova nova
+
+`M-03 — login EM VOO com a senha antiga não obtém sessão que sobreviva à
+recuperação`, em `recuperacao-senha.integration.spec.ts`. O entrelaçamento é
+**determinístico**, não disputado no scheduler: o login é congelado no ponto
+exato — depois do `verify`, antes da transação — e só é liberado quando a
+conclusão já commitou. Verifica `401`, ausência de cookie de sessão, ausência
+de qualquer sessão `ATIVA` do usuário ao final e que só a senha nova autentica.
+
+**Poder de mutação medido:** contra a árvore **sem** a correção a prova falha
+(`Expected: 401 / Received: 200`); com a correção, passa. `verify:api-integration`
+passa de **383** para **384** provas.
+
+#### 6-P.17.3 Correção documental
+
+`L-F6-07A` — identificador que **nunca existiu** na tabela de §6-P.7 — corrigido
+para `L-F6-07` nas duas ocorrências (cabeçalho e REV. 31, item (h)).
+
+### 6-P.15 Estado
+
+```text
+F6 IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA
+RODADA CORRETIVA FINAL APLICADA (M-01, M-02, B-01/B-02/B-03 — §6-P.16)
+NÃO HOMOLOGADA
+NÃO INTEGRADA
+
+branch: agent/fase2-etapa2.3d-f6-recuperacao-senha (a partir de main = origin/main = caf2280)
+commit: NÃO · push: NÃO · PR: NÃO · merge: NÃO · deploy: NÃO · tag/release: NÃO
+
+AUT-004 = MATERIALIZADA NESTA BRANCH (sujeita a revisão independente e homologação)
+AUT-005 = NÃO MATERIALIZADA / NÃO ENCERRADA / SEM FATIA ATRIBUÍDA
+RN-005  = satisfeita pela conclusão da recuperação (provada); RN-001 segue como em §9
+docs/12 = NÃO TOCADO
+F7      = NÃO INICIADA
+```
+
 ## 7. Auditoria — `P-BACK-01`
 
 ### 7.1 Estado
@@ -2951,13 +3347,16 @@ Sujeitas a autorização própria, nesta ordem provável:
 7. ~~**`F3 — endpoints REST de autenticação`**~~ — **CONCLUÍDA / HOMOLOGADA / INTEGRADA NA `main`** (§6-F a §6-I). Implementação executada em 27/08/2026 na branch `agent/fase2-etapa2.3d-f3-auth-http` a partir de `9a22262`; `D-2.3D-06`, `D-2.3D-07`, `D-2.3D-11`, `D-2.3D-12` e `D-2.3D-13` materializadas. **Três** revisões técnicas independentes adversariais — vereditos `B`, `B` e **`A`** — com duas fatias corretivas (§6-G, §6-H); `L-11` devolvida a Bruno e homologada como **`D-2.3D-13`**. Homologada em 28/08/2026 e integrada por **merge commit `3556972`**, PR [#14](https://github.com/BrunoMNoronha/techlab-fisio/pull/14), com os commits `362aefe`, `c755fcb` e `c20cf1c`. CI verde sobre o HEAD integrado (206 provas de integração) e validação local pós-merge verde; zero drift. Registro pós-medição em §6-I.8 e §11, REV. 20.
 8. ~~**`F4 — guards e decorators de autorização (RBAC)`**~~ — **CONCLUÍDA / HOMOLOGADA / VERSIONADA / INTEGRADA NA `main`** (§6-J a §6-L). Implementação executada em 28/08/2026 na branch `agent/fase2-etapa2.3d-f4-rbac` a partir de `main` = `a9be742`; `D-2.3D-09` e a parte de RBAC de `AUT-003` materializadas. **Duas** revisões técnicas independentes adversariais — vereditos `B` e **`A`** — com uma fatia corretiva (§6-K); `L-F4-01` **encerrada por eliminação da abstração**, não por decisão normativa. Homologada por Bruno Menezes Noronha em 28/08/2026 e integrada por **merge commit `fce62d9`**, PR [#16](https://github.com/BrunoMNoronha/techlab-fisio/pull/16), a partir do commit único `ea8c74d`. CI verde (run `33222908307`) e validação integral pós-merge verde sobre a `main` integrada; zero drift de persistência; nenhuma migration nova; nenhuma dependência nova; nenhuma rota nova publicada. Limites preservados: **AUT-005 NÃO MATERIALIZADA / NÃO ENCERRADA**, sem fatia atribuída, e autorização clínica contextual (`P2.2-05`) **NÃO INICIADA**. Registro pós-medição em §6-L.8 (REV. 24).
 9. ~~**`F5 — seed de papéis/permissões + bootstrap do primeiro Administrador`**~~ — **CONCLUÍDA / HOMOLOGADA / VERSIONADA / INTEGRADA NA `main`** (§6-M a §6-O). Implementação executada em 29/08/2026 na branch `agent/fase2-etapa2.3d-f5-seed-bootstrap-admin` a partir de `main` = `9140620`; `D-2.3D-09`, `D-2.3D-10`, `D-2.3D-14` e `D-2.3D-15` materializadas. **Três** revisões técnicas independentes adversariais — vereditos `C` (consolidado das duas primeiras) e **`B`** — com duas fatias corretivas (§6-N, §6-O); `L-F5-07` e `L-F5-08` devolvidas a Bruno e homologadas como **`D-2.3D-14`** e **`D-2.3D-15`** em 31/08/2026. Integrada em 02/09/2026 por **merge commit `657676b`**, PR [#18](https://github.com/BrunoMNoronha/techlab-fisio/pull/18), com os commits `f4b3015`, `11612b4` e `39ad197` (este último, correção de harness de teste após incidente de CI no teardown do banco descartável — §6-O.8). CI verde sobre o HEAD integrado; validação local pós-merge integralmente verde; zero drift; 10 migrations. Registro pós-medição em **§6-O.8** e §11, REV. 29.
-10. **`F6 — recuperação de senha`** — **NÃO INICIADA** (`D-2.3D-06`, `D-2.3D-08`).
+10. **`F6 — recuperação de senha`** — **IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA em 03/09/2026 — NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-P). Branch `agent/fase2-etapa2.3d-f6-recuperacao-senha` a partir de `main` = `caf2280`; AUT-004, D-04, RN-005, T-07, `D-2.3D-08` e a segunda metade de `D-2.3D-06` materializadas; zero drift de persistência; nenhuma dependência nova; nenhum canal de entrega. **Rodada corretiva final executada em 03/09/2026** (§6-P.16), respondendo à revisão técnica independente: `M-01` (deadlock `40P01` entre `iniciar` e `concluir`) eliminado por ordem única de locks; `M-02` (prova sem poder do `FOR UPDATE`) substituída por prova com barreira e constatação de bloqueio real; `B-01`/`B-02`/`B-03` corrigidos. Bateria integral reexecutada e verde. Passo seguinte: **nova** revisão técnica independente adversarial, decisão de Bruno sobre `L-F6-03`/`L-F6-05`/`L-F6-06`/`L-F6-07` (§6-P.7) e rito de integração — cada um por autorização própria.
 11. Decisões normativas adiadas (`L-05`..`L-08`, `configuracao.alterada`, `prontuario.exportado`, eventual `autor_original_usuario_id`) e RBAC (`profissionais.gerenciar`) — cada uma por decisão expressa de Bruno, nunca por implicação de implementação.
 
 ## 11. Histórico de revisões
 
 | REV. | Data | Conteúdo |
 | --- | --- | --- |
+| **32** | **05/09/2026** | **ETAPA 2.3D-B / F6 — RODADA CORRETIVA PÓS-PR** (§6-P.17), respondendo ao achado **P1** da revisão automatizada na PR #20. **(a) `M-03` corrigido:** a emissão de sessão do login reconferia o digest **apenas** no caminho de rehash; no caminho comum, um login em voo validado contra a credencial já superada emitia sessão **depois** da revogação em massa de T-07, deixando viva uma sessão baseada na senha antiga — frustrando RN-005/T-07. Acrescentada guarda de credencial corrente **incondicional** (`SELECT ... WHERE id = ? AND ativo = true AND senha_hash = ? FOR UPDATE`) abrindo a transação de emissão; `count !== 1` reusa a sentinela `ErroCredencialSuperada` e o `401` uniforme já existentes. Causa removida **na origem** — sem retry, sem captura de SQLSTATE, sem alteração de contrato, schema, OpenAPI ou política de sessão. Ordem de locks `usuario → sessões` idêntica à de `concluir`: nenhum ciclo possível. **(b) Prova nova com entrelaçamento determinístico** (login congelado entre o `verify` e a transação): falha `401→200` na árvore sem a correção, passa com ela; `verify:api-integration` **383 → 384**. **(c) Correção documental:** `L-F6-07A`, ID inexistente, corrigido para `L-F6-07` em duas ocorrências. **(d) Zero drift:** nenhuma migration, enum, índice, constraint, rota ou dependência nova; `docs/12` não tocado; decisões `L-F6-03`/`L-F6-05`/`L-F6-06`/`L-F6-07` seguem pendentes de decisão expressa, com o comportamento vigente preservado. |
+| **31** | **03/09/2026** | **ETAPA 2.3D-B / F6 — RODADA CORRETIVA FINAL sobre a mesma working tree não commitada; permanece NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-P.16). Mesma baseline `main` = `origin/main` = `caf2280`, mesma branch `agent/fase2-etapa2.3d-f6-recuperacao-senha`. **Publicação não autorizada: sem commit, push, PR, merge, rebase, tag, release ou deploy.** **(a) `M-01` corrigido:** `iniciar` e `concluir` adquiriam a linha de `usuario` e a do segredo em ordens INVERSAS, fechando ciclo de espera e produzindo `40P01` (→ `500 FALHA_INTERNA`) para início e conclusão simultâneos do mesmo usuário. Estabelecida a ordem **única e global** `usuario → segredo_recuperacao_senha → sessões`: a T-07 abre com `SELECT id FROM usuario ... FOR UPDATE`. Causa removida **na origem** — nenhuma captura de `40P01`, nenhum retry. Preservados uso único, atomicidade de T-07, Argon2 fora da transação, desfechos uniformes, ausência de enumeração, autoria/auditoria, revogação de sessões e contratos HTTP/OpenAPI. **(b) `M-02` corrigido:** a prova antiga (`Promise.all` sobre HTTP) permanecia verde com o `FOR UPDATE` de `iniciar` removido; substituída por prova com **barreira** no `AuditWriter` e **constatação positiva de bloqueio** via `pg_stat_activity`/`pg_blocking_pids()`, com espera balizada e mensagem própria. **(c) Prova nova de `iniciar × concluir`:** dois testes com entrelaçamento controlado por porta de largada e fila FIFO de locks — sem `40P01`, sem `500`, serialização determinística e invariantes de senha/segredo/sessões conferidos. **(d) Mutações:** `FOR UPDATE` de `iniciar` removido → **2 provas falharam** em ~3 s; ordem antiga de locks restaurada em T-07 → **1 prova falhou** em ~3,5 s com `40P01`; ambas revertidas com SHA-256 conferido. Reprodução direta da causa por sonda SQL: ordem antiga `40P01` em **3/3**, ordem nova limpa em **3/3**. **(e) `B-01`/`B-02`/`B-03`:** redações corrigidas (8 detectados + 3 combinados; base efetiva de 16 verificações do `verify:openapi-runtime`, `16 + 3 = 19`; o teste antigo deixou de ser citado como prova do lock). **(f) Bateria integral reexecutada e verde:** `typecheck` 0; `build` 0; `test:api` **24 · 595**; `verify:api-integration` **10 · 383 + 2 pulados**; `test:integration` **10 · 87**; `verify:from-scratch` **10 · 87**; Argon2 e OpenAPI (**19/19**); `smoke:api`; `lint:migrations` (10 · 37); `schema:verify` (golden 60 169 bytes; `migrate diff` 0); `git diff --check` 0. **(g) Zero drift:** `git diff -- packages/` vazio; nenhuma migration, enum, índice, constraint ou dependência nova; nenhuma rota nova. **(h) Fora de escopo, preservados:** `L-F6-05`, `L-F6-06`, `L-F6-07` (pendentes de Bruno), `B-04`, `B-05`, `B-06`. **(i) Higiene:** nenhuma mutação, spec auxiliar ou arquivo temporário na árvore; nenhum contêiner, volume ou banco descartável remanescente; `AGENTS.md` e demais alterações preexistentes preservados. |
+| **30** | **03/09/2026** | **ETAPA 2.3D-B / F6 — recuperação segura de senha — IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA; NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-P). Acrescentados §6-P.1..§6-P.15; §10 item 10 atualizado; cabeçalho atualizado. **Nenhuma decisão normativa criada, alterada, renumerada ou reaberta; `docs/12` não tocado; `docs/09` §12 não reaberto; Base Imutável intacta; zero drift de persistência; nenhuma dependência nova.** Divergência de numeração registrada em §6-P.1 (a recuperação de senha é AUT-004; AUT-005 é ativação/inativação e permanece NÃO MATERIALIZADA). Decisões locais `L-F6-01`..`L-F6-11` inventariadas, quatro destacadas para decisão de Bruno. Bateria integral verde (§6-P.13); 11 mutation challenges aplicados — **8 detectados individualmente e 3 cobertos apenas pelos desafios combinados** (§6-P.12, redação corrigida na REV. 31). Publicação não autorizada nesta execução. |
 | **29** | **02/09/2026** | **REGISTRO PÓS-MEDIÇÃO DA INTEGRAÇÃO DA ETAPA 2.3D-B / F5 NA `main`** (§6-O.8) — registro **exclusivamente factual**, no precedente `MEDIR → REGISTRAR` das REV. 10, REV. 15, REV. 20 e REV. 24. **Nenhuma decisão normativa criada, alterada, renumerada ou reaberta; `D-2.3D-14` e `D-2.3D-15` intactas; `docs/09` §12 não reaberto; Base Imutável intacta; nenhuma linha de runtime, persistência ou dependência tocada** — os arquivos alterados por esta execução documental são `docs/10` e `docs/12` (REV. 7, factual). **(a) Fatos registrados:** `main` antes `91406203cbecb148f395a58adcfeb6b39f825337`; commits da fatia `f4b3015` (implementação + testes), `11612b4` (documentação) e `39ad197` (harness); PR [#18](https://github.com/BrunoMNoronha/techlab-fisio/pull/18); merge commit **`657676b3ff28f6257e522bd987beddeea5e6bf8f`** (merge commit, sem squash/rebase/force-push; parent 1 = `9140620`, parent 2 = `39ad197`), 02/09/2026 20:45:16Z. **(b) Incidente de CI, corrigido antes do merge:** a run [33679640038](https://github.com/BrunoMNoronha/techlab-fisio/actions/runs/33679640038) passou nas 329 provas de integração e falhou no `globalTeardown` (`DROP DATABASE ... WITH (FORCE)` como `tlf_migrator` contra conexão `tlf_app` ainda viva da suíte do CLI, cujo pool só fecha ociosas após 10 s); reproduzido de forma determinística no host e corrigido com `afterAll(() => cliente.$disconnect())` em `provisionamento-cli.integration.spec.ts` — **somente harness**; run [33680739691](https://github.com/BrunoMNoronha/techlab-fisio/actions/runs/33680739691) **verde** (3m24s): from-scratch **10 · 87**; `test:api` **21 · 526**; integração **9 · 329** (nada pulado no Linux); Argon2 e OpenAPI **17/17**; Guardas 1–3; golden **60 169 bytes**; smoke verde. **(c) Validação local pós-merge sobre `main` = `657676b`:** `typecheck` 0; `build` 0; `test:api` **21 · 526**; `verify:api-integration` **9 · 327 + 2 pulados** (sinais POSIX); `test:integration` **10 · 87**; `verify:from-scratch` **10 · 87**; `smoke:api` 0; Argon2 **15/15**; OpenAPI **17/17**; Guardas 1–3; golden **60 169 bytes**; `git diff --check` 0; árvore limpa; zero resíduo Docker. **(d) Zero drift:** `git diff 9140620 657676b -- packages/database` = 0 linhas; manifests da raiz inalterados; `apps/api/package.json` +4 scripts; hashes de `schema.prisma`/golden/`protected-objects.json` idênticos aos da integração da F4; 10 migrations; nenhuma dependência nova; nenhuma rota nova. **(e) Estado:** **F5 CONCLUÍDA / HOMOLOGADA / VERSIONADA / INTEGRADA NA `main`**; §6-O passa a registro histórico com marcador **[ESTADO SUPERADO — §6-O.8]**; §10 item 9 riscado. **(f) Pendências preservadas:** AUT-005 NÃO MATERIALIZADA / NÃO ENCERRADA e sem fatia atribuída; RN-001 não satisfeita; `P2.2-05` NÃO INICIADA; `R2.2-04` e `P-2.3D-03` com estado vigente; `F5H-03`..`F5H-07` em aberto; risco médio de bloqueio administrativo (§6-N.6). **F6 NÃO INICIADA.** Nenhum deploy, tag ou release. |
 | **28** | **01/09/2026** | **SEGUNDA FATIA CORRETIVA DA ETAPA 2.3D-B / F5, pós-homologação técnica — `F5H-01` e `F5H-02` TRATADOS; a FATIA permanece NÃO HOMOLOGADA / NÃO INTEGRADA** (§6-O). Mesma baseline `main` = `origin/main` = `91406203cbecb148f395a58adcfeb6b39f825337`, mesma branch `agent/fase2-etapa2.3d-f5-seed-bootstrap-admin`, mesma working tree não commitada, staging vazio. **Publicação não autorizada: sem commit, push, PR, merge, rebase, tag, release ou deploy.** **Nenhuma decisão normativa criada, alterada, renumerada, reduzida ou reaberta** — `D-2.3D-01`..`D-2.3D-15` seguem exatamente como homologadas, **`D-2.3D-14` e `D-2.3D-15` não foram tocadas** e **`docs/12` NÃO foi alterado nesta rodada**; `docs/09` §12 não reaberto; catálogo e whitelist de auditoria não ampliados; Base Imutável intacta. **(a) Origem:** a revisão técnica independente e adversarial sobre a árvore corrigida devolveu **`B — APTA COM RESSALVAS NÃO BLOQUEANTES`**, com **0 BLOQUEANTES e 0 ALTOS**; reproduziu todas as medições da REV. 27 com números idênticos e provou por **mutação** que a serialização é efetiva — removido o advisory lock do artefato compilado, 4 de 5 rodadas mediram 2 a 4 Administradores; restaurado, 5 rodadas × 6 processos e uma de 12 processos mediram exatamente 1, com zero falhas não contratadas. **(b) `F5H-01` CORRIGIDO** (§6-O.2): o cabeçalho de §6-N e o marcador de §6-N.13 afirmavam, sem marca de data, que `docs/12` não fora tocado e que não existia `D-2.3D-14` — escritos em 29/08/2026 e tornados falsos pela homologação de 31/08/2026, contradizendo §6-N.3 e §6-N.4 na mesma seção. As afirmações foram **datadas** e **retificadas** com blocos de atualização explícitos; **§6-M não foi alterada**, por ser registro histórico declarado da execução inicial. Preservada a distinção material: o que foi homologado em 31/08/2026 são as **duas decisões**, não a fatia. **(c) `F5H-02` CORRIGIDO** (§6-O.3): o comando composto `provisionar` — exposto como `npm run provisionar` e até então sem regressão alguma — ganhou **7 provas** em `provisionamento-cli.integration.spec.ts` (de 29 para **36** casos no arquivo), com processo real do CLI compilado e verificação de estado no PostgreSQL: **P1** banco vazio (saída 0, 1 Administrador, evento com `ator = NULL` e justificativa persistida); **P2** composição idempotente (saída 0, `JA_CONFORME` nos dois estágios, mesma identidade); **P3** outro Administrador existente (saída 1, identidade intrusa não nasce, e o seed **commitou** — transações separadas); **P4** `provisionar --estrito` sobre banco divergente (**saída 3, bootstrap NÃO executado**, identidade solicitada inexistente, matriz canônica aplicada e excedentes preservados por `D-2.3D-14`); **P4b** controle positivo contra vacuidade; **P5** credencial inválida recusada **antes** do seed. **(d) Poder de reprovação medido:** dois mutantes aplicados ao artefato compilado, **ambos mortos** — remover o `return` do curto-circuito derruba P4 pelo código de saída, e preservar a saída 3 executando o bootstrap derruba P4 pela asserção de que `stdout` não contém `bootstrap-admin`; o segundo prova que a regressão detecta a **execução do bootstrap**, não apenas o código de saída. Artefato compilado restaurado e reconstruído, com SHA-256 idêntico ao build limpo. **(e) Nenhuma alteração de comportamento produtivo:** `src/` intocado, códigos de saída inalterados, advisory lock inalterado, nenhuma dependência instalada, `package.json` inalterado nesta rodada. **(f) Bateria integral verde** (§6-O.5): typecheck 0; build 0; `test:api` **21 · 526** (inalterado); integração da API **9 suítes · 327 passed · 2 skipped**; persistência **10 · 87**; `verify:from-scratch` (Guarda 2) 10 · 87; `verify:argon2-runtime` 15/15; `verify:openapi-runtime` 17/17; `smoke:api` verde; Guarda 1 (10 migrations · 37 objetos); Guarda 3 (golden byte a byte **60 169 bytes**, `migrate diff --exit-code` 0); `git diff --check` 0. **(g) Zero drift:** `packages/` com diff vazio; schema, golden e objetos protegidos com hash idêntico; 10 migrations continuam 10. **(h) Fora do escopo e EM ABERTO:** `F5H-03`, `F5H-04`, `F5H-05`, `F5H-06` e `F5H-07`. **(i) Estados preservados:** **AUT-005 NÃO MATERIALIZADA / NÃO ENCERRADA / SEM FATIA ATRIBUÍDA**; **RN-001** não declarada satisfeita; **`P2.2-05` NÃO INICIADA**; **`R2.2-04`** e **`P-2.3D-03`** com estado vigente preservado; **F6 NÃO INICIADA**. **Próximo passo: decisão de Bruno Menezes Noronha sobre a homologação da fatia e, somente após autorização própria, o rito de versionamento/integração.** |
 | **27** | **01/09/2026** | **DECISÕES NORMATIVAS DA F5 HOMOLOGADAS E CORREÇÕES OBJETIVAS REMEDIDAS; FATIA NÃO INTEGRADA.** Por autorização expressa de Bruno Menezes Noronha, foram acrescentadas a `docs/12` REV. 6: **`D-2.3D-14`**, que fixa a matriz canônica integralmente presente com seed aditivo, preservação/relato de excedentes e `--estrito` convergente com saída 3; e **`D-2.3D-15`**, que fixa `ator_usuario_id = NULL` no bootstrap inaugural, sem identidade sintética e com justificativa operacional obrigatória fora de `contexto`. `L-F5-07` e `L-F5-08` permanecem apenas como aliases históricos. Corrigida a promessa textual incorreta de que o modo estrito não alteraria banco; acrescentada prova de estado simultaneamente parcial e divergente, que confirma reparo da matriz, preservação do excedente e ausência da mensagem “nada foi alterado”; atualizado o rodapé vivo que ainda parava na REV. 20/F4 não iniciada/F5 não iniciada. Medições: typecheck/build verdes; API unit **21 · 526**; integração no host **9 · 320 aprovados + 2 sinais POSIX pulados**; persistência/from-scratch **10 · 87**; Argon2 15/15; OpenAPI 17/17; Guardas 1–3; golden **60 169 bytes**; smoke real verde; `git diff --check` limpo; zero container/volume/banco descartável residual. Nenhum commit, push, PR, merge, tag, release ou deploy. Próximo passo: homologação técnica final da árvore exata e autorização própria para versionamento/integração. |

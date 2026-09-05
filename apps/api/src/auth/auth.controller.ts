@@ -80,7 +80,7 @@ import { CABECALHO_REQUISICAO_TLF, ProtecaoCsrfGuard } from "./protecao-csrf.gua
  * Forma mínima da requisição consumida por este controller. Estrutural de
  * propósito — a fronteira não se acopla ao tipo da plataforma HTTP.
  */
-interface RequisicaoAutenticacao {
+export interface RequisicaoAutenticacao {
   readonly headers: Readonly<Record<string, string | string[] | undefined>>;
   readonly socket?: { readonly remoteAddress?: string | undefined };
 }
@@ -103,7 +103,7 @@ const IP_DESCONHECIDO = "desconhecido";
  * contador de IP novo por requisição — isto é, aboliria a dimensão inteira.
  * Quando existir proxy homologado, isto vira decisão própria.
  */
-function extrairIp(requisicao: RequisicaoAutenticacao): string {
+export function extrairIp(requisicao: RequisicaoAutenticacao): string {
   return requisicao.socket?.remoteAddress ?? IP_DESCONHECIDO;
 }
 

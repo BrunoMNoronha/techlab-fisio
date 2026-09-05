@@ -174,6 +174,41 @@ export class AutenticacaoService {
         // também o rehash — que é simplesmente refeito no próximo login.
         const correlacaoId = randomUUID();
         emitida = await this.database.transacao(async (tx) => {
+          // GUARDA DE CREDENCIAL CORRENTE (`M-03`) — INCONDICIONAL.
+          //
+          // Entre a leitura do usuário e este ponto passaram ~40 ms de Argon2,
+          // e nessa janela a credencial pode ter sido trocada (recuperação de
+          // senha da F6, ação administrativa) ou a conta inativada. Até aqui,
+          // só o caminho de REHASH reconferia o digest; o caminho comum — que
+          // é a esmagadora maioria dos logins — emitia a sessão sem reconferir
+          // nada. Consequência medida (`M-03`): uma conclusão de recuperação
+          // que coubesse na janela trocava a senha e revogava todas as sessões
+          // ATIVA, e o login em voo, validado contra a credencial JÁ SUPERADA,
+          // emitia a sua LOGO DEPOIS da revogação em massa — frustrando
+          // exatamente a finalidade de RN-005/T-07.
+          //
+          // O predicado inteiro é avaliado pelo PostgreSQL sob o lock da
+          // própria linha: sob READ COMMITTED, uma transação concorrente que
+          // esteja alterando a linha faz este `SELECT` esperar e REAVALIAR o
+          // predicado sobre a versão commitada. O digest não é trazido para a
+          // aplicação — a comparação vive no banco.
+          //
+          // A ordem de aquisição é `usuario → sessao_autenticacao`, a MESMA de
+          // `RecuperacaoSenhaService.concluir`: não há ciclo de espera possível
+          // entre login e recuperação. Quem pega o lock primeiro vence, e as
+          // duas ordens possíveis são corretas — se o login vence, sua sessão
+          // nasce antes e é revogada pela recuperação logo em seguida; se a
+          // recuperação vence, o login encontra o digest novo e é recusado.
+          const correntes = await tx.$queryRaw<Array<{ id: string }>>`
+            SELECT id
+              FROM usuario
+             WHERE id         = ${usuario.id}::uuid
+               AND ativo      = true
+               AND senha_hash = ${hashVerificado}
+             FOR UPDATE
+          `;
+          if (correntes.length !== 1) throw new ErroCredencialSuperada();
+
           if (novoHash !== null) {
             // ESCRITA CONDICIONADA AO DIGEST EFETIVAMENTE VERIFICADO. Entre a
             // leitura e esta escrita a credencial pode ter mudado (troca de

@@ -20,6 +20,7 @@ import { Module } from "@nestjs/common";
 import { AuditModule } from "./audit/audit.module.js";
 import { AuthModule } from "./auth/auth.module.js";
 import { AuthzModule } from "./authz/authz.module.js";
+import { RecuperacaoSenhaModule } from "./recuperacao-senha/recuperacao-senha.module.js";
 import { CobrancaModule } from "./cobranca/cobranca.module.js";
 import { DatabaseModule } from "./database/database.module.js";
 import { HealthModule } from "./health/health.module.js";
@@ -31,6 +32,7 @@ import { ProfissionalModule } from "./profissional/profissional.module.js";
     AuditModule,
     AuthModule,
     AuthzModule,
+    RecuperacaoSenhaModule,
     DatabaseModule,
     ProfissionalModule,
     CobrancaModule,

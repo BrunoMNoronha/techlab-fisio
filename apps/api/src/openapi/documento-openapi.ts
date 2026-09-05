@@ -23,11 +23,12 @@ import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import type { OpenAPIObject } from "@nestjs/swagger";
 
 /**
- * Versão do CONTRATO, independente da versão do pacote. Começa em `0.1.0`
- * porque a API expõe apenas a fronteira de autenticação da F3 — os demais
- * módulos ainda não têm exposição HTTP.
+ * Versão do CONTRATO, independente da versão do pacote. `0.1.0` cobria apenas
+ * a fronteira de autenticação da F3; `0.2.0` acrescenta, de forma ADITIVA e
+ * sem alterar nenhuma operação anterior, as duas rotas de recuperação de
+ * senha da F6 (AUT-004). Os demais módulos ainda não têm exposição HTTP.
  */
-export const VERSAO_CONTRATO = "0.1.0";
+export const VERSAO_CONTRATO = "0.2.0";
 
 export const TITULO_CONTRATO = "TechLab Fisio — API";
 
@@ -60,9 +61,9 @@ export function construirDocumentoOpenApi(app: INestApplication): OpenAPIObject 
   const configuracao = new DocumentBuilder()
     .setTitle(TITULO_CONTRATO)
     .setDescription(
-      "API REST do TechLab Fisio. Nesta versão o contrato cobre exclusivamente " +
-        "a fronteira de autenticação (AUT-001/AUT-002). Autorização por papéis " +
-        "e permissões, e os demais módulos, ainda não possuem exposição HTTP.",
+      "API REST do TechLab Fisio. Nesta versão o contrato cobre a fronteira de " +
+        "autenticação (AUT-001/AUT-002) e a recuperação segura de senha " +
+        "(AUT-004/D-04). Os demais módulos ainda não possuem exposição HTTP.",
     )
     .setVersion(VERSAO_CONTRATO)
     // Sessão por COOKIE (`D-2.3D-07`) — nunca bearer/JWT. O nome declarado é
