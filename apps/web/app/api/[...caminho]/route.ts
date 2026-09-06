@@ -31,9 +31,24 @@ async function proxyRequisicao(
     return NextResponse.json({ erro: "CAMINHO_INVALIDO" }, { status: 400 });
   }
 
+  const CABECALHOS_HOP_BY_HOP = new Set([
+    "connection",
+    "keep-alive",
+    "proxy-authenticate",
+    "proxy-authorization",
+    "te",
+    "trailer",
+    "transfer-encoding",
+    "upgrade",
+  ]);
+
   const headersEnvio: Record<string, string> = {};
   for (const [chave, valor] of request.headers.entries()) {
-    headersEnvio[chave.toLowerCase()] = valor;
+    const chaveNormalizada = chave.toLowerCase();
+    if (CABECALHOS_HOP_BY_HOP.has(chaveNormalizada)) {
+      continue;
+    }
+    headersEnvio[chaveNormalizada] = valor;
   }
 
   // Preserva o host público da requisição original para a ProtecaoCsrfGuard.
@@ -98,6 +113,7 @@ async function proxyRequisicao(
 
     const onAbort = () => {
       proxyReq.destroy();
+      resolve(new Response(null, { status: 499 }));
     };
     request.signal.addEventListener("abort", onAbort, { once: true });
 

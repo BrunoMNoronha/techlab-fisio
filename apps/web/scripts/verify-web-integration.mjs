@@ -12,13 +12,16 @@ import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { existsSync, readFileSync } from "node:fs";
+import { sanitizarCaminhoApi as sanitizarCaminho } from "../lib/api-cliente.ts";
 
 const ROTULO = "[web-integration]";
 const raizRepo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const raizWeb = path.join(raizRepo, "apps", "web");
 
 const falhas = [];
+let totalTestes = 0;
 function conferir(descricao, condicao, detalhe = "") {
+  totalTestes += 1;
   if (condicao) {
     console.log(`${ROTULO} OK   — ${descricao}`);
   } else {
@@ -29,21 +32,8 @@ function conferir(descricao, condicao, detalhe = "") {
 
 // 1. Verificação das funções de sanitização e proteção contra Client-Side CSRF
 console.log(`${ROTULO} --- 1. Sanitização de caminhos contra Client-Side CSRF ---`);
-
-// Importa dinamicamente o código do api-cliente compilado ou lê a regra
-function sanitizarCaminho(caminho) {
-  const limpo = caminho.trim();
-  if (
-    limpo.startsWith("http:") ||
-    limpo.startsWith("https:") ||
-    limpo.startsWith("//") ||
-    limpo.includes("://") ||
-    !limpo.startsWith("/api/")
-  ) {
-    throw new Error(`Caminho inválido: ${caminho}`);
-  }
-  return limpo;
-}
+// Usa diretamente sanitizarCaminhoApi de lib/api-cliente.ts (sem reimplementação local)
+// para garantir que este teste valide o código realmente enviado ao navegador.
 
 conferir(
   "aceita rota relativa legítima /api/auth/login",
@@ -69,6 +59,14 @@ conferir("bloqueia URL protocol-relative //", bloqueouProtocolRelative);
 let bloqueouSemPrefixoApi = false;
 try { sanitizarCaminho("/auth/login"); } catch { bloqueouSemPrefixoApi = true; }
 conferir("bloqueia rota relativa que não inicia com /api/", bloqueouSemPrefixoApi);
+
+let bloqueouTraversalMeio = false;
+try { sanitizarCaminho("/api/../admin"); } catch { bloqueouTraversalMeio = true; }
+conferir("bloqueia path traversal no meio do caminho (/../)", bloqueouTraversalMeio);
+
+let bloqueouTraversalFinal = false;
+try { sanitizarCaminho("/api/auth/.."); } catch { bloqueouTraversalFinal = true; }
+conferir("bloqueia path traversal ao final do caminho (/..)", bloqueouTraversalFinal);
 
 // 2. Prova de preservação de Host e Origin no Proxy Same-Origin
 console.log(`\n${ROTULO} --- 2. Prova de repasse no Proxy Same-Origin ---`);
@@ -219,7 +217,7 @@ conferir("formulario-login possui acessibilidade de alerta para erros (role=\"al
 // 5. Resultado
 console.log(`\n${ROTULO} --- Resultado da Verificação ---`);
 if (falhas.length === 0) {
-  console.log(`${ROTULO} TODOS OS 18 TESTES PASSARAM COM SUCESSO!`);
+  console.log(`${ROTULO} TODOS OS ${totalTestes} TESTES PASSARAM COM SUCESSO!`);
   process.exit(0);
 } else {
   console.error(`${ROTULO} ${falhas.length} falhas detectadas.`);
