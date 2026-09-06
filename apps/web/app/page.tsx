@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 // Página inicial da fundação (FRONT-F0). Server Component, sem estado e
 // sem interação: existe apenas para provar bootstrap, roteamento, layout,
 // estilos e tokens. Não representa nenhuma funcionalidade do produto.
@@ -27,6 +29,14 @@ export default function PaginaInicial() {
             <li>TypeScript estrito</li>
             <li>Tailwind CSS 4 com tokens semânticos</li>
           </ul>
+          <div className="mt-6 border-t border-border pt-4">
+            <Link
+              href="/login"
+              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              Acessar Login →
+            </Link>
+          </div>
         </section>
       </div>
     </main>

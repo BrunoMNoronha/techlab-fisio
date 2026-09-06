@@ -1,8 +1,9 @@
 import type { NextConfig } from "next";
 
-// FRONT-F0: configuração mínima. Nenhuma opção do framework foi desativada
-// ou sobrescrita; rewrites, headers, proxy para a API e afins pertencem a
-// sprints com fluxo funcional que os justifique.
+// O roteamento same-origin para apps/api (/api/*) é provido pelo Route Handler
+// transparente em `app/api/[...caminho]/route.ts`, garantindo que o cabeçalho
+// `Host` público original recebido do navegador (ex: localhost:3000) seja
+// estritamente preservado perante a `ProtecaoCsrfGuard` do NestJS (P-2.3D-04).
 const nextConfig: NextConfig = {};
 
 export default nextConfig;
