@@ -14,23 +14,31 @@ Todos a partir da raiz do monorepositório (após `npm ci`).
 | `npm run typecheck --workspace @techlab-fisio/web` | `next typegen` (gera os tipos de rota em `.next/types`) e depois `tsc --noEmit` |
 | `npm run build --workspace @techlab-fisio/web` | Build de produção (`next build`; inclui a verificação de tipos do Next) |
 | `npm run start --workspace @techlab-fisio/web` | Serve o build de produção (`next start`) |
+| `npm run test --workspace @techlab-fisio/web` | Executa a prova de integração e segurança do frontend (`verify-web-integration.mjs`) |
 
 Os comandos raiz `npm run typecheck` e `npm run build` já incluem este workspace.
-
-Não há lint nem testes configurados neste workspace: o repositório não possui infraestrutura de ESLint, e nenhum framework de testes foi introduzido só para produzir um teste artificial na fundação. Playwright (E2E, TLF-BASE-V1 §9) permanece `PENDENTE` em `docs/08` §6 até existir um fluxo funcional a cobrir.
 
 ## Arquitetura mínima
 
 ```text
 apps/web/
 ├── app/
-│   ├── globals.css      # Tailwind 4 + tokens semânticos (@theme inline) + estilos base
-│   ├── layout.tsx       # layout raiz: <html lang="pt-BR">, metadados mínimos
-│   └── page.tsx         # página inicial da fundação (Server Component, sem interação)
-├── next.config.ts       # configuração mínima do Next (nenhuma opção sobrescrita)
-├── postcss.config.mjs   # plugin oficial @tailwindcss/postcss
+│   ├── api/[...caminho]/ route.ts # Proxy transparente same-origin para apps/api
+│   ├── login/
+│   │   ├── formulario-login.tsx   # Client Component do formulário acessível
+│   │   └── page.tsx               # Server Component da rota /login
+│   ├── globals.css                # Tailwind 4 + tokens semânticos (@theme inline) + estilos base
+│   ├── layout.tsx                 # layout raiz: <html lang="pt-BR">, metadados mínimos
+│   ├── not-found.tsx              # página 404 própria em pt-BR
+│   └── page.tsx                   # página inicial com navegação para /login
+├── lib/
+│   └── api-cliente.ts             # Client HTTP tipado com proteção contra Client-Side CSRF
+├── scripts/
+│   └── verify-web-integration.mjs # Bateria de 18 verificações de integração e segurança
+├── next.config.ts                 # configuração do Next.js
+├── postcss.config.mjs             # plugin oficial @tailwindcss/postcss
 ├── package.json
-└── tsconfig.json        # estende ../../tsconfig.base.json com as chaves exigidas pelo Next
+└── tsconfig.json                  # estende ../../tsconfig.base.json
 ```
 
 - **App Router** (`app/`), sem `src/` e sem alias de import — o template oficial do `create-next-app@16.3.4` (`app-tw`) serviu de referência de configuração; nenhum asset, fonte ou texto do template foi copiado.
@@ -60,8 +68,8 @@ Limites deliberados: **um** tema (claro; dark mode não é requisito vigente), s
 | Sem ESLint, sem testes, sem Storybook, sem state manager, sem client HTTP | Fundação sem lógica; introduzir infraestrutura sem consumidor seria complexidade prematura (TLF-BASE-V1 §4.5) |
 | `next.config.ts` vazio | Nenhum header, rewrite ou proxy foi desativado ou configurado; isso pertence à primeira fatia funcional |
 
-## Limites atuais e próximos passos (fora desta sprint)
+## Estado da integração com `apps/api` (Fatia 1: P-2.3D-04)
 
-- **Sem integração com `apps/api`**: nenhum client HTTP, hook de dados, Server Action, cookie de sessão ou tratamento de CSRF. A comunicação será materializada quando existir um fluxo funcional com contrato definido.
-- **CSRF**: `docs/12` §5.7 (`D-2.3D-07`) determina que a proteção seja **reavaliada contra a arquitetura real do `apps/web`** (`P-2.3D-04`). A existência deste workspace torna essa reavaliação tecnicamente elegível; **nenhuma estratégia foi antecipada aqui**.
-- **Identidade visual, dark mode, PWA, i18n, portal do paciente, multitenancy**: fora do escopo.
+- **Integração inicial concluída:** proxy same-origin implementado em `app/api/[...caminho]/route.ts`, client HTTP tipado com mitigação de Client-Side CSRF em `lib/api-cliente.ts`, tela de login e formulário acessível em `app/login/`.
+- **CSRF e Same-Origin:** `P-2.3D-04` resolvida sob a topologia same-origin aprovada por Bruno Menezes Noronha. A `ProtecaoCsrfGuard` do backend é integralmente preservada sem enfraquecimento e CORS permanece desabilitado.
+- **Identidade visual definitiva, dark mode, PWA, i18n, portal do paciente, multitenancy:** fora do escopo do MVP (TLF-BASE-V1 §13).
