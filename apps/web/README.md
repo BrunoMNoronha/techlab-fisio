@@ -34,7 +34,7 @@ apps/web/
 ├── lib/
 │   └── api-cliente.ts             # Client HTTP tipado com proteção contra Client-Side CSRF
 ├── scripts/
-│   └── verify-web-integration.mjs # Bateria de 18 verificações de integração e segurança
+│   └── verify-web-integration.mjs # Bateria de 24 verificações de integração e segurança
 ├── next.config.ts                 # configuração do Next.js
 ├── postcss.config.mjs             # plugin oficial @tailwindcss/postcss
 ├── package.json
@@ -65,11 +65,12 @@ Limites deliberados: **um** tema (claro; dark mode não é requisito vigente), s
 | `typecheck` = `next typegen && tsc --noEmit` | `next-env.d.ts` e `.next/types` são gerados (e ignorados pelo Git); o `typegen` garante que `LayoutProps<"/">` e os tipos de rota existam num clone limpo, sem depender de um `build` prévio |
 | TypeScript **6.0.3** (raiz) em vez do `^5` sugerido pelo template | Baseline homologada (`docs/08` §6.3); `V-06.c` mede exatamente essa combinação |
 | Tailwind CSS **4.3.3** exato (com `@tailwindcss/postcss` 4.3.3) | `docs/08` §6 delegava a versão ao scaffold do frontend, "junto com a versão que o `create-next-app` do Next 16 instalar" — o template `app-tw` declara `^4`, que resolve para 4.3.3 na data da sprint; `save-exact=true` (`.npmrc`) fixa o valor |
-| Sem ESLint, sem testes, sem Storybook, sem state manager, sem client HTTP | Fundação sem lógica; introduzir infraestrutura sem consumidor seria complexidade prematura (TLF-BASE-V1 §4.5) |
-| `next.config.ts` vazio | Nenhum header, rewrite ou proxy foi desativado ou configurado; isso pertence à primeira fatia funcional |
+| Sem ESLint, sem testes, sem Storybook, sem state manager, sem client HTTP | Fundação sem lógica; introduzir infraestrutura sem consumidor seria complexidade prematura (TLF-BASE-V1 §4.5). **Superado em 06/09/2026 pela Fatia 1** quanto a *testes* e *client HTTP*: `scripts/verify-web-integration.mjs` e `lib/api-cliente.ts` passaram a existir porque houve consumidor. ESLint, Storybook e state manager continuam ausentes |
+| `next.config.ts` vazio | Nenhum header, rewrite ou proxy foi desativado ou configurado; isso pertence à primeira fatia funcional. **Estado em 06/09/2026:** o objeto de configuração **segue vazio** — o roteamento `/api/*` é feito por Route Handler (`app/api/[...caminho]/route.ts`), não por `rewrites` |
 
 ## Estado da integração com `apps/api` (Fatia 1: P-2.3D-04)
 
 - **Integração inicial concluída:** proxy same-origin implementado em `app/api/[...caminho]/route.ts`, client HTTP tipado com mitigação de Client-Side CSRF em `lib/api-cliente.ts`, tela de login e formulário acessível em `app/login/`.
-- **CSRF e Same-Origin:** `P-2.3D-04` resolvida sob a topologia same-origin aprovada por Bruno Menezes Noronha. A `ProtecaoCsrfGuard` do backend é integralmente preservada sem enfraquecimento e CORS permanece desabilitado.
+- **CSRF e Same-Origin:** a topologia é **same-origin** — o proxy preserva `Host` público, `Origin`, `Sec-Fetch-*` e `X-TLF-Requisicao`, CORS permanece desabilitado e a `ProtecaoCsrfGuard` do backend é integralmente preservada **sem enfraquecimento** (nenhum synchronizer token, nenhuma exceção no guard). Três das verificações exercitam o próprio guard: aprova o repasse legítimo, recusa `CABECALHO_REQUISICAO_AUSENTE` e recusa `ORIGIN_INVALIDA`.
+- **`P-2.3D-04` permanece ABERTA** (`docs/12` §11). Esta fatia torna a reavaliação de `D-2.3D-07` materialmente possível e a **mede**; ela **não a homologa**. O encerramento formal da pendência é ato expresso de Bruno Menezes Noronha (TLF-BASE-V1 §15, item 1) e vive em `docs/12`, não aqui. Registro pós-medição em `docs/08` REV. 26 e `docs/10` REV. 38.
 - **Identidade visual definitiva, dark mode, PWA, i18n, portal do paciente, multitenancy:** fora do escopo do MVP (TLF-BASE-V1 §13).
