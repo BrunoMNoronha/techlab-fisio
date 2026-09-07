@@ -1,6 +1,6 @@
 # `@techlab-fisio/web` — frontend do TechLab Fisio
 
-Workspace do frontend (Next.js 16, App Router, React 19, TypeScript 6 estrito, Tailwind CSS 4). Criado na sprint **FRONT-F0 — Fundação do Frontend**: é uma **fundação técnica**, não uma entrega funcional. Nenhuma funcionalidade do produto (autenticação, pacientes, agenda, prontuário, financeiro, indicadores) existe aqui; nada se comunica com `apps/api`.
+Workspace do frontend (Next.js 16, App Router, React 19, TypeScript 6 estrito, Tailwind CSS 4). Criado na sprint **FRONT-F0 — Fundação do Frontend** como **fundação técnica** (sem funcionalidade de negócio e sem comunicação com `apps/api`). **Atualização factual de 06/09/2026 (Fatia 1, PR #27):** recebeu integração inicial com `apps/api` via proxy same-origin (`/api/*`), client HTTP tipado com mitigação de Client-Side CSRF (`lib/api-cliente.ts`) e tela de login em `/login` (`app/login/`). As demais áreas do produto (pacientes, agenda, prontuário, financeiro, indicadores) permanecem não iniciadas.
 
 A fonte fundamental é [`TECHLAB_FISIO_BASE_IMUTAVEL_V1.md`](../../TECHLAB_FISIO_BASE_IMUTAVEL_V1.md) (§2 idioma/mobile first, §9 arquitetura de referência, §11 requisitos não funcionais). A baseline de versões é [`docs/08`](../../docs/08-baseline-tecnica-plano-implementacao.md) §6; a execução de `V-06.c` (teto do TypeScript 6.0 × Next.js 16) está registrada em `docs/08` §12.1/§12.2.
 
@@ -14,7 +14,7 @@ Todos a partir da raiz do monorepositório (após `npm ci`).
 | `npm run typecheck --workspace @techlab-fisio/web` | `next typegen` (gera os tipos de rota em `.next/types`) e depois `tsc --noEmit` |
 | `npm run build --workspace @techlab-fisio/web` | Build de produção (`next build`; inclui a verificação de tipos do Next) |
 | `npm run start --workspace @techlab-fisio/web` | Serve o build de produção (`next start`) |
-| `npm run test --workspace @techlab-fisio/web` | Executa a prova de integração e segurança do frontend (`verify-web-integration.mjs`) |
+| `npm run test --workspace @techlab-fisio/web` | Executa a bateria local de verificações de integração e segurança do frontend (`verify-web-integration.mjs` — 24 verificações; não executada na CI) |
 
 Os comandos raiz `npm run typecheck` e `npm run build` já incluem este workspace.
 
@@ -34,7 +34,7 @@ apps/web/
 ├── lib/
 │   └── api-cliente.ts             # Client HTTP tipado com proteção contra Client-Side CSRF
 ├── scripts/
-│   └── verify-web-integration.mjs # Bateria de 18 verificações de integração e segurança
+│   └── verify-web-integration.mjs # Bateria de 24 verificações de integração e segurança
 ├── next.config.ts                 # configuração do Next.js
 ├── postcss.config.mjs             # plugin oficial @tailwindcss/postcss
 ├── package.json
@@ -65,11 +65,18 @@ Limites deliberados: **um** tema (claro; dark mode não é requisito vigente), s
 | `typecheck` = `next typegen && tsc --noEmit` | `next-env.d.ts` e `.next/types` são gerados (e ignorados pelo Git); o `typegen` garante que `LayoutProps<"/">` e os tipos de rota existam num clone limpo, sem depender de um `build` prévio |
 | TypeScript **6.0.3** (raiz) em vez do `^5` sugerido pelo template | Baseline homologada (`docs/08` §6.3); `V-06.c` mede exatamente essa combinação |
 | Tailwind CSS **4.3.3** exato (com `@tailwindcss/postcss` 4.3.3) | `docs/08` §6 delegava a versão ao scaffold do frontend, "junto com a versão que o `create-next-app` do Next 16 instalar" — o template `app-tw` declara `^4`, que resolve para 4.3.3 na data da sprint; `save-exact=true` (`.npmrc`) fixa o valor |
-| Sem ESLint, sem testes, sem Storybook, sem state manager, sem client HTTP | Fundação sem lógica; introduzir infraestrutura sem consumidor seria complexidade prematura (TLF-BASE-V1 §4.5) |
-| `next.config.ts` vazio | Nenhum header, rewrite ou proxy foi desativado ou configurado; isso pertence à primeira fatia funcional |
+| Sem ESLint, sem testes, sem Storybook, sem state manager, sem client HTTP | Fundação sem lógica; introduzir infraestrutura sem consumidor seria complexidade prematura (TLF-BASE-V1 §4.5). **Superado em 06/09/2026 pela Fatia 1** quanto a *testes* e *client HTTP*: `scripts/verify-web-integration.mjs` e `lib/api-cliente.ts` passaram a existir porque houve consumidor. ESLint, Storybook e state manager continuam ausentes |
+| `next.config.ts` vazio | Nenhum header, rewrite ou proxy foi desativado ou configurado; isso pertence à primeira fatia funcional. **Estado em 06/09/2026:** o objeto de configuração **segue vazio** — o roteamento `/api/*` é feito por Route Handler (`app/api/[...caminho]/route.ts`), não por `rewrites` |
 
 ## Estado da integração com `apps/api` (Fatia 1: P-2.3D-04)
 
 - **Integração inicial concluída:** proxy same-origin implementado em `app/api/[...caminho]/route.ts`, client HTTP tipado com mitigação de Client-Side CSRF em `lib/api-cliente.ts`, tela de login e formulário acessível em `app/login/`.
-- **CSRF e Same-Origin:** `P-2.3D-04` resolvida sob a topologia same-origin aprovada por Bruno Menezes Noronha. A `ProtecaoCsrfGuard` do backend é integralmente preservada sem enfraquecimento e CORS permanece desabilitado.
+- **CSRF e Same-Origin:** a topologia é **same-origin** — o proxy preserva `Host` público, `Origin`, `Sec-Fetch-*` e `X-TLF-Requisicao`, CORS permanece desabilitado e a baseline de `D-2.3D-07` é preservada **sem enfraquecimento** (nenhum synchronizer token, nenhuma exceção no guard).
+- **Bateria local de verificações (`scripts/verify-web-integration.mjs` — 24 verificações):** não é executada pela CI. A bateria decompõe-se estritamente em:
+  - **Código real executado (8 verificações):** validação unitária direta de `sanitizarCaminhoApi` importada de `lib/api-cliente.ts` contra URLs absolutas, protocol-relative e path traversal;
+  - **Repasse HTTP simulado (5 verificações):** simulação direta via `node:http` (cliente e servidor locais) testando a recepção dos cabeçalhos repassados, **sem executar o Route Handler real do Next.js** (`app/api/[...caminho]/route.ts`);
+  - **Avaliação de compatibilidade por reprodução local (3 verificações):** avaliação dos cabeçalhos simulados contra a função local `avaliarGuard` (definida dentro do próprio script de teste), **sem instanciar a API nem executar a `ProtecaoCsrfGuard` real do NestJS**;
+  - **Inspeção estática (8 verificações):** verificação de existência de arquivos no disco e busca textual por atributos de acessibilidade, labels e referências de rota;
+  - **O que ainda NÃO foi comprovado:** o fluxo integrado ponta a ponta (navegador ou teste e2e submetendo requisição pelo Route Handler do Next.js até a API NestJS real com a `ProtecaoCsrfGuard` ativa em runtime) **não foi executado** e permanece como pendência de prova futura associada a `P-2.3D-04`.
+- **`P-2.3D-04` permanece ABERTA** (`docs/12` §11). Esta fatia torna a reavaliação de `D-2.3D-07` materialmente possível e a **mede** sob as condições descritas acima; ela **não a homologa**. O encerramento formal da pendência é ato expresso de Bruno Menezes Noronha (TLF-BASE-V1 §15, item 1) e vive em `docs/12`, não aqui. Registro pós-medição em `docs/08` REV. 26 e `docs/10` REV. 38.
 - **Identidade visual definitiva, dark mode, PWA, i18n, portal do paciente, multitenancy:** fora do escopo do MVP (TLF-BASE-V1 §13).

@@ -1,6 +1,6 @@
 # TechLab Fisio
 
-Sistema web de gestão para clínicas de fisioterapia (MVP em desenvolvimento). Monorepositório npm workspaces com a camada de persistência (`packages/database`, **encerrada** na Fase 2) e a fundação do backend (`apps/api`, NestJS 11 em ESM — [`apps/api/README.md`](apps/api/README.md); registro vivo em [`docs/10-backend-implementacao.md`](docs/10-backend-implementacao.md)). O frontend (`apps/web`, Next.js 16 + React 19 + Tailwind CSS 4 — [`apps/web/README.md`](apps/web/README.md)) nasceu na sprint `FRONT-F0` como **fundação técnica**: sem funcionalidade de negócio e sem integração com a API.
+Sistema web de gestão para clínicas de fisioterapia (MVP em desenvolvimento). Monorepositório npm workspaces com a camada de persistência (`packages/database`, **encerrada** na Fase 2) e a fundação do backend (`apps/api`, NestJS 11 em ESM — [`apps/api/README.md`](apps/api/README.md); registro vivo em [`docs/10-backend-implementacao.md`](docs/10-backend-implementacao.md)). O frontend (`apps/web`, Next.js 16 + React 19 + Tailwind CSS 4 — [`apps/web/README.md`](apps/web/README.md)) foi estabelecido na sprint `FRONT-F0` como fundação técnica e recebeu na Fatia 1 (PR #27) a infraestrutura inicial de integração com `apps/api` (proxy same-origin em `/api/*`, cliente HTTP tipado e tela de login em `/login`), sem telas ou fluxos de negócio clínicos adicionais.
 
 Este README é **operacional**: como reproduzir o ambiente e executar as verificações. As decisões de arquitetura, regras de negócio e o plano de implementação vivem em [`docs/`](docs/) — em especial [`docs/07-modelo-persistencia.md`](docs/07-modelo-persistencia.md) (modelo físico homologado) e [`docs/08-baseline-tecnica-plano-implementacao.md`](docs/08-baseline-tecnica-plano-implementacao.md) (baseline técnica e plano `E-01`..`E-18`). A fonte fundamental é [`TECHLAB_FISIO_BASE_IMUTAVEL_V1.md`](TECHLAB_FISIO_BASE_IMUTAVEL_V1.md).
 
@@ -112,7 +112,7 @@ TypeScript 6.0.x estrito em todos os workspaces, incluindo os testes; em `apps/w
 
 ## Frontend (`apps/web`)
 
-Fundação técnica do frontend (sprint `FRONT-F0`): Next.js 16 (App Router), React 19, TypeScript 6 estrito e Tailwind CSS 4 com tokens semânticos. **Nenhuma funcionalidade de negócio e nenhuma integração com `apps/api`** — propósito, limites e decisões locais em [`apps/web/README.md`](apps/web/README.md). O frontend não depende de banco nem de Docker.
+Fundação técnica do frontend estabelecida na sprint `FRONT-F0` (Next.js 16 App Router, React 19, TypeScript 6 estrito e Tailwind CSS 4 com tokens semânticos) e expandida na Fatia 1 (PR #27) com a infraestrutura inicial de integração com `apps/api`: proxy same-origin em `/api/*` ([`apps/web/app/api/[...caminho]/route.ts`](apps/web/app/api/[...caminho]/route.ts)), cliente HTTP tipado (`lib/api-cliente.ts`) e tela inicial de login (`app/login/page.tsx`). O frontend não depende de banco nem de Docker. Propósito, arquitetura e limites em [`apps/web/README.md`](apps/web/README.md).
 
 ```bash
 npm run dev --workspace @techlab-fisio/web
@@ -121,6 +121,8 @@ npm run dev --workspace @techlab-fisio/web
 ```bash
 npm run build --workspace @techlab-fisio/web
 ```
+
+O script de verificação (`scripts/verify-web-integration.mjs`) executa 24 verificações sintéticas locais (sanitização de caminho, simulação de repasse de headers de proxy com `node:http`, reprodução local simplificada de guard CSRF e inspeção estática de arquivos). **Atenção de escopo:** esse script roda isoladamente no workspace web e **não** é disparado pelo `npm test` da raiz nem pelo CI (`ci.yml`), não substituindo homologação ponta a ponta integrada em runtime.
 
 `npm run typecheck` e `npm run build` na raiz já incluem o workspace (`V-06.c` — teto do TypeScript 6.0 × Next.js 16 — foi aprovada nessa combinação; registro em `docs/08` §12.1).
 
