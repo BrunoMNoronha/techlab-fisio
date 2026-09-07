@@ -2,7 +2,7 @@
 
 Sistema web de gestão para clínicas de fisioterapia (MVP em desenvolvimento). Monorepositório npm workspaces com a camada de persistência (`packages/database`, **encerrada** na Fase 2) e a fundação do backend (`apps/api`, NestJS 11 em ESM — [`apps/api/README.md`](apps/api/README.md); registro vivo em [`docs/10-backend-implementacao.md`](docs/10-backend-implementacao.md)). O frontend (`apps/web`, Next.js 16 + React 19 + Tailwind CSS 4 — [`apps/web/README.md`](apps/web/README.md)) foi estabelecido na sprint `FRONT-F0` como fundação técnica e recebeu na Fatia 1 (PR #27) a infraestrutura inicial de integração com `apps/api` (proxy same-origin em `/api/*`, cliente HTTP tipado e tela de login em `/login`), sem telas ou fluxos de negócio clínicos adicionais.
 
-Este README é **operacional**: como reproduzir o ambiente e executar as verificações. As decisões de arquitetura, regras de negócio e o plano de implementação vivem em [`docs/`](docs/) — em especial [`docs/07-modelo-persistencia.md`](docs/07-modelo-persistencia.md) (modelo físico homologado) e [`docs/08-baseline-tecnica-plano-implementacao.md`](docs/08-baseline-tecnica-plano-implementacao.md) (baseline técnica e plano `E-01`..`E-18`). A fonte fundamental é [`TECHLAB_FISIO_BASE_IMUTAVEL_V1.md`](TECHLAB_FISIO_BASE_IMUTAVEL_V1.md).
+Este README é **operacional**: como reproduzir o ambiente e executar as verificações. Os fundamentos transversais e a governança vivem em [`docs/01-fundamentos-governanca.md`](docs/01-fundamentos-governanca.md). Requisitos, regras de negócio, decisões de arquitetura e o plano de implementação vivem nos documentos especializados em [`docs/`](docs/) — em especial [`docs/07-modelo-persistencia.md`](docs/07-modelo-persistencia.md) (modelo físico homologado) e [`docs/08-baseline-tecnica-plano-implementacao.md`](docs/08-baseline-tecnica-plano-implementacao.md) (baseline técnica e plano `E-01`..`E-18`). O antigo `TECHLAB_FISIO_BASE_IMUTAVEL_V1.md` é apenas um ponteiro histórico de compatibilidade e não é fonte normativa corrente.
 
 ## Requisitos
 
@@ -82,7 +82,7 @@ npm test
 
 Suíte de integração (Jest 30, ESM real, sem mocks) contra PostgreSQL real. O globalSetup cria um **banco descartável por execução** (`techlab_fisio_it_<sufixo>`) na instância do compose, aplica as 9 migrations como `tlf_migrator` e executa os testes como `tlf_app`; o globalTeardown destrói o banco. Estado atual: **9 suites · 79 passed · 0 todo**. `T-AUD-CONTEXTO` **não** está nesta suíte por desenho: é teste de regra de aplicação/backend (`docs/09` §12.7) e foi **EXECUTADO/PASSED** na suíte de `apps/api` (`npm run test:api` — 4 suites · 93 passed; estado vivo em `docs/10`). `npm test` executa as duas suítes em sequência.
 
-Dados **exclusivamente sintéticos** em desenvolvimento e testes — nunca dado real de paciente (TLF-BASE-V1 §10).
+Dados **exclusivamente sintéticos** em desenvolvimento e testes — nunca dado real de paciente (`docs/01` §10).
 
 ## Verificações de integridade
 
