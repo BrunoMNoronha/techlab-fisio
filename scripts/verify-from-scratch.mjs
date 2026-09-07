@@ -35,7 +35,7 @@
 //   - a suíte herda as guardas da E-13 (prefixo `techlab_fisio_it_`).
 
 import { spawnSync } from "node:child_process";
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
@@ -231,11 +231,16 @@ async function main() {
     //    alteração na infraestrutura de testes.
     // -----------------------------------------------------------------------
     console.log(`${ROTULO} executando a suíte integral de integração na instância reconstruída...`);
+    const caminhoJest = existsSync(
+      path.join(raizRepo, "packages", "database", "node_modules", "jest", "bin", "jest.js"),
+    )
+      ? path.join(raizRepo, "packages", "database", "node_modules", "jest", "bin", "jest.js")
+      : path.join(raizRepo, "node_modules", "jest", "bin", "jest.js");
     const suite = spawnSync(
       process.execPath,
       [
         "--experimental-vm-modules",
-        path.join(raizRepo, "node_modules", "jest", "bin", "jest.js"),
+        caminhoJest,
         "--config", path.join(raizRepo, "packages", "database", "jest.config.mjs"),
       ],
       {

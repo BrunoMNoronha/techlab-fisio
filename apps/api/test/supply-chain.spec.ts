@@ -50,11 +50,10 @@ describe("F-11 — telemetria transitiva do Scarf está desligada", () => {
   });
 
   it("o lockfile registra a cadeia exata e nenhuma outra fonte de telemetria", () => {
-    const lock = lerJson("package-lock.json");
-    const pacotes = lock["packages"] as Record<string, { version?: string }>;
-    expect(pacotes["node_modules/@nestjs/swagger"]?.version).toBe("11.4.7");
-    expect(pacotes["node_modules/swagger-ui-dist"]).toBeDefined();
-    expect(pacotes["node_modules/@scarf/scarf"]).toBeDefined();
+    const lock = readFileSync(path.join(raizRepo, "pnpm-lock.yaml"), "utf8");
+    expect(lock).toContain("@nestjs/swagger@11.4.7");
+    expect(lock).toContain("swagger-ui-dist@5.32.13");
+    expect(lock).toContain("@scarf/scarf@1.4.0");
   });
 });
 

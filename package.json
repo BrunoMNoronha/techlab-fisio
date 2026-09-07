@@ -2,24 +2,19 @@
   "name": "techlab-fisio",
   "version": "0.0.0",
   "private": true,
-  "description": "TechLab Fisio — sistema de gestão para clínicas de fisioterapia (monorepositório npm workspaces).",
+  "description": "TechLab Fisio — sistema de gestão para clínicas de fisioterapia (monorepositório pnpm workspaces).",
   "license": "UNLICENSED",
   "type": "module",
   "engines": {
     "node": ">=24.0.0 <25"
   },
-  "packageManager": "npm@11.16.0",
-  "workspaces": [
-    "packages/database",
-    "apps/api",
-    "apps/web"
-  ],
+  "packageManager": "pnpm@12.3.4",
   "scripts": {
-    "typecheck": "tsc --noEmit -p tsconfig.json && npm run typecheck --workspaces --if-present",
-    "build": "npm run build --workspace @techlab-fisio/database && npm run build --workspace @techlab-fisio/api && npm run build --workspace @techlab-fisio/web",
-    "test": "npm run test:integration && npm run test:api",
-    "test:integration": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config packages/database/jest.config.mjs",
-    "test:api": "npm run test --workspace @techlab-fisio/api",
+    "typecheck": "tsc --noEmit -p tsconfig.json && pnpm -r --if-present run typecheck",
+    "build": "pnpm --filter @techlab-fisio/database run build && pnpm --filter @techlab-fisio/api run build && pnpm --filter @techlab-fisio/web run build",
+    "test": "pnpm run test:integration && pnpm run test:api",
+    "test:integration": "pnpm --filter @techlab-fisio/database run test:integration",
+    "test:api": "pnpm --filter @techlab-fisio/api run test",
     "verify:api-integration": "node scripts/verify-api-integration.mjs",
     "smoke:api": "node scripts/smoke-api.mjs",
     "verify:from-scratch": "node scripts/verify-from-scratch.mjs",
