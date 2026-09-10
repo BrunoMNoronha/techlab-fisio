@@ -236,10 +236,19 @@ async function main() {
     // A resolução é ancorada no manifesto desse workspace, portanto independe
     // de hoisting, de `node-linker` e do sistema operacional — sondar caminhos
     // de `node_modules/` reintroduziria a fragilidade que o pnpm expôs.
+    // Resolve-se o MANIFESTO do pacote, e não `jest/bin/jest.js` diretamente:
+    // o campo `exports` do Jest não publica o subpath do binário, então
+    // `resolve("jest/bin/jest.js")` é recusado. O diretório do manifesto é o
+    // do pacote real, obtido por resolução de módulo — nunca por montagem de
+    // caminho interno do pnpm.
     const requireDatabase = createRequire(
       path.join(raizRepo, "packages", "database", "package.json"),
     );
-    const caminhoJest = requireDatabase.resolve("jest/bin/jest.js");
+    const caminhoJest = path.join(
+      path.dirname(requireDatabase.resolve("jest/package.json")),
+      "bin",
+      "jest.js",
+    );
     const suite = spawnSync(
       process.execPath,
       [

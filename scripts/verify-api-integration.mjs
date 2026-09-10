@@ -41,8 +41,17 @@ const raizRepo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."
 // layout estrito do pnpm o arquivo não existe na raiz. A resolução abaixo é
 // ancorada no manifesto do workspace dono da suíte, portanto independe de
 // hoisting, de `node-linker` e do sistema operacional.
+// Resolve-se o MANIFESTO do pacote, e não `jest/bin/jest.js` diretamente: o
+// campo `exports` do Jest não publica o subpath do binário, então
+// `resolve("jest/bin/jest.js")` é recusado. O diretório do manifesto é o do
+// pacote real, obtido por resolução de módulo — nunca por montagem de caminho
+// interno do pnpm.
 const requireApi = createRequire(path.join(raizRepo, "apps", "api", "package.json"));
-const caminhoJest = requireApi.resolve("jest/bin/jest.js");
+const caminhoJest = path.join(
+  path.dirname(requireApi.resolve("jest/package.json")),
+  "bin",
+  "jest.js",
+);
 
 function falhar(mensagem) {
   throw new Error(`${ROTULO} ${mensagem}`);
