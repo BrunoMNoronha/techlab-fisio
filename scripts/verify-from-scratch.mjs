@@ -35,7 +35,8 @@
 //   - a suíte herda as guardas da E-13 (prefixo `techlab_fisio_it_`).
 
 import { spawnSync } from "node:child_process";
-import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
+import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
@@ -231,11 +232,14 @@ async function main() {
     //    alteração na infraestrutura de testes.
     // -----------------------------------------------------------------------
     console.log(`${ROTULO} executando a suíte integral de integração na instância reconstruída...`);
-    const caminhoJest = existsSync(
-      path.join(raizRepo, "packages", "database", "node_modules", "jest", "bin", "jest.js"),
-    )
-      ? path.join(raizRepo, "packages", "database", "node_modules", "jest", "bin", "jest.js")
-      : path.join(raizRepo, "node_modules", "jest", "bin", "jest.js");
+    // O Jest é dependência do workspace `packages/database`, NUNCA da raiz.
+    // A resolução é ancorada no manifesto desse workspace, portanto independe
+    // de hoisting, de `node-linker` e do sistema operacional — sondar caminhos
+    // de `node_modules/` reintroduziria a fragilidade que o pnpm expôs.
+    const requireDatabase = createRequire(
+      path.join(raizRepo, "packages", "database", "package.json"),
+    );
+    const caminhoJest = requireDatabase.resolve("jest/bin/jest.js");
     const suite = spawnSync(
       process.execPath,
       [

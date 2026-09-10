@@ -20,6 +20,7 @@
 // Nenhuma senha e nenhuma URL completa aparecem em log.
 
 import { spawnSync } from "node:child_process";
+import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
@@ -34,6 +35,14 @@ import {
 const PREFIXO = "techlab-fisio-apiit-";
 const ROTULO = "[api-it]";
 const raizRepo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+// O Jest é dependência do workspace `apps/api`, NUNCA da raiz. Resolver por
+// caminho fixo em `node_modules/` só funcionava sob o hoisting do npm; com o
+// layout estrito do pnpm o arquivo não existe na raiz. A resolução abaixo é
+// ancorada no manifesto do workspace dono da suíte, portanto independe de
+// hoisting, de `node-linker` e do sistema operacional.
+const requireApi = createRequire(path.join(raizRepo, "apps", "api", "package.json"));
+const caminhoJest = requireApi.resolve("jest/bin/jest.js");
 
 function falhar(mensagem) {
   throw new Error(`${ROTULO} ${mensagem}`);
@@ -58,7 +67,7 @@ async function main() {
       process.execPath,
       [
         "--experimental-vm-modules",
-        path.join(raizRepo, "node_modules", "jest", "bin", "jest.js"),
+        caminhoJest,
         "--config", path.join(raizRepo, "apps", "api", "jest.integration.config.mjs"),
       ],
       {

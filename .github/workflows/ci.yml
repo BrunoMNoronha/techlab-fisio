@@ -37,9 +37,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Fonte única da versão do pnpm: o campo `packageManager` do
+      # package.json da raiz, lido pelo próprio action-setup. Declarar
+      # `version` aqui criaria uma segunda fonte de verdade, sujeita a
+      # divergir silenciosamente numa atualização futura.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 12.3.4
 
       - uses: actions/setup-node@v4
         with:
