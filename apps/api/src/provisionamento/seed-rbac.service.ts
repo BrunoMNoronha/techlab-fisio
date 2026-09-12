@@ -147,22 +147,39 @@ export class SeedRbacService {
 
       let papeisCriados = 0;
       let papeisAtualizados = 0;
+      const papeisParaCriar: Array<{ codigo: string; nome: string }> = [];
+      const papeisParaAtualizar: Array<{ id: string; nome: string }> = [];
+
       for (const papel of PAPEIS) {
         const vigente = papelPorCodigo.get(papel.codigo);
         if (vigente === undefined) {
-          const criado = await tx.papel.create({
-            data: { codigo: papel.codigo, nome: papel.nome },
-            select: { id: true, codigo: true, nome: true },
-          });
-          papelPorCodigo.set(criado.codigo, criado);
-          papeisCriados += 1;
+          papeisParaCriar.push({ codigo: papel.codigo, nome: papel.nome });
         } else if (vigente.nome !== papel.nome) {
-          await tx.papel.update({
-            where: { id: vigente.id },
-            data: { nome: papel.nome },
-          });
-          papeisAtualizados += 1;
+          papeisParaAtualizar.push({ id: vigente.id, nome: papel.nome });
         }
+      }
+
+      if (papeisParaCriar.length > 0) {
+        const criados = await tx.papel.createManyAndReturn({
+          data: papeisParaCriar,
+          select: { id: true, codigo: true, nome: true },
+        });
+        for (const criado of criados) {
+          papelPorCodigo.set(criado.codigo, criado);
+        }
+        papeisCriados = criados.length;
+      }
+
+      if (papeisParaAtualizar.length > 0) {
+        await Promise.all(
+          papeisParaAtualizar.map((papel) =>
+            tx.papel.update({
+              where: { id: papel.id },
+              data: { nome: papel.nome },
+            }),
+          ),
+        );
+        papeisAtualizados = papeisParaAtualizar.length;
       }
 
       // ----------------------------------------------------------- permissões
@@ -176,23 +193,40 @@ export class SeedRbacService {
 
       let permissoesCriadas = 0;
       let permissoesAtualizadas = 0;
+      const permissoesParaCriar: Array<{ codigo: string; nome: string }> = [];
+      const permissoesParaAtualizar: Array<{ id: string; nome: string }> = [];
+
       for (const codigo of PERMISSOES) {
         const nome = DESCRICAO_PERMISSAO[codigo];
         const vigente = permissaoPorCodigo.get(codigo);
         if (vigente === undefined) {
-          const criada = await tx.permissao.create({
-            data: { codigo, nome },
-            select: { id: true, codigo: true, nome: true },
-          });
-          permissaoPorCodigo.set(criada.codigo, criada);
-          permissoesCriadas += 1;
+          permissoesParaCriar.push({ codigo, nome });
         } else if (vigente.nome !== nome) {
-          await tx.permissao.update({
-            where: { id: vigente.id },
-            data: { nome },
-          });
-          permissoesAtualizadas += 1;
+          permissoesParaAtualizar.push({ id: vigente.id, nome });
         }
+      }
+
+      if (permissoesParaCriar.length > 0) {
+        const criadas = await tx.permissao.createManyAndReturn({
+          data: permissoesParaCriar,
+          select: { id: true, codigo: true, nome: true },
+        });
+        for (const criada of criadas) {
+          permissaoPorCodigo.set(criada.codigo, criada);
+        }
+        permissoesCriadas = criadas.length;
+      }
+
+      if (permissoesParaAtualizar.length > 0) {
+        await Promise.all(
+          permissoesParaAtualizar.map((permissao) =>
+            tx.permissao.update({
+              where: { id: permissao.id },
+              data: { nome: permissao.nome },
+            }),
+          ),
+        );
+        permissoesAtualizadas = permissoesParaAtualizar.length;
       }
 
       // ------------------------------------------------- matriz papel↔permissão
@@ -206,6 +240,8 @@ export class SeedRbacService {
       );
 
       let associacoesCriadas = 0;
+      const novasAssociacoes: Array<{ papelId: string; permissaoId: string }> = [];
+
       for (const associacao of ASSOCIACOES_SEED) {
         // Ausência aqui seria defeito de programação (o `satisfies` do
         // catálogo já casa os dois conjuntos em compilação). Fail-closed
@@ -220,10 +256,14 @@ export class SeedRbacService {
           );
         }
         if (vinculoJaExiste.has(`${papel.id} ${permissao.id}`)) continue;
-        await tx.papelPermissao.create({
-          data: { papelId: papel.id, permissaoId: permissao.id },
+        novasAssociacoes.push({ papelId: papel.id, permissaoId: permissao.id });
+      }
+
+      if (novasAssociacoes.length > 0) {
+        await tx.papelPermissao.createMany({
+          data: novasAssociacoes,
         });
-        associacoesCriadas += 1;
+        associacoesCriadas = novasAssociacoes.length;
       }
 
       const divergencias = await this.#medirDivergencias(tx);
