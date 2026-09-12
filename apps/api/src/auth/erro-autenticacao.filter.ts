@@ -226,16 +226,25 @@ function codigoDaFronteira(excecao: HttpException): string | null {
  * operacional de `500` — que existe justamente para marcar incidente de
  * infraestrutura.
  */
-function statusDeErroDoCliente(excecao: unknown): number | null {
-  if (typeof excecao !== "object" || excecao === null) return null;
+function extrairCodigoStatusBruto(excecao: object): number | null {
   const candidato = excecao as { status?: unknown; statusCode?: unknown };
-  const bruto =
-    typeof candidato.status === "number"
-      ? candidato.status
-      : typeof candidato.statusCode === "number"
-        ? candidato.statusCode
-        : null;
-  if (bruto === null || !Number.isInteger(bruto) || bruto < 400 || bruto > 499) {
+  if (typeof candidato.status === "number") {
+    return candidato.status;
+  }
+  if (typeof candidato.statusCode === "number") {
+    return candidato.statusCode;
+  }
+  return null;
+}
+
+function ehStatusHTTPDoCliente(status: number): boolean {
+  return Number.isInteger(status) && status >= 400 && status <= 499;
+}
+
+export function statusDeErroDoCliente(excecao: unknown): number | null {
+  if (typeof excecao !== "object" || excecao === null) return null;
+  const bruto = extrairCodigoStatusBruto(excecao);
+  if (bruto === null || !ehStatusHTTPDoCliente(bruto)) {
     return null;
   }
   return bruto;
