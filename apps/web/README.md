@@ -14,7 +14,7 @@ Todos a partir da raiz do monorepositório (após `npm ci`).
 | `npm run typecheck --workspace @techlab-fisio/web` | `next typegen` (gera os tipos de rota em `.next/types`) e depois `tsc --noEmit` |
 | `npm run build --workspace @techlab-fisio/web` | Build de produção (`next build`; inclui a verificação de tipos do Next) |
 | `npm run start --workspace @techlab-fisio/web` | Serve o build de produção (`next start`) |
-| `npm run test --workspace @techlab-fisio/web` | Executa a bateria local de verificações de integração e segurança do frontend (`verify-web-integration.mjs` — 24 verificações; não executada na CI) |
+| `npm run test --workspace @techlab-fisio/web` | Executa a bateria local de verificações de integração e segurança do frontend (`verify-web-integration.mjs` — 42 verificações; não executada na CI) |
 
 Os comandos raiz `npm run typecheck` e `npm run build` já incluem este workspace.
 
@@ -72,7 +72,7 @@ Limites deliberados: **um** tema (claro; dark mode não é requisito vigente), s
 
 - **Integração inicial concluída:** proxy same-origin implementado em `app/api/[...caminho]/route.ts`, client HTTP tipado com mitigação de Client-Side CSRF em `lib/api-cliente.ts`, tela de login e formulário acessível em `app/login/`.
 - **CSRF e Same-Origin:** a topologia é **same-origin** — o proxy preserva `Host` público, `Origin`, `Sec-Fetch-*` e `X-TLF-Requisicao`, CORS permanece desabilitado e a baseline de `D-2.3D-07` é preservada **sem enfraquecimento** (nenhum synchronizer token, nenhuma exceção no guard).
-- **Bateria local de verificações (`scripts/verify-web-integration.mjs` — 24 verificações):** não é executada pela CI. A bateria decompõe-se estritamente em:
+- **Bateria local de verificações (`scripts/verify-web-integration.mjs` — 42 verificações):** não é executada pela CI. A bateria decompõe-se estritamente em:
   - **Código real executado (8 verificações):** validação unitária direta de `sanitizarCaminhoApi` importada de `lib/api-cliente.ts` contra URLs absolutas, protocol-relative e path traversal;
   - **Repasse HTTP simulado (5 verificações):** simulação direta via `node:http` (cliente e servidor locais) testando a recepção dos cabeçalhos repassados, **sem executar o Route Handler real do Next.js** (`app/api/[...caminho]/route.ts`);
   - **Avaliação de compatibilidade por reprodução local (3 verificações):** avaliação dos cabeçalhos simulados contra a função local `avaliarGuard` (definida dentro do próprio script de teste), **sem instanciar a API nem executar a `ProtecaoCsrfGuard` real do NestJS**;

@@ -122,7 +122,7 @@ npm run dev --workspace @techlab-fisio/web
 npm run build --workspace @techlab-fisio/web
 ```
 
-O script de verificação (`scripts/verify-web-integration.mjs`) executa 24 verificações sintéticas locais (sanitização de caminho, simulação de repasse de headers de proxy com `node:http`, reprodução local simplificada de guard CSRF e inspeção estática de arquivos). **Atenção de escopo:** esse script roda isoladamente no workspace web e **não** é disparado pelo `npm test` da raiz nem pelo CI (`ci.yml`), não substituindo homologação ponta a ponta integrada em runtime.
+O script de verificação (`scripts/verify-web-integration.mjs`) executa 42 verificações sintéticas locais (sanitização de caminho, simulação de repasse de headers de proxy com `node:http`, reprodução local simplificada de guard CSRF, testes unitários do cliente HTTP e inspeção estática de arquivos). **Atenção de escopo:** esse script roda isoladamente no workspace web e **não** é disparado pelo `npm test` da raiz nem pelo CI (`ci.yml`), não substituindo homologação ponta a ponta integrada em runtime.
 
 `npm run typecheck` e `npm run build` na raiz já incluem o workspace (`V-06.c` — teto do TypeScript 6.0 × Next.js 16 — foi aprovada nessa combinação; registro em `docs/08` §12.1).
 

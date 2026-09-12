@@ -12,7 +12,7 @@ import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { existsSync, readFileSync } from "node:fs";
-import { sanitizarCaminhoApi as sanitizarCaminho } from "../lib/api-cliente.ts";
+import { sanitizarCaminhoApi as sanitizarCaminho, clienteHttp, CABECALHO_REQUISICAO_TLF } from "../lib/api-cliente.ts";
 
 const ROTULO = "[web-integration]";
 const raizRepo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
@@ -214,7 +214,279 @@ conferir("formulario-login possui campo identificador com label", conteudoForm.i
 conferir("formulario-login possui campo senha com label", conteudoForm.includes('htmlFor="senha"'));
 conferir("formulario-login possui acessibilidade de alerta para erros (role=\"alert\")", conteudoForm.includes('role="alert"'));
 
-// 5. Resultado
+// 5. Testes unitários das funções auxiliares do clienteHttp
+console.log(`\n${ROTULO} --- 5. Testes unitários do clienteHttp ---`);
+
+const fetchOriginal = globalThis.fetch;
+
+// Helper para mock de fetch em testes
+let ultimosParametrosFetch = null;
+function mockFetchResponda(status, dadosOuCorpo, headers = {}) {
+  globalThis.fetch = async (url, opcoes) => {
+    ultimosParametrosFetch = { url, opcoes };
+    const cabecalhosResposta = new Map(Object.entries(headers));
+    return {
+      ok: status >= 200 && status < 300,
+      status,
+      headers: {
+        get: (nome) => cabecalhosResposta.get(nome.toLowerCase()) ?? null,
+      },
+      json: async () => {
+        if (typeof dadosOuCorpo === "string") {
+          return JSON.parse(dadosOuCorpo);
+        }
+        return dadosOuCorpo;
+      },
+    };
+  };
+}
+
+function mockFetchRejeite(erro) {
+  globalThis.fetch = async (url, opcoes) => {
+    ultimosParametrosFetch = { url, opcoes };
+    throw erro;
+  };
+}
+
+function restaurarFetch() {
+  globalThis.fetch = fetchOriginal;
+  ultimosParametrosFetch = null;
+}
+
+// Teste GET
+try {
+  mockFetchResponda(200, { id: 1, nome: "Teste" });
+  const resGet = await clienteHttp.get("/api/pacientes/1", { headers: { "x-custom": "valor" } });
+
+  conferir(
+    "clienteHttp.get executa requisição GET com sucesso",
+    resGet.sucesso === true && resGet.status === 200 && resGet.dados.nome === "Teste",
+  );
+  conferir(
+    "clienteHttp.get envia método GET, cabeçalho accept e cabeçalho customizado",
+    ultimosParametrosFetch?.opcoes?.method === "GET" &&
+      ultimosParametrosFetch?.opcoes?.headers?.accept === "application/json" &&
+      ultimosParametrosFetch?.opcoes?.headers?.["x-custom"] === "valor",
+  );
+  conferir(
+    "clienteHttp.get NÃO envia cabeçalhos de mutação (x-tlf-requisicao e content-type)",
+    ultimosParametrosFetch?.opcoes?.headers?.[CABECALHO_REQUISICAO_TLF] === undefined &&
+      ultimosParametrosFetch?.opcoes?.headers?.["content-type"] === undefined,
+  );
+} finally {
+  restaurarFetch();
+}
+
+// Teste POST
+try {
+  mockFetchResponda(201, { id: 2, cadastrado: true });
+  const corpoPost = { nome: "Novo Paciente" };
+  const resPost = await clienteHttp.post("/api/pacientes", corpoPost);
+
+  conferir(
+    "clienteHttp.post executa requisição POST com sucesso",
+    resPost.sucesso === true && resPost.status === 201 && resPost.dados.cadastrado === true,
+  );
+  conferir(
+    "clienteHttp.post injeta cabeçalhos de mutação (x-tlf-requisicao: 1 e content-type: application/json)",
+    ultimosParametrosFetch?.opcoes?.method === "POST" &&
+      ultimosParametrosFetch?.opcoes?.headers?.[CABECALHO_REQUISICAO_TLF] === "1" &&
+      ultimosParametrosFetch?.opcoes?.headers?.["content-type"] === "application/json",
+  );
+  conferir(
+    "clienteHttp.post serializa o corpo em JSON",
+    ultimosParametrosFetch?.opcoes?.body === JSON.stringify(corpoPost),
+  );
+} finally {
+  restaurarFetch();
+}
+
+// Teste PUT
+try {
+  mockFetchResponda(200, { id: 2, atualizado: true });
+  const corpoPut = { nome: "Paciente Atualizado" };
+  const resPut = await clienteHttp.put("/api/pacientes/2", corpoPut);
+
+  conferir(
+    "clienteHttp.put executa requisição PUT com corpo serializado e cabeçalhos de mutação",
+    resPut.sucesso === true &&
+      resPut.status === 200 &&
+      ultimosParametrosFetch?.opcoes?.method === "PUT" &&
+      ultimosParametrosFetch?.opcoes?.headers?.[CABECALHO_REQUISICAO_TLF] === "1" &&
+      ultimosParametrosFetch?.opcoes?.body === JSON.stringify(corpoPut),
+  );
+} finally {
+  restaurarFetch();
+}
+
+// Teste PATCH
+try {
+  mockFetchResponda(200, { id: 2, alterado: true });
+  const corpoPatch = { ativo: false };
+  const resPatch = await clienteHttp.patch("/api/pacientes/2", corpoPatch);
+
+  conferir(
+    "clienteHttp.patch executa requisição PATCH com corpo serializado e cabeçalhos de mutação",
+    resPatch.sucesso === true &&
+      resPatch.status === 200 &&
+      ultimosParametrosFetch?.opcoes?.method === "PATCH" &&
+      ultimosParametrosFetch?.opcoes?.headers?.[CABECALHO_REQUISICAO_TLF] === "1" &&
+      ultimosParametrosFetch?.opcoes?.body === JSON.stringify(corpoPatch),
+  );
+} finally {
+  restaurarFetch();
+}
+
+// Teste DELETE & Resposta 204 No Content
+try {
+  mockFetchResponda(204, null);
+  const resDelete = await clienteHttp.delete("/api/pacientes/2");
+
+  conferir(
+    "clienteHttp.delete executa requisição DELETE com cabeçalho de mutação",
+    resDelete.sucesso === true &&
+      resDelete.status === 204 &&
+      resDelete.dados === undefined &&
+      ultimosParametrosFetch?.opcoes?.method === "DELETE" &&
+      ultimosParametrosFetch?.opcoes?.headers?.[CABECALHO_REQUISICAO_TLF] === "1",
+  );
+} finally {
+  restaurarFetch();
+}
+
+// Teste de sanitização de caminho no clienteHttp
+let erroSanitizacaoCliente = false;
+try {
+  await clienteHttp.get("https://externo.com/api/dados");
+} catch {
+  erroSanitizacaoCliente = true;
+}
+conferir(
+  "clienteHttp rejeita caminho inválido/absoluto ativando sanitizarCaminhoApi",
+  erroSanitizacaoCliente === true,
+);
+
+// Teste de falha de rede
+try {
+  mockFetchRejeite(new Error("Erro de conexão simulado"));
+  const resRede = await clienteHttp.get("/api/health");
+
+  conferir(
+    "clienteHttp trata falha de rede retornando envelope com erro FALHA_REDE",
+    resRede.sucesso === false &&
+      resRede.status === 0 &&
+      resRede.erro === "FALHA_REDE" &&
+      resRede.mensagem === "Erro de conexão simulado",
+  );
+} finally {
+  restaurarFetch();
+}
+
+// Teste de falha de rede com exceção não-Error
+try {
+  mockFetchRejeite("Erro arbitrário de rede");
+  const resRedeGenerico = await clienteHttp.get("/api/health");
+
+  conferir(
+    "clienteHttp trata falha de rede genérica com mensagem de fallback",
+    resRedeGenerico.sucesso === false &&
+      resRedeGenerico.status === 0 &&
+      resRedeGenerico.erro === "FALHA_REDE" &&
+      resRedeGenerico.mensagem === "Falha de conexão com o servidor.",
+  );
+} finally {
+  restaurarFetch();
+}
+
+// Teste de tradução de erros da API e Retry-After
+try {
+  mockFetchResponda(401, { erro: "CREDENCIAIS_INVALIDAS" });
+  const resErroCredenciais = await clienteHttp.post("/api/auth/login", { identificador: "a", senha: "b" });
+
+  conferir(
+    "clienteHttp traduz CREDENCIAIS_INVALIDAS para mensagem amigável",
+    resErroCredenciais.sucesso === false &&
+      resErroCredenciais.status === 401 &&
+      resErroCredenciais.erro === "CREDENCIAIS_INVALIDAS" &&
+      resErroCredenciais.mensagem === "E-mail ou senha incorretos.",
+  );
+} finally {
+  restaurarFetch();
+}
+
+try {
+  mockFetchResponda(429, { erro: "TENTATIVAS_EXCEDIDAS" }, { "retry-after": "60" });
+  const resErroRateLimit = await clienteHttp.post("/api/auth/login", {});
+
+  conferir(
+    "clienteHttp traduz TENTATIVAS_EXCEDIDAS com retryAfterSegundos quando cabeçalho retry-after está presente",
+    resErroRateLimit.sucesso === false &&
+      resErroRateLimit.status === 429 &&
+      resErroRateLimit.erro === "TENTATIVAS_EXCEDIDAS" &&
+      resErroRateLimit.retryAfterSegundos === 60 &&
+      resErroRateLimit.mensagem === "Muitas tentativas. Aguarde 60 segundos para tentar novamente.",
+  );
+} finally {
+  restaurarFetch();
+}
+
+try {
+  mockFetchResponda(429, { erro: "TENTATIVAS_EXCEDIDAS" });
+  const resErroRateLimitSemHeader = await clienteHttp.post("/api/auth/login", {});
+
+  conferir(
+    "clienteHttp traduz TENTATIVAS_EXCEDIDAS sem cabeçalho retry-after com mensagem padrão",
+    resErroRateLimitSemHeader.sucesso === false &&
+      resErroRateLimitSemHeader.mensagem === "Muitas tentativas. Tente novamente em alguns minutos.",
+  );
+} finally {
+  restaurarFetch();
+}
+
+try {
+  mockFetchResponda(403, { erro: "REQUISICAO_NAO_AUTORIZADA" });
+  const resErroAutorizacao = await clienteHttp.get("/api/admin");
+
+  conferir(
+    "clienteHttp traduz REQUISICAO_NAO_AUTORIZADA para mensagem amigável",
+    resErroAutorizacao.sucesso === false &&
+      resErroAutorizacao.erro === "REQUISICAO_NAO_AUTORIZADA" &&
+      resErroAutorizacao.mensagem === "Acesso recusado pelas políticas de segurança.",
+  );
+} finally {
+  restaurarFetch();
+}
+
+try {
+  mockFetchResponda(400, { erro: "REQUISICAO_INVALIDA" });
+  const resErroInvalida = await clienteHttp.post("/api/pacientes", {});
+
+  conferir(
+    "clienteHttp traduz REQUISICAO_INVALIDA para mensagem amigável",
+    resErroInvalida.sucesso === false &&
+      resErroInvalida.erro === "REQUISICAO_INVALIDA" &&
+      resErroInvalida.mensagem === "Preencha todos os campos obrigatórios corretamente.",
+  );
+} finally {
+  restaurarFetch();
+}
+
+try {
+  mockFetchResponda(500, "Erro Interno Não JSON");
+  const resErroServidor = await clienteHttp.get("/api/pacientes");
+
+  conferir(
+    "clienteHttp trata resposta de erro não-JSON com RESPOSTA_INESPERADA",
+    resErroServidor.sucesso === false &&
+      resErroServidor.status === 500 &&
+      resErroServidor.erro === "RESPOSTA_INESPERADA" &&
+      resErroServidor.mensagem === "Ocorreu um erro no processamento da solicitação.",
+  );
+} finally {
+  restaurarFetch();
+}
+
+// 6. Resultado
 console.log(`\n${ROTULO} --- Resultado da Verificação ---`);
 if (falhas.length === 0) {
   console.log(`${ROTULO} TODOS OS ${totalTestes} TESTES PASSARAM COM SUCESSO!`);
