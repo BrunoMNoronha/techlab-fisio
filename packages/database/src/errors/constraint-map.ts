@@ -107,12 +107,13 @@ function extrairNomeDaMensagem(mensagem: string | null): string | null {
   return m?.[1] ?? null;
 }
 
-/**
- * Identifica uma violação de constraint a partir do erro que chega à
- * aplicação. Retorna `null` para QUALQUER erro que não seja uma das quatro
- * classes medidas em V-03 — nunca classifica erro desconhecido.
- */
-export function identificarViolacao(erro: unknown): ViolacaoConstraint | null {
+interface CausaDriverPayload {
+  raiz: Record<string, unknown>;
+  meta: Record<string, unknown>;
+  cause: Record<string, unknown>;
+}
+
+function extrairCausaDriver(erro: unknown): CausaDriverPayload | null {
   const raiz = comoRegistro(erro);
   if (raiz === null) return null;
 
@@ -123,6 +124,44 @@ export function identificarViolacao(erro: unknown): ViolacaoConstraint | null {
   const cause = comoRegistro(driverAdapterError?.["cause"]);
   if (cause === null) return null;
 
+  return { raiz, meta, cause };
+}
+
+function extrairCamposUnique(
+  constraintEstruturada: Record<string, unknown> | null,
+): readonly string[] | null {
+  if (constraintEstruturada === null) return null;
+  const camposBrutos = constraintEstruturada["fields"];
+  if (
+    Array.isArray(camposBrutos) &&
+    camposBrutos.every((c) => typeof c === "string")
+  ) {
+    return camposBrutos as string[];
+  }
+  return null;
+}
+
+function extrairNomeConstraint(
+  cause: Record<string, unknown>,
+  constraintEstruturada: Record<string, unknown> | null,
+): string | null {
+  const nomeEstruturado = textoOuNull(constraintEstruturada?.["index"]);
+  if (nomeEstruturado !== null) {
+    return nomeEstruturado;
+  }
+  return extrairNomeDaMensagem(textoOuNull(cause["originalMessage"]));
+}
+
+/**
+ * Identifica uma violação de constraint a partir do erro que chega à
+ * aplicação. Retorna `null` para QUALQUER erro que não seja uma das quatro
+ * classes medidas em V-03 — nunca classifica erro desconhecido.
+ */
+export function identificarViolacao(erro: unknown): ViolacaoConstraint | null {
+  const payload = extrairCausaDriver(erro);
+  if (payload === null) return null;
+
+  const { raiz, meta, cause } = payload;
   const sqlstate =
     textoOuNull(cause["originalCode"]) ?? textoOuNull(cause["code"]);
   if (sqlstate === null) return null;
@@ -131,24 +170,16 @@ export function identificarViolacao(erro: unknown): ViolacaoConstraint | null {
   if (classe === undefined) return null;
 
   const constraintEstruturada = comoRegistro(cause["constraint"]);
-  const nomeEstruturado = textoOuNull(constraintEstruturada?.["index"]);
-  const camposBrutos = constraintEstruturada?.["fields"];
-  const camposUnique =
-    Array.isArray(camposBrutos) && camposBrutos.every((c) => typeof c === "string")
-      ? (camposBrutos as string[])
-      : null;
 
   return {
     classe,
     sqlstate,
     // FK expõe o nome estruturado (`constraint.index`); as demais classes só
     // o expõem na mensagem original do PostgreSQL (fato medido em V-03).
-    constraint:
-      nomeEstruturado ??
-      extrairNomeDaMensagem(textoOuNull(cause["originalMessage"])),
+    constraint: extrairNomeConstraint(cause, constraintEstruturada),
     codigoPrisma: textoOuNull(raiz["code"]),
     modelo: textoOuNull(meta["modelName"]),
-    camposUnique,
+    camposUnique: extrairCamposUnique(constraintEstruturada),
   };
 }
 
