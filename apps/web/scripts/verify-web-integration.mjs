@@ -35,38 +35,69 @@ console.log(`${ROTULO} --- 1. Sanitização de caminhos contra Client-Side CSRF 
 // Usa diretamente sanitizarCaminhoApi de lib/api-cliente.ts (sem reimplementação local)
 // para garantir que este teste valide o código realmente enviado ao navegador.
 
+function conferirErro(caminho, descricao) {
+  try {
+    sanitizarCaminho(caminho);
+    conferir(descricao, false, "deveria ter lançado um erro, mas não lançou");
+  } catch (err) {
+    const mensagemEsperada = `Caminho de API inválido: "${caminho}". Apenas rotas internas relativas iniciando com "/api/" são permitidas.`;
+    const ehInstanciaError = err instanceof Error;
+    const mensagemCorreta = err?.message === mensagemEsperada;
+    conferir(
+      descricao,
+      ehInstanciaError && mensagemCorreta,
+      !ehInstanciaError
+        ? "não é instância de Error"
+        : `mensagem recebida: "${err?.message}"`,
+    );
+  }
+}
+
+// Casos de sucesso (Happy Path)
 conferir(
   "aceita rota relativa legítima /api/auth/login",
   sanitizarCaminho("/api/auth/login") === "/api/auth/login",
 );
 conferir(
-  "aceita rota relativa legítima /api/health",
+  "aceita rota relativa com espaços extras em volta (trim)",
   sanitizarCaminho(" /api/health ") === "/api/health",
 );
+conferir(
+  "aceita subcaminhos profundos /api/v1/pacientes/123",
+  sanitizarCaminho("/api/v1/pacientes/123") === "/api/v1/pacientes/123",
+);
+conferir(
+  "aceita rotas com parâmetros de busca (query string)",
+  sanitizarCaminho("/api/pacientes?busca=teste&pagina=1") === "/api/pacientes?busca=teste&pagina=1",
+);
+conferir(
+  "aceita rotas com fragmento hash (#)",
+  sanitizarCaminho("/api/recursos#secao") === "/api/recursos#secao",
+);
 
-let bloqueouHttp = false;
-try { sanitizarCaminho("http://evil.com/api/login"); } catch { bloqueouHttp = true; }
-conferir("bloqueia URL absoluta externa com http:", bloqueouHttp);
+// Casos de rejeição (URLs absolutas e esquemas arbitrários)
+conferirErro("http://evil.com/api/login", "bloqueia URL absoluta externa com http:");
+conferirErro("https://attacker.com/api/login", "bloqueia URL absoluta externa com https:");
+conferirErro("//attacker.com/api/login", "bloqueia URL protocol-relative //");
+conferirErro("ftp://server/api/data", "bloqueia URL com esquema ftp://");
+conferirErro("javascript://alert(1)", "bloqueia URL com esquema javascript://");
+conferirErro("file:///etc/passwd", "bloqueia URL com esquema file://");
+conferirErro("ws://localhost/api", "bloqueia URL com esquema ws://");
 
-let bloqueouHttps = false;
-try { sanitizarCaminho("https://attacker.com/api/login"); } catch { bloqueouHttps = true; }
-conferir("bloqueia URL absoluta externa com https:", bloqueouHttps);
+// Casos de rejeição (prefixo /api/ ausente ou malformado)
+conferirErro("/auth/login", "bloqueia rota relativa que não inicia com /api/");
+conferirErro("/admin", "bloqueia rota interna que não é de API");
+conferirErro("api/login", "bloqueia rota relativa sem barra inicial");
+conferirErro("/apiv1/users", "bloqueia rota que começa com /api sem barra delimitadora");
+conferirErro("/api-docs", "bloqueia rota /api-docs (sem barra delimitadora)");
+conferirErro("", "bloqueia string vazia");
+conferirErro("   ", "bloqueia string contendo apenas espaços");
+conferirErro("/", "bloqueia raiz /");
 
-let bloqueouProtocolRelative = false;
-try { sanitizarCaminho("//attacker.com/api/login"); } catch { bloqueouProtocolRelative = true; }
-conferir("bloqueia URL protocol-relative //", bloqueouProtocolRelative);
-
-let bloqueouSemPrefixoApi = false;
-try { sanitizarCaminho("/auth/login"); } catch { bloqueouSemPrefixoApi = true; }
-conferir("bloqueia rota relativa que não inicia com /api/", bloqueouSemPrefixoApi);
-
-let bloqueouTraversalMeio = false;
-try { sanitizarCaminho("/api/../admin"); } catch { bloqueouTraversalMeio = true; }
-conferir("bloqueia path traversal no meio do caminho (/../)", bloqueouTraversalMeio);
-
-let bloqueouTraversalFinal = false;
-try { sanitizarCaminho("/api/auth/.."); } catch { bloqueouTraversalFinal = true; }
-conferir("bloqueia path traversal ao final do caminho (/..)", bloqueouTraversalFinal);
+// Casos de rejeição (Path Traversal)
+conferirErro("/api/../admin", "bloqueia path traversal no meio do caminho (/../)");
+conferirErro("/api/v1/../v2/users", "bloqueia path traversal intermediário (/../)");
+conferirErro("/api/auth/..", "bloqueia path traversal ao final do caminho (/..)");
 
 // 2. Prova de preservação de Host e Origin no Proxy Same-Origin
 console.log(`\n${ROTULO} --- 2. Prova de repasse no Proxy Same-Origin ---`);
