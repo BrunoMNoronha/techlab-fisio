@@ -26,8 +26,8 @@
 // `auth.module.integration.spec.ts`. Nenhum segredo real; nada é persistido.
 //
 // Uso:
-//   npm run build --workspace @techlab-fisio/api
-//   npm run verify:openapi-runtime --workspace @techlab-fisio/api
+//   pnpm --filter @techlab-fisio/api run build
+//   pnpm --filter @techlab-fisio/api run verify:openapi-runtime
 
 import "reflect-metadata";
 
@@ -52,7 +52,7 @@ for (const alvo of [
   if (!existsSync(path.join(dist, ...alvo))) {
     console.error(
       `${ROTULO} dist ausente — esta prova exige o artefato COMPILADO.\n` +
-        "  npm run build --workspace @techlab-fisio/api",
+        "  pnpm --filter @techlab-fisio/api run build",
     );
     process.exit(2);
   }
