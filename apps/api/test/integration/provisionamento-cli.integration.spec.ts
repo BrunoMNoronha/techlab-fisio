@@ -7,7 +7,7 @@
 // saída, fronteira de erros e a corrida ENTRE PROCESSOS que as revisões
 // independentes reproduziram.
 //
-// PRÉ-REQUISITO: `dist/` construído (`npm run build`). Sem ele a suíte é
+// PRÉ-REQUISITO: `dist/` construído (`pnpm run build`). Sem ele a suíte é
 // PULADA de forma explícita — nunca silenciosamente aprovada.
 
 import { spawn, spawnSync } from "node:child_process";
@@ -609,7 +609,7 @@ talvez("CLI compilado — corrida ENTRE PROCESSOS (`F5-R-01`)", () => {
 // ---------------------------------------------------------------------------
 // A homologação técnica final apontou que `seed` e `bootstrap-admin` estavam
 // exaustivamente cobertos, mas a COMPOSIÇÃO deles — o comando que o operador
-// de fato executa, exposto como `npm run provisionar` — não tinha regressão
+// de fato executa, exposto como `pnpm run provisionar` — não tinha regressão
 // alguma. O que só a composição decide, e por isso só aqui pode ser medido:
 //
 //   1. a credencial é validada ANTES do seed — entrada malformada não semeia;
@@ -664,7 +664,7 @@ async function excedentesPreservados(): Promise<boolean> {
 
 talvez("comando composto `provisionar` — o que o operador executa (`F5H-02`)", () => {
   it("os scripts públicos apontam para o CLI compilado com o argv medido aqui", () => {
-    // Fecha a distância entre `npm run provisionar` e o que esta suíte roda:
+    // Fecha a distância entre `pnpm run provisionar` e o que esta suíte roda:
     // se o script passar a apontar para outro alvo ou outro argumento, a
     // regressão abaixo deixaria de cobrir o comando real — e este teste cai.
     const manifesto = JSON.parse(
