@@ -205,7 +205,7 @@ export class SeedRbacService {
         vinculosExistentes.map((vinculo) => `${vinculo.papelId} ${vinculo.permissaoId}`),
       );
 
-      let associacoesCriadas = 0;
+      const novasAssociacoes: Array<{ papelId: string; permissaoId: string }> = [];
       for (const associacao of ASSOCIACOES_SEED) {
         // Ausência aqui seria defeito de programação (o `satisfies` do
         // catálogo já casa os dois conjuntos em compilação). Fail-closed
@@ -220,10 +220,15 @@ export class SeedRbacService {
           );
         }
         if (vinculoJaExiste.has(`${papel.id} ${permissao.id}`)) continue;
-        await tx.papelPermissao.create({
-          data: { papelId: papel.id, permissaoId: permissao.id },
+        novasAssociacoes.push({ papelId: papel.id, permissaoId: permissao.id });
+      }
+
+      let associacoesCriadas = 0;
+      if (novasAssociacoes.length > 0) {
+        const resultadoCriacao = await tx.papelPermissao.createMany({
+          data: novasAssociacoes,
         });
-        associacoesCriadas += 1;
+        associacoesCriadas = resultadoCriacao.count;
       }
 
       const divergencias = await this.#medirDivergencias(tx);
