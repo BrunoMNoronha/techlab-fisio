@@ -16,8 +16,8 @@
 // se `POLITICA_ARGON2` mudar, o benchmark muda junto, sem drift.
 //
 // Uso:
-//   npm run build --workspace @techlab-fisio/api
-//   npm run bench:argon2 --workspace @techlab-fisio/api
+//   pnpm --filter @techlab-fisio/api run build
+//   pnpm --filter @techlab-fisio/api run bench:argon2
 // Opcional: TLF_BENCH_WARMUP=5 TLF_BENCH_AMOSTRAS=30
 
 import { existsSync } from "node:fs";
@@ -32,7 +32,7 @@ const servicoCompilado = path.join(raizApi, "dist", "auth", "credencial.service.
 if (!existsSync(servicoCompilado)) {
   console.error(
     "[bench-argon2] dist ausente. Execute antes:\n" +
-      "  npm run build --workspace @techlab-fisio/api",
+      "  pnpm --filter @techlab-fisio/api run build",
   );
   process.exit(2);
 }
