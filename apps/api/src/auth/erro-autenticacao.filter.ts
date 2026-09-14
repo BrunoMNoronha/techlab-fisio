@@ -102,6 +102,13 @@ const ROTAS_DA_FRONTEIRA: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * Prefixo de rota da gestão administrativa de sessões (P-2.3D-07 / AUT-002).
+ * Cobre as operações DELETE sob `/auth/sessoes/*`, garantindo tratamento uniforme
+ * fail-closed (500 FALHA_INTERNA sem vazamento) em caso de exceções não tratadas.
+ */
+const PREFIXO_ROTA_SESSOES = "/auth/sessoes/";
+
+/**
  * Método das operações da F3. `F-07`: o filtro NÃO captura outros métodos —
  * um `GET /auth/login` recebe o `404` normal da plataforma e não pertence ao
  * contrato OpenAPI dos endpoints POST. Normalizar aquele `404` para o corpo
@@ -196,12 +203,16 @@ function caminhoNormalizado(requisicao: RequisicaoDaFronteira): string {
   return minusculo;
 }
 
-/** `true` sse a requisição é uma das duas operações da F3. */
 function ehOperacaoDaFronteira(requisicao: RequisicaoDaFronteira): boolean {
-  return (
-    requisicao.method?.toUpperCase() === METODO_DA_FRONTEIRA &&
-    ROTAS_DA_FRONTEIRA.has(caminhoNormalizado(requisicao))
-  );
+  const metodo = requisicao.method?.toUpperCase();
+  const caminho = caminhoNormalizado(requisicao);
+  if (metodo === METODO_DA_FRONTEIRA && ROTAS_DA_FRONTEIRA.has(caminho)) {
+    return true;
+  }
+  if (metodo === "DELETE" && caminho.startsWith(PREFIXO_ROTA_SESSOES)) {
+    return true;
+  }
+  return false;
 }
 
 /** `true` sse a exceção já carrega o contrato fechado da fronteira. */

@@ -143,13 +143,14 @@ try {
 
   const caminhos = Object.keys(documento.paths ?? {}).sort();
   conferir(
-    "rotas da F3 e da F6 presentes e nenhuma outra vazou",
+    "rotas da F3, F6 e P-2.3D-07 presentes e nenhuma outra vazou",
     JSON.stringify(caminhos) ===
       JSON.stringify([
         "/auth/login",
         "/auth/logout",
         "/auth/recuperacao-senha",
         "/auth/recuperacao-senha/concluir",
+        "/auth/sessoes/{sessaoId}",
         "/health",
       ]),
     `caminhos=${caminhos.join(", ")}`,
@@ -175,6 +176,18 @@ try {
     "POST /auth/recuperacao-senha/concluir documenta 204,400,401,403,413,429,500",
     statusConclusao === "204,400,401,403,413,429,500",
     `status=${statusConclusao}`,
+  );
+
+  // P-2.3D-07 — revogação administrativa de sessão de terceiro.
+  const statusRevogacao = Object.keys(
+    documento.paths["/auth/sessoes/{sessaoId}"]?.delete?.responses ?? {},
+  )
+    .sort()
+    .join(",");
+  conferir(
+    "DELETE /auth/sessoes/{sessaoId} documenta 204,400,401,403,413,500",
+    statusRevogacao === "204,400,401,403,413,500",
+    `status=${statusRevogacao}`,
   );
 
   const statusLogin = Object.keys(documento.paths["/auth/login"]?.post?.responses ?? {})
@@ -225,6 +238,7 @@ try {
     "LoginRespostaDto",
     "ErroAutenticacaoDto",
     "ErroRecuperacaoSenhaDto",
+    "ErroSessaoAdministrativaDto",
   ].flatMap((nome) => propriedades(nome).filter((p) => PROIBIDAS.has(p.toLowerCase())));
   conferir(
     "nenhum schema de resposta declara campo secreto",

@@ -49,7 +49,10 @@ afterAll(async () => {
   await app.close();
 });
 
-function operacao(caminho: string, metodo: "post" | "get"): Record<string, unknown> {
+function operacao(
+  caminho: string,
+  metodo: "post" | "get" | "delete",
+): Record<string, unknown> {
   const item = documento.paths[caminho];
   expect(item).toBeDefined();
   const op = (item as Record<string, unknown>)[metodo];
@@ -57,7 +60,10 @@ function operacao(caminho: string, metodo: "post" | "get"): Record<string, unkno
   return op as Record<string, unknown>;
 }
 
-function respostas(caminho: string, metodo: "post" | "get"): Record<string, unknown> {
+function respostas(
+  caminho: string,
+  metodo: "post" | "get" | "delete",
+): Record<string, unknown> {
   return operacao(caminho, metodo)["responses"] as Record<string, unknown>;
 }
 
@@ -102,16 +108,18 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
     expect(documento.paths["/health"]).toBeDefined();
   });
 
-  it("as rotas publicadas são EXATAMENTE as da F3 e da F6 — nenhuma outra vazou", () => {
-    // ATUALIZADO NA F6: as duas rotas de recuperação de senha (AUT-004) foram
+  it("as rotas publicadas são EXATAMENTE as da F3, F6 e P-2.3D-07 — nenhuma outra vazou", () => {
+    // ATUALIZADO NA F6 / P-2.3D-07: as duas rotas de recuperação de senha (AUT-004)
+    // e a rota de revogação de sessão (P-2.3D-07 / AUT-002) foram
     // autorizadas e passam a pertencer ao contrato. A asserção continua sendo
-    // de IGUALDADE EXATA — qualquer rota além destas cinco falha aqui.
+    // de IGUALDADE EXATA — qualquer rota além destas seis falha aqui.
     const caminhos = Object.keys(documento.paths);
     expect(caminhos.sort()).toEqual([
       "/auth/login",
       "/auth/logout",
       "/auth/recuperacao-senha",
       "/auth/recuperacao-senha/concluir",
+      "/auth/sessoes/{sessaoId}",
       "/health",
     ]);
     for (const proibido of [
@@ -127,13 +135,15 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
   });
 
   it("o custom header CSRF é declarado como obrigatório em TODAS as mutações", () => {
-    for (const caminho of [
-      "/auth/login",
-      "/auth/logout",
-      "/auth/recuperacao-senha",
-      "/auth/recuperacao-senha/concluir",
-    ]) {
-      const parametros = operacao(caminho, "post")["parameters"] as Array<
+    const mutacoes: Array<{ caminho: string; metodo: "post" | "delete" }> = [
+      { caminho: "/auth/login", metodo: "post" },
+      { caminho: "/auth/logout", metodo: "post" },
+      { caminho: "/auth/recuperacao-senha", metodo: "post" },
+      { caminho: "/auth/recuperacao-senha/concluir", metodo: "post" },
+      { caminho: "/auth/sessoes/{sessaoId}", metodo: "delete" },
+    ];
+    for (const { caminho, metodo } of mutacoes) {
+      const parametros = operacao(caminho, metodo)["parameters"] as Array<
         Record<string, unknown>
       >;
       const header = parametros.find(
@@ -253,6 +263,7 @@ describe("D-2.3D-11 — nenhum campo secreto no contrato", () => {
       "LoginRespostaDto",
       "ErroAutenticacaoDto",
       "ErroRecuperacaoSenhaDto",
+      "ErroSessaoAdministrativaDto",
     ]) {
       for (const propriedade of propriedadesDe(nome)) {
         expect(PROIBIDAS).not.toContain(propriedade.toLowerCase());
@@ -403,3 +414,56 @@ describe("F6 — rotas de recuperação de senha documentadas", () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// P-2.3D-07 — revogação administrativa de sessão (AUT-002, D-2.3D-19)
+// ---------------------------------------------------------------------------
+
+describe("P-2.3D-07 — revogação administrativa de sessão de terceiro documentada", () => {
+  it("DELETE /auth/sessoes/{sessaoId} está documentada com AUT-002 e exige cookie de sessão", () => {
+    const op = operacao("/auth/sessoes/{sessaoId}", "delete");
+    expect(op["summary"]).toEqual(expect.stringContaining("AUT-002"));
+    expect(op["tags"]).toEqual(["Autenticação"]);
+    const seguranca = op["security"] as Array<Record<string, unknown>> | undefined;
+    expect(seguranca).toBeDefined();
+    expect(seguranca?.some((s) => NOME_ESQUEMA_SESSAO in s)).toBe(true);
+  });
+
+  it("DELETE /auth/sessoes/{sessaoId} documenta 204, 400, 401, 403, 413 e 500", () => {
+    const todas = respostas("/auth/sessoes/{sessaoId}", "delete");
+    expect(Object.keys(todas).sort()).toEqual([
+      "204",
+      "400",
+      "401",
+      "403",
+      "413",
+      "500",
+    ]);
+    expect((todas["204"] as Record<string, unknown>)["content"]).toBeUndefined();
+  });
+
+  it("DELETE /auth/sessoes/{sessaoId} tem parâmetro de path sessaoId obrigatório e format uuid", () => {
+    const params = operacao("/auth/sessoes/{sessaoId}", "delete")["parameters"] as Array<
+      Record<string, unknown>
+    >;
+    const param = params.find((p) => p["name"] === "sessaoId" && p["in"] === "path");
+    expect(param).toBeDefined();
+    expect(param?.["required"]).toBe(true);
+    expect((param?.["schema"] as Record<string, unknown>)?.["format"]).toBe("uuid");
+  });
+
+  it("Erros da rota usam o schema ErroSessaoAdministrativaDto com conjunto fechado", () => {
+    const schema = documento.components?.schemas?.["ErroSessaoAdministrativaDto"] as {
+      properties?: Record<string, { enum?: string[] }>;
+    };
+    expect(Object.keys(schema.properties ?? {})).toEqual(["erro"]);
+    expect(schema.properties?.["erro"]?.enum?.sort()).toEqual([
+      "ACESSO_NEGADO",
+      "FALHA_INTERNA",
+      "REQUISICAO_INVALIDA",
+      "REQUISICAO_NAO_AUTORIZADA",
+      "SESSAO_INVALIDA",
+    ]);
+  });
+});
+

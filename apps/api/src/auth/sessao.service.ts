@@ -127,6 +127,25 @@ export type ResultadoRevogacaoSessao =
     }
   | { readonly revogada: false; readonly motivo: MotivoSessaoInvalida };
 
+export type MotivoRevogacaoAdministrativaNaoEfetivada =
+  | "SESSAO_INEXISTENTE"
+  | "SESSAO_REVOGADA"
+  | "SESSAO_EXPIRADA"
+  | "AUTORREVOGACAO_RECUSADA";
+
+export type ResultadoRevogacaoAdministrativaSessao =
+  | {
+      readonly mutacaoExecutada: true;
+      readonly sessaoId: string;
+      readonly usuarioId: string;
+      readonly revogadaPorUsuarioId: string;
+      readonly encerradaEm: Date;
+    }
+  | {
+      readonly mutacaoExecutada: false;
+      readonly motivo: MotivoRevogacaoAdministrativaNaoEfetivada;
+    };
+
 /** Projeção mínima usada na classificação; nunca sai do serviço. */
 const PROJECAO_SESSAO = {
   id: true,
@@ -449,6 +468,124 @@ export class SessaoService {
          AND estado     = 'ATIVA'
     `;
     return { expiradas, revogadas };
+  }
+
+  /**
+   * REVOGAÇÃO ADMINISTRATIVA DE SESSÃO DE TERCEIRO (`D-2.3D-19`; P-2.3D-07; AUT-002),
+   * sobre uma transação JÁ ABERTA pelo chamador.
+   *
+   * Regras vinculantes (`docs/12` §5.19):
+   *   1. Operação INDIVIDUAL sobre uma única sessão identificada por `sessaoId`;
+   *   2. `sessao_id` é identificador, NÃO credencial — o token do terceiro não é exigido;
+   *   3. Ator derivado do contexto administrativo autenticado (`atorUsuarioId`);
+   *   4. `sessao_autenticacao.revogada_por_usuario_id = atorUsuarioId`;
+   *   5. Proibição de autorrevogação: se `sessao.usuario_id === atorUsuarioId`, a
+   *      operação administrativa recusa a mutação (no-op, não emite auditoria);
+   *   6. Preservação do estado temporal: se a sessão já estiver vencida em `agora`
+   *      por prazo absoluto ou ociosidade (`D-2.3D-04`), ela preserva a semântica
+   *      de expiração e é fechada como `EXPIRADA`, NÃO como `REVOGADA`;
+   *   7. Atomicidade e locking: avaliada sob o lock exclusivo da linha
+   *      (`SELECT ... FOR UPDATE`);
+   *   8. Sessão inexistente ou já terminal (`REVOGADA` ou `EXPIRADA`) não sofre
+   *      mutação nem gera auditoria de sucesso.
+   */
+  async revogarPorAdministradorEm(
+    tx: TransacaoPersistencia,
+    sessaoId: string,
+    atorUsuarioId: string,
+  ): Promise<ResultadoRevogacaoAdministrativaSessao> {
+    const agora = this.relogio.agora();
+
+    const linhas = await tx.$queryRaw<
+      Array<{
+        id: string;
+        usuario_id: string;
+        estado: string;
+        expira_em: Date;
+        ultima_atividade_em: Date;
+      }>
+    >`
+      SELECT id, usuario_id, estado, expira_em, ultima_atividade_em
+        FROM sessao_autenticacao
+       WHERE id = ${sessaoId}::uuid
+         FOR UPDATE
+    `;
+
+    const sessao = linhas[0];
+    if (!sessao) {
+      return { mutacaoExecutada: false, motivo: "SESSAO_INEXISTENTE" };
+    }
+
+    if (sessao.usuario_id === atorUsuarioId) {
+      return { mutacaoExecutada: false, motivo: "AUTORREVOGACAO_RECUSADA" };
+    }
+
+    if (sessao.estado !== "ATIVA") {
+      return {
+        mutacaoExecutada: false,
+        motivo: sessao.estado === "REVOGADA" ? "SESSAO_REVOGADA" : "SESSAO_EXPIRADA",
+      };
+    }
+
+    // Preservação do estado temporal: se já venceu por expiração absoluta ou
+    // ociosidade em `agora`, fecha como EXPIRADA e não atribui revogação ao admin.
+    const limiteOcioso = new Date(agora.getTime() - POLITICA_SESSAO.timeoutOciosoMs);
+    const estaExpirada =
+      sessao.expira_em.getTime() <= agora.getTime() ||
+      sessao.ultima_atividade_em.getTime() <= limiteOcioso.getTime();
+
+    if (estaExpirada) {
+      await tx.$executeRaw`
+        UPDATE sessao_autenticacao
+           SET estado       = 'EXPIRADA',
+               encerrada_em = ${agora}::timestamptz
+         WHERE id     = ${sessaoId}::uuid
+           AND estado = 'ATIVA'
+      `;
+      return { mutacaoExecutada: false, motivo: "SESSAO_EXPIRADA" };
+    }
+
+    // Transição administrativa ATIVA -> REVOGADA com o admin como autor.
+    const revogadas = await tx.$executeRaw`
+      UPDATE sessao_autenticacao
+         SET estado                  = 'REVOGADA',
+             encerrada_em            = ${agora}::timestamptz,
+             revogada_por_usuario_id = ${atorUsuarioId}::uuid
+       WHERE id                      = ${sessaoId}::uuid
+         AND estado                  = 'ATIVA'
+         AND usuario_id             <> ${atorUsuarioId}::uuid
+    `;
+
+    if (revogadas === 1) {
+      return {
+        mutacaoExecutada: true,
+        sessaoId: sessao.id,
+        usuarioId: sessao.usuario_id,
+        revogadaPorUsuarioId: atorUsuarioId,
+        encerradaEm: agora,
+      };
+    }
+
+    // Ramo defensivo de corrida: relê o estado
+    const atual = await tx.sessaoAutenticacao.findUnique({
+      where: { id: sessaoId },
+      select: PROJECAO_SESSAO,
+    });
+    if (atual === null) return { mutacaoExecutada: false, motivo: "SESSAO_INEXISTENTE" };
+    if (atual.estado === "REVOGADA") return { mutacaoExecutada: false, motivo: "SESSAO_REVOGADA" };
+    return { mutacaoExecutada: false, motivo: "SESSAO_EXPIRADA" };
+  }
+
+  /**
+   * Versão independente de transação externa para conveniência / testes.
+   */
+  async revogarPorAdministrador(
+    sessaoId: string,
+    atorUsuarioId: string,
+  ): Promise<ResultadoRevogacaoAdministrativaSessao> {
+    return this.database.transacao(async (tx) =>
+      this.revogarPorAdministradorEm(tx, sessaoId, atorUsuarioId),
+    );
   }
 
   /**
