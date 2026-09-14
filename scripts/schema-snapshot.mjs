@@ -196,7 +196,7 @@ async function main() {
         relatarDivergencia(golden, dump);
         console.error(
           `${ROTULO} O CI nunca atualiza o golden. Se a mudança é deliberada, execute ` +
-            `\`npm run schema:golden:update\` localmente, revise o diff e versione.`,
+            `\`pnpm run schema:golden:update\` localmente, revise o diff e versione.`,
         );
         falhar("golden schema divergente");
       }

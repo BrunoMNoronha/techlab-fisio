@@ -24,7 +24,7 @@ Exclusivamente pela API pública do pacote (`@techlab-fisio/database`, campo `ex
 
 | Comando | O que faz |
 | --- | --- |
-| `npm run build` | `packages/database` → `apps/api` (tsc, ESM) |
-| `npm run test:api` | Suíte da API (Jest 30 ESM, sem banco) |
-| `npm run start --workspace @techlab-fisio/api` | Executa `dist/main.js` (exige build prévio) |
-| `npm run typecheck` | Inclui `apps/api` (src + testes, estrito, `skipLibCheck: false`) |
+| `pnpm run build` | `packages/database` → `apps/api` (tsc, ESM) |
+| `pnpm run test:api` | Suíte da API (Jest 30 ESM, sem banco) |
+| `pnpm --filter @techlab-fisio/api run start` | Executa `dist/main.js` (exige build prévio) |
+| `pnpm run typecheck` | Inclui `apps/api` (src + testes, estrito, `skipLibCheck: false`) |

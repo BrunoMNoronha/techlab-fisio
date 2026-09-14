@@ -37,45 +37,51 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Fonte única da versão do pnpm: o campo `packageManager` do
+      # package.json da raiz, lido pelo próprio action-setup. Declarar
+      # `version` aqui criaria uma segunda fonte de verdade, sujeita a
+      # divergir silenciosamente numa atualização futura.
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
           # Fonte única da versão de Node (docs/08 §4.4): linha 24.x.
           node-version-file: .nvmrc
-          cache: npm
+          cache: pnpm
 
       - name: Ambiente sintético (.env a partir do modelo versionado)
         run: cp .env.example .env
 
       - name: Instalação reproduzível pelo lockfile
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Prisma Client + validação do schema
         run: |
-          npx prisma generate
-          npx prisma validate
+          pnpm exec prisma generate
+          pnpm exec prisma validate
 
       - name: Typecheck (inclui os testes — tsconfig.test.json)
-        run: npm run typecheck
+        run: pnpm run typecheck
 
       - name: "Guarda 1 — lint de migrations (objetos protegidos)"
-        run: npm run lint:migrations
+        run: pnpm run lint:migrations
 
       - name: "E-15 + Guarda 2 — PostgreSQL 18 limpo → migrate deploy → catálogo → suíte integral → limpeza"
-        run: npm run verify:from-scratch
+        run: pnpm run verify:from-scratch
 
       - name: "Guarda 3 + alarme — golden schema byte a byte + prisma migrate diff --exit-code"
-        run: npm run schema:verify
+        run: pnpm run schema:verify
 
       # ------------------------------------------------------------------
       # Etapa 2.3A — fundação do backend (apps/api). Passos ACRESCENTADOS;
       # nenhuma guarda de persistência acima foi alterada ou reordenada.
       # ------------------------------------------------------------------
 
-      # FRONT-F0 (05/09/2026): `npm run build` passou a incluir apps/web
+      # FRONT-F0 (05/09/2026): `pnpm run build` passou a incluir apps/web
       # (`next build`, que também executa a verificação de tipos do Next).
       # Somente o NOME deste passo mudou; nenhuma guarda anterior foi alterada.
       - name: "Build dos workspaces (packages/database → apps/api → apps/web)"
-        run: npm run build
+        run: pnpm run build
 
       # Etapa 2.3D-B / F1 (achado A-04 da revisão independente): prova de
       # runtime do addon NATIVO do `argon2` no ESM compilado, FORA do Jest.
@@ -86,7 +92,7 @@ jobs:
       # do Jest e falhar em `node dist/main.js`, e é o único passo que valida
       # o prebuild N-API de linux-x64 de forma explícita.
       - name: "Backend — prova de runtime do Argon2id no ESM compilado (D-2.3D-02)"
-        run: npm run verify:argon2-runtime --workspace @techlab-fisio/api
+        run: pnpm --filter @techlab-fisio/api run verify:argon2-runtime
 
       # Etapa 2.3D-B / F3 (`D-2.3D-11`, `P-2.3D-03`): prova de runtime do
       # `@nestjs/swagger@11.4.7` sobre o ESM compilado, FORA do Jest — a
@@ -97,10 +103,10 @@ jobs:
       # mesma razão da prova do Argon2: barata, no primeiro ponto em que
       # `apps/api/dist/**` existe, e falha cedo.
       - name: "Backend — prova de runtime do OpenAPI no ESM compilado (D-2.3D-11)"
-        run: npm run verify:openapi-runtime --workspace @techlab-fisio/api
+        run: pnpm --filter @techlab-fisio/api run verify:openapi-runtime
 
       - name: "Backend — suíte de apps/api (bootstrap, health, integração database, T-AUD-CONTEXTO)"
-        run: npm run test:api
+        run: pnpm run test:api
 
       # F-01 (revisão da 2.3A; caminho ATUALIZADO na 2.3B): prova runtime,
       # FORA do Jest, de que o Node ESM resolve `@techlab-fisio/database` pelo
@@ -109,6 +115,7 @@ jobs:
       # raiz). O Jest não serve como prova deste caminho porque mapeia o pacote
       # para src/index.ts. A prova também cobre a fábrica pública da 2.3B.
       - name: "Backend — prova runtime do exports público de @techlab-fisio/database (F-01)"
+        working-directory: apps/api
         run: |
           node --input-type=module -e '
             const m = await import("@techlab-fisio/database");
@@ -131,7 +138,7 @@ jobs:
       # AuditContextValidator → evento_auditoria (atomicidade, rollback,
       # concorrência, postura de role — tlf_app aceito, migrator rejeitado).
       - name: "Backend — integração da API com PostgreSQL 18 real (tlf_app + fluxo auditado)"
-        run: npm run verify:api-integration
+        run: pnpm run verify:api-integration
 
       # R-BL-02 (2.3A) ADAPTADO na 2.3B: o DatabaseService conecta EAGER no
       # bootstrap, então o smoke provisiona banco descartável (tlf_app) antes
@@ -139,4 +146,4 @@ jobs:
       # processo real dist/main.js, /health 200, 404 sem stack, encerramento
       # limpo por SIGTERM e cleanup garantido mesmo em falha (F-03).
       - name: "Backend — prova de bootstrap ESM (R-BL-02): dist/main.js + banco descartável"
-        run: npm run smoke:api
+        run: pnpm run smoke:api
