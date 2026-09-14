@@ -1,0 +1,15 @@
+packages:
+  - 'packages/*'
+  - 'apps/*'
+
+# Configurações do projeto (pnpm 12 lê configurações de projeto de pnpm-workspace.yaml)
+engineStrict: true
+saveExact: true
+
+# Política estrita de scripts de build / pós-instalação (fail-closed, pnpm 12)
+allowBuilds:
+  '@prisma/engines': true
+  '@scarf/scarf': false
+  argon2: true
+  prisma: true
+  unrs-resolver: true

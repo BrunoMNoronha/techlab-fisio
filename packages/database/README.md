@@ -10,7 +10,7 @@ Pré-requisitos, variáveis de ambiente e o passo a passo completo estão no [RE
 | --- | --- |
 | `prisma/schema.prisma` | Categoria A do modelo (tabelas, enums, FKs `Restrict`, uniques e índices simples). **Não** declara índices parciais, CHECKs, exclusions, triggers nem a expressão da coluna gerada — esses objetos vivem só em SQL de migration (`docs/08` C-3) |
 | `prisma/migrations/` | Histórico autossuficiente — 9 migrations, da extensão `btree_gist` ao append-only. **Imutáveis**: correção nunca reescreve migration versionada |
-| `generated/prisma/` | Prisma Client gerado (`npx prisma generate`) — não versionado |
+| `generated/prisma/` | Prisma Client gerado (`pnpm exec prisma generate`) — não versionado |
 | `src/errors/constraint-map.ts` | Mapeamento medido de erros (`V-03`): `identificarViolacao`, `ehConsumoDuplicado`, `ehConflitoAgenda` — fail-closed |
 | `test/` | Suíte de integração (Jest 30 ESM, sem mocks) + helpers; `guard-anti-drift.spec.ts` é a Guarda 2 |
 | `protected-objects.json` | **Fonte única** do inventário de objetos SQL protegidos (36 nomes + coluna gerada + 5 tabelas append-only), consumida pelas Guardas 1 e 2 e pela verificação de catálogo da E-15 |
@@ -21,13 +21,13 @@ Pré-requisitos, variáveis de ambiente e o passo a passo completo estão no [RE
 
 | Comando | O que faz |
 | --- | --- |
-| `npm test` | Suíte integral contra banco descartável (`techlab_fisio_it_<sufixo>`) criado na instância do compose; migrations como `tlf_migrator`, testes como `tlf_app`; truncamento determinístico entre testes; teardown destrói o banco |
-| `npm run typecheck` | `tsc --noEmit` estrito, código e testes |
-| `npm run verify:from-scratch` | Reconstrução E-15 em container/volume descartáveis + verificação de catálogo + suíte integral |
-| `npm run lint:migrations` | Guarda 1 — `DROP` de objeto protegido fora da migration de origem falha |
-| `npm run schema:verify` | Guarda 3 + alarme `migrate diff --exit-code` |
-| `npm run schema:golden:update` | Regera o golden a partir de reconstrução limpa — **ato deliberado**, revisado em diff; nunca no CI |
-| `npm run db:validate` / `db:generate` / `db:status` | Atalhos do CLI do Prisma (config em `prisma.config.ts` na raiz) |
+| `pnpm test` | Suíte integral contra banco descartável (`techlab_fisio_it_<sufixo>`) criado na instância do compose; migrations como `tlf_migrator`, testes como `tlf_app`; truncamento determinístico entre testes; teardown destrói o banco |
+| `pnpm run typecheck` | `tsc --noEmit` estrito, código e testes |
+| `pnpm run verify:from-scratch` | Reconstrução E-15 em container/volume descartáveis + verificação de catálogo + suíte integral |
+| `pnpm run lint:migrations` | Guarda 1 — `DROP` de objeto protegido fora da migration de origem falha |
+| `pnpm run schema:verify` | Guarda 3 + alarme `migrate diff --exit-code` |
+| `pnpm run schema:golden:update` | Regera o golden a partir de reconstrução limpa — **ato deliberado**, revisado em diff; nunca no CI |
+| `pnpm run db:validate` / `db:generate` / `db:status` | Atalhos do CLI do Prisma (config em `prisma.config.ts` na raiz) |
 
 ## Invariantes operacionais
 

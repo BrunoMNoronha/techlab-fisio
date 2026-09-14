@@ -6,7 +6,7 @@
 //     @nestjs/swagger -> swagger-ui-dist -> @scarf/scarf
 //
 // cujo `postinstall` faz requisição de rede. Num projeto de saúde sujeito à
-// TLF-BASE-V1 §10/§14 isso precisa ser DECLARADO e desligado explicitamente. O
+// TLF-BASE-V2 §10/§14 isso precisa ser DECLARADO e desligado explicitamente. O
 // opt-out suportado pelo próprio pacote é `scarfSettings.enabled = false` no
 // `package.json` da raiz do projeto.
 //
@@ -50,11 +50,10 @@ describe("F-11 — telemetria transitiva do Scarf está desligada", () => {
   });
 
   it("o lockfile registra a cadeia exata e nenhuma outra fonte de telemetria", () => {
-    const lock = lerJson("package-lock.json");
-    const pacotes = lock["packages"] as Record<string, { version?: string }>;
-    expect(pacotes["node_modules/@nestjs/swagger"]?.version).toBe("11.4.7");
-    expect(pacotes["node_modules/swagger-ui-dist"]).toBeDefined();
-    expect(pacotes["node_modules/@scarf/scarf"]).toBeDefined();
+    const lock = readFileSync(path.join(raizRepo, "pnpm-lock.yaml"), "utf8");
+    expect(lock).toContain("@nestjs/swagger@11.4.7");
+    expect(lock).toContain("swagger-ui-dist@5.32.13");
+    expect(lock).toContain("@scarf/scarf@1.4.0");
   });
 });
 
@@ -71,7 +70,7 @@ describe("F3 — dependências da fatia permanecem contidas", () => {
   it("nenhum framework de validação foi instalado", () => {
     // A validação da F3 é uma função pura explícita; `class-validator` e
     // `class-transformer` são peers OPCIONAIS de `@nestjs/swagger` e ficaram
-    // deliberadamente de fora (TLF-BASE-V1 §14).
+    // deliberadamente de fora (TLF-BASE-V2 §14).
     const api = lerJson("apps", "api", "package.json");
     const todas = {
       ...(api["dependencies"] as Record<string, string>),
