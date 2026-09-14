@@ -84,11 +84,28 @@ export interface RequisicaoComContexto {
  * lançaria. Ela permanece `writable: false` e `enumerable: false`: o valor
  * não é mutável por atribuição direta, e não vaza em enumeração nem em JSON.
  */
+function ehObjetoValido(valor: unknown): valor is Record<PropertyKey, unknown> {
+  return typeof valor === "object" && valor !== null;
+}
+
+function ehContextoAutenticadoValido(
+  bruto: unknown,
+): bruto is ContextoAutenticado {
+  if (!ehObjetoValido(bruto)) return false;
+  const { usuarioId, sessaoId } = bruto;
+  return (
+    typeof usuarioId === "string" &&
+    usuarioId !== "" &&
+    typeof sessaoId === "string" &&
+    sessaoId !== ""
+  );
+}
+
 export function anexarContextoAutenticado(
   requisicao: unknown,
   contexto: ContextoAutenticado,
 ): void {
-  if (typeof requisicao !== "object" || requisicao === null) return;
+  if (!ehObjetoValido(requisicao)) return;
   const alvo = requisicao as RequisicaoComContexto;
   Object.defineProperty(alvo, CHAVE_CONTEXTO_AUTENTICADO, {
     value: Object.freeze({
@@ -109,12 +126,9 @@ export function anexarContextoAutenticado(
 export function lerContextoAutenticado(
   requisicao: unknown,
 ): ContextoAutenticado | null {
-  if (typeof requisicao !== "object" || requisicao === null) return null;
+  if (!ehObjetoValido(requisicao)) return null;
   const bruto = (requisicao as RequisicaoComContexto)[CHAVE_CONTEXTO_AUTENTICADO];
-  if (typeof bruto !== "object" || bruto === null) return null;
-  const { usuarioId, sessaoId } = bruto;
-  if (typeof usuarioId !== "string" || usuarioId === "") return null;
-  if (typeof sessaoId !== "string" || sessaoId === "") return null;
+  if (!ehContextoAutenticadoValido(bruto)) return null;
   return bruto;
 }
 
