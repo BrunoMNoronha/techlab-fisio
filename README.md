@@ -1,24 +1,24 @@
 # TechLab Fisio
 
-Sistema web de gestão para clínicas de fisioterapia (MVP em desenvolvimento). Monorepositório npm workspaces com a camada de persistência (`packages/database`, **encerrada** na Fase 2) e a fundação do backend (`apps/api`, NestJS 11 em ESM — [`apps/api/README.md`](apps/api/README.md); registro vivo em [`docs/10-backend-implementacao.md`](docs/10-backend-implementacao.md)). O frontend (`apps/web`, Next.js 16 + React 19 + Tailwind CSS 4 — [`apps/web/README.md`](apps/web/README.md)) foi estabelecido na sprint `FRONT-F0` como fundação técnica e recebeu na Fatia 1 (PR #27) a infraestrutura inicial de integração com `apps/api` (proxy same-origin em `/api/*`, cliente HTTP tipado e tela de login em `/login`), sem telas ou fluxos de negócio clínicos adicionais.
+Sistema web de gestão para clínicas de fisioterapia (MVP em desenvolvimento). Monorepositório pnpm workspaces com a camada de persistência (`packages/database`, **encerrada** na Fase 2) e a fundação do backend (`apps/api`, NestJS 11 em ESM — [`apps/api/README.md`](apps/api/README.md); registro vivo em [`docs/10-backend-implementacao.md`](docs/10-backend-implementacao.md)). O frontend (`apps/web`, Next.js 16 + React 19 + Tailwind CSS 4 — [`apps/web/README.md`](apps/web/README.md)) foi estabelecido na sprint `FRONT-F0` como fundação técnica e recebeu na Fatia 1 (PR #27) a infraestrutura inicial de integração com `apps/api` (proxy same-origin em `/api/*`, cliente HTTP tipado e tela de login em `/login`), sem telas ou fluxos de negócio clínicos adicionais.
 
-Este README é **operacional**: como reproduzir o ambiente e executar as verificações. As decisões de arquitetura, regras de negócio e o plano de implementação vivem em [`docs/`](docs/) — em especial [`docs/07-modelo-persistencia.md`](docs/07-modelo-persistencia.md) (modelo físico homologado) e [`docs/08-baseline-tecnica-plano-implementacao.md`](docs/08-baseline-tecnica-plano-implementacao.md) (baseline técnica e plano `E-01`..`E-18`). A fonte fundamental é [`TECHLAB_FISIO_BASE_IMUTAVEL_V1.md`](TECHLAB_FISIO_BASE_IMUTAVEL_V1.md).
+Este README é **operacional**: como reproduzir o ambiente e executar as verificações. As decisões de arquitetura, regras de negócio e o plano de implementação vivem em [`docs/`](docs/) — em especial [`docs/07-modelo-persistencia.md`](docs/07-modelo-persistencia.md) (modelo físico homologado) e [`docs/08-baseline-tecnica-plano-implementacao.md`](docs/08-baseline-tecnica-plano-implementacao.md) (baseline técnica e plano `E-01`..`E-18`). A base formal vigente do repositório é a [`TECHLAB_FISIO_BASE_IMUTAVEL_V2.md`](TECHLAB_FISIO_BASE_IMUTAVEL_V2.md), homologada por Bruno Menezes Noronha para registrar a migração para pnpm workspaces; a [`TECHLAB_FISIO_BASE_IMUTAVEL_V1.md`](TECHLAB_FISIO_BASE_IMUTAVEL_V1.md) permanece intacta e preservada como versão histórica substituída.
 
 ## Requisitos
 
 | Ferramenta | Versão | Observação |
 | --- | --- | --- |
-| Node.js | **24.x** (Active LTS) | `engines.node: ">=24.0.0 <25"` + `engine-strict=true` (`.npmrc`) recusam outra linha; `.nvmrc` = `24` |
-| npm | o distribuído com o Node 24 | registrado em `packageManager` (`npm@11.16.0`) |
+| Node.js | **24.x** (Active LTS) | `engines.node: ">=24.0.0 <25"` + `engineStrict: true` (`pnpm-workspace.yaml`) recusam outra linha; `.nvmrc` = `24` |
+| pnpm | **12.3.4** | registrado em `packageManager` (`pnpm@12.3.4`) |
 | Docker + Docker Compose v2 | qualquer engine atual | o comportamento é fixado pela **tag da imagem**: `postgres:18-bookworm` |
 
 ## Instalação
 
 ```bash
-npm ci
+pnpm install --frozen-lockfile
 ```
 
-Sempre `npm ci` (instalação reproduzível pelo `package-lock.json` versionado), nunca `npm install` casual.
+Sempre `pnpm install --frozen-lockfile` (instalação reproduzível pelo `pnpm-lock.yaml` versionado), nunca instalação sem lockfile.
 
 ## Variáveis de ambiente
 
@@ -50,11 +50,11 @@ A separação de roles é pré-requisito do modelo — não conecte a aplicaçã
 ## Prisma
 
 ```bash
-npx prisma generate
+pnpm exec prisma generate
 ```
 
 ```bash
-npx prisma validate
+pnpm exec prisma validate
 ```
 
 O Client é gerado em `packages/database/generated/prisma` (fora de `node_modules`, **não versionado** — artefato derivável).
@@ -64,12 +64,12 @@ O Client é gerado em `packages/database/generated/prisma` (fora de `node_module
 O histórico versionado em `packages/database/prisma/migrations` (9 migrations) é a **fonte de verdade** junto com `schema.prisma`. Aplicar em banco local:
 
 ```bash
-npx prisma migrate deploy
+pnpm exec prisma migrate deploy
 ```
 
 Regras vinculantes (detalhe em `docs/08` §9.3/§10/§10.2):
 
-- toda mudança de schema nasce em migration (`prisma migrate dev --create-only` + revisão humana do SQL); nada é aplicado manualmente no banco;
+- toda mudança de schema nasce em migration (`pnpm exec prisma migrate dev --create-only` + revisão humana do SQL); nada é aplicado manualmente no banco;
 - objetos não representáveis no Prisma Schema (CHECKs, índices parciais, exclusion constraints, triggers, `REVOKE`, coluna gerada, extensão) vivem **somente** em SQL de migration, com nomes determinísticos;
 - **`prisma db push` é proibido** em qualquer ambiente;
 - **`prisma db pull` está fora do fluxo normal**: nenhum script o expõe; investigação começa por `db pull --print` (não escreve em disco); sobrescrever o `schema.prisma` versionado é vedado, `--force` é proibido, e qualquer resultado que introduza `previewFeatures` (ex.: `partialIndexes`) é rejeitado por definição.
@@ -77,35 +77,35 @@ Regras vinculantes (detalhe em `docs/08` §9.3/§10/§10.2):
 ## Testes
 
 ```bash
-npm test
+pnpm test
 ```
 
-Suíte de integração (Jest 30, ESM real, sem mocks) contra PostgreSQL real. O globalSetup cria um **banco descartável por execução** (`techlab_fisio_it_<sufixo>`) na instância do compose, aplica as 9 migrations como `tlf_migrator` e executa os testes como `tlf_app`; o globalTeardown destrói o banco. Estado atual: **9 suites · 79 passed · 0 todo**. `T-AUD-CONTEXTO` **não** está nesta suíte por desenho: é teste de regra de aplicação/backend (`docs/09` §12.7) e foi **EXECUTADO/PASSED** na suíte de `apps/api` (`npm run test:api` — 4 suites · 93 passed; estado vivo em `docs/10`). `npm test` executa as duas suítes em sequência.
+Suíte de integração (Jest 30, ESM real, sem mocks) contra PostgreSQL real. O globalSetup cria um **banco descartável por execução** (`techlab_fisio_it_<sufixo>`) na instância do compose, aplica as 9 migrations como `tlf_migrator` e executa os testes como `tlf_app`; o globalTeardown destrói o banco. Estado atual: **9 suites · 79 passed · 0 todo**. `T-AUD-CONTEXTO` **não** está nesta suíte por desenho: é teste de regra de aplicação/backend (`docs/09` §12.7) e foi **EXECUTADO/PASSED** na suíte de `apps/api` (`pnpm run test:api` — 4 suites · 93 passed; estado vivo em `docs/10`). `pnpm test` executa as duas suítes em sequência.
 
-Dados **exclusivamente sintéticos** em desenvolvimento e testes — nunca dado real de paciente (TLF-BASE-V1 §10).
+Dados **exclusivamente sintéticos** em desenvolvimento e testes — nunca dado real de paciente (TLF-BASE-V2 §10).
 
 ## Verificações de integridade
 
 ```bash
-npm run verify:from-scratch
+pnpm run verify:from-scratch
 ```
 
-Prova de reconstrução (`E-15`): cria container+volume PostgreSQL descartáveis, comprova o banco vazio, reconstrói **apenas** com `prisma migrate deploy`, verifica no catálogo todos os objetos SQL customizados e roda a suíte integral dentro da instância reconstruída; destrói tudo ao final (inclusive em falha).
+Prova de reconstrução (`E-15`): cria container+volume PostgreSQL descartáveis, comprova o banco vazio, reconstrói **apenas** com `pnpm exec prisma migrate deploy`, verifica no catálogo todos os objetos SQL customizados e roda a suíte integral dentro da instância reconstruída; destrói tudo ao final (inclusive em falha).
 
 ```bash
-npm run lint:migrations
+pnpm run lint:migrations
 ```
 
 Guarda 1 anti-drift: falha se qualquer migration contiver `DROP` de objeto protegido (lista única em [`packages/database/protected-objects.json`](packages/database/protected-objects.json)) fora da migration de origem e sem anotação `-- INTENCIONAL:` justificada.
 
 ```bash
-npm run schema:verify
+pnpm run schema:verify
 ```
 
-Guarda 3 + alarme: reconstrói uma instância limpa, gera `pg_dump --schema-only` dentro do container e compara **byte a byte** com o golden versionado [`packages/database/schema.golden.sql`](packages/database/schema.golden.sql); em seguida roda `prisma migrate diff --from-migrations … --to-schema … --exit-code`. O golden só é atualizado por ato deliberado (`npm run schema:golden:update`) revisável em diff — o CI nunca o atualiza.
+Guarda 3 + alarme: reconstrói uma instância limpa, gera `pg_dump --schema-only` dentro do container e compara **byte a byte** com o golden versionado [`packages/database/schema.golden.sql`](packages/database/schema.golden.sql); em seguida roda `pnpm exec prisma migrate diff --from-migrations … --to-schema … --exit-code`. O golden só é atualizado por ato deliberado (`pnpm run schema:golden:update`) revisável em diff — o CI nunca o atualiza.
 
 ```bash
-npm run typecheck
+pnpm run typecheck
 ```
 
 TypeScript 6.0.x estrito em todos os workspaces, incluindo os testes; em `apps/web` o comando executa `next typegen` antes do `tsc --noEmit`.
@@ -115,20 +115,20 @@ TypeScript 6.0.x estrito em todos os workspaces, incluindo os testes; em `apps/w
 Fundação técnica do frontend estabelecida na sprint `FRONT-F0` (Next.js 16 App Router, React 19, TypeScript 6 estrito e Tailwind CSS 4 com tokens semânticos) e expandida na Fatia 1 (PR #27) com a infraestrutura inicial de integração com `apps/api`: proxy same-origin em `/api/*` ([`apps/web/app/api/[...caminho]/route.ts`](apps/web/app/api/[...caminho]/route.ts)), cliente HTTP tipado (`lib/api-cliente.ts`) e tela inicial de login (`app/login/page.tsx`). O frontend não depende de banco nem de Docker. Propósito, arquitetura e limites em [`apps/web/README.md`](apps/web/README.md).
 
 ```bash
-npm run dev --workspace @techlab-fisio/web
+pnpm --filter @techlab-fisio/web run dev
 ```
 
 ```bash
-npm run build --workspace @techlab-fisio/web
+pnpm --filter @techlab-fisio/web run build
 ```
 
-O script de verificação (`scripts/verify-web-integration.mjs`) executa 24 verificações sintéticas locais (sanitização de caminho, simulação de repasse de headers de proxy com `node:http`, reprodução local simplificada de guard CSRF e inspeção estática de arquivos). **Atenção de escopo:** esse script roda isoladamente no workspace web e **não** é disparado pelo `npm test` da raiz nem pelo CI (`ci.yml`), não substituindo homologação ponta a ponta integrada em runtime.
+O script de verificação (`scripts/verify-web-integration.mjs`) executa 24 verificações sintéticas locais (sanitização de caminho, simulação de repasse de headers de proxy com `node:http`, reprodução local simplificada de guard CSRF e inspeção estática de arquivos). **Atenção de escopo:** esse script roda isoladamente no workspace web e **não** é disparado pelo `pnpm test` da raiz nem pelo CI (`ci.yml`), não substituindo homologação ponta a ponta integrada em runtime.
 
-`npm run typecheck` e `npm run build` na raiz já incluem o workspace (`V-06.c` — teto do TypeScript 6.0 × Next.js 16 — foi aprovada nessa combinação; registro em `docs/08` §12.1).
+`pnpm run typecheck` e `pnpm run build` na raiz já incluem o workspace (`V-06.c` — teto do TypeScript 6.0 × Next.js 16 — foi aprovada nessa combinação; registro em `docs/08` §12.1).
 
 ## CI
 
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml) executa, na ordem barato→caro: `npm ci` → `prisma generate`/`validate` → typecheck → Guarda 1 → `verify:from-scratch` (que É a preparação da suíte integral, incluindo a Guarda 2 `guard-anti-drift.spec.ts`) → Guarda 3 + alarme → build dos três workspaces (`packages/database` → `apps/api` → `apps/web`) → provas de runtime e suítes do backend.
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) executa, na ordem barato→caro: `pnpm install --frozen-lockfile` → `pnpm exec prisma generate`/`validate` → typecheck → Guarda 1 → `verify:from-scratch` (que É a preparação da suíte integral, incluindo a Guarda 2 `guard-anti-drift.spec.ts`) → Guarda 3 + alarme → build dos três workspaces (`packages/database` → `apps/api` → `apps/web`) → provas de runtime e suítes do backend.
 
 ## Desligar o ambiente
 

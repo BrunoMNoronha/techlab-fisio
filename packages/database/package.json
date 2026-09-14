@@ -14,7 +14,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
-    "test:integration": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --config jest.config.mjs"
+    "test:integration": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.9.1",
