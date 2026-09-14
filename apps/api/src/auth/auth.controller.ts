@@ -59,7 +59,7 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 
-import { AutenticacaoService } from "./autenticacao.service.js";
+import { AutenticacaoService, type ResultadoLogin } from "./autenticacao.service.js";
 import {
   ERRO,
   ErroAutenticacaoDto,
@@ -205,6 +205,13 @@ export class AuthController {
       ip: extrairIp(requisicao),
     });
 
+    return this.#tratarResultadoAutenticacao(resultado, resposta);
+  }
+
+  #tratarResultadoAutenticacao(
+    resultado: ResultadoLogin,
+    resposta: RespostaAutenticacao,
+  ): LoginRespostaDto {
     if (resultado.desfecho === "BLOQUEADO") {
       // `Retry-After` é escrito ANTES da exceção: o filtro de exceção do Nest
       // escreve status e corpo na MESMA resposta, preservando os cabeçalhos.
