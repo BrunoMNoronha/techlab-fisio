@@ -12,8 +12,8 @@
 //
 // Execução:
 //   - local: docker compose up -d (instância de desenvolvimento) e
-//     `npm run test:integration -w @techlab-fisio/api` (lê .env);
-//   - CI: `npm run verify:api-integration` provisiona uma instância
+//     `pnpm --filter @techlab-fisio/api run test:integration` (lê .env);
+//   - CI: `pnpm run verify:api-integration` provisiona uma instância
 //     PostgreSQL 18 descartável e exporta as URLs antes de rodar esta suíte.
 
 import { createDefaultEsmPreset } from "ts-jest";
