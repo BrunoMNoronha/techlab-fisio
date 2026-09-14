@@ -18,8 +18,8 @@
 // Falha => exit 1. Nenhum segredo real; senhas 100% sintéticas.
 //
 // Uso:
-//   npm run build --workspace @techlab-fisio/api
-//   npm run verify:argon2-runtime --workspace @techlab-fisio/api
+//   pnpm --filter @techlab-fisio/api run build
+//   pnpm --filter @techlab-fisio/api run verify:argon2-runtime
 
 import { existsSync } from "node:fs";
 import path from "node:path";
@@ -33,7 +33,7 @@ const servicoCompilado = path.join(raizApi, "dist", "auth", "credencial.service.
 if (!existsSync(servicoCompilado)) {
   console.error(
     `${ROTULO} dist ausente — esta prova exige o artefato COMPILADO.\n` +
-      "  npm run build --workspace @techlab-fisio/api",
+      "  pnpm --filter @techlab-fisio/api run build",
   );
   process.exit(2);
 }

@@ -66,6 +66,7 @@ function centavos(valorCanonico: string): bigint {
   return BigInt(inteiro) * 100n + BigInt(fracao);
 }
 
+/** Motivos formais de rejeição da aplicação de desconto em cobrança. */
 export type MotivoRejeicaoDescontoCobranca =
   | "VALOR_DESCONTO_INVALIDO"
   | "ATOR_INEXISTENTE"
@@ -78,6 +79,7 @@ export type MotivoRejeicaoDescontoCobranca =
   | "RECEBIDO_EXCEDE_NOVO_LIQUIDO"
   | "MUTACAO_NAO_EFETIVADA";
 
+/** Erro de domínio lançado quando a aplicação de desconto em cobrança é rejeitada. */
 export class ErroDescontoCobranca extends Error {
   override readonly name = "ErroDescontoCobranca";
 
@@ -87,7 +89,9 @@ export class ErroDescontoCobranca extends Error {
   }
 }
 
+/** Comando de entrada para a aplicação de desconto em cobrança (operação FIN-003). */
 export interface ComandoAplicarDescontoCobranca {
+  /** Identificador único da cobrança. */
   readonly cobrancaId: string;
   /** Ator — validado como existente, ativo E portador da permissão. */
   readonly atorUsuarioId: string;
@@ -95,10 +99,13 @@ export interface ComandoAplicarDescontoCobranca {
   readonly valorDescontoNovo: string;
 }
 
+/** Resultado da operação de aplicação de desconto em cobrança. */
 export interface ResultadoAplicarDescontoCobranca {
+  /** Identificador único da cobrança. */
   readonly cobrancaId: string;
   /** Desconto vigente no instante serializado (string canônica do banco). */
   readonly valorDescontoAnterior: string;
+  /** Novo desconto TOTAL aplicado, string decimal canônica ("25.00"). */
   readonly valorDescontoNovo: string;
   /** `false` = no-op (novo desconto idêntico ao vigente; nada persistido). */
   readonly mutado: boolean;
