@@ -36,6 +36,7 @@ import {
 import { ProtecaoCsrfGuard } from "./protecao-csrf.guard.js";
 import { RELOGIO_SESSAO, relogioDoSistema } from "./relogio-sessao.js";
 import { SessaoService } from "./sessao.service.js";
+import { SessaoAutenticadaGuard } from "../authz/sessao-autenticada.guard.js";
 
 @Module({
   imports: [DatabaseModule, AuditModule],
@@ -61,6 +62,7 @@ import { SessaoService } from "./sessao.service.js";
     // por restart — limitação homologada, `R-2.3D-02`/`P-2.3D-06`).
     { provide: LimitadorLogin, useFactory: (): LimitadorLogin => new LimitadorLogin() },
     ProtecaoCsrfGuard,
+    SessaoAutenticadaGuard,
     AutenticacaoService,
     // Registrado por `APP_FILTER` — e não em `main.ts` — de propósito: assim o
     // filtro acompanha o MÓDULO, e toda aplicação montada a partir do

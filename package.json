@@ -16,6 +16,7 @@
     "test:integration": "pnpm --filter @techlab-fisio/database run test:integration",
     "test:api": "pnpm --filter @techlab-fisio/api run test",
     "verify:api-integration": "node scripts/verify-api-integration.mjs",
+    "verify:web-api-e2e": "node apps/web/scripts/verify-web-api-e2e.mjs",
     "smoke:api": "node scripts/smoke-api.mjs",
     "verify:from-scratch": "node scripts/verify-from-scratch.mjs",
     "lint:migrations": "node scripts/lint-migrations.mjs",
