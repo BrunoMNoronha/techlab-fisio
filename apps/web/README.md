@@ -14,7 +14,8 @@ Todos a partir da raiz do monorepositório (após `pnpm install --frozen-lockfil
 | `pnpm --filter @techlab-fisio/web run typecheck` | `next typegen` (gera os tipos de rota em `.next/types`) e depois `tsc --noEmit` |
 | `pnpm --filter @techlab-fisio/web run build` | Build de produção (`next build`; inclui a verificação de tipos do Next) |
 | `pnpm --filter @techlab-fisio/web run start` | Serve o build de produção (`next start`) |
-| `pnpm --filter @techlab-fisio/web run test` | Executa a bateria local de verificações de integração e segurança do frontend (`verify-web-integration.mjs` — 24 verificações; não executada na CI) |
+| `pnpm --filter @techlab-fisio/web run test` | Executa a bateria de verificações de integração e segurança do frontend (`verify-web-integration.mjs` — 24 verificações; executada na CI) |
+| `pnpm run verify:web-api-e2e` | Prova E2E real automatizada same-origin executando simultaneamente PostgreSQL 18 descartável, NestJS compilado, Next.js compilado com Route Handler proxy, `ProtecaoCsrfGuard` real e cookie real (`verify-web-api-e2e.mjs` — 24 verificações; executada na CI) |
 
 Os comandos raiz `pnpm run typecheck` e `pnpm run build` já incluem este workspace.
 
@@ -34,6 +35,7 @@ apps/web/
 ├── lib/
 │   └── api-cliente.ts             # Client HTTP tipado com proteção contra Client-Side CSRF
 ├── scripts/
+│   ├── verify-web-api-e2e.mjs     # Prova E2E automatizada real same-origin (24 verificações)
 │   └── verify-web-integration.mjs # Bateria de 24 verificações de integração e segurança
 ├── next.config.ts                 # configuração do Next.js
 ├── postcss.config.mjs             # plugin oficial @tailwindcss/postcss
@@ -68,15 +70,12 @@ Limites deliberados: **um** tema (claro; dark mode não é requisito vigente), s
 | Sem ESLint, sem testes, sem Storybook, sem state manager, sem client HTTP | Fundação sem lógica; introduzir infraestrutura sem consumidor seria complexidade prematura (TLF-BASE-V2 §4.5). **Superado em 06/09/2026 pela Fatia 1** quanto a *testes* e *client HTTP*: `scripts/verify-web-integration.mjs` e `lib/api-cliente.ts` passaram a existir porque houve consumidor. ESLint, Storybook e state manager continuam ausentes |
 | `next.config.ts` vazio | Nenhum header, rewrite ou proxy foi desativado ou configurado; isso pertence à primeira fatia funcional. **Estado em 06/09/2026:** o objeto de configuração **segue vazio** — o roteamento `/api/*` é feito por Route Handler (`app/api/[...caminho]/route.ts`), não por `rewrites` |
 
-## Estado da integração com `apps/api` (Fatia 1: P-2.3D-04)
+## Estado da integração com `apps/api` (Fatia 1 / P-2.3D-04 / P-2.3D-08)
 
-- **Integração inicial concluída:** proxy same-origin implementado em `app/api/[...caminho]/route.ts`, client HTTP tipado com mitigação de Client-Side CSRF em `lib/api-cliente.ts`, tela de login e formulário acessível em `app/login/`.
+- **Integração inicial concluída (Fatia 1):** proxy same-origin implementado em `app/api/[...caminho]/route.ts`, client HTTP tipado com mitigação de Client-Side CSRF em `lib/api-cliente.ts`, tela de login e formulário acessível em `app/login/`.
 - **CSRF e Same-Origin:** a topologia é **same-origin** — o proxy preserva `Host` público, `Origin`, `Sec-Fetch-*` e `X-TLF-Requisicao`, CORS permanece desabilitado e a baseline de `D-2.3D-07` é preservada **sem enfraquecimento** (nenhum synchronizer token, nenhuma exceção no guard).
-- **Bateria local de verificações (`scripts/verify-web-integration.mjs` — 24 verificações):** não é executada pela CI. A bateria decompõe-se estritamente em:
-  - **Código real executado (8 verificações):** validação unitária direta de `sanitizarCaminhoApi` importada de `lib/api-cliente.ts` contra URLs absolutas, protocol-relative e path traversal;
-  - **Repasse HTTP simulado (5 verificações):** simulação direta via `node:http` (cliente e servidor locais) testando a recepção dos cabeçalhos repassados, **sem executar o Route Handler real do Next.js** (`app/api/[...caminho]/route.ts`);
-  - **Avaliação de compatibilidade por reprodução local (3 verificações):** avaliação dos cabeçalhos simulados contra a função local `avaliarGuard` (definida dentro do próprio script de teste), **sem instanciar a API nem executar a `ProtecaoCsrfGuard` real do NestJS**;
-  - **Inspeção estática (8 verificações):** verificação de existência de arquivos no disco e busca textual por atributos de acessibilidade, labels e referências de rota;
-  - **O que ainda NÃO foi comprovado:** o fluxo integrado ponta a ponta (navegador ou teste e2e submetendo requisição pelo Route Handler do Next.js até a API NestJS real com a `ProtecaoCsrfGuard` ativa em runtime) **não foi executado** e permanece como pendência de prova futura associada a `P-2.3D-04`.
-- **`P-2.3D-04` permanece ABERTA** (`docs/12` §11). Esta fatia torna a reavaliação de `D-2.3D-07` materialmente possível e a **mede** sob as condições descritas acima; ela **não a homologa**. O encerramento formal da pendência é ato expresso de Bruno Menezes Noronha (TLF-BASE-V2 §15, item 1) e vive em `docs/12`, não aqui. Registro pós-medição em `docs/08` REV. 26 e `docs/10` REV. 38.
+- **Baterias automatizadas integradas à CI:**
+  - `verify-web-integration.mjs` (24 verificações): executada na CI via step `Frontend — verificações de integração e segurança web`;
+  - `verify-web-api-e2e.mjs` (24 verificações): executada na CI via script raiz `verify:web-api-e2e` e step `E2E — prova de integração real frontend/backend same-origin (verify-web-api-e2e)`.
+- **`P-2.3D-04` ENCERRADA em 15/09/2026**: Encerrada em 15/09/2026 após a integração do PR #47 (merge commit `89fa492603bdb6e90693b03544c7857ee7d7fb3d`) que versionou `apps/web/scripts/verify-web-api-e2e.mjs` e o passo correspondente na CI, executando simultaneamente PostgreSQL real em container, NestJS real compilado, Next.js real compilado com Route Handler de proxy same-origin (`/api/*`), `ProtecaoCsrfGuard` real e cookie real de sessão, provando que a baseline de CSRF de `D-2.3D-07` (`SameSite=Strict`, cabeçalho obrigatório `X-TLF-Requisicao` nas mutações, Fetch Metadata, validação de `Origin`, ausência de CORS) protege a fronteira de ponta a ponta sem necessidade de synchronizer token adicional.
 - **Identidade visual definitiva, dark mode, PWA, i18n, portal do paciente, multitenancy:** fora do escopo do MVP (TLF-BASE-V2 §13).
