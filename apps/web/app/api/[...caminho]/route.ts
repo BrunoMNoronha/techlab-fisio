@@ -60,10 +60,8 @@ async function proxyRequisicao(
   let corpoBuffer: Buffer | undefined;
   if (request.method !== "GET" && request.method !== "HEAD") {
     const arrayBuffer = await request.arrayBuffer();
-    if (arrayBuffer.byteLength > 0) {
-      corpoBuffer = Buffer.from(arrayBuffer);
-      headersEnvio["content-length"] = String(corpoBuffer.length);
-    }
+    corpoBuffer = Buffer.from(arrayBuffer);
+    headersEnvio["content-length"] = String(corpoBuffer.length);
   }
 
   return new Promise<Response>((resolve) => {
@@ -90,6 +88,19 @@ async function proxyRequisicao(
           }
         }
 
+        const status = proxyRes.statusCode ?? 502;
+        if (status === 204 || status === 304) {
+          proxyRes.resume();
+          resolve(
+            new NextResponse(null, {
+              status,
+              statusText: proxyRes.statusMessage,
+              headers: headersResposta,
+            }),
+          );
+          return;
+        }
+
         const corpoReadableStream = new ReadableStream({
           start(controller) {
             proxyRes.on("data", (chunk) => controller.enqueue(chunk));
@@ -103,7 +114,7 @@ async function proxyRequisicao(
 
         resolve(
           new NextResponse(corpoReadableStream, {
-            status: proxyRes.statusCode ?? 502,
+            status,
             statusText: proxyRes.statusMessage,
             headers: headersResposta,
           }),
@@ -129,7 +140,7 @@ async function proxyRequisicao(
       );
     });
 
-    if (corpoBuffer) {
+    if (corpoBuffer && corpoBuffer.length > 0) {
       proxyReq.write(corpoBuffer);
     }
     proxyReq.end();

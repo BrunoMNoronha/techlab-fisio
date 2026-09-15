@@ -108,17 +108,19 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
     expect(documento.paths["/health"]).toBeDefined();
   });
 
-  it("as rotas publicadas são EXATAMENTE as da F3, F6 e P-2.3D-07 — nenhuma outra vazou", () => {
-    // ATUALIZADO NA F6 / P-2.3D-07: as duas rotas de recuperação de senha (AUT-004)
-    // e a rota de revogação de sessão (P-2.3D-07 / AUT-002) foram
-    // autorizadas e passam a pertencer ao contrato. A asserção continua sendo
-    // de IGUALDADE EXATA — qualquer rota além destas seis falha aqui.
+  it("as rotas publicadas são EXATAMENTE as da F3, F6, P-2.3D-07 e P-2.3D-08 — nenhuma outra vazou", () => {
+    // ATUALIZADO NA F6 / P-2.3D-07 / P-2.3D-08: as duas rotas de recuperação de senha (AUT-004),
+    // a rota de revogação de sessão (P-2.3D-07 / AUT-002) e a consulta da sessão
+    // autenticada atual (P-2.3D-08 / D-2.3D-20) foram autorizadas e passam a pertencer
+    // ao contrato. A asserção continua sendo de IGUALDADE EXATA — qualquer rota
+    // além destas sete falha aqui.
     const caminhos = Object.keys(documento.paths);
     expect(caminhos.sort()).toEqual([
       "/auth/login",
       "/auth/logout",
       "/auth/recuperacao-senha",
       "/auth/recuperacao-senha/concluir",
+      "/auth/sessao",
       "/auth/sessoes/{sessaoId}",
       "/health",
     ]);
@@ -132,6 +134,16 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
     ]) {
       expect(caminhos.some((c) => c.includes(proibido))).toBe(false);
     }
+  });
+
+  it("a consulta segura GET /auth/sessao NÃO declara e NÃO exige o header CSRF x-tlf-requisicao", () => {
+    const parametros = (operacao("/auth/sessao", "get")["parameters"] ?? []) as Array<
+      Record<string, unknown>
+    >;
+    const header = parametros.find(
+      (p) => p["in"] === "header" && p["name"] === "x-tlf-requisicao",
+    );
+    expect(header).toBeUndefined();
   });
 
   it("o custom header CSRF é declarado como obrigatório em TODAS as mutações", () => {
@@ -464,6 +476,53 @@ describe("P-2.3D-07 — revogação administrativa de sessão de terceiro docume
       "REQUISICAO_NAO_AUTORIZADA",
       "SESSAO_INVALIDA",
     ]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// P-2.3D-08 — consulta da sessão autenticada atual (D-2.3D-20)
+// ---------------------------------------------------------------------------
+
+describe("P-2.3D-08 — consulta da sessão autenticada atual documentada", () => {
+  it("GET /auth/sessao está documentada com D-2.3D-20 e exige cookie de sessão", () => {
+    const op = operacao("/auth/sessao", "get");
+    expect(op["summary"]).toEqual(expect.stringContaining("D-2.3D-20"));
+    expect(op["tags"]).toEqual(["Autenticação"]);
+    const seguranca = op["security"] as Array<Record<string, unknown>> | undefined;
+    expect(seguranca).toBeDefined();
+    expect(seguranca?.some((s) => NOME_ESQUEMA_SESSAO in s)).toBe(true);
+  });
+
+  it("GET /auth/sessao documenta 200, 401 e 500", () => {
+    const todas = respostas("/auth/sessao", "get");
+    expect(Object.keys(todas).sort()).toEqual(["200", "401", "500"]);
+    const resp200 = todas["200"] as Record<string, unknown>;
+    expect(resp200["content"]).toBeDefined();
+  });
+
+  it("200 referencia ConsultarSessaoRespostaDto com usuarioId e sessaoId (ambos uuid)", () => {
+    const schema = documento.components?.schemas?.["ConsultarSessaoRespostaDto"] as {
+      properties?: Record<string, { type?: string; format?: string }>;
+      required?: string[];
+    };
+    expect(schema).toBeDefined();
+    expect(Object.keys(schema.properties ?? {}).sort()).toEqual(["sessaoId", "usuarioId"]);
+    expect(schema.properties?.["usuarioId"]?.format).toBe("uuid");
+    expect(schema.properties?.["sessaoId"]?.format).toBe("uuid");
+  });
+
+  it("ConsultarSessaoRespostaDto NÃO vaza campos confidenciais", () => {
+    const props = Object.keys(
+      (
+        documento.components?.schemas?.["ConsultarSessaoRespostaDto"] as {
+          properties?: Record<string, unknown>;
+        }
+      )?.properties ?? {},
+    );
+    const proibidos = ["token", "tokenHash", "segredo", "senhaHash", "hash", "cookie"];
+    for (const proibido of proibidos) {
+      expect(props.some((p) => p.toLowerCase().includes(proibido.toLowerCase()))).toBe(false);
+    }
   });
 });
 

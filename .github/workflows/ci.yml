@@ -147,3 +147,16 @@ jobs:
       # limpo por SIGTERM e cleanup garantido mesmo em falha (F-03).
       - name: "Backend — prova de bootstrap ESM (R-BL-02): dist/main.js + banco descartável"
         run: pnpm run smoke:api
+
+      # ------------------------------------------------------------------
+      # Etapa 2.3D-B / P-2.3D-08 — integração frontend e prova E2E real.
+      # ------------------------------------------------------------------
+
+      - name: "Frontend — prova de integração da fundação web (sanitização de caminhos)"
+        run: pnpm --filter @techlab-fisio/web run test
+
+      # Executa ciclo completo ponta a ponta: PostgreSQL 18 descartável +
+      # NestJS compilado + Next.js compilado + proxy same-origin + CSRF +
+      # cookie real + GET /auth/sessao (D-2.3D-20) + encerramento limpo.
+      - name: "E2E — prova real same-origin Web + API + PostgreSQL (P-2.3D-08 / D-2.3D-20)"
+        run: pnpm run verify:web-api-e2e

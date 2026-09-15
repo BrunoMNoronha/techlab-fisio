@@ -212,6 +212,9 @@ function ehOperacaoDaFronteira(requisicao: RequisicaoDaFronteira): boolean {
   if (metodo === "DELETE" && caminho.startsWith(PREFIXO_ROTA_SESSOES)) {
     return true;
   }
+  if (metodo === "GET" && caminho === "/auth/sessao") {
+    return true;
+  }
   return false;
 }
 

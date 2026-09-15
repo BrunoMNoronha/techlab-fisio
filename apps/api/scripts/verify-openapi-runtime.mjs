@@ -143,17 +143,30 @@ try {
 
   const caminhos = Object.keys(documento.paths ?? {}).sort();
   conferir(
-    "rotas da F3, F6 e P-2.3D-07 presentes e nenhuma outra vazou",
+    "rotas da F3, F6, P-2.3D-07 e P-2.3D-08 presentes e nenhuma outra vazou",
     JSON.stringify(caminhos) ===
       JSON.stringify([
         "/auth/login",
         "/auth/logout",
         "/auth/recuperacao-senha",
         "/auth/recuperacao-senha/concluir",
+        "/auth/sessao",
         "/auth/sessoes/{sessaoId}",
         "/health",
       ]),
     `caminhos=${caminhos.join(", ")}`,
+  );
+
+  // P-2.3D-08 — consulta da sessão autenticada atual.
+  const statusSessaoAtual = Object.keys(
+    documento.paths["/auth/sessao"]?.get?.responses ?? {},
+  )
+    .sort()
+    .join(",");
+  conferir(
+    "GET /auth/sessao documenta 200,401,500",
+    statusSessaoAtual === "200,401,500",
+    `status=${statusSessaoAtual}`,
   );
 
   // F6 — as duas rotas de recuperação de senha, com decorators resolvidos.
@@ -225,6 +238,12 @@ try {
       JSON.stringify(["expiraEm", "usuarioId"]),
     propriedades("LoginRespostaDto").join(", "),
   );
+  conferir(
+    "ConsultarSessaoRespostaDto expõe SÓ sessaoId e usuarioId",
+    JSON.stringify(propriedades("ConsultarSessaoRespostaDto").sort()) ===
+      JSON.stringify(["sessaoId", "usuarioId"]),
+    propriedades("ConsultarSessaoRespostaDto").join(", "),
+  );
   const PROIBIDAS = new Set([
     "token",
     "tokenhash",
@@ -244,6 +263,14 @@ try {
     "nenhum schema de resposta declara campo secreto",
     vazamentos.length === 0,
     vazamentos.join(", "),
+  );
+  const vazamentosSessaoAtual = propriedades("ConsultarSessaoRespostaDto").filter((p) =>
+    new Set(["token", "tokenhash", "segredo", "senhahash", "hash", "cookie"]).has(p.toLowerCase()),
+  );
+  conferir(
+    "ConsultarSessaoRespostaDto não declara token, hash ou segredo",
+    vazamentosSessaoAtual.length === 0,
+    vazamentosSessaoAtual.join(", "),
   );
   // F6 — a ÚNICA exceção homologada (AUT-004, passo 3): a apresentação única
   // do segredo de recuperação, e nada além de `segredo` + `expiraEm`.

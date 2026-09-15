@@ -87,6 +87,28 @@ export class LoginRespostaDto {
 }
 
 /**
+ * Corpo de `200 OK` de `GET /auth/sessao` (`D-2.3D-20`).
+ *
+ * Expõe exclusivamente os identificadores autoritativos do usuário e da sessão.
+ * Nenhum token, hash, segredo ou metadado sensível é trafegado.
+ */
+export class ConsultarSessaoRespostaDto {
+  @ApiProperty({
+    description: "Identificador único do usuário autenticado titular da sessão.",
+    format: "uuid",
+    example: "123e4567-e89b-12d3-a456-426614174000",
+  })
+  readonly usuarioId!: string;
+
+  @ApiProperty({
+    description: "Identificador único da sessão autenticada atual.",
+    format: "uuid",
+    example: "123e4567-e89b-12d3-a456-426614174001",
+  })
+  readonly sessaoId!: string;
+}
+
+/**
  * Corpo de erro — ÚNICO para toda a fronteira de autenticação.
  *
  * `erro` é um código de conjunto fechado. Nenhuma mensagem livre, nenhum

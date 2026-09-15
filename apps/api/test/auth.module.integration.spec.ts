@@ -257,6 +257,7 @@ describe("AuthModule — fronteira da F1+F2+F3 preservada", () => {
       "/auth/logout",
       "/auth/recuperacao-senha",
       "/auth/recuperacao-senha/concluir",
+      "/auth/sessao",
       "/auth/sessoes/{sessaoId}",
       "/health",
     ]);

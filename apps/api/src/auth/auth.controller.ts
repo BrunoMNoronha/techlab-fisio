@@ -41,6 +41,8 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Get,
+  Header,
   HttpCode,
   Inject,
   HttpException,
@@ -53,6 +55,7 @@ import {
 } from "@nestjs/common";
 import {
   ApiBody,
+  ApiCookieAuth,
   ApiHeader,
   ApiOperation,
   ApiResponse,
@@ -61,6 +64,7 @@ import {
 
 import { AutenticacaoService, type ResultadoLogin } from "./autenticacao.service.js";
 import {
+  ConsultarSessaoRespostaDto,
   ERRO,
   ErroAutenticacaoDto,
   LoginRequisicaoDto,
@@ -75,6 +79,12 @@ import {
   type PoliticaCookieSessao,
 } from "./politica-cookie.js";
 import { CABECALHO_REQUISICAO_TLF, ProtecaoCsrfGuard } from "./protecao-csrf.guard.js";
+import { SessaoAutenticadaGuard } from "../authz/sessao-autenticada.guard.js";
+import {
+  UsuarioAutenticado,
+  type ContextoAutenticado,
+} from "../authz/contexto-autenticado.js";
+import { NOME_ESQUEMA_SESSAO } from "../openapi/documento-openapi.js";
 
 /**
  * Forma mínima da requisição consumida por este controller. Estrutural de
@@ -108,17 +118,7 @@ export function extrairIp(requisicao: RequisicaoAutenticacao): string {
 }
 
 @ApiTags("Autenticação")
-@ApiHeader({
-  name: CABECALHO_REQUISICAO_TLF,
-  required: true,
-  description:
-    "Custom request header obrigatório da baseline CSRF (D-2.3D-07). Qualquer " +
-    "valor não vazio. Um formulário cross-site não consegue emiti-lo, e um " +
-    "fetch cross-site que tente dispara preflight — que ninguém responde, " +
-    "porque CORS está desabilitado.",
-})
 @Controller("auth")
-@UseGuards(ProtecaoCsrfGuard)
 export class AuthController {
   constructor(
     private readonly autenticacao: AutenticacaoService,
@@ -127,7 +127,17 @@ export class AuthController {
   ) {}
 
   @Post("login")
+  @UseGuards(ProtecaoCsrfGuard)
   @HttpCode(HttpStatus.OK)
+  @ApiHeader({
+    name: CABECALHO_REQUISICAO_TLF,
+    required: true,
+    description:
+      "Custom request header obrigatório da baseline CSRF (D-2.3D-07). Qualquer " +
+      "valor não vazio. Um formulário cross-site não consegue emiti-lo, e um " +
+      "fetch cross-site que tente dispara preflight — que ninguém responde, " +
+      "porque CORS está desabilitado.",
+  })
   @ApiOperation({
     summary: "Autentica um usuário ativo e emite a sessão (AUT-001).",
     description:
@@ -239,7 +249,17 @@ export class AuthController {
   }
 
   @Post("logout")
+  @UseGuards(ProtecaoCsrfGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiHeader({
+    name: CABECALHO_REQUISICAO_TLF,
+    required: true,
+    description:
+      "Custom request header obrigatório da baseline CSRF (D-2.3D-07). Qualquer " +
+      "valor não vazio. Um formulário cross-site não consegue emiti-lo, e um " +
+      "fetch cross-site que tente dispara preflight — que ninguém responde, " +
+      "porque CORS está desabilitado.",
+  })
   @ApiOperation({
     summary: "Encerra a própria sessão (AUT-002, D-2.3D-05).",
     description:
@@ -307,5 +327,45 @@ export class AuthController {
     }
     // 204: nenhum corpo. Nada do estado interno da sessão é devolvido —
     // nem id, nem instante, nem estado.
+  }
+
+  @Get("sessao")
+  @UseGuards(SessaoAutenticadaGuard)
+  @HttpCode(HttpStatus.OK)
+  @Header("Cache-Control", "no-store")
+  @ApiCookieAuth(NOME_ESQUEMA_SESSAO)
+  @ApiOperation({
+    summary: "Consulta a sessão autenticada atual (D-2.3D-20).",
+    description:
+      "Retorna os identificadores autoritativos do usuário e da sessão vigentes. " +
+      "Método seguro de leitura sem CSRF guard, sem X-TLF-Requisicao, sem corpo e sem synchronizer token. " +
+      "Não emite evento de auditoria.",
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      "Sessão válida. Retorna os identificadores autoritativos do usuário e da sessão.",
+    type: ConsultarSessaoRespostaDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: "Sessão ausente, inválida, expirada ou revogada.",
+    type: ErroAutenticacaoDto,
+  })
+  @ApiResponse({
+    status: 500,
+    description:
+      "Falha TÉCNICA inesperada. Deliberadamente distinta de 401: uma " +
+      "indisponibilidade de infraestrutura nunca é reportada como credencial " +
+      "inválida. Nenhum detalhe interno é devolvido.",
+    type: ErroAutenticacaoDto,
+  })
+  async consultarSessao(
+    @UsuarioAutenticado() contexto: ContextoAutenticado,
+  ): Promise<ConsultarSessaoRespostaDto> {
+    return {
+      usuarioId: contexto.usuarioId,
+      sessaoId: contexto.sessaoId,
+    };
   }
 }
