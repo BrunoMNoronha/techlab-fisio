@@ -10,7 +10,8 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "next typegen && tsc --noEmit -p tsconfig.json",
-    "test": "node scripts/verify-web-integration.mjs"
+    "test": "node scripts/verify-web-integration.mjs",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "next": "16.3.4",
@@ -18,6 +19,7 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "24.13.3",
     "@types/react": "19.2.18",

@@ -21,3 +21,9 @@ Thumbs.db
 apps/web/.next/
 apps/web/out/
 apps/web/next-env.d.ts
+
+# Playwright: relatórios, evidências de falha e cache
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
