@@ -3952,7 +3952,7 @@ Contexto ausente, contexto `{}` e subconjunto das chaves permitidas continuam ac
 
 #### 7.5.8 Fronteira desta fatia
 
-**Não** foram criados: endpoint, migration, ação de auditoria, chave de whitelist, alvo, abstração genérica, biblioteca de validação, parser de datas global, serviço de UUID ou normalizador. **Não** foram alterados: obrigatoriedade de chave, ownership da validação (`D-AUD-08`), política de escalares (§7.3), catálogo de ações, catálogo de `resultado`, contratos HTTP/OpenAPI, dependências ou CI. `L-06` **não** foi tocada; `prontuario.acessado` continua fora; **`P-BACK-01` não foi encerrada**; **`R2.2-04` não foi encerrado** (§7.2.0). Nenhuma decisão foi tomada sobre a leitura de `docs/09` §13.3 — a questão foi registrada e devolvida.
+**Não** foram criados: endpoint, migration, ação de auditoria, chave de whitelist, alvo, abstração genérica, biblioteca de validação, parser de datas global, serviço de UUID ou normalizador. **Não** foram alterados: obrigatoriedade de chave, ownership da validação (`D-AUD-08`), política de escalares (§7.3), catálogo de ações, catálogo de `resultado`, contratos HTTP/OpenAPI, dependências ou CI. `L-06` **não** foi tocada; `prontuario.acessado` continua fora; **`P-BACK-01` não foi encerrada**. **`R2.2-04` não é encerrado por esta subseção**: a fatia supriu a condição semântica, e o encerramento formal do risco decorre de **`D-AUD-09-A`** (`docs/09` §14.9), registrado em §7.2/§7.2.0 pela REV. 43. A leitura de `docs/09` §13.3 **não** foi decidida por esta fatia: ela foi registrada e devolvida em `docs/09` §14.8 e **respondida por Bruno Menezes Noronha** em §14.9 — leitura restrita (a).
 
 ## 8. Testes e verificações
 
