@@ -3,9 +3,9 @@
 > **Documento:** `docs/09-pacote-decisao-p-e14-01.md`
 > **Projeto:** TechLab Fisio
 > **Fase:** 2 — Implementação física — `E-18A`
-> **Status:** **DECIDIDO — DECISÕES `D-AUD-01`..`D-AUD-08` HOMOLOGADAS POR BRUNO MENEZES NORONHA EM 25/08/2026 (REGISTRO NORMATIVO EM §12); DECISÕES `PBACK-AUD-01`..`PBACK-AUD-08` HOMOLOGADAS EM 05/09/2026 (REGISTRO NORMATIVO EM §13); `PBACK-AUD-09` — REAVALIAÇÃO DE `L-07` SOBRE O PACOTE `docs/13` — DECIDIDA EM 05/09/2026 (REGISTRO NORMATIVO EM §13.4.1: `autorizacao.negada` HOMOLOGADA COMO 25ª AÇÃO, WHITELIST VAZIA, EMISSÃO RESTRITA A `senha.recuperar_terceiro`). `L-06` PERMANECE ABERTA / BLOQUEADA — §13.3**
-> **Data:** 25 de agosto de 2026 (proposta e decisão de `P-E14-01`); 05 de setembro de 2026 (decisão de `P-BACK-01-D2` — §13; decisão de reavaliação de `L-07` — §13.4.1)
-> **Natureza:** §§1..11 são preservados **como a proposta original submetida à decisão** (insumo decisório histórico, sem valor normativo próprio); **§12 é o registro normativo da decisão homologada** de `P-E14-01`; **§13 é o registro normativo da decisão homologada** de `P-BACK-01-D2`, que cumpre o que `D-AUD-06` adiou. Onde §12 divergir de §§1..11, **§12 prevalece**; §13 **não altera nem reabre** §12. Este documento não altera `docs/02`..`docs/07`.
+> **Status:** **DECIDIDO — DECISÕES `D-AUD-01`..`D-AUD-08` HOMOLOGADAS POR BRUNO MENEZES NORONHA EM 25/08/2026 (REGISTRO NORMATIVO EM §12); DECISÕES `PBACK-AUD-01`..`PBACK-AUD-08` HOMOLOGADAS EM 05/09/2026 (REGISTRO NORMATIVO EM §13); `PBACK-AUD-09` — REAVALIAÇÃO DE `L-07` SOBRE O PACOTE `docs/13` — DECIDIDA EM 05/09/2026 (REGISTRO NORMATIVO EM §13.4.1: `autorizacao.negada` HOMOLOGADA COMO 25ª AÇÃO, WHITELIST VAZIA, EMISSÃO RESTRITA A `senha.recuperar_terceiro`); `D-AUD-09` — SEMÂNTICA DOS VALORES DAS WHITELISTS POSITIVAS REMANESCENTES — HOMOLOGADA EM 15/09/2026 (REGISTRO NORMATIVO EM §14: DATA CIVIL GREGORIANA CANÔNICA E UUID TEXTUAL CANÔNICO; NENHUMA AÇÃO, CHAVE OU OBRIGATORIEDADE ALTERADA); `D-AUD-09-A` — RESOLUÇÃO DA AMBIGUIDADE DE §13.3 (“POR ESTA VIA”) — HOMOLOGADA EM 15/09/2026 (REGISTRO NORMATIVO EM §14.9: PREVALECE A LEITURA RESTRITA; `L-06` NÃO É PRÉ-CONDIÇÃO GLOBAL DE `R2.2-04`, QUE PASSA A PODER SER ENCERRADO — ESTADO VIVO EM `docs/10` §7.2). `L-06` PERMANECE ABERTA / BLOQUEADA — §13.3**
+> **Data:** 25 de agosto de 2026 (proposta e decisão de `P-E14-01`); 05 de setembro de 2026 (decisão de `P-BACK-01-D2` — §13; decisão de reavaliação de `L-07` — §13.4.1); 15 de setembro de 2026 (decisão `D-AUD-09` — §14; resolução da ambiguidade de §13.3, `D-AUD-09-A` — §14.9)
+> **Natureza:** §§1..11 são preservados **como a proposta original submetida à decisão** (insumo decisório histórico, sem valor normativo próprio); **§12 é o registro normativo da decisão homologada** de `P-E14-01`; **§13 é o registro normativo da decisão homologada** de `P-BACK-01-D2`, que cumpre o que `D-AUD-06` adiou; **§14 é o registro normativo da decisão homologada `D-AUD-09`**, e **§14.9 o da decisão homologada `D-AUD-09-A`** — ambos com o mesmo valor normativo de §12 e §13. Onde §12, §13 ou §14 divergirem de §§1..11, **prevalece a seção normativa**; §13 **não altera nem reabre** §12, e §14 **não altera nem reabre** §12 nem §13 — apenas acrescenta semântica de valor às chaves que §12.6 já homologara. Este documento não altera `docs/02`..`docs/07` nem a Base Imutável (`TLF-BASE-V2`).
 
 ---
 
@@ -462,7 +462,7 @@ E **não** são classificadas como sensíveis para esse gatilho específico: **n
 - **`P2.2-05`** — relação fisioterapeuta↔paciente / escopo de acesso clínico: **não materializada**; é dependência direta de `L-06`.
 - **Visualizador de auditoria (AUD-004)** — política fechada por §13.9; **implementação pendente**, como unidade própria.
 - **Emissores ausentes** — 17 das 24 ações homologadas seguem sem emissor (G-02); cada uma será materializada com o módulo de domínio correspondente.
-- **`R2.2-04`** — permanece **ABERTO / MITIGADO PARCIALMENTE**. Esta seção **não** o encerra: a validação semântica de `data_referencia_anterior`/`data_referencia_nova` e de `registro_original_id` continua sem regra homologada e sem emissor.
+- ~~**`R2.2-04`** — permanece **ABERTO / MITIGADO PARCIALMENTE**. Esta seção **não** o encerra: a validação semântica de `data_referencia_anterior`/`data_referencia_nova` e de `registro_original_id` continua sem regra homologada e sem emissor.~~ — **SUPERADO em 15/09/2026 por `D-AUD-09` (§14).** O texto acima é preservado como registro do estado de 05/09/2026 e continua verdadeiro quanto a esta seção, que de fato não encerrou o risco. A regra semântica que faltava foi **formalmente decidida** em §14; o estado factual corrente de `R2.2-04` consta de `docs/10` §7.2. A ausência de emissor, isoladamente, deixou de ser fundamento para manter o risco aberto (§14.8). O único fundamento que restava — o vínculo normativo de §13.3 com `L-06` — foi **afastado na mesma data por §14.9 (`D-AUD-09-A`)**, que homologou a leitura restrita de “por esta via”: `L-06` **não** é pré-condição global de `R2.2-04`. `R2.2-04` está **ENCERRADO** no estado vivo (`docs/10` §7.2); **`L-06` segue ABERTA / BLOQUEADA** e continua listada acima com suas dependências intactas.
 - **`L-08` — materialização técnica** — ação, alvo e chaves a decidir com o módulo de pacientes, considerando o conflito `campos_alterados` × política de escalares (§13.5).
 - **`configuracao.alterada` — estado anterior não preservado** — limitação declarada em §13.6, reavaliável com emissor real.
 
@@ -484,4 +484,150 @@ Não são objeto nem consequência deste registro: a implementação do endpoint
 
 ---
 
-**Fim — §§1..11: proposta histórica; §12: decisão homologada em 25/08/2026 (`D-AUD-01`..`D-AUD-08`); §13: decisão homologada em 05/09/2026 (`PBACK-AUD-01`..`PBACK-AUD-08`); §13.4.1: `PBACK-AUD-09` decidida em 05/09/2026 (reavaliação de `L-07` — auditoria restrita, `autorizacao.negada` homologada). `P-E14-01` ENCERRADA; `T-AUD-CONTEXTO` EXECUTADO (`docs/10` §8.1); `L-05` e `L-08` (política) FECHADAS; `L-07` DECIDIDA (§13.4.1) — implementação autorizada, materializada e **integrada na `main` em 05/09/2026 (PR #23, merge `e1459f6`)**; `D-6` registrou a não autorização no ato da decisão e a publicação foi ato posterior de Bruno Menezes Noronha; `L-06` ABERTA / BLOQUEADA POR DEPENDÊNCIA FUNCIONAL-TÉCNICA; `R2.2-04` permanece ABERTO / MITIGADO PARCIALMENTE.**
+## 14. Registro de decisão — `D-AUD-09`: semântica dos valores das whitelists positivas remanescentes (15/09/2026)
+
+> **Natureza desta seção: NORMATIVA.** Decisão homologada por **Bruno Menezes Noronha** em **15/09/2026**, no mesmo regime de §12 e §13. Onde §§1..11 divergirem, prevalece esta seção. `D-AUD-09` **não reabre** `D-AUD-01`..`D-AUD-08` nem `PBACK-AUD-01`..`PBACK-AUD-09`.
+
+### 14.1 Problema
+
+`D-AUD-07` (§12.6) fixou **quais chaves** podem existir em `contexto` por ação, mas não **que valores** cada chave admite. A validação semântica de valores existia apenas para o par monetário de `cobranca.desconto_aplicado` (`F-2.3C-REV-01`, apoiada em `docs/07` §19.2 e `PROP-RN-2.3C-01` — `docs/11`). As outras duas whitelists positivas permaneciam sob barreiras **apenas estruturais** (whitelist + escalar JSON), de modo que uma string arbitrária era aceita em `data_referencia_anterior`, `data_referencia_nova` e `registro_original_id`. Era exatamente a condição registrada em §13.11 e em `docs/10` §7.2 como obstáculo ao encerramento de `R2.2-04`.
+
+### 14.2 Estado anterior (preservado como fato histórico)
+
+- `SEMANTICA_CONTEXTO` continha **uma única** entrada (`cobranca.desconto_aplicado`);
+- `apps/api/test/audit-context.validator.spec.ts` continha um teste — *"NÃO amplia silenciosamente para as demais whitelists positivas"* — que **materializava deliberadamente** essa lacuna, provando que `"qualquer-string"` era aceita em datas e uuid **porque faltava fonte homologada**. O teste era correto para o estado de então; com `D-AUD-09` a fonte passa a existir e o comportamento que ele travava deixa de ser válido, razão pela qual foi **substituído** — nunca mantido em paralelo com o novo;
+- `R2.2-04` permanecia **ABERTO / MITIGADO PARCIALMENTE**.
+
+### 14.3 Decisão — datas civis
+
+Para a ação `cobranca.data_referencia_recalculada`, as chaves `data_referencia_anterior` e `data_referencia_nova` admitem **exclusivamente** uma **data civil gregoriana canônica** na forma `YYYY-MM-DD` — quatro dígitos de ano, dois de mês, dois de dia, separados por hífen.
+
+**Fundamento.** `cobranca.data_referencia` é `date NOT NULL`, materializada como **data civil no fuso da clínica** (`docs/07` §20; tipologia "Data civil" de `docs/07` §11.3). A chave de auditoria registra o valor anterior e o novo **dessa mesma coluna** (F-07), logo representa uma **data civil, não um instante temporal**.
+
+**Regra calendárica.** A forma é condição necessária, não suficiente: a data deve **existir de fato** no calendário gregoriano. Ano bissexto sse `ano % 400 === 0` **ou** (`ano % 4 === 0` **e** `ano % 100 !== 0`). Consequências vinculantes:
+
+| Valor | Resultado | Razão |
+| --- | --- | --- |
+| `2026-09-15`, `2026-01-01` | **válido** | data civil existente |
+| `2024-02-29` | **válido** | bissexto pela regra dos 4 |
+| `2000-02-29` | **válido** | secular bissexto (múltiplo de 400) |
+| `2023-02-29` | **inválido** | ano não bissexto |
+| `1900-02-29` | **inválido** | secular **não** bissexto (múltiplo de 100, não de 400) |
+| `2026-13-01`, `2026-00-01` | **inválido** | mês inexistente |
+| `2026-04-31`, `2026-02-30` | **inválido** | dia inexistente no mês |
+| `0000-01-01` | **inválido** | **ano zero rejeitado** para este contrato |
+| `2026-9-15`, `15/09/2026`, `2026/09/15` | **inválido** | forma não canônica |
+| `2026-09-15T00:00:00Z` | **inválido** | datetime não é data civil |
+| `" 2026-09-15 "` (com espaços), `""` | **inválido** | espaços não são removidos; vazio não é data |
+| `number`, `boolean`, `null`, objeto, array | **inválido** | valor não string |
+
+**Proibições expressas.** Não se usa fuso horário; não se converte para UTC; não se normaliza; não se aceita `Date`; não se aceita datetime; não se removem espaços; não se corrige entrada alguma. Um valor fora da forma é **rejeitado**, jamais consertado.
+
+### 14.4 Decisão — UUID canônico
+
+Para a ação `retificacao_clinica.efetivada_terceiro`, a chave `registro_original_id` admite **exclusivamente** UUID textual canônico em **minúsculas**, na forma `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`, isto é `^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`. Exemplo válido: `550e8400-e29b-41d4-a716-446655440000`.
+
+**Fundamento.** A chave existe por F-08 / D-01.4 para apontar o **registro original** da retificação; a base técnica do projeto adota UUIDs (`TLF-BASE-V2` §9). São rejeitados: UUID em maiúsculas ou caixa mista; UUID sem hífens; `{uuid}` e `urn:uuid:`; espaços antes ou depois; comprimento incorreto; caractere não hexadecimal; string vazia; `number`; `boolean`; `null`; objeto; array.
+
+**Limites deliberados.** A decisão **não** exige UUID v4 nem qualquer outra versão, **não** valida variante, **não** consulta o banco, **não** verifica a existência da linha apontada, **não** infere entidade e **não** normaliza maiúsculas para minúsculas. O objeto da validação é exclusivamente a **representação textual canônica** do identificador em contexto de auditoria; a existência referencial, quando o emissor existir, é matéria da transação que o emite, não desta política.
+
+### 14.5 O que `D-AUD-09` NÃO faz
+
+> `D-AUD-09` não altera ações, whitelist, quantidade de chaves, obrigatoriedade ou ownership da validação pela aplicação; apenas define a semântica dos valores de três chaves já homologadas.
+
+Detalhando:
+
+- **Ações:** permanecem **25** (`D-AUD-01` + `PBACK-AUD-09`). Nenhuma criada, removida ou renomeada.
+- **Whitelist:** permanece **3 positivas · 22 vazias**, com exatamente as mesmas chaves. `D-AUD-07` **continua sendo a fonte das whitelists**; esta decisão só acrescenta **semântica de valor**.
+- **Obrigatoriedade:** **inalterada**. Contexto **ausente** continua permitido; contexto `{}` continua permitido; **subconjunto** das chaves permitidas continua permitido. `D-AUD-09` restringe os valores **somente quando a chave estiver presente** — não torna `data_referencia_anterior`, `data_referencia_nova` ou `registro_original_id` obrigatórias por implicação.
+- **`autor_original_usuario_id`:** continua **não homologada** (§12.6, confirmada em §13.8) e é recusada pela barreira de whitelist, **antes** da semântica — mesmo acompanhada de um uuid canônico.
+- **Ownership (`D-AUD-08`):** **inalterado** — a validação é da **aplicação**. Nenhum trigger, CHECK, enum, JSON Schema de banco ou regra em `packages/database` decorre desta seção. **Nenhuma migration, nenhuma alteração de schema, nenhum contrato HTTP/OpenAPI, nenhuma dependência.**
+- **Emissores:** nenhum é criado. As duas ações seguem **sem emissor de domínio**; a enforcement passa a existir **antes** do emissor, que é a ordem correta para uma política fail-closed.
+- **Política de escalares (`docs/10` §7.3):** inalterada — a barreira estrutural **precede** a semântica, e objeto/array/`NaN`/`±Infinity` continuam recusados como `VALOR_NAO_ESCALAR`.
+
+### 14.6 Relação com decisões anteriores
+
+| Decisão | Relação |
+| --- | --- |
+| `D-AUD-07` (§12.6) | **Fonte das whitelists — não reaberta.** `D-AUD-09` opera *dentro* das chaves que ela homologou. A recusa de `autor_original_usuario_id` é preservada |
+| `D-AUD-08` (§12.7) | **Confirmada.** O ownership da validação continua na aplicação; a enforcement é a mesma do `AuditContextValidator` |
+| `F-2.3C-REV-01` / `PROP-RN-2.3C-01` (`docs/11`) | **Precedente metodológico e comportamento preservado.** A validação monetária de `cobranca.desconto_aplicado` permanece **idêntica**; `D-AUD-09` replica o mesmo mecanismo (predicado declarado no catálogo, executado pelo validator) para as duas whitelists restantes |
+| `SEMANTICA_CONTEXTO` | Passa de **uma** para **três** entradas. Com isso **não resta chave homologada sob barreira apenas estrutural** |
+| `PBACK-AUD-09` (§13.4.1) | Sem interação: `autorizacao.negada` tem whitelist vazia |
+| `L-06` (§13.3) | **Não alterada** — permanece **ABERTA / BLOQUEADA**; `prontuario.acessado` continua fora. Mas a cláusula final de §13.3 **víncula o encerramento de `R2.2-04` a `L-06`**, e por isso `D-AUD-09` **não** declara `R2.2-04` encerrado (§14.8) |
+
+### 14.7 Materialização e testes
+
+| Onde | O quê |
+| --- | --- |
+| `apps/api/src/audit/audit.catalog.ts` | helpers puros `ehDataCivilCanonica` e `ehUuidCanonico` (sem biblioteca externa, sem `Date`, sem normalização) e as três novas entradas de `SEMANTICA_CONTEXTO` |
+| `apps/api/src/audit/audit-context.validator.ts` | mensagem de `VALOR_SEMANTICAMENTE_INVALIDO` tornada **genérica** (o motivo é preservado); a lógica concreta de data/uuid **não** migra para o validator — o catálogo **declara**, o validator **executa** |
+| `apps/api/test/audit-context.validator.spec.ts` | matrizes de válidos/inválidos das datas e do uuid; precedência estrutural × semântica; ausência de normalização; não obrigatoriedade; mensagem genérica sem valores. O teste do estado anterior foi **substituído** (§14.2) |
+| `apps/api/test/audit.module.integration.spec.ts` | as mesmas regras exercidas pelo provider resolvido do `AppModule` real — a política da aplicação é a política testada |
+
+Nenhum teste transacional sintético é criado para estas duas ações: **elas ainda não possuem emissor de domínio real**, e um fluxo de banco artificial não produziria evidência proporcional. A atomicidade será provada nas fatias funcionais dos emissores, quando existirem.
+
+### 14.8 Efeito sobre `R2.2-04` — condição suprida; encerramento não declarado **nesta subseção** (estado da rodada de implementação, 15/09/2026, antes de §14.9)
+
+> **Leia §14.9 antes desta subseção.** O texto abaixo é preservado **na íntegra** como registro do estado em que a rodada de implementação de `D-AUD-09` se encerrou, e da divergência interpretativa então devolvida a Bruno Menezes Noronha. Essa divergência **foi resolvida na mesma data**, em §14.9, pela adoção da **leitura restrita (a)**. Onde esta subseção divergir de §14.9, **prevalece §14.9**.
+
+O obstáculo declarado em §13.11 e em `docs/10` §7.2 — *"a validação semântica de `data_referencia_anterior`/`data_referencia_nova` e de `registro_original_id` continua sem regra homologada"* — **deixa de existir** com esta decisão e sua materialização. Com whitelist fail-closed implementada, `T-AUD-CONTEXTO` executado, rejeição de chave fora da whitelist coberta e as **três** whitelists positivas semanticamente validadas, a **política de conteúdo** de `contexto` está integralmente definida e exercida pela aplicação.
+
+**`D-AUD-09` NÃO declara `R2.2-04` encerrado.** A inspeção final desta rodada encontrou uma **segunda condição normativa**, homologada e ainda pendente, que nenhuma das fontes consultadas antes da implementação havia relacionado a esta frente:
+
+> §13.3 (`PBACK-AUD-02`, 05/09/2026), última consequência operacional: *"Enquanto `L-06` permanecer aberta, **`R2.2-04` não pode ser declarado encerrado** por esta via, e nenhuma rota de leitura clínica deve ser publicada sem que esta lacuna seja decidida."*
+
+`L-06` permanece **ABERTA / BLOQUEADA** — e continua assim por dependência funcional-técnica real (`P2.2-05` não materializada; módulo de prontuário inexistente), não por omissão desta rodada. Duas leituras da cláusula são defensáveis e a divergência **não é resolvida silenciosamente** (`TLF-BASE-V2` §15):
+
+| Leitura | Texto que a sustenta | Consequência |
+| --- | --- | --- |
+| **(a) restrita** — "por esta via" limita a cláusula à própria §13: aquela seção não podia servir de veículo para o encerramento | §13.11 diz, no mesmo sentido, "Esta seção **não** o encerra"; e `R2.2-04` é definido em `docs/07` §22.3/§24.4 como vazamento por **chave/valor** de `contexto`, matéria distinta da auditoria de **leitura** clínica (AUD-002), que é o objeto de `L-06` | `R2.2-04` poderia ser encerrado agora |
+| **(b) ampla** — enquanto `L-06` estiver aberta, `R2.2-04` não pode ser declarado encerrado por via alguma | a redação é categórica quanto ao efeito ("não pode ser declarado encerrado"), e `TLF-BASE-V1` §10 / `TLF-BASE-V2` §10 tratam auditoria de acesso como requisito permanente | `R2.2-04` permanece aberto até `L-06` ser decidida |
+
+~~**Decisão desta rodada: prevalece a leitura conservadora (b).**~~ — **SUPERADA em 15/09/2026 por §14.9**, que homologou a leitura **(a)**. O parágrafo fica preservado como registro do critério aplicado *enquanto* a matéria não tinha decisão de autoridade: `R2.2-04` **não** era declarado encerrado, e a escolha seguia `TLF-BASE-V2` §15: diante de duas fontes homologadas do mesmo nível cuja divergência não foi resolvida por autoridade, interrompe-se a decisão afetada em vez de adotar a interpretação mais conveniente. O estado factual resultante — **`ABERTO`, com a política de conteúdo integralmente mitigada e uma única condição remanescente** — é registrado em `docs/10` §7.2.
+
+~~**Questão objetiva devolvida a Bruno Menezes Noronha** (única matéria não decidida por esta seção)~~ — **RESPONDIDA em 15/09/2026: leitura (a)** (§14.9). Texto original preservado: a cláusula final de §13.3 deve ser lida como (a) ou como (b)? Se (a), `R2.2-04` pode ser encerrado imediatamente, pois todas as demais condições estão satisfeitas e verificadas uma a uma (`docs/10` §7.2). Se (b), `R2.2-04` permanece aberto — sem trabalho técnico pendente de auditoria de `contexto` — até que `L-06` seja decidida, o que depende de `P2.2-05` e do módulo de prontuário. Nenhuma implementação adicional decorre de qualquer das respostas.
+
+A resposta foi **(a)**, e vale a consequência ali antecipada: *“`R2.2-04` pode ser encerrado imediatamente, pois todas as demais condições estão satisfeitas e verificadas uma a uma”* — verificação e encerramento formal em `docs/10` §7.2 (§14.9).
+
+Registra-se ainda, para não se perder no ruído: **a ausência de emissor futuro não mantém `R2.2-04` aberto por si só** — o risco é de política de conteúdo, e a enforcement está pronta **antes** do emissor. O único fundamento remanescente do não encerramento era o vínculo normativo com `L-06` — **fundamento afastado por §14.9**. `P-BACK-01` **não** é encerrada por esta seção nem por §14.9, e `L-06` permanece **ABERTA / BLOQUEADA**.
+
+### 14.9 Resolução da ambiguidade de §13.3 — **leitura restrita homologada** (`D-AUD-09-A`, 15/09/2026)
+
+> **Natureza desta subseção: NORMATIVA.** Decisão de autoridade tomada por **Bruno Menezes Noronha** em **15/09/2026**, no mesmo regime de §12, §13 e §14. Resolve — e encerra — a única matéria que §14.8 devolvera em aberto. §13.3 **não é reaberta**: seu texto permanece íntegro e vinculante; o que se fixa aqui é **o alcance** de uma de suas cláusulas.
+
+**Matéria submetida.** A última consequência operacional de §13.3 (`PBACK-AUD-02`, 05/09/2026) diz: *“Enquanto `L-06` permanecer aberta, **`R2.2-04` não pode ser declarado encerrado** por esta via, e nenhuma rota de leitura clínica deve ser publicada sem que esta lacuna seja decidida.”* §14.8 registrou duas leituras defensáveis de **“por esta via”** — (a) restrita e (b) ampla — e, na ausência de decisão de autoridade, aplicou provisoriamente a conservadora (b).
+
+**Decidido — prevalece a leitura restrita (a).** A expressão **“por esta via”** alcança o **veículo** do encerramento: `L-06` impede que `R2.2-04` seja considerado encerrado **pela decisão relativa à auditoria de leitura clínica** — isto é, §13 não podia servir de veículo para esse encerramento. A cláusula **não** cria dependência global entre `L-06` e `R2.2-04`, e **não** transforma `L-06` em pré-condição de qualquer outra via de encerramento.
+
+**Fundamento — os dois itens têm objeto próprio e distinto.**
+
+| Item | Objeto próprio | Fonte |
+| --- | --- | --- |
+| `R2.2-04` | **Vazamento de conteúdo clínico por `evento_auditoria.contexto`** — política de chave/valor: lista branca por ação, validada **na aplicação**, com teste que rejeita chave fora da lista | `docs/07` §22.3 e tabela de riscos §24.4 |
+| `L-06` | **Quando** o acesso de **leitura** a dados clínicos deve gerar auditoria (condição do “quando exigido” de AUD-002) | `docs/09` §13.3; `docs/02` AUD-002 |
+
+São **obrigações distintas**: a primeira governa *o que pode ser escrito dentro de `contexto`*; a segunda governa *que eventos de leitura devem existir*. Satisfazer integralmente a política de conteúdo do `contexto` não depende de existir — ou não — uma ação de auditoria de leitura clínica, e a recíproca também é verdadeira. A leitura (a) é a única que preserva os dois objetos sem absorver um no outro.
+
+**Consequências vinculantes desta decisão.**
+
+1. **`R2.2-04` pode e deve ser declarado encerrado**, desde que — e somente enquanto — as condições materiais estejam efetivamente atendidas e verificadas uma a uma. Elas estão: a verificação condição a condição e o encerramento formal constam do estado vivo, em `docs/10` §7.2.
+2. **`L-06` permanece `ABERTA / BLOQUEADA POR DEPENDÊNCIA FUNCIONAL-TÉCNICA`** (§13.3), com regra, gatilhos e dependências (`P2.2-05`; módulo de prontuário; superfície real de leitura clínica) **inalterados**. Esta decisão **não** a fecha, **não** a atenua e **não** a reprograma.
+3. **Nenhuma rota de leitura clínica é autorizada** por esta decisão. A segunda metade da cláusula de §13.3 — *“nenhuma rota de leitura clínica deve ser publicada sem que esta lacuna seja decidida”* — é **integralmente preservada** e segue vinculante.
+4. **`prontuario.acessado` NÃO é criada.** O catálogo permanece com **25** ações e **3 whitelists positivas · 22 vazias**; nenhuma chave é acrescentada, removida ou renomeada.
+5. **`P-BACK-01` NÃO é encerrada.** Segue **EM ANDAMENTO** por pendências próprias — `L-06`, emissores de domínio ausentes, visualizador AUD-004 (política fechada, implementação pendente). O encerramento de `R2.2-04` não a alcança (`docs/10` §7.1).
+6. **Nenhuma alteração de código, teste, schema, migration, contrato HTTP/OpenAPI ou dependência decorre desta decisão.** §14.1..§14.7 ficam **inalteradas**; a materialização registrada em `docs/10` §7.5 é a mesma, e nada nela é reaberto.
+7. **Nada além disto é decidido.** Esta subseção não amplia o escopo de `P-BACK-01`, não reabre `D-AUD-01`..`D-AUD-08`, `PBACK-AUD-01`..`PBACK-AUD-09` ou §14.1..§14.7, e não cria precedente para encerrar qualquer outro item por analogia.
+
+**Estado registrado:** ambiguidade de §13.3 — **RESOLVIDA / LEITURA RESTRITA (a) HOMOLOGADA**. Estado factual de `R2.2-04` em `docs/10` §7.2; estado de `L-06` em §13.3 e `docs/10` §7.1, **inalterado**.
+
+
+---
+
+**Fim — §14: `D-AUD-09` homologada em 15/09/2026. Semântica de valor definida para as três whitelists positivas; `D-AUD-07` não reaberta; ações, chaves, obrigatoriedade e ownership inalterados; nenhuma migration, dependência ou contrato HTTP afetado; `R2.2-04` com a condição semântica SUPRIDA. §14.8 registra o estado da rodada de implementação, em que o encerramento **não** foi declarado por causa do vínculo normativo de §13.3 com `L-06`; **§14.9 — `D-AUD-09-A`, homologada por Bruno Menezes Noronha na mesma data — resolve essa divergência adotando a leitura restrita (a)**, de modo que `R2.2-04` **pode ser encerrado**, e o encerramento formal consta do estado vivo (`docs/10` §7.2). `P-BACK-01` permanece EM ANDAMENTO e `L-06` permanece ABERTA / BLOQUEADA; nenhuma rota clínica autorizada; `prontuario.acessado` não criada.**
+
+---
+
+**Fim — §§1..11: proposta histórica; §12: decisão homologada em 25/08/2026 (`D-AUD-01`..`D-AUD-08`); §13: decisão homologada em 05/09/2026 (`PBACK-AUD-01`..`PBACK-AUD-08`); §13.4.1: `PBACK-AUD-09` decidida em 05/09/2026 (reavaliação de `L-07` — auditoria restrita, `autorizacao.negada` homologada). `P-E14-01` ENCERRADA; `T-AUD-CONTEXTO` EXECUTADO (`docs/10` §8.1); `L-05` e `L-08` (política) FECHADAS; `L-07` DECIDIDA (§13.4.1) — implementação autorizada, materializada e **integrada na `main` em 05/09/2026 (PR #23, merge `e1459f6`)**; `D-6` registrou a não autorização no ato da decisão e a publicação foi ato posterior de Bruno Menezes Noronha; `L-06` ABERTA / BLOQUEADA POR DEPENDÊNCIA FUNCIONAL-TÉCNICA; §14: `D-AUD-09` homologada em 15/09/2026 (semântica de valor das três whitelists positivas).**
+>
+> **Atualização de 15/09/2026 — `D-AUD-09` (§14).** A linha acima descreve o estado até 05/09/2026 e fica preservada como registro histórico: `R2.2-04` estava então ABERTO / MITIGADO PARCIALMENTE, exatamente porque faltava a regra semântica das datas e do uuid. Com §14 essa condição normativa foi suprida e materializada; o estado factual corrente de `R2.2-04` é registrado em `docs/10` §7.2. §14.8 **não** declarou `R2.2-04` encerrado, por causa da cláusula final de §13.3 — divergência de leitura registrada e devolvida naquela subseção. **Em 15/09/2026, §14.9 (`D-AUD-09-A`) resolveu a divergência**: Bruno Menezes Noronha homologou a **leitura restrita (a)** de “por esta via”, de modo que `L-06` **não** é pré-condição global de `R2.2-04`; o encerramento formal do risco consta do estado vivo (`docs/10` §7.2). `P-BACK-01` **não** é encerrada por §14 nem por §14.9, e `L-06` permanece ABERTA / BLOQUEADA — nenhuma rota de leitura clínica autorizada, `prontuario.acessado` não criada.

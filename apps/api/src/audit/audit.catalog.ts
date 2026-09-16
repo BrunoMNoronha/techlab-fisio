@@ -2,10 +2,11 @@
 //
 // FONTE ÚNICA E EXAUSTIVA: docs/09 §12 (decisões D-AUD-01 e D-AUD-07,
 // homologadas por Bruno Menezes Noronha em 25/08/2026), docs/09 §13
-// (decisões PBACK-AUD-01..PBACK-AUD-08, homologadas em 05/09/2026) e docs/09
+// (decisões PBACK-AUD-01..PBACK-AUD-08, homologadas em 05/09/2026), docs/09
 // §13.4.1 (PBACK-AUD-09 — reavaliação de L-07, decidida em 05/09/2026 sobre o
-// pacote docs/13). Este arquivo é a materialização tipada daquele registro —
-// ele NÃO decide nada.
+// pacote docs/13) e docs/09 §14 (D-AUD-09 — regras semânticas das whitelists
+// positivas remanescentes, homologada por Bruno Menezes Noronha em 15/09/2026).
+// Este arquivo é a materialização tipada daquele registro — ele NÃO decide nada.
 //
 // §13 NÃO ALTEROU ESTE ARQUIVO EM SUBSTÂNCIA: as 24 ações e as whitelists
 // (3 positivas · 21 vazias) de D-AUD-01/D-AUD-07 foram preservadas por
@@ -18,6 +19,28 @@
 // autorização da permissão `senha.recuperar_terceiro` (lista fechada mantida
 // pelo emissor em `authz/auditoria-negacao-autorizacao.ts`, não aqui: este
 // catálogo declara ações e chaves, não regras de emissão).
+//
+// D-AUD-09 (docs/09 §14, 15/09/2026) ACRESCENTOU REGRAS SEMÂNTICAS às duas
+// whitelists positivas que permaneciam sem validação semântica desde a 2.3C:
+//   - `cobranca.data_referencia_recalculada`: `data_referencia_anterior` e
+//     `data_referencia_nova` exigem data civil gregoriana canônica YYYY-MM-DD
+//     com validação calendárica real (bissexto incluso); sem interpretação de
+//     timezone; sem conversão `Date`;
+//   - `retificacao_clinica.efetivada_terceiro`: `registro_original_id` exige
+//     UUID canônico em minúsculas xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx; sem
+//     restrição de versão/variante; sem consulta ao banco.
+// Nenhuma ação, chave, cardinalidade ou obrigatoriedade foi alterada; D-AUD-07
+// não foi reaberta. D-AUD-09 supriu a condição semântica que mantinha `R2.2-04`
+// aberto, mas NÃO o encerrou por si: o encerramento dependia ainda da cláusula
+// final de docs/09 §13.3 (divergência registrada em docs/09 §14.8).
+//
+// D-AUD-09-A (docs/09 §14.9, 15/09/2026) resolveu essa divergência — prevalece a
+// leitura restrita de "por esta via": L-06 NÃO é pré-condição global de
+// `R2.2-04`, que fica ENCERRADO (estado vivo em docs/10 §7.2). L-06 permanece
+// ABERTA / BLOQUEADA, nenhuma rota de leitura clínica é autorizada e
+// `prontuario.acessado` NÃO é criada — ver abaixo. Nada disso altera este
+// arquivo, que nada decide: nenhuma ação, chave ou predicado mudou por
+// D-AUD-09-A.
 //
 // Regras de manutenção (vinculantes):
 //   - nenhuma ação entra aqui sem decisão homologada própria — em particular
@@ -38,7 +61,7 @@
 //     `agendamento.concluido` e `bloqueio_agenda.criado` seguem FORA; as
 //     demais transições são atribuíveis por `historico_agendamento`;
 //   - L-06 (acesso clínico) — **ABERTA / BLOQUEADA** (§13.3). NÃO foi
-//     encerrada por escopo: TLF-BASE-V1 §10 exige trilha de auditoria para
+//     encerrada por escopo: TLF-BASE-V2 §10 exige trilha de auditoria para
 //     ACESSO a dados sensíveis, e AUD-002 não é dada por satisfeita pelas
 //     ações de exportação/finalização/retificação. Bloqueada por não existir
 //     módulo de prontuário nem `P2.2-05`. `prontuario.acessado` continua
@@ -146,21 +169,93 @@ export function ehDecimalMonetarioCanonico(valor: unknown): valor is string {
 }
 
 /**
- * F-2.3C-REV-01 — validação SEMÂNTICA fail-closed por ação/chave, aplicada
- * pelo `AuditContextValidator` DEPOIS das barreiras estruturais (whitelist e
+ * Forma canônica de DATA CIVIL gregoriana aceita em chave de contexto de data
+ * (D-AUD-09, `docs/09` §14): exatamente `YYYY-MM-DD`, quatro dígitos de ano,
+ * dois de mês e dois de dia. A forma é condição NECESSÁRIA, não suficiente —
+ * a existência real no calendário é verificada em seguida.
+ */
+const FORMATO_DATA_CIVIL_CANONICA = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/** Dias por mês em ano NÃO bissexto, índice 1..12. */
+const DIAS_POR_MES = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+/** Regra gregoriana de ano bissexto (D-AUD-09): 400, ou 4 e não 100. */
+function ehAnoBissexto(ano: number): boolean {
+  return ano % 400 === 0 || (ano % 4 === 0 && ano % 100 !== 0);
+}
+
+/**
+ * `true` sse `valor` é uma STRING de DATA CIVIL gregoriana canônica
+ * `YYYY-MM-DD` que EXISTE de fato no calendário (D-AUD-09, `docs/09` §14).
+ *
+ * A chave representa uma data civil (`cobranca.data_referencia` é `date` —
+ * `docs/07` §20, "data civil no fuso da clínica"), NÃO um instante temporal:
+ * por isso nada aqui usa `Date`, timezone, UTC ou qualquer conversão. Nenhuma
+ * normalização é feita: `" 2026-09-15 "`, `"2026-9-15"`, `"15/09/2026"`,
+ * `"2026-09-15T00:00:00Z"`, `""`, datas inexistentes (`2023-02-29`,
+ * `1900-02-29`, `2026-13-01`, `2026-04-31`) e o ano `0000` são FALSOS, assim
+ * como qualquer valor que não seja `string`.
+ */
+export function ehDataCivilCanonica(valor: unknown): valor is string {
+  if (typeof valor !== "string") {
+    return false;
+  }
+  const partes = FORMATO_DATA_CIVIL_CANONICA.exec(valor);
+  if (partes === null) {
+    return false;
+  }
+  const ano = Number(partes[1]);
+  const mes = Number(partes[2]);
+  const dia = Number(partes[3]);
+  if (ano < 1 || mes < 1 || mes > 12 || dia < 1) {
+    return false;
+  }
+  const diasNoMes =
+    mes === 2 && ehAnoBissexto(ano) ? 29 : (DIAS_POR_MES[mes] as number);
+  return dia <= diasNoMes;
+}
+
+/**
+ * Forma canônica textual de UUID aceita em chave de contexto identificadora
+ * (D-AUD-09, `docs/09` §14): 8-4-4-4-12 dígitos hexadecimais MINÚSCULOS,
+ * separados por hífen. Sem restrição de versão nem de variante — por decisão
+ * expressa: o contrato valida a REPRESENTAÇÃO do identificador, não sua
+ * origem.
+ */
+const FORMATO_UUID_CANONICO =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+/**
+ * `true` sse `valor` é uma STRING de UUID textual canônico em minúsculas
+ * (D-AUD-09). Maiúsculas, ausência de hífens, delimitadores (`{...}`),
+ * espaços, comprimento incorreto, caractere não hexadecimal, string vazia e
+ * qualquer não-string são FALSOS. Nenhuma normalização (não se converte
+ * maiúscula em minúscula) e nenhuma consulta ao banco: a existência da linha
+ * apontada não é — e não pode ser — verificada por este predicado.
+ */
+export function ehUuidCanonico(valor: unknown): valor is string {
+  return typeof valor === "string" && FORMATO_UUID_CANONICO.test(valor);
+}
+
+/**
+ * Validação SEMÂNTICA fail-closed por ação/chave, aplicada pelo
+ * `AuditContextValidator` DEPOIS das barreiras estruturais (whitelist e
  * escalar JSON). Uma chave listada aqui só é aceita se o predicado aprovar o
  * valor; chave sem predicado permanece sob as barreiras estruturais apenas.
  *
- * Escopo deliberadamente restrito (sem ampliação silenciosa de D-AUD-07):
- *   - `cobranca.desconto_aplicado`: as duas chaves monetárias homologadas
- *     exigem string decimal canônica de `numeric(12,2)` — fonte: `docs/07`
- *     §19.2 + PROP-RN-2.3C-01 + autorização de F-2.3C-REV-01;
- *   - `cobranca.data_referencia_recalculada` e
- *     `retificacao_clinica.efetivada_terceiro`: NENHUMA regra semântica é
- *     definida aqui — o formato dessas chaves (data civil ISO; uuid) não tem
- *     regra homologada própria e será decidido quando seus emissores forem
- *     implementados (pendência registrada em `docs/10`). O mecanismo suporta
- *     acrescentá-las com uma linha por chave, mediante decisão expressa.
+ * Fontes homologadas, por regime (sem ampliação silenciosa de D-AUD-07 —
+ * nenhuma ação, chave ou obrigatoriedade é alterada aqui):
+ *   - `cobranca.desconto_aplicado` (F-2.3C-REV-01): as duas chaves monetárias
+ *     exigem string decimal canônica de `numeric(12,2)` — `docs/07` §19.2 +
+ *     PROP-RN-2.3C-01 (`docs/11`);
+ *   - `cobranca.data_referencia_recalculada` (**D-AUD-09**, `docs/09` §14): o
+ *     par de datas exige data civil gregoriana canônica `YYYY-MM-DD` existente
+ *     no calendário;
+ *   - `retificacao_clinica.efetivada_terceiro` (**D-AUD-09**): a chave
+ *     `registro_original_id` exige UUID textual canônico em minúsculas.
+ *
+ * Com D-AUD-09 as TRÊS whitelists positivas do catálogo passam a ter regra
+ * semântica: não resta chave homologada sob barreira apenas estrutural.
  */
 export const SEMANTICA_CONTEXTO: Readonly<
   Partial<Record<AcaoAuditoria, Readonly<Record<string, (valor: unknown) => boolean>>>>
@@ -168,6 +263,13 @@ export const SEMANTICA_CONTEXTO: Readonly<
   "cobranca.desconto_aplicado": {
     valor_desconto_anterior: ehDecimalMonetarioCanonico,
     valor_desconto_novo: ehDecimalMonetarioCanonico,
+  },
+  "cobranca.data_referencia_recalculada": {
+    data_referencia_anterior: ehDataCivilCanonica,
+    data_referencia_nova: ehDataCivilCanonica,
+  },
+  "retificacao_clinica.efetivada_terceiro": {
+    registro_original_id: ehUuidCanonico,
   },
 };
 

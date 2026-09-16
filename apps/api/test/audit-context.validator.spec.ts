@@ -317,18 +317,20 @@ describe("barreira contra serialização genérica de DTO/request", () => {
     expect(erro.motivo).toBe("CONTEXTO_NAO_OBJETO");
   });
 
-  it("aceita escalares JSON em chave permitida SEM regra semântica registrada", () => {
-    // F-2.3C-REV-01: as chaves monetárias de `cobranca.desconto_aplicado`
-    // ganharam regra semântica própria (ver bloco no fim do arquivo); a
-    // aceitação estrutural genérica de escalares continua valendo apenas
-    // para chaves homologadas SEM regra registrada — nenhuma regra foi
-    // inventada para datas/uuid nesta correção.
+  it("a barreira estrutural PRECEDE a semântica: objeto/array em chave com regra é VALOR_NAO_ESCALAR", () => {
+    // D-AUD-09 registrou regra semântica para TODAS as chaves homologadas,
+    // mas NÃO alterou a precedência: o não-escalar é recusado antes, pelo
+    // motivo estrutural. A ordem é comportamento observável e fica travada.
     expect(
-      validator.validar("cobranca.data_referencia_recalculada", {
-        data_referencia_anterior: null,
-        data_referencia_nova: 15,
-      }),
-    ).toBe("cobranca.data_referencia_recalculada");
+      rejeicao("cobranca.data_referencia_recalculada", {
+        data_referencia_anterior: { corpo: "de um DTO inteiro" },
+      }).motivo,
+    ).toBe("VALOR_NAO_ESCALAR");
+    expect(
+      rejeicao("cobranca.data_referencia_recalculada", {
+        data_referencia_nova: ["2026-09-15"],
+      }).motivo,
+    ).toBe("VALOR_NAO_ESCALAR");
   });
 });
 
@@ -370,17 +372,22 @@ describe("números não finitos NÃO são escalares JSON (F-REV-02)", () => {
     ["zero", 0],
     ["zero negativo", -0],
     ["Number.MAX_VALUE (finito)", Number.MAX_VALUE],
-  ])("continua aceitando %s em chave SEM regra semântica", (_rotulo, valor) => {
-    // Desde F-2.3C-REV-01, número finito deixou de ser aceito nas chaves
-    // MONETÁRIAS (regra semântica própria — bloco abaixo); a aceitação
-    // estrutural de números finitos permanece para chave sem regra.
-    expect(Number.isFinite(valor)).toBe(true);
-    expect(
-      validator.validar("cobranca.data_referencia_recalculada", {
+  ])(
+    "%s ATRAVESSA a barreira estrutural e só então é recusado pela semântica",
+    (_rotulo, valor) => {
+      // A distinção entre as duas barreiras continua observável depois de
+      // D-AUD-09: número finito É escalar JSON (ao contrário de NaN/±Infinity,
+      // acima) e por isso só é recusado na etapa SEMÂNTICA. Desde D-AUD-09 não
+      // resta chave homologada sem regra semântica — nenhuma chave aceita
+      // número.
+      expect(Number.isFinite(valor)).toBe(true);
+      const erro = rejeicao("cobranca.data_referencia_recalculada", {
         data_referencia_nova: valor,
-      }),
-    ).toBe("cobranca.data_referencia_recalculada");
-  });
+      });
+      expect(erro.motivo).toBe("VALOR_SEMANTICAMENTE_INVALIDO");
+      expect(erro.chaves).toEqual(["data_referencia_nova"]);
+    },
+  );
 });
 
 describe("F-2.3C-REV-01 — validação semântica das chaves monetárias de cobranca.desconto_aplicado", () => {
@@ -484,18 +491,284 @@ describe("F-2.3C-REV-01 — validação semântica das chaves monetárias de cob
     expect(JSON.stringify(contexto)).toBe(antes);
   });
 
-  it("NÃO amplia silenciosamente para as demais whitelists positivas", () => {
-    // Datas e uuid não ganharam regra nesta correção (sem fonte homologada):
-    // continuam sob as barreiras estruturais apenas.
+  // O teste que aqui existia ("NÃO amplia silenciosamente para as demais
+  // whitelists positivas") materializava o estado ANTERIOR: `"qualquer-string"`
+  // era aceita em datas/uuid porque faltava fonte homologada. D-AUD-09
+  // (docs/09 §14) supriu a fonte; o comportamento que aquele teste travava
+  // deixou de ser válido e foi SUBSTITUÍDO pelos dois blocos abaixo — nunca
+  // mantido em paralelo com o novo.
+  it("`\"qualquer-string\"` deixou de ser aceita nas demais whitelists positivas (D-AUD-09)", () => {
+    expect(
+      rejeicao("cobranca.data_referencia_recalculada", {
+        data_referencia_anterior: "qualquer-string",
+      }).motivo,
+    ).toBe("VALOR_SEMANTICAMENTE_INVALIDO");
+    expect(
+      rejeicao("retificacao_clinica.efetivada_terceiro", {
+        registro_original_id: "qualquer-string",
+      }).motivo,
+    ).toBe("VALOR_SEMANTICAMENTE_INVALIDO");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// D-AUD-09 (docs/09 §14) — semântica das duas whitelists positivas restantes.
+// ---------------------------------------------------------------------------
+
+describe("D-AUD-09 — data civil canônica em cobranca.data_referencia_recalculada", () => {
+  const CHAVES_DATA = ["data_referencia_anterior", "data_referencia_nova"] as const;
+
+  it("aceita o par homologado com datas civis válidas", () => {
     expect(
       validator.validar("cobranca.data_referencia_recalculada", {
-        data_referencia_anterior: "qualquer-string",
+        data_referencia_anterior: "2026-08-01",
+        data_referencia_nova: "2026-09-15",
       }),
     ).toBe("cobranca.data_referencia_recalculada");
+  });
+
+  const datasValidas: Array<[string, string]> = [
+    ["data civil comum", "2026-09-15"],
+    ["29/02 de ano bissexto por regra dos 4", "2024-02-29"],
+    ["29/02 de ano secular bissexto (400)", "2000-02-29"],
+    ["primeiro dia do ano", "2026-01-01"],
+    ["último dia do ano", "2026-12-31"],
+    ["28/02 de ano não bissexto", "2023-02-28"],
+    ["ano 0001 (ano > 0)", "0001-01-01"],
+  ];
+
+  const datasInvalidas: Array<[string, unknown]> = [
+    ["29/02 em ano não bissexto", "2023-02-29"],
+    ["29/02 em ano secular NÃO bissexto (1900)", "1900-02-29"],
+    ["mês 13", "2026-13-01"],
+    ["mês 00", "2026-00-01"],
+    ["31/04 (abril tem 30)", "2026-04-31"],
+    ["30/02", "2026-02-30"],
+    ["dia 00", "2026-09-00"],
+    ["ano zero", "0000-01-01"],
+    ["mês sem zero à esquerda", "2026-9-15"],
+    ["dia sem zero à esquerda", "2026-09-5"],
+    ["formato brasileiro", "15/09/2026"],
+    ["datetime ISO com Z", "2026-09-15T00:00:00Z"],
+    ["datetime ISO sem Z", "2026-09-15T00:00:00"],
+    ["espaços em volta", " 2026-09-15 "],
+    ["espaço à esquerda", " 2026-09-15"],
+    ["espaço à direita", "2026-09-15 "],
+    ["string vazia", ""],
+    ["ano com 2 dígitos", "26-09-15"],
+    ["separador de barra", "2026/09/15"],
+    ["number", 123],
+    ["boolean", true],
+    ["null", null],
+  ];
+
+  for (const chave of CHAVES_DATA) {
+    describe(`chave ${chave}`, () => {
+      it.each(datasValidas)("aceita %s", (_rotulo, valor) => {
+        expect(
+          validator.validar("cobranca.data_referencia_recalculada", {
+            [chave]: valor,
+          }),
+        ).toBe("cobranca.data_referencia_recalculada");
+      });
+
+      it.each(datasInvalidas)(
+        "rejeita %s como VALOR_SEMANTICAMENTE_INVALIDO",
+        (_rotulo, valor) => {
+          const erro = rejeicao("cobranca.data_referencia_recalculada", {
+            [chave]: valor,
+          });
+          expect(erro.motivo).toBe("VALOR_SEMANTICAMENTE_INVALIDO");
+          expect(erro.chaves).toEqual([chave]);
+        },
+      );
+
+      // Precedência preservada: objeto/array/número não finito são recusados
+      // ANTES, pela barreira estrutural — D-AUD-09 não a alterou.
+      it.each([
+        ["objeto", { data: "2026-09-15" }],
+        ["array", ["2026-09-15"]],
+        ["NaN", Number.NaN],
+        ["Infinity", Number.POSITIVE_INFINITY],
+      ])("rejeita %s pela barreira estrutural (VALOR_NAO_ESCALAR)", (_r, valor) => {
+        expect(
+          rejeicao("cobranca.data_referencia_recalculada", { [chave]: valor })
+            .motivo,
+        ).toBe("VALOR_NAO_ESCALAR");
+      });
+    });
+  }
+
+  it("as DUAS chaves inválidas são citadas juntas, sem valores na mensagem", () => {
+    const erro = rejeicao("cobranca.data_referencia_recalculada", {
+      data_referencia_anterior: "2023-02-29",
+      data_referencia_nova: "SEGREDO-A-NAO-VAZAR",
+    });
+    expect(erro.motivo).toBe("VALOR_SEMANTICAMENTE_INVALIDO");
+    expect(erro.chaves).toEqual([
+      "data_referencia_anterior",
+      "data_referencia_nova",
+    ]);
+    expect(erro.message).not.toContain("2023-02-29");
+    expect(erro.message).not.toContain("SEGREDO-A-NAO-VAZAR");
+  });
+
+  it("D-AUD-09 NÃO torna as chaves obrigatórias: contexto ausente, vazio e subconjunto seguem aceitos", () => {
+    expect(validator.validar("cobranca.data_referencia_recalculada")).toBe(
+      "cobranca.data_referencia_recalculada",
+    );
+    expect(validator.validar("cobranca.data_referencia_recalculada", {})).toBe(
+      "cobranca.data_referencia_recalculada",
+    );
+    expect(
+      validator.validar("cobranca.data_referencia_recalculada", {
+        data_referencia_nova: "2026-09-15",
+      }),
+    ).toBe("cobranca.data_referencia_recalculada");
+  });
+
+  it("nenhuma correção/normalização: o candidato rejeitado não é mutado", () => {
+    const contexto = { data_referencia_nova: " 2026-09-15 " };
+    const antes = JSON.stringify(contexto);
+    rejeicao("cobranca.data_referencia_recalculada", contexto);
+    // Espaços NÃO são removidos e a data NÃO é corrigida: rejeição, não conserto.
+    expect(JSON.stringify(contexto)).toBe(antes);
+    expect(contexto.data_referencia_nova).toBe(" 2026-09-15 ");
+  });
+});
+
+describe("D-AUD-09 — uuid canônico em retificacao_clinica.efetivada_terceiro", () => {
+  it("aceita o UUID textual canônico em minúsculas", () => {
     expect(
       validator.validar("retificacao_clinica.efetivada_terceiro", {
-        registro_original_id: "qualquer-string",
+        registro_original_id: "550e8400-e29b-41d4-a716-446655440000",
       }),
     ).toBe("retificacao_clinica.efetivada_terceiro");
   });
+
+  it("não restringe versão nem variante: outras versões canônicas são aceitas", () => {
+    // Deliberado (D-AUD-09): valida-se a REPRESENTAÇÃO, não a versão/variante.
+    for (const uuid of [
+      "3f1a2b3c-0000-1000-8000-000000000001", // "v1"
+      "3f1a2b3c-0000-4000-8000-000000000001", // "v4"
+      "3f1a2b3c-0000-7000-b000-000000000001", // "v7"
+      "00000000-0000-0000-0000-000000000000", // nil
+      "ffffffff-ffff-ffff-ffff-ffffffffffff", // max
+    ]) {
+      expect(
+        validator.validar("retificacao_clinica.efetivada_terceiro", {
+          registro_original_id: uuid,
+        }),
+      ).toBe("retificacao_clinica.efetivada_terceiro");
+    }
+  });
+
+  it.each([
+    ["uuid em MAIÚSCULAS", "550E8400-E29B-41D4-A716-446655440000"],
+    ["uuid em caixa mista", "550e8400-E29B-41d4-a716-446655440000"],
+    ["uuid sem hífens", "550e8400e29b41d4a716446655440000"],
+    ["uuid entre chaves", "{550e8400-e29b-41d4-a716-446655440000}"],
+    ["urn:uuid", "urn:uuid:550e8400-e29b-41d4-a716-446655440000"],
+    ["caractere não hexadecimal", "550e8400-e29b-41d4-a716-44665544000g"],
+    ["comprimento curto", "550e8400-e29b-41d4-a716-44665544000"],
+    ["comprimento longo", "550e8400-e29b-41d4-a716-4466554400000"],
+    ["grupos mal divididos", "550e840-0e29b-41d4-a716-446655440000"],
+    ["espaço à esquerda", " 550e8400-e29b-41d4-a716-446655440000"],
+    ["espaço à direita", "550e8400-e29b-41d4-a716-446655440000 "],
+    ["espaços em volta", " 550e8400-e29b-41d4-a716-446655440000 "],
+    ["string vazia", ""],
+    ["string arbitrária", "registro-1"],
+    ["number", 123],
+    ["boolean", true],
+    ["null", null],
+  ])("rejeita %s como VALOR_SEMANTICAMENTE_INVALIDO", (_rotulo, valor) => {
+    const erro = rejeicao("retificacao_clinica.efetivada_terceiro", {
+      registro_original_id: valor,
+    });
+    expect(erro.motivo).toBe("VALOR_SEMANTICAMENTE_INVALIDO");
+    expect(erro.chaves).toEqual(["registro_original_id"]);
+  });
+
+  it.each([
+    ["objeto", { id: "550e8400-e29b-41d4-a716-446655440000" }],
+    ["array", ["550e8400-e29b-41d4-a716-446655440000"]],
+    ["NaN", Number.NaN],
+  ])("rejeita %s pela barreira estrutural (VALOR_NAO_ESCALAR)", (_r, valor) => {
+    expect(
+      rejeicao("retificacao_clinica.efetivada_terceiro", {
+        registro_original_id: valor,
+      }).motivo,
+    ).toBe("VALOR_NAO_ESCALAR");
+  });
+
+  it("a chave não homologada continua recusada ANTES da semântica, mesmo com uuid canônico", () => {
+    // `autor_original_usuario_id` segue fora da whitelist (docs/09 §12.6/§13.8):
+    // D-AUD-09 não alterou chave alguma.
+    const erro = rejeicao("retificacao_clinica.efetivada_terceiro", {
+      registro_original_id: "550e8400-e29b-41d4-a716-446655440000",
+      autor_original_usuario_id: "9f1a2b3c-0000-4000-8000-000000000002",
+    });
+    expect(erro.motivo).toBe("CHAVE_FORA_DA_WHITELIST");
+    expect(erro.chaves).toEqual(["autor_original_usuario_id"]);
+  });
+
+  it("D-AUD-09 NÃO torna a chave obrigatória: contexto ausente e vazio seguem aceitos", () => {
+    expect(validator.validar("retificacao_clinica.efetivada_terceiro")).toBe(
+      "retificacao_clinica.efetivada_terceiro",
+    );
+    expect(validator.validar("retificacao_clinica.efetivada_terceiro", {})).toBe(
+      "retificacao_clinica.efetivada_terceiro",
+    );
+  });
+
+  it("nenhuma normalização: uuid em maiúsculas NÃO vira minúsculas — é rejeitado como está", () => {
+    const contexto = {
+      registro_original_id: "550E8400-E29B-41D4-A716-446655440000",
+    };
+    const antes = JSON.stringify(contexto);
+    const erro = rejeicao("retificacao_clinica.efetivada_terceiro", contexto);
+    expect(erro.motivo).toBe("VALOR_SEMANTICAMENTE_INVALIDO");
+    expect(contexto.registro_original_id).toBe(
+      "550E8400-E29B-41D4-A716-446655440000",
+    );
+    expect(JSON.stringify(contexto)).toBe(antes);
+    expect(erro.message).not.toContain("550E8400");
+  });
+});
+
+describe("D-AUD-09 — a mensagem semântica é genérica e nunca cita valores", () => {
+  it.each([
+    [
+      "data",
+      "cobranca.data_referencia_recalculada",
+      { data_referencia_nova: "2023-02-29" },
+      "2023-02-29",
+    ],
+    [
+      "uuid",
+      "retificacao_clinica.efetivada_terceiro",
+      { registro_original_id: "550E8400-E29B-41D4-A716-446655440000" },
+      "550E8400-E29B-41D4-A716-446655440000",
+    ],
+    [
+      "monetário",
+      "cobranca.desconto_aplicado",
+      { valor_desconto_novo: "10,00" },
+      "10,00",
+    ],
+  ])(
+    "a rejeição de %s traz a mesma mensagem genérica, com a chave e sem o valor",
+    (_rotulo, acao, contexto, valorRejeitado) => {
+      const erro = rejeicao(acao, contexto as ContextoCandidato);
+      expect(erro.motivo).toBe("VALOR_SEMANTICAMENTE_INVALIDO");
+      expect(erro.message).toContain(
+        "o valor não satisfaz a forma semântica homologada para a chave",
+      );
+      // A mensagem deixou de ser específica do contrato monetário.
+      expect(erro.message).not.toContain("numeric(12,2)");
+      expect(erro.message).toContain(acao);
+      expect(erro.message).toContain(Object.keys(contexto)[0] as string);
+      expect(erro.message).not.toContain(valorRejeitado);
+    },
+  );
 });

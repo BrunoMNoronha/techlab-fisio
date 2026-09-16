@@ -16,11 +16,13 @@
 //      NaN e ±Infinity não existem em JSON e seriam silenciosamente
 //      serializados como null na coluna jsonb, o que violaria a proibição de
 //      sanitização silenciosa;
-//   6. (F-2.3C-REV-01) chave com regra SEMÂNTICA registrada no catálogo só
-//      aceita o tipo/forma específicos — as chaves monetárias de
-//      `cobranca.desconto_aplicado` exigem string decimal canônica de
-//      numeric(12,2); escalar de outro tipo ou forma → rejeição, sem
-//      conversão/normalização;
+//   6. (F-2.3C-REV-01; ampliado por D-AUD-09 — docs/09 §14) chave com regra
+//      SEMÂNTICA registrada em `SEMANTICA_CONTEXTO` só é aceita quando o
+//      predicado correspondente aprova o valor; escalar de outro tipo ou de
+//      outra forma → rejeição da operação inteira, sem conversão nem
+//      normalização. Este arquivo NÃO conhece as formas concretas (monetária,
+//      data civil, uuid): o catálogo DECLARA as regras, o validator apenas as
+//      EXECUTA;
 //   7. mensagens de erro citam AÇÃO e NOMES de chave, nunca VALORES — um
 //      valor recusado pode conter dado sensível e não deve vazar em log.
 //
@@ -161,12 +163,14 @@ export class AuditContextValidator {
       );
     }
 
-    // F-2.3C-REV-01: validação SEMÂNTICA por ação/chave, depois das barreiras
-    // estruturais. Uma chave homologada com regra semântica só aceita o tipo/
-    // forma específicos (ex.: chave monetária exige string decimal canônica de
-    // numeric(12,2)) — mesmo que o valor seja um escalar JSON válido. Nenhuma
-    // conversão/normalização: valor fora da forma → rejeição da operação
-    // inteira. Chaves sem regra registrada não são afetadas.
+    // Validação SEMÂNTICA por ação/chave (F-2.3C-REV-01; conjunto de regras
+    // ampliado por D-AUD-09), depois das barreiras estruturais. Uma chave
+    // homologada com regra registrada em `SEMANTICA_CONTEXTO` só é aceita se o
+    // predicado declarado pelo catálogo aprovar o valor — mesmo que ele seja um
+    // escalar JSON válido. Nenhuma conversão/normalização: valor fora da forma
+    // → rejeição da operação inteira. Chaves sem regra registrada permanecem
+    // sob as barreiras estruturais apenas. A forma concreta de cada regra
+    // pertence ao catálogo; aqui só se executa a política.
     const regras = SEMANTICA_CONTEXTO[acao];
     if (regras !== undefined) {
       const semanticamenteInvalidas = chaves.filter((c) => {
@@ -178,7 +182,7 @@ export class AuditContextValidator {
           "VALOR_SEMANTICAMENTE_INVALIDO",
           acao,
           semanticamenteInvalidas,
-          "o valor não satisfaz a forma semântica exigida para a chave (chave monetária exige string decimal canônica compatível com numeric(12,2)); nenhuma conversão ou normalização é aplicada.",
+          "o valor não satisfaz a forma semântica homologada para a chave; nenhuma conversão ou normalização é aplicada.",
         );
       }
     }
