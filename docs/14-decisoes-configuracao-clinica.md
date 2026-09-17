@@ -146,7 +146,7 @@ Nenhuma outra restrição é aplicada (Unicode e TLD de um caractere são aceito
 | Item | Estado |
 | --- | --- |
 | `P-CFG-01` — implementação da fatia `CFG-001A` (migration de linha única, GET/PUT `/clinica`, testes) | **IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA (`agent/cfg-001a-dados-clinica`) — NÃO INTEGRADA** (`docs/10` §6-W) |
-| `P-CFG-02` — provisionamento da linha de `clinica` (`CFG-001B`; `D-CFG-01`, `D-CFG-09`..`D-CFG-12`) | **DECIDIDO — IMPLEMENTAÇÃO NÃO AUTORIZADA** |
+| `P-CFG-02` — provisionamento da linha de `clinica` (`CFG-001B`; `D-CFG-01`, `D-CFG-09`..`D-CFG-12`) | **IMPLEMENTADO E MEDIDO EM BRANCH PRÓPRIA (`agent/cfg-001b-provisionamento-clinica`) — NÃO INTEGRADO** (`docs/10` §6-X) |
 | Logotipo e duração padrão (`D-CFG-07`) | **FUTURO DO MVP** |
 | CFG-002..CFG-005 | **NÃO INICIADOS** |
 | Alinhamento de `docs/07` (afirma restrição ainda inexistente) | resolvido factualmente pela migration `20260917060000_clinica_linha_unica` (`ux_clinica_linha_unica`), quando integrada |
@@ -155,6 +155,7 @@ Nenhuma outra restrição é aplicada (Unicode e TLD de um caractere são aceito
 
 | REV. | Data | Descrição |
 | --- | --- | --- |
+| **5** | 17/09/2026 | Atualização factual de §5: `P-CFG-02` implementado e medido em branch própria (`docs/10` §6-X); nenhuma decisão criada, alterada ou reaberta. |
 | **4** | 17/09/2026 | Acréscimo de `D-CFG-09`..`D-CFG-12` (§3.9) — autoria nula com justificativa, reexecução idempotente, entrada por ambiente e subcomando `bootstrap-clinica` —, homologadas por Bruno Menezes Noronha a partir do pacote `CFG-PREP1` (opções conservadoras). Nenhuma decisão anterior alterada; nenhum código alterado. |
 | **3** | 17/09/2026 | Adendos `D-CFG-03-A` (representação da resposta) e `D-CFG-04-A` (predicado exato do e-mail), homologados por Bruno Menezes Noronha em 17/09/2026 em resposta à revisão do PR #60. Formalizam o comportamento já implementado em `CFG-001A`; nenhuma decisão anterior alterada. |
 | **2** | 17/09/2026 | Atualização factual de §5: `P-CFG-01` implementada e medida em branch própria (`docs/10` §6-W); nenhuma decisão criada, alterada ou reaberta. |
