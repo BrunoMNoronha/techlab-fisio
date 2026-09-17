@@ -11,7 +11,7 @@
     "start": "next start",
     "typecheck": "next typegen && tsc --noEmit -p tsconfig.json",
     "test": "node scripts/verify-web-integration.mjs && node scripts/verify-grade-funcionamento.mjs",
-    "test:e2e": "playwright test"
+    "test:e2e": "node scripts/run-playwright-e2e.mjs"
   },
   "dependencies": {
     "next": "16.3.4",

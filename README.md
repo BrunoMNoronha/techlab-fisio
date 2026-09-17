@@ -128,17 +128,31 @@ O script de verificação (`scripts/verify-web-integration.mjs`) executa 24 veri
 
 ## CI
 
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml) executa, na ordem barato→caro: `pnpm install --frozen-lockfile` → `pnpm exec prisma generate`/`validate` → typecheck → Guarda 1 → `verify:from-scratch` (que É a preparação da suíte integral, incluindo a Guarda 2 `guard-anti-drift.spec.ts`) → Guarda 3 + alarme → build dos três workspaces (`packages/database` → `apps/api` → `apps/web`) → provas de runtime e suítes do backend → verificações do frontend (`verify-web-integration.mjs`) → prova E2E real same-origin Web + API + PostgreSQL (`pnpm run verify:web-api-e2e`) → smoke E2E Playwright (`CI-E2E0`).
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) executa, na ordem barato→caro: `pnpm install --frozen-lockfile` → `pnpm exec prisma generate`/`validate` → typecheck → Guarda 1 → `verify:from-scratch` (que É a preparação da suíte integral, incluindo a Guarda 2 `guard-anti-drift.spec.ts`) → Guarda 3 + alarme → build dos três workspaces (`packages/database` → `apps/api` → `apps/web`) → provas de runtime e suítes do backend → verificações do frontend (`verify-web-integration.mjs`) → prova E2E real same-origin Web + API + PostgreSQL (`pnpm run verify:web-api-e2e`) → suíte Playwright (`pnpm run test:e2e`, `CI-E2E0`).
 
-### E2E Playwright na CI (`CI-E2E0`)
+### E2E Playwright (`CI-E2E0`)
 
-A suíte `FRONT-E2E0` ([`apps/web/e2e/smoke.spec.ts`](apps/web/e2e/smoke.spec.ts) — 3 testes: `/`, `/login`, 404) é obrigatória no job `integracao` (disparado por `push` em `agent/**`, `pull_request` para `main` e manualmente), depois do build:
+Comando oficial, **idêntico no local e na CI** (job `integracao`, disparado por `push` em `agent/**`, `pull_request` para `main` e manualmente):
 
-1. `pnpm --filter @techlab-fisio/web exec playwright install --with-deps chromium` (Chromium é o único browser da suíte);
-2. `pnpm --filter @techlab-fisio/web run test:e2e` — o `webServer` do [`playwright.config.ts`](apps/web/playwright.config.ts) executa `next start` do build de produção em `127.0.0.1:3100` (readiness pela própria URL, timeout 120 s, `reuseExistingServer: false`), `retries: 0`, `forbidOnly` sob `CI`. Qualquer teste falho encerra o `playwright test` com exit code ≠ 0 e reprova o job;
-3. somente em falha, `playwright-report/` e `test-results/` (traces `retain-on-failure` e screenshots) são publicados como artefato `playwright-report-ci-e2e0` (7 dias).
+```bash
+pnpm run test:e2e
+```
 
-**Escopo real:** os smoke tests exercitam o frontend compilado (páginas estáticas e 404) e **não** chamam a API nem o banco — a prova ponta a ponta Web + API + PostgreSQL continua sendo `verify:web-api-e2e`. Reprodução local (porta 3100 livre; outra via `PORT`):
+Ele executa [`apps/web/scripts/run-playwright-e2e.mjs`](apps/web/scripts/run-playwright-e2e.mjs), que a cada execução monta um ambiente novo e sintético — nada é reaproveitado de execuções anteriores nem de servidores já abertos na máquina:
+
+1. PostgreSQL 18 descartável (container e volume novos, prefixo `techlab-fisio-pwe2e-`) → `prisma migrate deploy`;
+2. Administrador e clínica **sintéticos** pelo CLI compilado de provisionamento (`provisionar` e `bootstrap-clinica`);
+3. API compilada (`apps/api/dist/main.js`) em porta efêmera, `TLF_AMBIENTE=teste`, readiness por `GET /health`;
+4. `playwright test`: o `webServer` do [`playwright.config.ts`](apps/web/playwright.config.ts) sobe o `next start` do build em **outra** porta efêmera com `URL_API_INTERNA` apontando para a API, e só libera os testes quando `GET /api/health` responde 200 **pelo proxy same-origin**. `reuseExistingServer: false`, `retries: 0`, `workers: 1`, `forbidOnly` sob `CI`, Chromium único;
+5. no `finally`: API encerrada, container e volume destruídos e resíduo conferido (há handlers de `SIGINT`/`SIGTERM` para o Ctrl+C; uma interrupção **forçada** pode deixar a API filha viva, e o container é varrido na execução seguinte). O exit code é o do Playwright; resíduo descartável também reprova. Órfãos de execuções mortas à força são removidos no início da execução seguinte.
+
+Suítes (`apps/web/e2e/`, 13 testes): `autenticacao.spec.ts` (3 — rota protegida sem sessão, credencial inválida, login pelo formulário → cookie `HttpOnly`/`SameSite=Strict` → `GET /api/auth/sessao` 200 → tela protegida liberada → CSRF → logout → revogação no servidor; sem mocks), `horario-funcionamento.spec.ts` (7 — API simulada no navegador) e `smoke.spec.ts` (3 — `/`, `/login`, 404). Rodar `playwright test` diretamente falha de propósito: a configuração exige as variáveis do orquestrador e nunca cai nas portas padrão (API e `next start` usam 3000; o proxy assume 3001).
+
+Argumentos extras do Playwright (por exemplo `--repeat-each=3` ou `--grep`) devem ser passados pelo comando do workspace — `pnpm --filter @techlab-fisio/web run test:e2e --repeat-each=3` —, porque o script da raiz apenas delega.
+
+Em falha, na CI, `playwright-report/` e `test-results/` (traces `retain-on-failure` e screenshots) são publicados como artefato `playwright-report-ci-e2e0` (7 dias); localmente ficam em `apps/web/test-results/` (ignorado pelo Git). A prova roteirizada `verify:web-api-e2e` continua cobrindo a tela de horário contra a pilha real (persistência, auditoria e `403` com Recepcionista).
+
+Pré-requisitos locais: Docker ativo, `.env` sintético copiado de `.env.example` e, uma vez por árvore:
 
 ```bash
 pnpm run build
@@ -146,10 +160,6 @@ pnpm run build
 
 ```bash
 pnpm --filter @techlab-fisio/web exec playwright install chromium
-```
-
-```bash
-pnpm --filter @techlab-fisio/web run test:e2e
 ```
 
 ## Desligar o ambiente

@@ -179,70 +179,81 @@ export async function criarInstanciaLimpa({ raizRepo, prefixo, rotulo, cred }) {
     "--label", `${LABEL_PID}=${process.pid}`,
   ];
   dockerOk(["volume", "create", ...labelsDono, volume]);
-  dockerOk([
-    "run", "-d",
-    "--name", container,
-    ...labelsDono,
-    "-v", `${volume}:/var/lib/postgresql`,
-    "-v", `${path.join(raizRepo, "infra", "postgres", "initdb")}:/docker-entrypoint-initdb.d:ro`,
-    "-p", "127.0.0.1::5432",
-    "-e", `POSTGRES_USER=${cred.superuser}`,
-    "-e", `POSTGRES_PASSWORD=${cred.superuserPwd}`,
-    "-e", `POSTGRES_DB=${cred.bancoApp}`,
-    "-e", `TLF_MIGRATOR_USER=${cred.roleMigrador}`,
-    "-e", `TLF_MIGRATOR_PASSWORD=${cred.migradorPwd}`,
-    "-e", `TLF_APP_USER=${cred.roleApp}`,
-    "-e", `TLF_APP_PASSWORD=${cred.appPwd}`,
-    "-e", `TLF_SHADOW_DB=${cred.bancoShadow}`,
-    imagem,
-  ]);
+  // A partir daqui os recursos JÁ EXISTEM: qualquer falha do bootstrap (container
+  // que morre no initdb, prontidão que nunca chega, porta não publicada) precisa
+  // destruí-los AQUI — o chamador ainda não recebeu os identificadores, e o
+  // `finally` dele não teria o que limpar. Sem isto o resíduo só sairia na
+  // varredura de órfãos de uma execução posterior.
+  try {
+    dockerOk([
+      "run", "-d",
+      "--name", container,
+      ...labelsDono,
+      "-v", `${volume}:/var/lib/postgresql`,
+      "-v", `${path.join(raizRepo, "infra", "postgres", "initdb")}:/docker-entrypoint-initdb.d:ro`,
+      "-p", "127.0.0.1::5432",
+      "-e", `POSTGRES_USER=${cred.superuser}`,
+      "-e", `POSTGRES_PASSWORD=${cred.superuserPwd}`,
+      "-e", `POSTGRES_DB=${cred.bancoApp}`,
+      "-e", `TLF_MIGRATOR_USER=${cred.roleMigrador}`,
+      "-e", `TLF_MIGRATOR_PASSWORD=${cred.migradorPwd}`,
+      "-e", `TLF_APP_USER=${cred.roleApp}`,
+      "-e", `TLF_APP_PASSWORD=${cred.appPwd}`,
+      "-e", `TLF_SHADOW_DB=${cred.bancoShadow}`,
+      imagem,
+    ]);
 
-  const portaLinha = dockerOk(["port", container, "5432/tcp"])
-    .split("\n")
-    .find((l) => l.startsWith("127.0.0.1:"));
-  if (!portaLinha) throw new Error("porta publicada em 127.0.0.1 não encontrada");
-  const porta = Number(portaLinha.slice(portaLinha.lastIndexOf(":") + 1));
-  console.log(`${rotulo} instância em 127.0.0.1:${porta} (porta efêmera do Docker)`);
+    const portaLinha = dockerOk(["port", container, "5432/tcp"])
+      .split("\n")
+      .find((l) => l.startsWith("127.0.0.1:"));
+    if (!portaLinha) throw new Error("porta publicada em 127.0.0.1 não encontrada");
+    const porta = Number(portaLinha.slice(portaLinha.lastIndexOf(":") + 1));
+    console.log(`${rotulo} instância em 127.0.0.1:${porta} (porta efêmera do Docker)`);
 
-  const conexaoMigrador = {
-    host: "127.0.0.1",
-    port: porta,
-    user: cred.roleMigrador,
-    password: cred.migradorPwd,
-    database: cred.bancoApp,
-    connectionTimeoutMillis: 2_000,
-  };
-  const inicio = Date.now();
-  for (;;) {
-    try {
-      await comCliente(conexaoMigrador, async () => {});
-      break;
-    } catch {
-      const rodando = dockerOk(["inspect", "-f", "{{.State.Running}}", container]);
-      if (rodando !== "true") {
-        const logs = docker(["logs", "--tail", "40", container]);
-        throw new Error(`container encerrou durante o bootstrap:\n${logs.stdout}\n${logs.stderr}`);
+    const conexaoMigrador = {
+      host: "127.0.0.1",
+      port: porta,
+      user: cred.roleMigrador,
+      password: cred.migradorPwd,
+      database: cred.bancoApp,
+      connectionTimeoutMillis: 2_000,
+    };
+    const inicio = Date.now();
+    for (;;) {
+      try {
+        await comCliente(conexaoMigrador, async () => {});
+        break;
+      } catch {
+        const rodando = dockerOk(["inspect", "-f", "{{.State.Running}}", container]);
+        if (rodando !== "true") {
+          const logs = docker(["logs", "--tail", "40", container]);
+          throw new Error(`container encerrou durante o bootstrap:\n${logs.stdout}\n${logs.stderr}`);
+        }
+        if (Date.now() - inicio > 180_000) throw new Error("instância não ficou pronta em 180s");
+        await aguardar(1_000);
       }
-      if (Date.now() - inicio > 180_000) throw new Error("instância não ficou pronta em 180s");
-      await aguardar(1_000);
     }
+    console.log(`${rotulo} bootstrap initdb concluído (roles "${cred.roleMigrador}"/"${cred.roleApp}").`);
+
+    const urlBase = (role, pwd, banco) =>
+      `postgresql://${encodeURIComponent(role)}:${encodeURIComponent(pwd)}` +
+      `@127.0.0.1:${porta}/${banco}`;
+
+    return {
+      container,
+      volume,
+      porta,
+      imagem,
+      conexaoMigrador,
+      urlMigrador: urlBase(cred.roleMigrador, cred.migradorPwd, cred.bancoApp),
+      urlApp: urlBase(cred.roleApp, cred.appPwd, cred.bancoApp),
+      urlShadow: urlBase(cred.roleMigrador, cred.migradorPwd, cred.bancoShadow),
+    };
+  } catch (erro) {
+    console.error(`${rotulo} falha ao criar a instância — destruindo recursos parciais...`);
+    destruirInstancia(container, volume, prefixo, rotulo);
+    throw erro;
   }
-  console.log(`${rotulo} bootstrap initdb concluído (roles "${cred.roleMigrador}"/"${cred.roleApp}").`);
-
-  const urlBase = (role, pwd, banco) =>
-    `postgresql://${encodeURIComponent(role)}:${encodeURIComponent(pwd)}` +
-    `@127.0.0.1:${porta}/${banco}`;
-
-  return {
-    container,
-    volume,
-    porta,
-    imagem,
-    conexaoMigrador,
-    urlMigrador: urlBase(cred.roleMigrador, cred.migradorPwd, cred.bancoApp),
-    urlApp: urlBase(cred.roleApp, cred.appPwd, cred.bancoApp),
-    urlShadow: urlBase(cred.roleMigrador, cred.migradorPwd, cred.bancoShadow),
-  };
 }
 
 /** Prova que o schema `public` está vazio e a major é PostgreSQL 18. */
