@@ -1,5 +1,5 @@
 // TechLab Fisio — P-2.3D-10 — listagem administrativa das sessões ativas de um usuário
-// ponta a ponta contra PostgreSQL REAL (AUT-002; D-2.3D-22; L-01..L-14).
+// ponta a ponta contra PostgreSQL REAL (AUT-002; D-2.3D-22; L-01..L-16).
 
 import { randomUUID } from "node:crypto";
 
@@ -19,6 +19,7 @@ import type { RelogioSessao } from "../../src/auth/relogio-sessao.js";
 import { POLITICA_SESSAO, SessaoService } from "../../src/auth/sessao.service.js";
 import { ERRO_AUTORIZACAO } from "../../src/authz/erro-autorizacao.js";
 import { DatabaseService } from "../../src/database/database.service.js";
+import { SessoesService } from "../../src/sessoes/sessoes.service.js";
 
 const MINUTO = 60_000;
 const T0 = new Date("2026-08-25T10:00:00.000Z");
@@ -355,5 +356,51 @@ describe("P-2.3D-10 — GET /auth/usuarios/:usuarioId/sessoes (D-2.3D-22)", () =
     });
     expect(res.status).toBe(403);
     expect(await res.json()).toEqual({ erro: "REQUISICAO_NAO_AUTORIZADA" });
+  });
+
+  it("L-15: falha técnica na consulta devolve 500 FALHA_INTERNA no envelope fechado, sem detalhe interno", async () => {
+    const admin = await criarAdministrador();
+    const alvo = await criarUsuario();
+    const espiao = jest
+      .spyOn(moduleRef.get(SessoesService), "listarSessoesAtivasDoUsuario")
+      .mockRejectedValueOnce(new Error("falha simulada de infraestrutura tlf-detalhe-interno"));
+
+    try {
+      const res = await listar(alvo, admin.cookie);
+      expect(res.status).toBe(500);
+      expect(res.corpo).toEqual({ erro: ERRO.FALHA_INTERNA });
+      expect(res.texto).not.toContain("tlf-detalhe-interno");
+    } finally {
+      espiao.mockRestore();
+    }
+  });
+
+  it("L-16: a consulta não escreve nas sessões do ALVO; a sessão do operador segue o registro de atividade de D-2.3D-04", async () => {
+    const alvo = await criarUsuario();
+    const sessaoAlvo = await emitir(alvo);
+    const admin = await criarAdministrador();
+
+    // Passado o throttle de atividade, a guarda de sessão do operador registra
+    // atividade (comportamento vigente de toda rota autenticada, D-2.3D-04);
+    // as sessões do alvo, objeto da consulta, permanecem byte a byte iguais.
+    relogio.avancar(POLITICA_SESSAO.throttleAtividadeMs + MINUTO);
+    const antes = await database.transacao((tx) =>
+      tx.sessaoAutenticacao.findUniqueOrThrow({ where: { id: sessaoAlvo.sessaoId } }),
+    );
+
+    expect((await listar(alvo, admin.cookie)).status).toBe(200);
+
+    const depois = await database.transacao((tx) =>
+      tx.sessaoAutenticacao.findUniqueOrThrow({ where: { id: sessaoAlvo.sessaoId } }),
+    );
+    expect(depois).toEqual(antes);
+    const operador = await database.transacao((tx) =>
+      tx.sessaoAutenticacao.findUniqueOrThrow({
+        where: { id: admin.sessaoId },
+        select: { estado: true, ultimaAtividadeEm: true },
+      }),
+    );
+    expect(operador.estado).toBe("ATIVA");
+    expect(operador.ultimaAtividadeEm.getTime()).toBeGreaterThan(T0.getTime());
   });
 });
