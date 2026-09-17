@@ -242,12 +242,12 @@ describe("AuthModule — fronteira da F1+F2+F3 preservada", () => {
     expect(imports ?? []).toEqual([DatabaseModule, AuditModule]);
   });
 
-  it("as rotas expostas pela aplicação são SÓ as da F3, F6, P-2.3D-07 e AUT-005", () => {
+  it("as rotas expostas pela aplicação são SÓ as da F3, F6, P-2.3D-07, AUT-005 e CFG-001A", () => {
     // Prova de fronteira contra o ROUTER real, e não contra metadados: se um
     // endpoint de F4+ (profissionais, pacientes, agenda, refresh)
     // entrar acidentalmente no `AppModule`, esta asserção falha.
     // ATUALIZADO NA F6 / P-2.3D-07 / AUT-005: as rotas autorizadas vivem em módulos PRÓPRIOS
-    // (`RecuperacaoSenhaModule`, `SessoesModule`, `UsuariosModule`), não no AuthModule.
+    // (`RecuperacaoSenhaModule`, `SessoesModule`, `UsuariosModule`, `ClinicaModule`), não no AuthModule.
     // A asserção continua sendo de igualdade exata sobre o ROUTER real.
     const caminhos = Object.keys(documentoDaAplicacao.paths).sort();
     expect(caminhos).toEqual([
@@ -258,6 +258,7 @@ describe("AuthModule — fronteira da F1+F2+F3 preservada", () => {
       "/auth/sessao",
       "/auth/sessoes/{sessaoId}",
       "/auth/usuarios/{usuarioId}/situacao",
+      "/clinica",
       "/health",
     ]);
   });

@@ -1298,6 +1298,13 @@ CREATE UNIQUE INDEX usuario_email_key ON public.usuario USING btree (email);
 
 
 --
+-- Name: ux_clinica_linha_unica; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX ux_clinica_linha_unica ON public.clinica USING btree ((true));
+
+
+--
 -- Name: ux_movimento_sessao_consumo_atendimento_pacote; Type: INDEX; Schema: public; Owner: -
 --
 

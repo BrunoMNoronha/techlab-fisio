@@ -20,6 +20,7 @@ import { Module } from "@nestjs/common";
 import { AuditModule } from "./audit/audit.module.js";
 import { AuthModule } from "./auth/auth.module.js";
 import { AuthzModule } from "./authz/authz.module.js";
+import { ClinicaModule } from "./clinica/clinica.module.js";
 import { RecuperacaoSenhaModule } from "./recuperacao-senha/recuperacao-senha.module.js";
 import { CobrancaModule } from "./cobranca/cobranca.module.js";
 import { DatabaseModule } from "./database/database.module.js";
@@ -40,6 +41,7 @@ import { UsuariosModule } from "./auth/usuarios.module.js";
     DatabaseModule,
     ProfissionalModule,
     CobrancaModule,
+    ClinicaModule,
   ],
 })
 export class AppModule {}

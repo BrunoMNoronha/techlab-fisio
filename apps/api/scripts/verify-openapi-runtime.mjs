@@ -143,7 +143,7 @@ try {
 
   const caminhos = Object.keys(documento.paths ?? {}).sort();
   conferir(
-    "rotas da F3, F6, P-2.3D-07, P-2.3D-08 e AUT-005 presentes e nenhuma outra vazou",
+    "rotas da F3, F6, P-2.3D-07, P-2.3D-08, AUT-005 e CFG-001A presentes e nenhuma outra vazou",
     JSON.stringify(caminhos) ===
       JSON.stringify([
         "/auth/login",
@@ -153,6 +153,7 @@ try {
         "/auth/sessao",
         "/auth/sessoes/{sessaoId}",
         "/auth/usuarios/{usuarioId}/situacao",
+        "/clinica",
         "/health",
       ]),
     `caminhos=${caminhos.join(", ")}`,
@@ -215,6 +216,17 @@ try {
     statusSituacao === "200,400,401,403,404,413,422,500",
     `status=${statusSituacao}`,
   );
+
+  // CFG-001A — configuração dos dados da clínica única (docs/14).
+  for (const [metodo, esperado] of [
+    ["get", "200,401,403,404,500"],
+    ["put", "200,400,401,403,404,413,500"],
+  ]) {
+    const status = Object.keys(documento.paths["/clinica"]?.[metodo]?.responses ?? {})
+      .sort()
+      .join(",");
+    conferir(`${metodo.toUpperCase()} /clinica documenta ${esperado}`, status === esperado, `status=${status}`);
+  }
 
   const statusLogin = Object.keys(documento.paths["/auth/login"]?.post?.responses ?? {})
     .sort()
