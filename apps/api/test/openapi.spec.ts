@@ -196,10 +196,6 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
       { caminho: "/auth/usuarios/{usuarioId}/situacao", metodo: "patch" },
       { caminho: "/clinica", metodo: "put" },
       { caminho: "/horario-funcionamento", metodo: "put" },
-    }
-  });
-});
-
       { caminho: "/servicos", metodo: "post" },
       { caminho: "/servicos/{servicoId}", metodo: "put" },
       { caminho: "/servicos/{servicoId}/situacao", metodo: "patch" },
@@ -273,6 +269,10 @@ describe("CFG-002 — contratos de resposta de /horario-funcionamento (docs/14)"
   it("GET e PUT exigem o cookie de sessão", () => {
     for (const metodo of ["get", "put"] as const) {
       expect(operacao("/horario-funcionamento", metodo)["security"]).toBeDefined();
+    }
+  });
+});
+
 describe("CFG-003 — contratos de /servicos (docs/14 §3.11)", () => {
   const esperados: Array<[string, "get" | "post" | "put" | "patch", string[]]> = [
     ["/servicos", "get", ["200", "400", "401", "403", "500"]],

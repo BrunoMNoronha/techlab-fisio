@@ -4022,6 +4022,16 @@ Executados um a um contra a suíte `servicos-catalogo.integration.spec.ts` em Po
 - **`docs/07` §10.1/§10.2** ainda não lista as novas restrições — alinhamento pendente para depois da integração (`docs/14` §3.11.2).
 - Leitura do catálogo por outros papéis, uso em agenda/pacotes e duração sobrescrevível permanecem nas fatias futuras (`D-CFG-30`, `D-CFG-33`).
 
+### 6-Z.6 Revalidação após incorporar `CFG-002` (`origin/main` = `ad2bcf8`)
+
+A `main` recebeu `CFG-002` (PR #76) durante a medição. A branch incorporou-a por merge; os conflitos foram textuais (listas fechadas de rotas em `openapi.spec.ts`, `auth.module.integration.spec.ts` e `verify-openapi-runtime.mjs`; cabeçalho, §6 e §11 deste documento; §5 e §6 de `docs/14`) e resolvidos preservando as duas frentes — `CFG-002` permanece em §6-Y/REV. 56 e `CFG-003` passa a §6-Z/REV. 57. Nenhum código de produção de nenhuma das frentes foi alterado na resolução. Baterias sobre a árvore mesclada:
+
+- `pnpm run typecheck`: **verde** (a primeira execução acusou erro de sintaxe introduzido na resolução de `openapi.spec.ts`, corrigido e remedido).
+- `pnpm run lint:migrations`: **OK**. `pnpm run schema:verify`: **OK**, golden idêntico e `migrate diff` exit 0.
+- `pnpm run build` e `verify:openapi-runtime`: **38 verificações OK**.
+- `pnpm run test:api`: **40 suites · 1168 passed**.
+- `pnpm run verify:api-integration`: **19 suites · 638 passed · 2 skipped** (inclui `horario-funcionamento` e `servicos-catalogo`).
+
 ## 7. Auditoria — `P-BACK-01`
 
 ### 7.1 Estado
@@ -4544,7 +4554,7 @@ Sujeitas a autorização própria, nesta ordem provável:
 
 | REV. | Data | Conteúdo |
 | --- | --- | --- |
-| **57** | **17/09/2026** | **`CFG-003` — CATÁLOGO DE SERVIÇOS IMPLEMENTADO E MEDIDO EM BRANCH PRÓPRIA — NÃO INTEGRADO** (§6-Z). Migration de unicidade do nome e CHECKs de `servico`; `GET/POST /servicos`, `GET/PUT /servicos/:servicoId`, `PATCH /servicos/:servicoId/situacao`; test:api 1133 passed; integração da API 18 suites · 614 passed · 2 skipped; 10 mutation challenges detectados. Nenhuma decisão, permissão, ação, chave ou dependência nova. |
+| **57** | **17/09/2026** | **`CFG-003` — CATÁLOGO DE SERVIÇOS IMPLEMENTADO E MEDIDO EM BRANCH PRÓPRIA — NÃO INTEGRADO** (§6-Z). Migration de unicidade do nome e CHECKs de `servico`; `GET/POST /servicos`, `GET/PUT /servicos/:servicoId`, `PATCH /servicos/:servicoId/situacao`; test:api 1168 passed e integração da API 19 suites · 638 passed · 2 skipped após incorporar `CFG-002` (§6-Z.6); 10 mutation challenges detectados. Nenhuma decisão, permissão, ação, chave ou dependência nova. |
 | **56** | **17/09/2026** | **`CFG-002` — HORÁRIO DE FUNCIONAMENTO IMPLEMENTADO E MEDIDO EM BRANCH PRÓPRIA — NÃO INTEGRADO** (§6-Y). `GET`/`PUT /horario-funcionamento` sob `clinica.configurar`; substituição integral sob lock da clínica; `configuracao.alterada` alvo `clinica`; no-op sem escrita; 7 mutation challenges detectados; baterias verdes. Nenhuma migration, permissão, ação de auditoria, chave de `contexto` ou dependência nova. |
 | **55** | **17/09/2026** | **REGISTRO PÓS-INTEGRAÇÃO DE `CFG-001A` (PR [#65](https://github.com/BrunoMNoronha/techlab-fisio/pull/65), COMMIT `6ee19f2`) E `CFG-001B` (PR [#69](https://github.com/BrunoMNoronha/techlab-fisio/pull/69), MERGE `02cc93d`) NA `main`** (§6-X.5). Reconciliação **exclusivamente factual** (`CFG-POST1`); nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código, teste, schema, migration, contrato, dependência ou CI alterada. CI verde medida sobre os HEADs das PRs (`a8269a5`, `abb3a8a`), não sobre os commits de integração; árvores idênticas. Item 20 de §10 e cabeçalho atualizados; `docs/14` REV. 6. |
 | **54** | **17/09/2026** | **`CFG-001B` — PROVISIONAMENTO DA LINHA ÚNICA DE `clinica` IMPLEMENTADO E MEDIDO EM BRANCH PRÓPRIA — NÃO INTEGRADO** (§6-X). Subcomando `bootstrap-clinica`; `configuracao.alterada` com ator NULL e justificativa; reexecução idempotente; concorrência resolvida pela unicidade física; 4 mutation challenges detectados. Nenhuma migration, rota, permissão, ação de auditoria, chave de `contexto` ou dependência nova. |
