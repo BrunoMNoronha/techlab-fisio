@@ -108,13 +108,14 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
     expect(documento.paths["/health"]).toBeDefined();
   });
 
-  it("as rotas publicadas são EXATAMENTE as da F3, F6, P-2.3D-07, P-2.3D-08 e AUT-005 — nenhuma outra vazou", () => {
+  it("as rotas publicadas são EXATAMENTE as da F3, F6, P-2.3D-07, P-2.3D-08, AUT-005 e P-2.3D-10 — nenhuma outra vazou", () => {
     // ATUALIZADO NA F6 / P-2.3D-07 / P-2.3D-08: as duas rotas de recuperação de senha (AUT-004),
     // a rota de revogação de sessão (P-2.3D-07 / AUT-002) e a consulta da sessão
     // autenticada atual (P-2.3D-08 / D-2.3D-20) foram autorizadas e passam a pertencer
     // ao contrato. A asserção continua sendo de IGUALDADE EXATA — qualquer rota
     // além destas oito falha aqui. AUT-005 (`D-2.3D-21`) acrescentou a alteração
-    // administrativa de situação de usuário.
+    // administrativa de situação de usuário. P-2.3D-10 (`D-2.3D-22`) acrescentou a
+    // listagem administrativa das sessões ativas de um usuário.
     const caminhos = Object.keys(documento.paths);
     expect(caminhos.sort()).toEqual([
       "/auth/login",
@@ -123,6 +124,7 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
       "/auth/recuperacao-senha/concluir",
       "/auth/sessao",
       "/auth/sessoes/{sessaoId}",
+      "/auth/usuarios/{usuarioId}/sessoes",
       "/auth/usuarios/{usuarioId}/situacao",
       "/health",
     ]);
@@ -142,6 +144,15 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
     const parametros = (operacao("/auth/sessao", "get")["parameters"] ?? []) as Array<
       Record<string, unknown>
     >;
+    const header = parametros.find(
+      (p) => p["in"] === "header" && p["name"] === "x-tlf-requisicao",
+    );
+    expect(header).toBeUndefined();
+  });
+
+  it("a consulta segura GET /auth/usuarios/{usuarioId}/sessoes NÃO declara o header CSRF x-tlf-requisicao", () => {
+    const parametros = (operacao("/auth/usuarios/{usuarioId}/sessoes", "get")["parameters"] ??
+      []) as Array<Record<string, unknown>>;
     const header = parametros.find(
       (p) => p["in"] === "header" && p["name"] === "x-tlf-requisicao",
     );
@@ -589,5 +600,62 @@ describe("AUT-005 — alteração de situação de usuário documentada", () => 
       "inativadoEm",
       "usuarioId",
     ]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// P-2.3D-10 — listagem administrativa das sessões ativas (AUT-002, D-2.3D-22)
+// ---------------------------------------------------------------------------
+
+describe("P-2.3D-10 — listagem administrativa de sessões ativas documentada", () => {
+  const CAMINHO = "/auth/usuarios/{usuarioId}/sessoes";
+
+  it("GET está documentada com AUT-002 e D-2.3D-22 e exige cookie de sessão", () => {
+    const op = operacao(CAMINHO, "get");
+    expect(op["summary"]).toEqual(expect.stringContaining("AUT-002"));
+    expect(op["summary"]).toEqual(expect.stringContaining("D-2.3D-22"));
+    expect(op["tags"]).toEqual(["Autenticação"]);
+    const seguranca = op["security"] as Array<Record<string, unknown>> | undefined;
+    expect(seguranca?.some((s) => NOME_ESQUEMA_SESSAO in s)).toBe(true);
+  });
+
+  it("documenta EXATAMENTE 200, 400, 401, 403 e 500", () => {
+    const todas = respostas(CAMINHO, "get");
+    expect(Object.keys(todas).sort()).toEqual(["200", "400", "401", "403", "500"]);
+    expect((todas["200"] as Record<string, unknown>)["content"]).toBeDefined();
+  });
+
+  it("tem parâmetro de path usuarioId obrigatório, format uuid, e nenhum outro parâmetro", () => {
+    const params = (operacao(CAMINHO, "get")["parameters"] ?? []) as Array<Record<string, unknown>>;
+    expect(params).toHaveLength(1);
+    expect(params[0]?.["name"]).toBe("usuarioId");
+    expect(params[0]?.["in"]).toBe("path");
+    expect(params[0]?.["required"]).toBe(true);
+    expect((params[0]?.["schema"] as Record<string, unknown>)?.["format"]).toBe("uuid");
+  });
+
+  it("ListarSessoesUsuarioRespostaDto expõe SÓ sessoes, e o item SÓ os quatro campos homologados", () => {
+    const envelope = documento.components?.schemas?.["ListarSessoesUsuarioRespostaDto"] as {
+      properties?: Record<string, unknown>;
+    };
+    expect(Object.keys(envelope.properties ?? {})).toEqual(["sessoes"]);
+
+    const item = documento.components?.schemas?.["SessaoAtivaUsuarioDto"] as {
+      properties?: Record<string, { format?: string }>;
+    };
+    expect(Object.keys(item.properties ?? {}).sort()).toEqual([
+      "criadaEm",
+      "expiraEm",
+      "sessaoId",
+      "ultimaAtividadeEm",
+    ]);
+    expect(item.properties?.["sessaoId"]?.format).toBe("uuid");
+    for (const campo of ["criadaEm", "ultimaAtividadeEm", "expiraEm"]) {
+      expect(item.properties?.[campo]?.format).toBe("date-time");
+    }
+    const proibidos = ["token", "hash", "segredo", "senha", "cookie", "estado", "revogada", "usuario"];
+    for (const nome of Object.keys(item.properties ?? {})) {
+      expect(proibidos.some((p) => nome.toLowerCase().includes(p))).toBe(false);
+    }
   });
 });
