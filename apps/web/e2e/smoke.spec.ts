@@ -87,11 +87,18 @@ async function validarFocoVisivel(elemento: Locator, rotulo: string): Promise<vo
       focusVisible: el.matches(":focus-visible"),
       outlineStyle: estilo.outlineStyle,
       outlineWidth: Number.parseFloat(estilo.outlineWidth),
+      outlineColor: estilo.outlineColor,
     };
   });
+  // Cor computada vem como rgb(r, g, b) ou rgba(r, g, b, a) / rgb(r g b / a);
+  // alfa ausente equivale a opaco. Alfa 0 (ex.: transparent) = foco invisível.
+  const canais = /rgba?\(([^)]*)\)/.exec(foco.outlineColor)?.[1]?.split(/[\s,/]+/).filter(Boolean);
+  const alfa = canais?.[3] !== undefined ? Number.parseFloat(canais[3]) : 1;
   expect(foco.focusVisible, `${rotulo}: deveria casar com :focus-visible`).toBe(true);
   expect(foco.outlineStyle, `${rotulo}: indicador de foco removido (outline-style)`).not.toBe("none");
   expect(foco.outlineWidth, `${rotulo}: indicador de foco sem espessura`).toBeGreaterThan(0);
+  expect(canais, `${rotulo}: cor de outline em formato inesperado (${foco.outlineColor})`).toBeDefined();
+  expect(alfa, `${rotulo}: indicador de foco transparente (${foco.outlineColor})`).toBeGreaterThan(0);
 }
 
 async function validarSemOverflowHorizontal(page: Page, rotulo: string): Promise<void> {
