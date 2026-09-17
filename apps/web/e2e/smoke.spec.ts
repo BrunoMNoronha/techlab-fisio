@@ -23,7 +23,10 @@ interface Monitor {
   verificarAusenciaDeErros(): void;
 }
 
-function instalarMonitores(page: Page): Monitor {
+// rota404Esperada: somente no cenário 404, tolera o erro de console que o
+// navegador emite para o próprio documento com status 404 — identificado pela
+// URL de origem da mensagem, nunca por substring do texto.
+function instalarMonitores(page: Page, rota404Esperada?: string): Monitor {
   const erros: string[] = [];
   const requisicoesExternas: string[] = [];
 
@@ -32,16 +35,21 @@ function instalarMonitores(page: Page): Monitor {
   });
 
   page.on("console", (msg) => {
-    if (msg.type() === "error") {
-      const texto = msg.text();
-      // Permite o erro esperado de recurso 404 da própria rota de prova e favicon ausente
-      if (
-        !texto.includes("favicon.ico") &&
-        !texto.includes("__front_e2e0_rota_inexistente__") &&
-        !texto.includes("404")
-      ) {
-        erros.push(`[console.error] ${texto}`);
-      }
+    if (msg.type() !== "error") return;
+    const texto = msg.text();
+    let caminhoOrigem = "";
+    try {
+      caminhoOrigem = new URL(msg.location().url).pathname;
+    } catch {
+      // mensagem sem URL de origem: nunca é tolerada
+    }
+    const erro404Esperado =
+      rota404Esperada !== undefined &&
+      caminhoOrigem === rota404Esperada &&
+      texto.startsWith("Failed to load resource:") &&
+      texto.includes("404");
+    if (!erro404Esperado) {
+      erros.push(`[console.error] ${texto}`);
     }
   });
 
@@ -176,9 +184,9 @@ test.describe("FRONT-E2E0 — Smoke E2E da Fundação Frontend", () => {
   test("E2E-03 — Rota inexistente (404) apresenta página própria em pt-BR e retorno funcional", async ({
     page,
   }) => {
-    const monitor = instalarMonitores(page);
-
     const rotaInexistente = "/__front_e2e0_rota_inexistente__";
+    const monitor = instalarMonitores(page, rotaInexistente);
+
     const resposta = await page.goto(rotaInexistente);
     expect(resposta?.status()).toBe(404);
 

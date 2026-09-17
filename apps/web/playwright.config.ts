@@ -36,7 +36,10 @@ export default defineConfig({
   webServer: {
     command: `pnpm exec next start -p ${PORT} -H 127.0.0.1`,
     url: baseURL,
-    reuseExistingServer: !process.env.CI,
+    // Nunca reutilizar: um servidor já escutando na porta (ex.: outro checkout)
+    // seria testado em silêncio no lugar do build desta árvore. Porta ocupada
+    // deve falhar a execução; use PORT para escolher outra.
+    reuseExistingServer: false,
     cwd: __dirname,
     timeout: 120_000,
   },

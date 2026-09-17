@@ -76,7 +76,7 @@ Limites deliberados: **um** tema (claro; dark mode não é requisito vigente), s
 | `next.config.ts` vazio | Nenhum header, rewrite ou proxy foi desativado ou configurado; isso pertence à primeira fatia funcional. **Estado em 06/09/2026:** o objeto de configuração **segue vazio** — o roteamento `/api/*` é feito por Route Handler (`app/api/[...caminho]/route.ts`), não por `rewrites` |
 | Playwright **1.63.0** exato em `devDependencies` | Fixado no workspace com `saveExact: true` na fatia `FRONT-E2E0` para a fundação E2E browser-based; sem lifecycle scripts (`allowBuilds` preservado) |
 | Chromium como único browser da fundação | Decisão local reversível da fatia `FRONT-E2E0` para comprovar o harness E2E sobre o build real sem antecipar política multi-browser |
-| WebServer na porta dedicada `3100` | Configurado em `playwright.config.ts` para servir `next start` isolado de `3000` (Next dev), `3001` (NestJS) e portas efêmeras de outras suítes |
+| WebServer na porta dedicada `3100` | Configurado em `playwright.config.ts` para servir `next start` isolado de `3000` (Next dev), `3001` (NestJS) e portas efêmeras de outras suítes; configurável por `PORT`. `reuseExistingServer: false` — porta ocupada falha a execução em vez de testar em silêncio um servidor de outra árvore |
 
 ## Estado da integração com `apps/api` (Fatia 1 / P-2.3D-04 / P-2.3D-08)
 
