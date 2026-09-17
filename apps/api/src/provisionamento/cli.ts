@@ -6,6 +6,12 @@
 //   node dist/provisionamento/cli.js seed [--estrito]
 //   node dist/provisionamento/cli.js bootstrap-admin
 //   node dist/provisionamento/cli.js provisionar [--estrito]
+//   node dist/provisionamento/cli.js bootstrap-clinica
+//
+// CFG-001B (`docs/14` D-CFG-12): `bootstrap-clinica` cria a linha única de
+// `clinica`. É subcomando PRÓPRIO — `seed`, `bootstrap-admin` e `provisionar`
+// não foram alterados. Não depende de Argon2, mas segue a mesma importação
+// dinâmica para manter o grafo de cada comando mínimo.
 //
 // NÃO EXISTE BOOTSTRAP AUTOMÁTICO. Este arquivo não é importado por `main.ts`,
 // por `app.module.ts` nem por módulo algum da aplicação; `SeedModule` e
@@ -62,7 +68,7 @@ import type { INestApplicationContext } from "@nestjs/common";
 import { SeedModule } from "./seed.module.js";
 import { SeedRbacService } from "./seed-rbac.service.js";
 
-const COMANDOS = ["seed", "bootstrap-admin", "provisionar"] as const;
+const COMANDOS = ["seed", "bootstrap-admin", "provisionar", "bootstrap-clinica"] as const;
 type Comando = (typeof COMANDOS)[number];
 
 /** Códigos de saída — contrato estável, verificado por teste. */
@@ -90,6 +96,7 @@ const USO = [
   "  seed             aplica o seed idempotente de papéis, permissões e matriz",
   "  bootstrap-admin  cria/eleva o primeiro Administrador (idempotente)",
   "  provisionar      executa `seed` e, em seguida, `bootstrap-admin`",
+  "  bootstrap-clinica  cria a linha única da clínica (idempotente; não aceita opções)",
   "",
   "Opções:",
   "  --estrito        aplica/completa a matriz canônica sem remover excedentes",
@@ -101,6 +108,12 @@ const USO = [
   "  TLF_BOOTSTRAP_ADMIN_NOME",
   "  TLF_BOOTSTRAP_ADMIN_JUSTIFICATIVA   motivo operacional; vai para a trilha",
   "                                      de auditoria e nunca é impresso",
+  "",
+  "Variáveis de ambiente de bootstrap-clinica (todas obrigatórias):",
+  "  TLF_BOOTSTRAP_CLINICA_NOME_CADASTRAL",
+  "  TLF_BOOTSTRAP_CLINICA_FUSO_HORARIO     identificador IANA (ex.: America/Sao_Paulo)",
+  "  TLF_BOOTSTRAP_CLINICA_JUSTIFICATIVA    motivo operacional; vai para a trilha",
+  "                                         de auditoria e nunca é impresso",
   "",
   "Senha — precedência determinística, nesta ordem:",
   "  1. TLF_BOOTSTRAP_ADMIN_SENHA, se definida e não vazia (stdin NÃO é lido)",
@@ -142,7 +155,12 @@ class ErroCli extends Error {
  * módulo carregado dinamicamente, e um `instanceof` exigiria importá-lo
  * estaticamente — justamente o que quebraria o comando `seed` sem Argon2.
  */
-const ERROS_PROPRIOS = new Set(["ErroCli", "ErroBootstrapAdministrador", "ErroSeedRbac"]);
+const ERROS_PROPRIOS = new Set([
+  "ErroCli",
+  "ErroBootstrapAdministrador",
+  "ErroSeedRbac",
+  "ErroBootstrapClinica",
+]);
 const FORMATO_MOTIVO = /^[A-Z][A-Z0-9_]*$/;
 
 interface ErroProprio {
@@ -180,7 +198,8 @@ function analisarArgumentos(argumentos: readonly string[]): Argumentos {
   }
   let estrito = false;
   for (const opcao of resto) {
-    if (opcao === "--estrito") {
+    // `--estrito` pertence ao seed; `bootstrap-clinica` não aceita opção alguma.
+    if (opcao === "--estrito" && primeiro !== "bootstrap-clinica") {
       estrito = true;
       continue;
     }
@@ -426,8 +445,44 @@ async function executarBootstrap(credencial: {
   );
 }
 
+async function executarBootstrapClinica(entrada: {
+  nomeCadastral: string;
+  fusoHorario: string;
+  justificativa: string;
+}): Promise<void> {
+  const { BootstrapClinicaService, validarEntradaBootstrapClinica } = await import(
+    "./bootstrap-clinica.service.js"
+  );
+  // Validação semântica ANTES do contexto: a inicialização do módulo conecta
+  // ao banco (eager). Entrada inválida falha com motivo fechado sem tocá-lo.
+  validarEntradaBootstrapClinica(entrada);
+  const { BootstrapClinicaModule } = await import("./bootstrap-clinica.module.js");
+
+  const resultado = await comContexto(BootstrapClinicaModule, async (contexto) =>
+    contexto.get(BootstrapClinicaService).executar(entrada),
+  );
+
+  // Somente desfecho, id e correlação — nem nome, nem fuso, nem justificativa.
+  imprimir(
+    `bootstrap-clinica: ${resultado.desfecho} · clinica=${resultado.clinicaId}` +
+      (resultado.correlacaoId === null ? "" : ` · correlacao=${resultado.correlacaoId}`),
+  );
+}
+
 async function principal(): Promise<void> {
   const { comando, estrito } = analisarArgumentos(process.argv.slice(2));
+
+  if (comando === "bootstrap-clinica") {
+    // Entrada exclusivamente por ambiente (D-CFG-11), lida antes de conectar.
+    const entrada = {
+      nomeCadastral: exigirVariavel("TLF_BOOTSTRAP_CLINICA_NOME_CADASTRAL"),
+      fusoHorario: exigirVariavel("TLF_BOOTSTRAP_CLINICA_FUSO_HORARIO"),
+      justificativa: exigirVariavel("TLF_BOOTSTRAP_CLINICA_JUSTIFICATIVA"),
+    };
+    await executarBootstrapClinica(entrada);
+    process.exitCode = SAIDA_OK;
+    return;
+  }
 
   // Toda a entrada é validada ANTES de abrir qualquer contexto ou transação:
   // entrada malformada falha sem sequer conectar ao banco.

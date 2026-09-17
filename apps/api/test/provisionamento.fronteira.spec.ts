@@ -206,7 +206,7 @@ describe("acoplamento — o provisionamento não vaza para a aplicação", () =>
     expect(ARQUIVOS_SRC.length).toBeGreaterThan(20);
     expect(
       ARQUIVOS_SRC.map(relativo).filter((a) => a.startsWith("provisionamento/")),
-    ).toHaveLength(7);
+    ).toHaveLength(9);
   });
 });
 

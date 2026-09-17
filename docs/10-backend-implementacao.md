@@ -2,7 +2,8 @@
 
 > **Arquivo:** `docs/10-backend-implementacao.md`
 > **Natureza:** documento **MUTÁVEL** — registro vivo de implementação da frente de backend (`apps/api`)
-> **Revisão vigente:** REV. 53 (17/09/2026) — **REGISTRO PÓS-INTEGRAÇÃO DE `PBACK-AUD-08` / AUD-004 NA `main` (PR [#63](https://github.com/BrunoMNoronha/techlab-fisio/pull/63), MERGE `27012ff`)** (§7.6.7). Registro **exclusivamente factual**, no precedente `MEDIR → REGISTRAR`; nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código, teste, schema, migration, contrato, dependência ou CI alterada. Merge commit **`27012ff82f58aa4bca9d6f5f2b264662359b839d`** (merge commit, sem squash/rebase), 17/09/2026 06:55:47Z, CI verde no HEAD da PR (runs `35191204044` e `35191207118`). **`P-BACK-01` permanece EM ANDAMENTO**; `L-06` ABERTA / BLOQUEADA.
+> **Revisão vigente:** REV. 54 (17/09/2026) — **`CFG-001B` — PROVISIONAMENTO DA LINHA ÚNICA DE `clinica` (SUBCOMANDO `bootstrap-clinica`) IMPLEMENTADO E MEDIDO EM BRANCH PRÓPRIA (`agent/cfg-001b-provisionamento-clinica`) — NÃO INTEGRADO NA `main`** (§6-X). Materializa `D-CFG-01` e `D-CFG-09`..`D-CFG-12` (`docs/14`); nenhuma decisão criada, alterada ou reaberta; nenhuma migration, rota, permissão, ação de auditoria, chave de `contexto` ou dependência nova.
+> **Estado anterior preservado:** REV. 53 (17/09/2026) — **REGISTRO PÓS-INTEGRAÇÃO DE `PBACK-AUD-08` / AUD-004 NA `main` (PR [#63](https://github.com/BrunoMNoronha/techlab-fisio/pull/63), MERGE `27012ff`)** (§7.6.7). Registro **exclusivamente factual**, no precedente `MEDIR → REGISTRAR`; nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código, teste, schema, migration, contrato, dependência ou CI alterada. Merge commit **`27012ff82f58aa4bca9d6f5f2b264662359b839d`** (merge commit, sem squash/rebase), 17/09/2026 06:55:47Z, CI verde no HEAD da PR (runs `35191204044` e `35191207118`). **`P-BACK-01` permanece EM ANDAMENTO**; `L-06` ABERTA / BLOQUEADA.
 > **Estado anterior preservado:** REV. 52 (17/09/2026) — **`PBACK-AUD-08` / AUD-004 — CONSULTA DA TRILHA DE AUDITORIA IMPLEMENTADA EM BRANCH / NÃO INTEGRADA** (§7.6). Branch `agent/p-back-01-aud-004-consulta-trilha-r2` a partir de `origin/main` = `4225b63`. Rota `GET /auditoria/eventos` sob `@RequerPermissao("auditoria.ler")`, materializando a política fechada de `docs/09` §13.9 sem reinterpretá-la. Nenhuma decisão normativa criada, alterada ou reaberta; nenhuma permissão nova; catálogo de ações (25) e whitelist inalterados; `auditoria.consultada` **não** criada; zero drift de persistência; zero dependências. Revisão independente aprovada com ressalvas; por decisão de Bruno Menezes Noronha (17/09/2026) `justificativa` é **omitida** da resposta e o contrato local (path, limite 20/50, cursor keyset — §7.6.2) é **aceito**. **`P-BACK-01` permanece EM ANDAMENTO**; `L-06` ABERTA / BLOQUEADA; AUT-005 não tocada.
 > **Estado anterior preservado:** REV. 51 (17/09/2026) — **REGISTRO PÓS-INTEGRAÇÃO DE `P-2.3D-10` / AUT-002 / `D-2.3D-22` NA `main` (PR [#64](https://github.com/BrunoMNoronha/techlab-fisio/pull/64), MERGE `bc6a763`) E CORREÇÕES DA REVISÃO AUTOMATIZADA** (§6-V.4). PR [#64](https://github.com/BrunoMNoronha/techlab-fisio/pull/64), commits da fatia `254a677` (implementação e testes), `58c4741` (`docs/12` REV. 18) e `400377e` (`docs/10` REV. 49), merge commit **`bc6a763f3525b16384022ad5b43b95a542be5b2f`** (merge commit, sem squash/rebase, por auto-merge autorizado por Bruno Menezes Noronha), 17/09/2026 05:48:03Z, CI verde nas runs `35186845908` (push) e `35186860133` (pull_request). `docs/12` REV. 19.
 > **Estado anterior preservado:** REV. 50 (17/09/2026) — **`CFG-001A` — CONSULTA E ATUALIZAÇÃO DOS DADOS DA CLÍNICA ÚNICA (CFG-001 SEM LOGOTIPO + CFG-006) IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA (`agent/cfg-001a-dados-clinica`) — NÃO INTEGRADA NA `main`** (§6-W). Materialização de `D-CFG-01`..`D-CFG-08` (`docs/14`, homologadas por Bruno Menezes Noronha em 17/09/2026); nenhuma decisão criada, alterada ou reaberta. Migration nova `20260917060000_clinica_linha_unica` (`ux_clinica_linha_unica`) e golden atualizado; rotas `GET /clinica` e `PUT /clinica`; nenhuma permissão, ação de auditoria, chave de `contexto` ou dependência nova.
@@ -3832,6 +3833,49 @@ Os 4 mutation challenges obrigatórios estabelecidos em `docs/12` §10.5 foram t
 - Logotipo e duração padrão fora (`D-CFG-07`); CFG-002..CFG-005 não iniciados.
 - **Correção pós-revisão do PR #65:** o fuso aceita também links IANA reconhecidos pelo runtime (`US/Eastern`, `Etc/GMT+3`, `America/Argentina/Buenos_Aires`) além dos identificadores preferidos, rejeitando offsets (`-03:00`) e variantes de caixa do canônico; limite residual: variante de caixa de um link com segmentos iniciados por maiúscula (`US/eastern`) não é distinguível pelo runtime e é aceita. Limites de tamanho passam a contar **caracteres Unicode** (code points), coerentes com `maxLength` do OpenAPI.
 
+## 6-X. `CFG-001B` — Provisionamento da linha única de `clinica`
+
+**Estado: IMPLEMENTADO E MEDIDO EM BRANCH PRÓPRIA (`agent/cfg-001b-provisionamento-clinica`, a partir de `main` = `9b403a8`) — NÃO INTEGRADO.** Decisões: `docs/14` §3.1 (`D-CFG-01`) e §3.9 (`D-CFG-09`..`D-CFG-12`).
+
+### 6-X.1 Componentes
+
+- **`provisionamento/bootstrap-clinica.service.ts`:** valida a entrada antes de qualquer consulta (`nomeCadastral` e `fusoHorario` por `D-CFG-04`, reutilizando `LIMITES_CLINICA`, `contarCaracteres` e `ehFusoHorarioValido` de `clinica.dto.ts`; justificativa não vazia e sem caractere de controle). Transação única: leitura da linha → `JA_CONFORME` (mesmos nome/fuso, zero escrita) ou `CLINICA_JA_EXISTE` (divergente, nada sobrescrito) ou `INSERT` + `configuracao.alterada` (`ator_usuario_id = NULL`, `justificativa` persistida, `contexto` omitido). Criação concorrente perdida (`identificarViolacao(...).classe === "UNIQUE"` em `ux_clinica_linha_unica`) → rollback e decisão refeita **uma** vez sobre o estado commitado. **Sem advisory lock**: a unicidade é física (`D-CFG-02`).
+- **`provisionamento/bootstrap-clinica.module.ts`:** `DatabaseModule` + `AuditModule`, fora do `AppModule`, sem `CredencialService`.
+- **`provisionamento/cli.ts`:** subcomando `bootstrap-clinica` (importação dinâmica, como o bootstrap do Administrador); variáveis `TLF_BOOTSTRAP_CLINICA_NOME_CADASTRAL`, `TLF_BOOTSTRAP_CLINICA_FUSO_HORARIO`, `TLF_BOOTSTRAP_CLINICA_JUSTIFICATIVA` lidas antes de conectar; validação semântica (`validarEntradaBootstrapClinica`) executada **antes** de abrir o contexto Nest — que conecta ao banco de forma eager —, de modo que entrada inválida produz o motivo fechado mesmo com o banco inalcançável (correção da revisão do PR #69, provada por teste com `DATABASE_URL` inalcançável e por mutação detectada); não aceita opções (inclusive `--estrito` → saída 2); saída impressa só com desfecho, `clinica=<uuid>` e correlação. `seed`, `bootstrap-admin` e `provisionar` inalterados (`D-CFG-12`); `package.json` sem script novo.
+- **Testes:** `bootstrap-clinica.service.spec.ts` (validação antes do banco); `integration/provisionamento-clinica.integration.spec.ts` (serviço e CLI compilado, **19 testes**); `provisionamento.fronteira.spec.ts` passa a contar 9 arquivos na fatia.
+
+### 6-X.2 Critérios de aceite × prova
+
+| CA | Prova | Status |
+| --- | --- | --- |
+| CA-01 cria 1 linha, saída 0 | serviço + CLI | **OK** |
+| CA-02 evento com ator NULL, justificativa, `contexto` vazio | serviço | **OK** |
+| CA-03 reexecução idêntica → `JA_CONFORME`, sem escrita | serviço + CLI | **OK** |
+| CA-04 divergente → `CLINICA_JA_EXISTE` (saída 1), sem sobrescrever | serviço + CLI | **OK** |
+| CA-05 variável ausente → saída 1, só o nome da variável | CLI | **OK** |
+| CA-06 fuso inválido / nome > 200 → recusado | unitário + CLI | **OK** |
+| CA-07 falha da auditoria → 0 linhas, 0 eventos | serviço (sabotagem) | **OK** |
+| CA-08 concorrência → 1 linha, 1 evento, nenhuma falha não controlada | serviço com barreira (23505 real) + 5 processos | **OK** |
+| CA-09 saída sem nome, fuso inválido, justificativa ou SQL | CLI | **OK** |
+| CA-10 `GET /clinica` 404 → 200 após o comando | CLI + `AppModule` | **OK** |
+| CA-11 `seed`/`bootstrap-admin`/`provisionar` inalterados | suíte `provisionamento-cli` e regressão | **OK** |
+| CA-12 zero migration, rota, permissão, ação, chave ou dependência | diff | **OK** |
+
+### 6-X.3 Mutation challenges
+
+| # | Mutação | Resultado |
+| --- | --- | --- |
+| M1 | remover a auditoria | **DETECTADA** (10 testes) |
+| M2 | remover o tratamento de violação única | **DETECTADA** (CA-08 serviço e CLI) |
+| M3 | tratar divergente como `JA_CONFORME` | **DETECTADA** (CA-04, CA-08) |
+| M4 | aceitar fuso inválido | **DETECTADA** (CA-06 CLI) |
+
+### 6-X.4 Limitações declaradas
+
+- A saída padrão do comando inclui as linhas de log de inicialização do Nest (mesmo comportamento vigente de `seed` e `bootstrap-admin`); a linha de desfecho é a contratual.
+- A reexecução compara apenas `nomeCadastral` e `fusoHorario`; opcionais preenchidos depois por `PUT /clinica` não geram divergência.
+- A inclusão da clínica em `provisionar` segue não autorizada (`D-CFG-12`).
+
 ## 7. Auditoria — `P-BACK-01`
 
 ### 7.1 Estado
@@ -4352,6 +4396,7 @@ Sujeitas a autorização própria, nesta ordem provável:
 
 | REV. | Data | Conteúdo |
 | --- | --- | --- |
+| **54** | **17/09/2026** | **`CFG-001B` — PROVISIONAMENTO DA LINHA ÚNICA DE `clinica` IMPLEMENTADO E MEDIDO EM BRANCH PRÓPRIA — NÃO INTEGRADO** (§6-X). Subcomando `bootstrap-clinica`; `configuracao.alterada` com ator NULL e justificativa; reexecução idempotente; concorrência resolvida pela unicidade física; 4 mutation challenges detectados. Nenhuma migration, rota, permissão, ação de auditoria, chave de `contexto` ou dependência nova. |
 | **53** | **17/09/2026** | **REGISTRO PÓS-INTEGRAÇÃO DE `PBACK-AUD-08` / AUD-004 NA `main` (PR [#63](https://github.com/BrunoMNoronha/techlab-fisio/pull/63), MERGE `27012ff`)** (§7.6.7). Registro **exclusivamente factual**; nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código, teste, schema, migration, contrato, dependência ou CI alterada. Merge commit **`27012ff82f58aa4bca9d6f5f2b264662359b839d`** (merge commit, sem squash/rebase), 17/09/2026 06:55:47Z, árvore idêntica ao HEAD validado `6111662`; CI verde (runs `35191204044` e `35191207118`); integração completa local 16 suítes · 522 passed · 2 skipped. Nova §7.6.7, item 19 de §10, estados vivos e cabeçalho atualizados. `P-BACK-01` EM ANDAMENTO; `L-06` ABERTA / BLOQUEADA. |
 | **52** | **17/09/2026** | **`PBACK-AUD-08` / AUD-004 — CONSULTA DA TRILHA DE AUDITORIA IMPLEMENTADA EM BRANCH / NÃO INTEGRADA** (§7.6). `GET /auditoria/eventos` sob `auditoria.ler`; filtros fechados de `docs/09` §13.9; cursor keyset `(ocorrido_em DESC, id DESC)`, limite 20/50; sem join, sem expansão de alvo, sem auto-auditoria. Nenhuma decisão normativa criada/alterada; nenhuma permissão, ação, chave de whitelist, migration ou dependência. Revisão independente tratada: `justificativa` omitida e contrato local aceitos por Bruno; errata do fato sobre emissores de `justificativa`. Mutation challenges M1..M7 mortos e revertidos. `P-BACK-01` EM ANDAMENTO; AUT-005 não tocada. |
 | **51** | **17/09/2026** | **REGISTRO PÓS-INTEGRAÇÃO DE `P-2.3D-10` / AUT-002 / `D-2.3D-22` NA `main` (PR [#64](https://github.com/BrunoMNoronha/techlab-fisio/pull/64), MERGE `bc6a763`) E CORREÇÕES DA REVISÃO AUTOMATIZADA** (§6-V.4). PR [#64](https://github.com/BrunoMNoronha/techlab-fisio/pull/64), commits da fatia `254a677` (implementação e testes), `58c4741` (`docs/12` REV. 18) e `400377e` (`docs/10` REV. 49), merge commit **`bc6a763f3525b16384022ad5b43b95a542be5b2f`** (merge commit, sem squash/rebase, por auto-merge autorizado por Bruno Menezes Noronha), 17/09/2026 05:48:03Z, CI verde nas runs `35186845908` (push) e `35186860133` (pull_request). Correções: revisão automatizada do Codex sobre `400377e`, recebida após o merge, com dois achados P2: **(1)** falha técnica da listagem saía no corpo padrão do Nest (`{"statusCode":500,"message":...}`) porque `FiltroErroAutenticacao` não reconhecia a rota — **defeito real, corrigido**: a rota exata `GET /auth/usuarios/:usuarioId/sessoes` entra no escopo fechado do filtro, com `L-15` (integração) e testes unitários de escopo; mutação que remove a rota do filtro detectada por `L-15`; **(2)** "a consulta não escreve nada" era afirmado sem ressalva, mas a guarda de sessão do **operador** registra atividade (e detecta expiração) como em toda rota autenticada, inclusive `GET /auth/sessao` (`D-2.3D-04`/`D-2.3D-20`) — **esclarecimento de escopo, sem alteração de comportamento nem de decisão**: a ausência de escrita refere-se às sessões do **alvo**; provado por `L-16`. Verificação: `pnpm typecheck` verde; `test:api` 946 testes (sobre `origin/main` `9b403a8`); `verify:api-integration` 15 suítes / 488 aprovados / 2 pulados preexistentes (uma execução anterior teve 1 falha intermitente em `F5-R-01`, corrida entre processos do CLI de provisionamento, não relacionada; reexecução verde); `verify:openapi-runtime` 28/28; `lint:migrations` verde. `docs/12` REV. 19. |
