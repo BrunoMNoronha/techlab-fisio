@@ -172,8 +172,9 @@ jobs:
       # atual) com suas dependências de sistema para manter o runner enxuto.
       #
       # Achado F-E2E0-01 (revisão independente FRONT-E2E0): `trace: "on-first-retry"`
-      # está inerte com `retries: 0`. Classificação: não bloqueante — não corrigido
-      # aqui para preservar isolamento de fatias; correção deve ser fatia própria.
+      # era inerte com `retries: 0`. Corrigido em fatia própria: `trace:
+      # "retain-on-failure"` — o trace.zip de testes que falham vai em test-results/,
+      # publicado pelo passo de artefatos abaixo.
       # ------------------------------------------------------------------
 
       - name: "E2E (FRONT-E2E0) — instalar Chromium com dependências de sistema"

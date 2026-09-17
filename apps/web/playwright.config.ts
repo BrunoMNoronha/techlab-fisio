@@ -23,7 +23,9 @@ export default defineConfig({
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : [["list"]],
   use: {
     baseURL,
-    trace: "on-first-retry",
+    // F-E2E0-01: com retries: 0, "on-first-retry" nunca gravava trace.
+    // "retain-on-failure" grava sempre e só preserva o trace de testes que falharam.
+    trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "off",
   },
