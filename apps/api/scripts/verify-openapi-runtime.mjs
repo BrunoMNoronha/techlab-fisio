@@ -143,7 +143,7 @@ try {
 
   const caminhos = Object.keys(documento.paths ?? {}).sort();
   conferir(
-    "rotas da F3, F6, P-2.3D-07, P-2.3D-08, AUT-005, P-2.3D-10, CFG-001A, CFG-002 e AUD-004 presentes e nenhuma outra vazou",
+    "rotas da F3, F6, P-2.3D-07, P-2.3D-08, AUT-005, P-2.3D-10, CFG-001A, CFG-002, AUD-004 e CFG-003 presentes e nenhuma outra vazou",
     JSON.stringify(caminhos) ===
       JSON.stringify([
         "/auditoria/eventos",
@@ -158,6 +158,9 @@ try {
         "/clinica",
         "/health",
         "/horario-funcionamento",
+        "/servicos",
+        "/servicos/{servicoId}",
+        "/servicos/{servicoId}/situacao",
       ]),
     `caminhos=${caminhos.join(", ")}`,
   );
@@ -275,6 +278,25 @@ try {
       .join(",");
     conferir(`${metodo.toUpperCase()} /horario-funcionamento documenta ${esperado}`, status === esperado, `status=${status}`);
   }
+  // CFG-003 — catálogo de serviços (docs/14 §3.11); sem DELETE.
+  for (const [caminho, metodo, esperado] of [
+    ["/servicos", "get", "200,400,401,403,500"],
+    ["/servicos", "post", "201,400,401,403,404,409,413,500"],
+    ["/servicos/{servicoId}", "get", "200,400,401,403,404,500"],
+    ["/servicos/{servicoId}", "put", "200,400,401,403,404,409,413,500"],
+    ["/servicos/{servicoId}/situacao", "patch", "200,400,401,403,404,413,500"],
+  ]) {
+    const status = Object.keys(documento.paths[caminho]?.[metodo]?.responses ?? {})
+      .sort()
+      .join(",");
+    conferir(`${metodo.toUpperCase()} ${caminho} documenta ${esperado}`, status === esperado, `status=${status}`);
+  }
+  conferir(
+    "nenhum DELETE em /servicos",
+    ["/servicos", "/servicos/{servicoId}", "/servicos/{servicoId}/situacao"].every(
+      (caminho) => documento.paths[caminho]?.delete === undefined,
+    ),
+  );
 
   const statusLogin = Object.keys(documento.paths["/auth/login"]?.post?.responses ?? {})
     .sort()

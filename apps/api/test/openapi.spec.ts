@@ -108,7 +108,7 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
     expect(documento.paths["/health"]).toBeDefined();
   });
 
-  it("as rotas publicadas são EXATAMENTE as da F3, F6, P-2.3D-07, P-2.3D-08, AUT-005, P-2.3D-10, CFG-001A e CFG-002 — nenhuma outra vazou", () => {
+  it("as rotas publicadas são EXATAMENTE as da F3, F6, P-2.3D-07, P-2.3D-08, AUT-005, P-2.3D-10, CFG-001A, CFG-002 e CFG-003 — nenhuma outra vazou", () => {
     // ATUALIZADO NA F6 / P-2.3D-07 / P-2.3D-08: as duas rotas de recuperação de senha (AUT-004),
     // a rota de revogação de sessão (P-2.3D-07 / AUT-002) e a consulta da sessão
     // autenticada atual (P-2.3D-08 / D-2.3D-20) foram autorizadas e passam a pertencer
@@ -118,6 +118,7 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
     // listagem administrativa das sessões ativas de um usuário.
     // CFG-001A (`docs/14`, D-CFG-03) acrescentou GET/PUT /clinica.
     // CFG-002 (`docs/14`, D-CFG-15) acrescentou GET/PUT /horario-funcionamento.
+    // CFG-003 (`docs/14`, D-CFG-24) acrescentou /servicos, /servicos/{servicoId} e a situação.
     const caminhos = Object.keys(documento.paths);
     expect(caminhos.sort()).toEqual([
       "/auditoria/eventos",
@@ -132,6 +133,9 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
       "/clinica",
       "/health",
       "/horario-funcionamento",
+      "/servicos",
+      "/servicos/{servicoId}",
+      "/servicos/{servicoId}/situacao",
     ]);
     for (const proibido of [
       "papeis",
@@ -192,6 +196,9 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
       { caminho: "/auth/usuarios/{usuarioId}/situacao", metodo: "patch" },
       { caminho: "/clinica", metodo: "put" },
       { caminho: "/horario-funcionamento", metodo: "put" },
+      { caminho: "/servicos", metodo: "post" },
+      { caminho: "/servicos/{servicoId}", metodo: "put" },
+      { caminho: "/servicos/{servicoId}/situacao", metodo: "patch" },
     ];
     for (const { caminho, metodo } of mutacoes) {
       const parametros = operacao(caminho, metodo)["parameters"] as Array<
@@ -262,6 +269,34 @@ describe("CFG-002 — contratos de resposta de /horario-funcionamento (docs/14)"
   it("GET e PUT exigem o cookie de sessão", () => {
     for (const metodo of ["get", "put"] as const) {
       expect(operacao("/horario-funcionamento", metodo)["security"]).toBeDefined();
+    }
+  });
+});
+
+describe("CFG-003 — contratos de /servicos (docs/14 §3.11)", () => {
+  const esperados: Array<[string, "get" | "post" | "put" | "patch", string[]]> = [
+    ["/servicos", "get", ["200", "400", "401", "403", "500"]],
+    ["/servicos", "post", ["201", "400", "401", "403", "404", "409", "413", "500"]],
+    ["/servicos/{servicoId}", "get", ["200", "400", "401", "403", "404", "500"]],
+    ["/servicos/{servicoId}", "put", ["200", "400", "401", "403", "404", "409", "413", "500"]],
+    ["/servicos/{servicoId}/situacao", "patch", ["200", "400", "401", "403", "404", "413", "500"]],
+  ];
+
+  it.each(esperados)("%s %s documenta exatamente os status do contrato", (caminho, metodo, status) => {
+    expect(Object.keys(respostas(caminho, metodo)).sort()).toEqual(status);
+    expect(operacao(caminho, metodo)["security"]).toBeDefined();
+  });
+
+  it("as consultas GET de /servicos NÃO declaram o header CSRF", () => {
+    for (const caminho of ["/servicos", "/servicos/{servicoId}"]) {
+      const parametros = (operacao(caminho, "get")["parameters"] ?? []) as Array<Record<string, unknown>>;
+      expect(parametros.find((p) => p["in"] === "header" && p["name"] === "x-tlf-requisicao")).toBeUndefined();
+    }
+  });
+
+  it("não existe DELETE em /servicos (D-CFG-24)", () => {
+    for (const caminho of ["/servicos", "/servicos/{servicoId}", "/servicos/{servicoId}/situacao"]) {
+      expect((documento.paths[caminho] as Record<string, unknown>)["delete"]).toBeUndefined();
     }
   });
 });
