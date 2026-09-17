@@ -38,19 +38,20 @@ function rejeicao(
 }
 
 describe("catálogo homologado (D-AUD-01 / D-AUD-02 / PBACK-AUD-09)", () => {
-  it("contém exatamente as 24 ações de docs/09 §12.2 + `autorizacao.negada` (§13.4.1) = 25", () => {
-    expect(ACOES_AUDITORIA).toHaveLength(25);
-    expect(new Set(ACOES_AUDITORIA).size).toBe(25);
-    // A 25ª é a ÚNICA acrescentada depois de D-AUD-01, e fica ao final para
+  it("contém exatamente as 24 ações de docs/09 §12.2 + `autorizacao.negada` (§13.4.1) + 2 de paciente (docs/17 D-PAC-07) = 27", () => {
+    expect(ACOES_AUDITORIA).toHaveLength(27);
+    expect(new Set(ACOES_AUDITORIA).size).toBe(27);
+    // As acrescentadas depois de D-AUD-01 ficam ao final, na ordem das decisões, para
     // que a ordem da fonte original permaneça reconhecível.
     expect(ACOES_AUDITORIA[24]).toBe("autorizacao.negada");
+    expect(ACOES_AUDITORIA.slice(25)).toEqual(["paciente.cadastro.alterado", "paciente.situacao.alterada"]);
   });
 
   it("o catálogo de resultado é exatamente SUCESSO | NEGADO | FALHA", () => {
     expect(RESULTADOS_AUDITORIA).toEqual(["SUCESSO", "NEGADO", "FALHA"]);
   });
 
-  it("a whitelist declara TODAS as 25 ações e somente três não vazias (D-AUD-07)", () => {
+  it("a whitelist declara TODAS as 27 ações e somente três não vazias (D-AUD-07)", () => {
     expect(Object.keys(WHITELIST_CONTEXTO).sort()).toEqual(
       [...ACOES_AUDITORIA].sort(),
     );
@@ -88,7 +89,6 @@ describe("ação desconhecida → rejeição explícita", () => {
   it.each([
     "acao.inexistente",
     // SF — D-AUD-05, confirmados por docs/09 §13:
-    "paciente.cadastro.alterado", // §13.5 — política de L-08 fechada; ação NÃO criada
     // `prontuario.acessado`: L-06 permanece ABERTA / BLOQUEADA (docs/09
     // §13.3). A matéria NÃO foi encerrada — TLF-BASE-V1 §10 exige trilha de
     // auditoria para ACESSO a dados sensíveis —, mas a ação não pode ser
@@ -107,7 +107,8 @@ describe("ação desconhecida → rejeição explícita", () => {
     "agendamento.falta_registrada",
     "agendamento.concluido",
     "bloqueio_agenda.criado",
-    "paciente.situacao.alterada", // RC — §13.5: não criada com a política de L-08
+    "paciente.cadastro.alterada", // variante: a ação homologada por D-PAC-07 é `paciente.cadastro.alterado`
+    "PACIENTE.SITUACAO.ALTERADA", // caixa diferente não é a ação homologada por D-PAC-07
     "USUARIO.AUTENTICACAO", // caixa diferente não é a ação homologada
     "",
   ])('rejeita "%s" mesmo com contexto vazio', (acao) => {
@@ -117,14 +118,16 @@ describe("ação desconhecida → rejeição explícita", () => {
   });
 });
 
-describe("whitelist vazia → nenhum contexto não vazio (22 ações)", () => {
+describe("whitelist vazia → nenhum contexto não vazio (24 ações)", () => {
   const acoesComWhitelistVazia = Object.entries(WHITELIST_CONTEXTO)
     .filter(([, chaves]) => chaves.length === 0)
     .map(([acao]) => acao);
 
-  it("são exatamente 22 ações (21 de D-AUD-07 + `autorizacao.negada` de PBACK-AUD-09)", () => {
-    expect(acoesComWhitelistVazia).toHaveLength(22);
+  it("são exatamente 24 ações (21 de D-AUD-07 + `autorizacao.negada` de PBACK-AUD-09 + 2 de D-PAC-07)", () => {
+    expect(acoesComWhitelistVazia).toHaveLength(24);
     expect(acoesComWhitelistVazia).toContain("autorizacao.negada");
+    expect(acoesComWhitelistVazia).toContain("paciente.cadastro.alterado");
+    expect(acoesComWhitelistVazia).toContain("paciente.situacao.alterada");
   });
 
   it.each(acoesComWhitelistVazia)(

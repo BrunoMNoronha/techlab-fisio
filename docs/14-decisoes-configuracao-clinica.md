@@ -3,9 +3,9 @@
 > **Documento:** `docs/14-decisoes-configuracao-clinica.md`
 > **Projeto:** TechLab Fisio
 > **Frente:** Fase 3 — Configuração da Clínica (módulo M2, `CFG-001..CFG-006`)
-> **Status:** **DECIDIDO — `D-CFG-01`..`D-CFG-08` E ADENDOS `D-CFG-03-A` E `D-CFG-04-A` HOMOLOGADOS POR BRUNO MENEZES NORONHA EM 17/09/2026; `D-CFG-09`..`D-CFG-12` (PROVISIONAMENTO DA CLÍNICA) HOMOLOGADAS EM 17/09/2026; `D-CFG-13`..`D-CFG-21` (HORÁRIO DE FUNCIONAMENTO, CFG-002) HOMOLOGADAS EM 17/09/2026; `D-CFG-22`..`D-CFG-33` (CATÁLOGO DE SERVIÇOS, CFG-003) HOMOLOGADAS EM 17/09/2026; `D-CFG-34`..`D-CFG-45` (FORMAS DE PAGAMENTO, CFG-004) HOMOLOGADAS EM 17/09/2026; `D-CFG-46`..`D-CFG-57` (MOTIVOS DE CANCELAMENTO, CFG-005) HOMOLOGADAS EM 17/09/2026** (TLF-BASE-V1 §15, item 1).
+> **Status:** **DECIDIDO — `D-CFG-01`..`D-CFG-08` E ADENDOS `D-CFG-03-A` E `D-CFG-04-A` HOMOLOGADOS POR BRUNO MENEZES NORONHA EM 17/09/2026; `D-CFG-09`..`D-CFG-12` (PROVISIONAMENTO DA CLÍNICA) HOMOLOGADAS EM 17/09/2026; `D-CFG-13`..`D-CFG-21` (HORÁRIO DE FUNCIONAMENTO, CFG-002) HOMOLOGADAS EM 17/09/2026; `D-CFG-22`..`D-CFG-33` (CATÁLOGO DE SERVIÇOS, CFG-003) HOMOLOGADAS EM 17/09/2026; `D-CFG-34`..`D-CFG-45` (FORMAS DE PAGAMENTO, CFG-004) HOMOLOGADAS EM 17/09/2026; `D-CFG-46`..`D-CFG-57` (MOTIVOS DE CANCELAMENTO, CFG-005) HOMOLOGADAS EM 17/09/2026; `D-CFG-58`..`D-CFG-66` (FECHAMENTO DA CONFIGURAÇÃO HORÁRIA, FRENTE `CFG-HOR`) DECIDIDAS EM 17/09/2026 A PARTIR DAS FONTES VIGENTES, POR SOLICITAÇÃO DE BRUNO MENEZES NORONHA, E HOMOLOGADAS POR ELE EM 17/09/2026, SEM ALTERAÇÃO DE TEOR (REV. 26)** (TLF-BASE-V1 §15, item 1).
 > **Data:** 17 de setembro de 2026
-> **Insumo decisório:** pacotes de análise somente leitura `CFG-PREP0` (`D-CFG-01`..`D-CFG-08`, sobre `origin/main` = `63bb058`), `CFG-PREP1` (`D-CFG-09`..`D-CFG-12`), `CFG-PREP2` (`D-CFG-13`..`D-CFG-21`), `CFG-PREP3` (`D-CFG-22`..`D-CFG-33`), `CFG-PREP4` (`D-CFG-34`..`D-CFG-45`) e `CFG-PREP5` (`D-CFG-46`..`D-CFG-57`); a base medida de cada um consta da respectiva seção.
+> **Insumo decisório:** pacotes de análise somente leitura `CFG-PREP0` (`D-CFG-01`..`D-CFG-08`, sobre `origin/main` = `63bb058`), `CFG-PREP1` (`D-CFG-09`..`D-CFG-12`), `CFG-PREP2` (`D-CFG-13`..`D-CFG-21`), `CFG-PREP3` (`D-CFG-22`..`D-CFG-33`), `CFG-PREP4` (`D-CFG-34`..`D-CFG-45`), `CFG-PREP5` (`D-CFG-46`..`D-CFG-57`) e a frente de fechamento `CFG-HOR` (`D-CFG-58`..`D-CFG-66`, medida no workspace local sobre `bd772a3`); a base medida de cada um consta da respectiva seção.
 > **Natureza:** registro normativo das decisões. A materialização da fatia `CFG-001A` (autorizada por Bruno em 17/09/2026) é registrada factualmente em `docs/10` §6-W; nenhuma decisão foi alterada por ela.
 > **Por que um documento próprio:** precedente do projeto para decisões por frente (`docs/09`, `docs/11`, `docs/12`, `docs/13`). Um documento dedicado também evita edição concorrente de `docs/10` e `docs/12`, em uso por frentes paralelas.
 
@@ -486,6 +486,212 @@ Registro de fronteira; a agenda **não** é implementada nem decidida aqui.
 - **Serialização com `D-CFG-50`:** o cancelamento de agendamento deve bloquear a linha do motivo (`SELECT ... FOR SHARE` ou mais forte) ao verificar sua situação, para não correr com edição ou inativação concorrente.
 - **Pendências de fronteira:** obrigatoriedade do motivo e CHECK de coerência (`D-CFG-51`); cancelamento sem motivos ativos (`D-CFG-52`); leitura pela Recepção (`D-CFG-55`). Os motivos de cancelamento de pacote e de cobrança permanecem texto livre, **fora** de CFG-005.
 
+### 3.14 Fechamento da Configuração Horária (`CFG-002` × agenda × `CFG-006`) — `D-CFG-58`..`D-CFG-66` *(decididas em 17/09/2026; frente `CFG-HOR`; **homologadas** por Bruno Menezes Noronha em 17/09/2026 — REV. 26)*
+
+**Natureza e autoridade.** Frente de **fechamento de contrato**, conduzida por solicitação de Bruno Menezes Noronha em 17/09/2026 para eliminar as ambiguidades restantes da configuração horária, decidindo autonomamente o que é **determinável pelas fontes vigentes** (TLF-BASE-V1 §5.2, §5.5, §9, §13; `docs/02` CFG-002, CFG-006, PRO-003, AGD-001..005; `docs/03` RN-014..RN-016, RN-060; `docs/07` §17.2, §17.4, §24.1; `D-CFG-08`, `D-CFG-13`..`D-CFG-21`, `D-CFG-33`) e escolhendo, entre alternativas, a mais simples compatível com essas fontes. Estas decisões **não** alteram `D-CFG-13`..`D-CFG-21` nem o runtime integrado pela PR #76; `D-CFG-64` **refina** a classificação de `D-CFG-19` e `D-CFG-63` **conclui** a reavaliação prevista em `D-CFG-08`/`D-CFG-20`, ambas de forma explícita. **Registro normativo; nenhum código, schema, migration ou teste alterado.** Nenhuma implementação de agenda é autorizada por este registro.
+
+**Fatos de partida (medidos no workspace sobre `bd772a3`).**
+
+| # | Fato | Evidência |
+| --- | --- | --- |
+| FH-01 | `GET`/`PUT /horario-funcionamento` integrados: grade `{ janelas: [{ diaSemana, horaInicio, horaFim }] }`, `HH:MM` 00:00..23:59, `horaFim > horaInicio`, ≤ 4 janelas/dia, sem sobreposição nem adjacência, substituição integral sob `FOR UPDATE` em `clinica`, no-op sem auditoria, `400 REQUISICAO_INVALIDA` sem detalhamento do campo | `apps/api/src/clinica/horario-funcionamento.{dto,service,controller}.ts`; `docs/10` §6-Y |
+| FH-02 | `horario_funcionamento` sem vigência, sem unicidade e sem tabela de exceções; CHECKs `ck_horario_funcionamento_dia_semana` e `ck_horario_funcionamento_intervalo` | `packages/database/prisma/schema.prisma`; `docs/08` §8 |
+| FH-03 | `disponibilidade_profissional` é camada **separada** (`dia_semana`, `hora_inicio`/`hora_fim`, vigência `date`), de PRO-003 | `schema.prisma`; `docs/07` §7.3 |
+| FH-04 | `agendamento.inicio/fim` e `bloqueio_agenda.inicio/fim` são `timestamptz`; conflito temporal é semiaberto (exclusion constraint); bloqueio é **por profissional** | `schema.prisma`; `docs/07` §17.2, §24.1 |
+| FH-05 | `docs/07` §17.2 atribui horário de funcionamento e disponibilidade ao **backend**; §17.4 põe RN-014 no passo 3 de T-01 | `docs/07` |
+| FH-06 | Não há módulo de agenda nem de disponibilidade em `apps/api`; não há tela de configuração em `apps/web` | `apps/api/src`, `apps/web/app` |
+| FH-07 | O projeto usa `422` para regra de negócio violada (`AUTO_INATIVACAO_PROIBIDA`, `ALVO_NAO_ELEGIVEL`) | `apps/api/src/auth/usuarios.controller.ts`; `recuperacao-senha.controller.ts` |
+
+#### 3.14.1 Mapa do estado (antes desta frente)
+
+| Tema | Estado anterior | Fonte | Resolução |
+| --- | --- | --- | --- |
+| Unidade da configuração | DECIDIDO | TLF-BASE §5.2; `D-CFG-02`, `D-CFG-17` | confirmada em `D-CFG-58` |
+| Dias da semana | DECIDIDO | `D-CFG-18` (0 = domingo) | — |
+| Múltiplos intervalos por dia | DECIDIDO | `D-CFG-13`, `D-CFG-18` | — |
+| Dia fechado | DECIDIDO | `D-CFG-13` (ausência de janela) | explicitada a grade vazia em `D-CFG-58` |
+| Intervalo de almoço | DECIDIDO (implícito) | `D-CFG-13` | explicitado em `D-CFG-58` |
+| Sobreposição / adjacência | DECIDIDO | `D-CFG-13`, `D-CFG-16` | — |
+| Limites e precisão | PARCIAL (23:59 e 00:00 não explicitados) | `D-CFG-18` | `D-CFG-59` |
+| Meia-noite | DECIDIDO (grade) / A DECIDIR (agendamento) | `D-CFG-14` | `D-CFG-61` |
+| Exceção por data / feriados | FUTURO sem contrato | `D-CFG-19` | `D-CFG-64` |
+| Profissional × clínica | PARCIAL | CFG-002, RN-014, `D-CFG-20` | `D-CFG-62` |
+| Duração do atendimento | PARCIAL | `D-CFG-07`, `D-CFG-33` | `D-CFG-62` |
+| Timezone na avaliação | PARCIAL | TLF-BASE §9; CFG-006; `docs/07` §24.1 | `D-CFG-60` |
+| Regra da agenda (contenção, bordas) | A DECIDIR | RN-014 | `D-CFG-61` |
+| Edição futura / impacto em agendamentos / retroatividade | A DECIDIR | PRO-003 (análogo); AGD-004; `D-CFG-08` | `D-CFG-63` |
+| Auditoria | DECIDIDO | `D-CFG-17` | fronteira em `D-CFG-65` |
+| Permissões | DECIDIDO (gestão) / PARCIAL (uso pela agenda) | `D-CFG-21` | `D-CFG-65` |
+| Concorrência | DECIDIDO (grade) / A DECIDIR (grade × agendamento) | `D-CFG-15` | `D-CFG-61` |
+| Persistência | DECIDIDO | FH-02; `D-CFG-15`, `D-CFG-16` | `D-CFG-58` (sem mudança de schema) |
+| Frontend | A DECIDIR (comportamento) | TLF-BASE §4.9, §11 | `D-CFG-66` |
+
+#### 3.14.2 `D-CFG-58` — Unidade, grade inicial e forma consolidada
+
+- **Contexto.** O prompt de fechamento exige confirmar a entidade dona e a semântica de dia fechado e de almoço.
+- **Decisão.**
+  - A grade semanal pertence à **clínica única** (`horario_funcionamento.clinica_id`); **não** existe unidade, filial, sala ou tenant (TLF-BASE §5.2, §13).
+  - **Não há grade pré-cadastrada**: provisionamento, seed e migration não criam janelas; `bootstrap-clinica` permanece inalterado (mesmo racional de `D-CFG-39`/`D-CFG-52`).
+  - **Grade vazia** = clínica fechada em todos os dias; a agenda rejeita todo agendamento novo (`D-CFG-61`). Não existe "sem configuração = aberto 24h".
+  - Dia **fechado** = dia sem janela. **Não** há estado persistido `ABERTO`/`FECHADO` — um único predicado elimina a contradição "aberto sem janela" / "fechado com janela".
+  - **Almoço** e outros fechamentos intermediários são expressos por **duas ou mais janelas** (ex.: `08:00–12:00` + `14:00–18:00`); não existe campo `intervalo_almoco`.
+  - **Adjacência** (`08:00–12:00` + `12:00–18:00`) é **rejeitada** (`D-CFG-13`), nunca normalizada: o Administrador informa `08:00–18:00`. Sobreposição é rejeitada; não há fusão silenciosa.
+- **Motivação.** Coerência com as decisões integradas e com a clínica única; fail-closed sem configuração.
+- **Impactos.** Nenhuma mudança de schema, migration ou API. A agenda depende da grade estar cadastrada para aceitar agendamentos.
+- **Alternativas.** Grade padrão (ex.: seg–sex 08–18) no provisionamento — rejeitada: inventaria horário que a clínica não declarou. Estado explícito por dia — rejeitado: cria estados contraditórios.
+- **Aceite / testes.** Já provados pela PR #76 (`docs/10` §6-Y.2); o comportamento com grade vazia na agenda é provado pela fatia de agenda (`CH-AG-07`).
+
+#### 3.14.3 `D-CFG-59` — Limites do dia e precisão
+
+- **Decisão.**
+  - Formato `HH:MM` 24h, minutos `00`–`59`, **sem segundos** e **sem arredondamento** (`D-CFG-18`); qualquer outra forma → `400 REQUISICAO_INVALIDA`.
+  - `00:00` é aceito como **início**; o **maior fim representável é `23:59`**. `24:00` não é aceito. Consequência aceita: o minuto `23:59–24:00` nunca é horário de funcionamento; não há janela "dia inteiro" exata.
+  - `horaInicio = horaFim` (ex.: `08:00–08:00`) e `horaInicio > horaFim` (ex.: `18:00–08:00`) → `400`; não há interpretação como "atravessa a meia-noite" (`D-CFG-14`).
+  - A janela é o intervalo **semiaberto** `[horaInicio, horaFim)` para fins de agenda (`D-CFG-61`); a borda final é alcançável pelo **fim** de um agendamento.
+- **Motivação.** Registra o comportamento integrado (`FORMA_HORA` e CHECK físico) e remove a dúvida sobre 24:00, sem alterar o CHECK protegido.
+- **Alternativas.** Aceitar `24:00` — rejeitada: exige mudança no CHECK/tipo `time` e na validação integrada sem requisito demonstrado para clínica de fisioterapia.
+- **Testes.** Já cobertos por `apps/api/test/horario-funcionamento-dto.spec.ts` (`00:00–23:59` aceito; `24:00`, segundos, `8:00` e `22:00–02:00` rejeitados).
+
+#### 3.14.4 `D-CFG-60` — Interpretação temporal e fuso
+
+- **Decisão.**
+  - A grade é **horário local de parede** no fuso IANA de `clinica.fuso_horario` (CFG-006). Não existe fuso por janela, por profissional ou por usuário.
+  - Instantes (`agendamento.inicio/fim`, `bloqueio_agenda`) permanecem `timestamptz` em UTC (TLF-BASE §9). Nenhuma coluna da grade guarda UTC.
+  - Para avaliar um agendamento, o backend converte `inicio` e `fim` para data civil e hora local usando o **fuso vigente no momento da validação**, com as regras IANA (inclusive eventual horário de verão). O **dia da semana** considerado é o da **data civil local do início**.
+  - A conversão para RN-014 é feita **na aplicação** (API `Intl` do runtime — a mesma base que valida `fusoHorario` em `D-CFG-04`), por **função pura** testável; a grade é lida em `HH:MM` como hoje. Esta decisão resolve, **somente para RN-014**, o item "local da conversão UTC ↔ local" de §5; indicadores (RN-060) seguem pendentes da sua fatia.
+- **Motivação.** Evita a divergência entre bases de fusos da aplicação e do PostgreSQL no ponto em que o fuso já foi validado; mantém a regra unitariamente testável.
+- **Alternativas.** Converter no SQL (`AT TIME ZONE`) — rejeitada para RN-014: exige verificar compatibilidade de `pg_timezone_names` com a base do runtime. Persistir a grade em UTC — rejeitada por `docs/07` §24.1 (quebra com horário de verão).
+- **Testes futuros.** `America/Sao_Paulo`: agendamento `11:00Z–12:00Z` = `08:00–09:00` local de segunda aceito em `08:00–12:00`; instante UTC do dia seguinte que ainda é o dia anterior local avaliado pelo dia local; fuso com horário de verão (ex.: `America/New_York`) em data de transição avaliado pela hora de parede.
+
+#### 3.14.5 `D-CFG-61` — Regra da agenda (RN-014, parcela da clínica)
+
+- **Decisão (predicado normativo).** Um agendamento `[inicio, fim)` satisfaz o horário de funcionamento **se e somente se**, após a conversão de `D-CFG-60`:
+  1. a data civil local de `inicio` é **igual** à de `fim` (agendamento que atravessa a meia-noite local é rejeitado); e
+  2. existe **uma única janela** `J` do dia da semana dessa data com `J.horaInicio ≤ hora_local(inicio)` **e** `hora_local(fim) ≤ J.horaFim`, comparando com a precisão integral do instante.
+- **Consequências normativas.**
+  - Início **exatamente** na abertura: aceito. Fim **exatamente** no fechamento: aceito.
+  - Início antes da abertura ou fim depois do fechamento: rejeitado.
+  - Agendamento que **atravessa** fechamento intermediário (ex.: `11:30–12:30` com `08:00–12:00` + `14:00–18:00`): rejeitado — nunca se somam janelas (adjacência é proibida, logo não há janelas contíguas a unir).
+  - Dia sem janela (inclusive grade vazia): rejeitado.
+- **Onde se aplica.** Na **criação** (AGD-001) e em **toda remarcação** (AGD-002, RN-016), no passo 3 de T-01 (`docs/07` §17.4), antes da disponibilidade do profissional. **Não** se aplica a confirmação, check-in, início, conclusão, falta ou cancelamento.
+- **Erro.** `422 FORA_DO_HORARIO_FUNCIONAMENTO`, no envelope `{ erro: <código> }`, sem expor a grade nem valores. Validação estrutural do corpo continua `400`.
+- **Concorrência grade × agendamento.** A validação lê a grade **dentro** da transação de T-01, **sem** lock em `clinica`. Um agendamento validado contra a grade anterior a um `PUT` concorrente equivale a um agendamento criado imediatamente antes da alteração e é tolerado por `D-CFG-63`. Não se introduz `FOR SHARE`, versão ou `SERIALIZABLE`.
+- **Motivação.** RN-014 exige "janela permitida"; o intervalo semiaberto é o mesmo da exclusion constraint (`docs/07` §17.2); o `422` segue o padrão do projeto para regra de negócio (FH-07).
+- **Alternativas.** Aceitar agendamento que cruze fechamento intermediário se a soma cobrir — rejeitada (contradiz o fechamento declarado). Lock compartilhado em `clinica` em T-01 — rejeitado: serializaria toda a agenda com a configuração sem risco que o justifique.
+- **Critérios de aceite / testes futuros.** `CH-AG-01`..`CH-AG-09` (§3.14.11).
+
+#### 3.14.6 `D-CFG-62` — Camadas: clínica × disponibilidade × bloqueio × serviço
+
+- **Decisão.**
+  - **Configuração horária** = quando **a clínica** funciona. **Disponibilidade** (PRO-003) = quando **o profissional** atende. **Bloqueio** (AGD-004) = indisponibilidade pontual do profissional. **Serviço** (CFG-003) = duração padrão do atendimento.
+  - Um agendamento novo é válido quando está contido numa janela da clínica (`D-CFG-61`) **e** numa disponibilidade vigente do profissional (PRO-003) **e** não sobrepõe bloqueio (RN-015.2) — equivale à **interseção** das camadas, avaliada **somente na agenda**.
+  - **Sem validação cruzada na escrita:** cadastrar disponibilidade fora do horário da clínica **não** é rejeitado pela configuração, e alterar a grade **não** altera nem invalida disponibilidades; a parte fora da grade é simplesmente ineficaz para novos agendamentos.
+  - A configuração horária **não** contém duração, granularidade de slot ou múltiplos obrigatórios. O `fim` avaliado é o `fim` do agendamento (proposto a partir de `servico.duracao_min`, `D-CFG-33`); se a duração é sobrescrevível permanece decisão da agenda.
+  - Regras próprias de disponibilidade (vigência, sobreposição, erro) pertencem à fatia de PRO-003 e **não** são decididas aqui.
+- **Motivação.** CFG-002 ("não substitui disponibilidade específica"), TLF-BASE §5.3 e §8 (disponibilidade é entidade do profissional).
+- **Alternativas.** Exigir disponibilidade contida na grade da clínica — rejeitada: acopla cadastros e tornaria uma redução da grade uma cascata de invalidações.
+
+#### 3.14.7 `D-CFG-63` — Alteração da grade ou do fuso com agendamentos existentes; retroatividade
+
+- **Estratégia conservadora (avaliada).** Rejeitar o `PUT` (`409`) enquanto houver agendamento futuro ativo fora da nova grade. *Custo/risco:* altera o contrato integrado de `D-CFG-15`, acopla CFG a AGD, exige varrer e travar a agenda futura, impede fechar a clínica (ex.: reforma) sem antes remarcar tudo, e não tem apoio em fonte.
+- **Estratégia flexível (adotada).**
+  - O `PUT /horario-funcionamento` **não consulta** agendamentos e **nunca** cancela, remarca, altera estado ou reclassifica agendamento, bloqueio ou disponibilidade.
+  - A nova grade vale **somente para validações posteriores** (criação e remarcação). Agendamentos já existentes fora dela **permanecem válidos** e seguem normalmente confirmação, check-in, atendimento, conclusão, falta e cancelamento, sem revalidação de horário.
+  - **Remarcação** de qualquer agendamento é validada contra a grade **vigente** (RN-016), inclusive a de um agendamento criado sob grade anterior.
+  - **Sem retroatividade:** nada do passado é reavaliado; histórico, indicadores e auditoria não são reescritos. Não há vigência na grade (`D-CFG-20`); a grade anterior não é preservada (limitação já aceita em `docs/10` §6-Y.5).
+  - **Troca de fuso** (reavaliação de `D-CFG-08` concluída): continua **permitida**, sem regra de transição; os instantes UTC dos agendamentos são preservados e passam a ser **exibidos** no novo fuso (TLF-BASE §9); validações posteriores usam o novo fuso.
+  - **Sem** aviso ou listagem de agendamentos afetados no MVP (melhoria futura possível, não autorizada).
+- **Motivação.** Precedentes de não apagamento silencioso (AGD-004) e de não reescrita (PRO-003); contrato integrado (`D-CFG-15`, `D-CFG-20`); simplicidade do MVP (TLF-BASE §4.5).
+- **Risco aceito.** A agenda pode conter agendamentos fora da grade vigente após redução; é estado **tolerado**, análogo ao bloqueio criado sobre agendamento existente (`docs/07` §17.2).
+- **Testes futuros.** `CH-ALT-01`..`CH-ALT-04` (§3.14.11).
+
+#### 3.14.8 `D-CFG-64` — Exceções por data e feriados (**Opção A**; refina `D-CFG-19`)
+
+- **Decisão.**
+  - O MVP opera **somente a grade semanal recorrente**. **Não** há entidade, tabela, rota ou regra de exceção por data nesta frente nem como pré-requisito da agenda.
+  - **Fechamento pontual** (feriado, manutenção, evento interno) é operado por **bloqueio de agenda** por profissional (AGD-004, `agenda.bloqueio`), que já rejeita novos agendamentos e não apaga os existentes.
+  - **Abertura extraordinária** fora da grade **não é suportada** por exceção; exige alteração da grade, com os efeitos de `D-CFG-63`.
+  - **Feriados** não são tratados automaticamente: sem calendário embutido e **sem API externa**.
+  - Refinamento de `D-CFG-19`: exceções por data deixam de ser pendência bloqueante e passam a **melhoria futura** condicionada (CFG-002 "quando modeladas"). Sua modelagem exigirá pacote de decisão próprio (entidade, precedência sobre a grade, fechamento total × horário especial, auditoria, efeito sobre agendamentos existentes).
+- **Motivação.** TLF-BASE §5.2 exige "horário de funcionamento", sem exceções; §5.5 já prevê bloqueio; menor superfície para o MVP.
+- **Custo aceito.** Fechar a clínica inteira numa data exige um bloqueio por profissional.
+- **Alternativa (Opção B).** Grade + exceção por data — rejeitada **para o MVP** por ausência de requisito e custo de modelo, API, UI e testes; permanece como evolução.
+
+#### 3.14.9 `D-CFG-65` — Permissões e auditoria na fronteira
+
+- **Decisão.**
+  - **Gestão** (`GET`/`PUT /horario-funcionamento`): exclusivamente `clinica.configurar` (somente Administrador); sem sessão → `401`; sem permissão → `403` **sem** evento (`L-07`); CSRF só no `PUT` (`D-CFG-21`). Nenhuma permissão nova.
+  - **Aplicação de RN-014** pela agenda é leitura **interna** do backend: o ator do agendamento (ex.: Recepcionista com `agenda.gerenciar`) **não** precisa de `clinica.configurar`.
+  - **Leitura da grade via HTTP por outros perfis** (ex.: sombrear horários fechados na tela da agenda) **não** é concedida agora; a fatia de agenda decide se expõe e sob qual permissão existente. Não bloqueia implementação: o backend rejeita de qualquer forma.
+  - **Auditoria:** confirma `D-CFG-17` (um `configuracao.alterada`, alvo `clinica`, `contexto` vazio, na mesma transação). Rejeição de agendamento por `FORA_DO_HORARIO_FUNCIONAMENTO` **não** emite `configuracao.alterada`; se emite evento de agenda é decisão da fatia de agenda. Nenhum dado clínico é registrado.
+
+#### 3.14.10 `D-CFG-66` — Comportamento esperado do frontend (sem layout)
+
+- Tela acessível somente a usuário com `clinica.configurar`; a ocultação na UI **não** substitui o `403` do backend.
+- Web responsiva, mobile first, acessível (rótulos por dia e por janela; erros anunciados; operável por teclado).
+- Para cada um dos 7 dias: estado **aberto/fechado derivado** (fechado = sem janela); adicionar janela (até 4); remover janela; horas em `HH:MM` 24h sem segundos. Ordem de exibição dos dias é escolha de UI, mapeada para `diaSemana` 0 = domingo.
+- Marcar um dia como fechado remove suas janelas no rascunho; um dia "aberto" sem janela é salvo como fechado.
+- Validação no cliente espelha `D-CFG-13`/`D-CFG-18`/`D-CFG-59` (fim > início, sem sobreposição **nem adjacência**, ≤ 4/dia) apenas para ajuda; como o servidor responde `400 REQUISICAO_INVALIDA` sem detalhar o campo, a UI apresenta mensagem genérica quando o servidor rejeitar.
+- **Salvar envia a grade inteira** num único `PUT` e renderiza a resposta como estado vigente; sem salvamento por dia ou por janela.
+- Não criar componente visual proprietário nem copiar a referência funcional (TLF-BASE §2).
+
+#### 3.14.11 Matriz de cenários e critérios de aceite
+
+| ID | Cenário | Esperado | Decisão | Prova |
+| --- | --- | --- | --- | --- |
+| CH-G-01 | Segunda `08:00–18:00` | aceito | `D-CFG-13` | existente (PR #76) |
+| CH-G-02 | Sábado reduzido `08:00–12:00` | aceito | `D-CFG-13` | existente |
+| CH-G-03 | Domingo sem janela | aceito; domingo fechado | `D-CFG-58` | existente |
+| CH-G-04 | `08:00–12:00` + `14:00–18:00` no mesmo dia | aceito | `D-CFG-58` | existente |
+| CH-G-05 | `08:00–12:00` + `11:00–14:00` | `400`, sem mutação | `D-CFG-13` | existente |
+| CH-G-06 | `08:00–12:00` + `12:00–18:00` | `400`, sem normalização | `D-CFG-58` | existente |
+| CH-G-07 | `08:00–08:00` | `400` | `D-CFG-59` | existente |
+| CH-G-08 | `18:00–08:00` / `22:00–02:00` | `400` | `D-CFG-14`, `D-CFG-59` | existente |
+| CH-G-09 | `08:00:00`, `8:00`, `24:00`, número em vez de string | `400` | `D-CFG-59` | existente |
+| CH-G-10 | 5 janelas no mesmo dia | `400` | `D-CFG-18` | existente |
+| CH-G-11 | Grade vazia `{ janelas: [] }` | `200`; todos os dias fechados | `D-CFG-58` | existente |
+| CH-AG-01 | Agendamento `09:00–10:00` com `08:00–18:00` | aceito | `D-CFG-61` | fatia de agenda |
+| CH-AG-02 | `07:30–08:30` | `422 FORA_DO_HORARIO_FUNCIONAMENTO` | `D-CFG-61` | fatia de agenda |
+| CH-AG-03 | `17:30–18:30` | `422` | `D-CFG-61` | fatia de agenda |
+| CH-AG-04 | `11:30–12:30` com `08:00–12:00` + `14:00–18:00` | `422` | `D-CFG-61` | fatia de agenda |
+| CH-AG-05 | `08:00–09:00` (início na abertura) | aceito | `D-CFG-61` | fatia de agenda |
+| CH-AG-06 | `17:00–18:00` (fim no fechamento) | aceito | `D-CFG-61` | fatia de agenda |
+| CH-AG-07 | Qualquer agendamento em dia sem janela ou com grade vazia | `422` | `D-CFG-58`, `D-CFG-61` | fatia de agenda |
+| CH-AG-08 | Agendamento que cruza a meia-noite local | `422` | `D-CFG-61` | fatia de agenda |
+| CH-AG-09 | Instante UTC cujo dia local difere do dia UTC | avaliado pelo dia/hora local do fuso da clínica | `D-CFG-60` | fatia de agenda (unitário) |
+| CH-AG-10 | Dentro da grade, fora da disponibilidade do profissional | rejeitado pela regra de PRO-003 | `D-CFG-62` | fatias PRO-003/agenda |
+| CH-ALT-01 | Ampliar `08:00–16:00` → `08:00–18:00` | `200`; novo agendamento `17:00` passa a ser aceito | `D-CFG-63` | integração CFG + agenda |
+| CH-ALT-02 | Reduzir `08:00–18:00` → `08:00–16:00` sem agendamentos afetados | `200`; um evento de auditoria | `D-CFG-63` | existente (grade) + agenda |
+| CH-ALT-03 | Reduzir para `08:00–16:00` com agendamento futuro às `17:00` | `200`; agendamento **intacto** e com transições normais; novo às `17:00` → `422`; remarcá-lo para `17:30` → `422` | `D-CFG-63` | fatia de agenda |
+| CH-ALT-04 | Trocar fuso com agendamentos existentes | `200`; instantes UTC inalterados; novas validações no novo fuso | `D-CFG-63` | fatia de agenda |
+| CH-P-01 | Administrador autenticado com `clinica.configurar` | `GET`/`PUT` permitidos | `D-CFG-65` | existente |
+| CH-P-02 | Autenticado sem `clinica.configurar` (ex.: Recepcionista) | `403`, sem evento | `D-CFG-65` | existente |
+| CH-P-03 | Não autenticado | `401` | `D-CFG-65` | existente |
+| CH-P-04 | Recepcionista com `agenda.gerenciar` cria agendamento | RN-014 aplicada sem exigir `clinica.configurar` | `D-CFG-65` | fatia de agenda |
+
+#### 3.14.12 Impactos futuros (nenhum implementado por este registro)
+
+- **Banco:** nenhuma migration exigida para a grade (FH-02 satisfaz `D-CFG-58`..`D-CFG-65`); a não sobreposição segue no backend (`D-CFG-16`). Exceção por data, se decidida no futuro, exigirá tabela e decisões próprias.
+- **Backend:** função pura de contenção (`D-CFG-60`, `D-CFG-61`) consumida pelo serviço de agenda no passo 3 de T-01, em criação e remarcação; leitura da grade na transação; código `FORA_DO_HORARIO_FUNCIONAMENTO` (`422`) no OpenAPI da agenda; nenhuma alteração em `/horario-funcionamento`.
+- **Frontend:** tela de grade conforme `D-CFG-66`, consumindo o contrato integrado.
+- **Agenda:** aplicar `D-CFG-61`..`D-CFG-63`; decidir exposição da grade a outros perfis e evento de auditoria de rejeição (`D-CFG-65`); implementar PRO-003 como camada própria (`D-CFG-62`).
+
+#### 3.14.13 Classificação de escopo
+
+| Tema | Classificação |
+| --- | --- |
+| Grade semanal, múltiplas janelas, dia fechado, limites (`D-CFG-58`, `D-CFG-59`) | requisito do MVP — **integrado** |
+| Fuso na avaliação e contenção RN-014 (`D-CFG-60`, `D-CFG-61`) | requisito do MVP — decisão técnica para a fatia de agenda |
+| Camadas clínica × profissional × serviço (`D-CFG-62`) | requisito do MVP — fronteira |
+| Estratégia flexível e troca de fuso (`D-CFG-63`) | decisão técnica; **risco aceito** (agendamentos fora da grade vigente) |
+| Aviso de agendamentos afetados por alteração da grade | melhoria futura |
+| Exceções por data, horário especial, abertura extraordinária (`D-CFG-64`) | melhoria futura |
+| Feriados automáticos, API externa de feriados | fora de escopo |
+| Fechamento pontual via bloqueio por profissional | requisito do MVP (AGD-004) — custo operacional aceito |
+| Atualização perdida entre administradores; grade anterior não preservada | dívida técnica aceita (`D-CFG-05`, `docs/10` §6-Y.5) |
+| Tela de configuração horária (`D-CFG-66`) | requisito do MVP — não implementado |
+| Agenda inteligente, otimização, escala complexa, múltiplos fusos, ponto/jornada, Google Calendar | fora de escopo |
+
 ## 4. Consequências normativas já definidas (sem ampliação)
 
 - **Auditoria** (`docs/09` §13.6): mutação efetiva de `clinica` (`CFG-001`, `CFG-006`) emite `configuracao.alterada` com ator da sessão, `alvo_tipo = "clinica"`, `alvo_id = clinica.id`, `resultado = SUCESSO`, `justificativa = null`, `contexto` vazio, na **mesma transação** da mutação; falha da auditoria implica rollback conjunto. Nenhum valor de campo é registrado. *Alcance por frente:* `CFG-002` usa o mesmo alvo `clinica` por leitura homologada (`D-CFG-17`); `CFG-003` usa `alvo_tipo = "servico"` e `alvo_id = servico.id` (`D-CFG-32`); `CFG-004` usa `alvo_tipo = "forma_pagamento"` e `alvo_id = forma_pagamento.id` (`D-CFG-44`); `CFG-005` usa `alvo_tipo = "motivo_cancelamento"` e `alvo_id = motivo_cancelamento.id` (`D-CFG-56`). Em todas, `contexto` vazio e nenhum valor de campo registrado.
@@ -500,21 +706,23 @@ Registro de fronteira; a agenda **não** é implementada nem decidida aqui.
 | `P-CFG-02` — provisionamento da linha de `clinica` (`CFG-001B`; `D-CFG-01`, `D-CFG-09`..`D-CFG-12`) | **INTEGRADO NA `main`** — PR [#69](https://github.com/BrunoMNoronha/techlab-fisio/pull/69), merge commit `02cc93d5770003775d3417b1d2ee08a874675d30` (`docs/10` §6-X, §6-X.5) |
 | Logotipo e duração padrão (`D-CFG-07`) | **FUTURO DO MVP** — não implementados |
 | `P-CFG-03` — implementação de `CFG-002` (`D-CFG-13`..`D-CFG-21`) | **INTEGRADA NA `main`** — PR [#76](https://github.com/BrunoMNoronha/techlab-fisio/pull/76), merge commit `ad2bcf8041635f469db6c799e7405f455d836d30` (`docs/10` §6-Y, §6-Y.6) |
-| Exceções e feriados do horário de funcionamento (`D-CFG-19`) | **FUTURO DO MVP** |
-| Aplicação de RN-014 e reavaliação da troca de fuso (`D-CFG-20`, `D-CFG-08`) | **PENDENTE DA FATIA DE AGENDA** |
+| Exceções e feriados do horário de funcionamento (`D-CFG-19`) | **MELHORIA FUTURA** — refinado por `D-CFG-64` (Opção A): MVP só com grade semanal; fechamento pontual por bloqueio de agenda (AGD-004); feriados sem automação nem API externa |
+| Aplicação de RN-014 e reavaliação da troca de fuso (`D-CFG-20`, `D-CFG-08`) | **CONTRATO DECIDIDO** (`D-CFG-60`..`D-CFG-63`: predicado de contenção, `422 FORA_DO_HORARIO_FUNCIONAMENTO`, estratégia flexível, troca de fuso permitida sem transição). **COMPONENTE IMPLEMENTADO (17/09/2026) — INTEGRADO NA BRANCH LOCAL `integration/local-fase4`, NÃO PUBLICADO NA `main`**: regra pura `apps/api/src/agenda/horario-funcionamento.regra.ts` e `VerificadorHorarioFuncionamento` (`verificador-horario-funcionamento.ts`), que lê fuso e grade na transação recebida, sem lock, e lança `ErroForaDoHorarioFuncionamento` (código `FORA_DO_HORARIO_FUNCIONAMENTO`, status `422` reservado) ou `CLINICA_NAO_CONFIGURADA`; provas: `test/agenda-horario-funcionamento.regra.spec.ts` (16, CH-AG-01..09, horário de verão, precisão de milissegundos) e `test/integration/agenda-horario-funcionamento.integration.spec.ts` (7, PostgreSQL real: grade gravada por CFG-002, fuso lido do banco, grade nova só para validações posteriores, ausência de escrita/auditoria e de bloqueio sob `FOR UPDATE` concorrente); mutações locais `FOR SHARE`, borda `<=`→`<` e remoção da checagem de meia-noite detectadas. **NÃO CONECTADO A NENHUMA OPERAÇÃO:** a fatia de agenda (rotas, T-01 de criação/remarcação, mapeamento HTTP do `422`, PRO-003) não existe e depende de decisões próprias; o verificador não está registrado em módulo do `AppModule` |
+| Exposição da grade a outros perfis na agenda; evento de auditoria da rejeição por horário (`D-CFG-65`) | **DECIDIDO EM `docs/15`** — grade exposta em `GET /agenda/opcoes` sob `agenda.gerenciar` (`D-AGD-13`); rejeição por horário sem evento (`D-AGD-10`); implementação não autorizada |
+| Tela de configuração horária (`D-CFG-66`) | **IMPLEMENTADA (17/09/2026) — INTEGRADA NA BRANCH LOCAL `integration/local-fase4`, NÃO PUBLICADA NA `main`**: `apps/web/app/configuracoes/horario-funcionamento/`, `apps/web/lib/grade-funcionamento.ts`; provas locais `verify-grade-funcionamento.mjs` (21/21), `e2e/horario-funcionamento.spec.ts` (7/7, API simulada) e Cenário 8 de `apps/web/scripts/verify-web-api-e2e.mjs` e Cenário 9 (Chromium real + NestJS + PostgreSQL 18 descartável; execução completa 50/50 em 17/09/2026), incluindo `403` sem `clinica.configurar` com Recepcionista real, sem mutação nem auditoria |
 | `P-CFG-04` — implementação de `CFG-003` (`D-CFG-22`..`D-CFG-33`: migration de unicidade e CHECKs de `servico`, rotas `/servicos`, testes) | **INTEGRADA NA `main`** — PR [#80](https://github.com/BrunoMNoronha/techlab-fisio/pull/80), merge commit `fd3c205f420b9cb201dad46fe946b3df7354b9ba` (`docs/10` §6-Z, §6-Z.7) |
 | Alinhamento de `docs/07` §10.1/§10.2 às restrições de `D-CFG-23` | **RESOLVIDO** — `docs/07` REV. 2.3 (§1.3, §7.2, §10.1 `U-14`, §10.2, §28.1) |
-| Leitura do catálogo de serviços por outros papéis; pacote/agendamento com serviço inativo; duração sobrescrevível (`D-CFG-30`, `D-CFG-33`) | **PENDENTE DAS FATIAS DE AGENDA E PACOTES** |
+| Leitura do catálogo de serviços por outros papéis; pacote/agendamento com serviço inativo; duração sobrescrevível (`D-CFG-30`, `D-CFG-33`) | **PARCIALMENTE DECIDIDO EM `docs/15`** — leitura de serviços ativos sem preço em `GET /agenda/opcoes` (`D-AGD-13`); duração sobrescrevível com `fim` obrigatório (`D-AGD-05`); pacote/agendamento com serviço inativo **PENDENTE DA FATIA AGD-D** (`D-AGD-15`) |
 | CFG-002 | **INTEGRADO NA `main`** (exceto exceções/feriados e aplicação de RN-014, acima) |
 | CFG-003 | **INTEGRADO NA `main`** (exceto pendências de fronteira, acima) |
-| `P-CFG-05` — implementação de `CFG-004` (`D-CFG-34`..`D-CFG-45`: migration de unicidade e CHECK de `forma_pagamento`, rotas `/formas-pagamento`, testes) | **DECIDIDO — IMPLEMENTAÇÃO NÃO AUTORIZADA** |
+| `P-CFG-05` — implementação de `CFG-004` (`D-CFG-34`..`D-CFG-45`: migration de unicidade e CHECK de `forma_pagamento`, rotas `/formas-pagamento`, testes) | **IMPLEMENTADA E MEDIDA** — implementação autorizada por Bruno Menezes Noronha em 17/09/2026 (`docs/10` §6-AA); **INTEGRADA NA BRANCH LOCAL `integration/local-fase4` — NÃO PUBLICADA NA `main`** (`docs/10` §6-AE) |
 | Alinhamento de `docs/07` §10.1/§10.2 às restrições de `D-CFG-35` | **PENDENTE** — após integração da migration |
 | Leitura das formas de pagamento por outros papéis; bloqueio da forma em T-03 (`D-CFG-43`, `D-CFG-45`) | **PENDENTE DA FATIA DE PAGAMENTOS** |
-| `P-CFG-06` — implementação de `CFG-005` (`D-CFG-46`..`D-CFG-57`: migration de unicidade e CHECK de `motivo_cancelamento`, rotas `/motivos-cancelamento`, testes) | **DECIDIDO — IMPLEMENTAÇÃO NÃO AUTORIZADA** |
+| `P-CFG-06` — implementação de `CFG-005` (`D-CFG-46`..`D-CFG-57`: migration de unicidade e CHECK de `motivo_cancelamento`, rotas `/motivos-cancelamento`, testes) | **IMPLEMENTADA E MEDIDA**, após autorização de implementação por Bruno Menezes Noronha (`docs/10` §6-AB); **INTEGRADA NA BRANCH LOCAL `integration/local-fase4` — NÃO PUBLICADA NA `main`** (`docs/10` §6-AE) |
 | Alinhamento de `docs/07` §10.1/§10.2 às restrições de `D-CFG-47` | **PENDENTE** — após integração da migration |
-| Obrigatoriedade do motivo no cancelamento e CHECK de coerência `estado`/motivo; cancelamento sem motivos ativos; leitura dos motivos por outros papéis; bloqueio do motivo no cancelamento (`D-CFG-51`, `D-CFG-52`, `D-CFG-55`, `D-CFG-57`) | **PENDENTE DA FATIA DE AGENDA** |
+| Obrigatoriedade do motivo no cancelamento e CHECK de coerência `estado`/motivo; cancelamento sem motivos ativos; leitura dos motivos por outros papéis; bloqueio do motivo no cancelamento (`D-CFG-51`, `D-CFG-52`, `D-CFG-55`, `D-CFG-57`) | **DECIDIDO EM `docs/15`** (`D-AGD-07`, `D-AGD-13`): motivo obrigatório; sem motivo ativo → `422 MOTIVO_CANCELAMENTO_INELEGIVEL`; migration futura do CHECK de coerência aprovada; motivos ativos em `GET /agenda/opcoes`; `FOR SHARE` no motivo — implementação não autorizada |
 | CFG-006 — fuso horário operacional (`D-CFG-04`, `D-CFG-08`, `D-CFG-11`) | **DECIDIDO E INTEGRADO NA `main`** — materializado com `CFG-001A` (PR [#65](https://github.com/BrunoMNoronha/techlab-fisio/pull/65), `P-CFG-01`) e `CFG-001B` (PR [#69](https://github.com/BrunoMNoronha/techlab-fisio/pull/69), `P-CFG-02`); nenhum módulo consumidor do fuso existe na `main` |
-| CFG-006 — pendências de fronteira: demonstração do aceite (exibição e agregação no período local); local da conversão UTC ↔ local (aplicação ou banco) e compatibilidade entre as bases de fusos do runtime e do PostgreSQL; leitura do fuso por outros papéis; distinção da troca de fuso na trilha de auditoria (limitação de `docs/09` §13.6) | **PENDENTE DAS FATIAS DE AGENDA, INDICADORES E FRONTEND** — registro factual, sem decisão; a reavaliação da troca de fuso segue na linha de `D-CFG-08` acima |
+| CFG-006 — pendências de fronteira: demonstração do aceite (exibição e agregação no período local); local da conversão UTC ↔ local (aplicação ou banco — **resolvido somente para RN-014 por `D-CFG-60`: aplicação**) e compatibilidade entre as bases de fusos do runtime e do PostgreSQL; leitura do fuso por outros papéis; distinção da troca de fuso na trilha de auditoria (limitação de `docs/09` §13.6) | **PENDENTE DAS FATIAS DE AGENDA, INDICADORES E FRONTEND** — registro factual, sem decisão; a reavaliação da troca de fuso segue na linha de `D-CFG-08` acima |
 | Inclusão da clínica no subcomando `provisionar` (`D-CFG-12`) | **NÃO AUTORIZADA** — reavaliação futura possível |
 | Alinhamento de `docs/07` (afirmava restrição então inexistente) | **RESOLVIDO** — migration `20260917060000_clinica_linha_unica` (`ux_clinica_linha_unica`) integrada na `main` pela PR #65 |
 
@@ -522,6 +730,15 @@ Registro de fronteira; a agenda **não** é implementada nem decidida aqui.
 
 | REV. | Data | Descrição |
 | --- | --- | --- |
+| **26** | 17/09/2026 | Alinhamento editorial `D-INTEG-02` (Bruno Menezes Noronha), na integração local das quatro frentes: `D-CFG-58`..`D-CFG-66` registradas como **HOMOLOGADAS** (Status e título de §3.14), exatamente como decididas na REV. 18, **sem alteração de teor**; estados de §5 de RN-014, tela de configuração horária, `P-CFG-05` e `P-CFG-06` atualizados para a consolidação na branch local `integration/local-fase4` (`docs/10` §6-AE). Nenhuma decisão criada, alterada ou reaberta. |
+| **25** | 17/09/2026 | Atualização factual de §5: `P-CFG-06` (`CFG-005`) implementada e medida no ambiente local, sem commit (`docs/10` §6-AB; numeração fixada na integração local; registrada na origem como REV. 18), após autorização de implementação por Bruno Menezes Noronha. Nenhuma decisão criada, alterada ou reaberta. |
+| **24** | 17/09/2026 | Atualização factual de §5: `P-CFG-05` (`CFG-004`) implementada e medida em branch local sem commit (`docs/10` §6-AA; numeração fixada na integração local; registrada na origem como REV. 18), após autorização de implementação por Bruno Menezes Noronha. Nenhuma decisão criada, alterada ou reaberta. |
+| **23** | 17/09/2026 | Atualização factual de §5: pendências de fronteira `D-CFG-30`, `D-CFG-33` (parcial), `D-CFG-51`, `D-CFG-52`, `D-CFG-55`, `D-CFG-57` e `D-CFG-65` decididas no pacote da agenda homologado (`docs/15` REV. 2). Nenhuma decisão deste documento criada, alterada ou reaberta. |
+| **22** | 17/09/2026 | Atualização factual de §5: componente de RN-014 (parcela da clínica, `D-CFG-60`/`D-CFG-61`) implementado localmente, ainda sem consumidor — a fatia de agenda não existe. Nenhuma decisão criada, alterada ou reaberta. |
+| **21** | 17/09/2026 | Atualização factual de §5: `403` sem `clinica.configurar` coberto na prova E2E real (Cenário 9). Nenhuma decisão criada, alterada ou reaberta. |
+| **20** | 17/09/2026 | Atualização factual de §5: tela de configuração horária incluída na prova E2E real same-origin (`verify-web-api-e2e.mjs`, Cenário 8). Nenhuma decisão criada, alterada ou reaberta. |
+| **19** | 17/09/2026 | Atualização factual de §5: tela de configuração horária (`D-CFG-66`) implementada localmente, sem publicação Git. Nenhuma decisão criada, alterada ou reaberta. |
+| **18** | 17/09/2026 | Acréscimo de §3.14 (`D-CFG-58`..`D-CFG-66`) — fechamento da configuração horária (frente `CFG-HOR`), decidido a partir das fontes vigentes por solicitação de Bruno Menezes Noronha: mapa de estado; grade vazia fail-closed e sem grade pré-cadastrada; limites `00:00`/`23:59`; grade como hora local no fuso da clínica com conversão na aplicação para RN-014; predicado de contenção em janela única, bordas inclusivas no intervalo semiaberto e `422 FORA_DO_HORARIO_FUNCIONAMENTO`; camadas clínica × disponibilidade × bloqueio × serviço; estratégia flexível sem retroatividade e troca de fuso sem transição (conclui a reavaliação de `D-CFG-08`); Opção A para exceções e feriados (refina a classificação de `D-CFG-19`); permissões e auditoria de fronteira; comportamento do frontend; matriz de cenários; impactos e classificação de escopo. Cabeçalho e §5 atualizados. Nenhuma decisão anterior revogada; nenhum código, schema, migration ou teste alterado. |
 | **17** | 17/09/2026 | Atualização factual de §5: alinhamento de `docs/07` às restrições de `D-CFG-23` resolvido pela REV. 2.3 daquele documento. Nenhuma decisão normativa criada, alterada ou reaberta. |
 | **16** | 17/09/2026 | Reconciliação factual pós-integração de §5: `P-CFG-04` / `CFG-003` integrada pela PR #80 (merge `fd3c205`). O registro da REV. 15 permanece como histórico. Nenhuma decisão normativa criada, alterada ou reaberta. |
 | **15** | 17/09/2026 | Atualização factual de §5: `P-CFG-04` (`CFG-003`) implementada e medida em branch própria (`docs/10` §6-Z), após autorização de implementação por Bruno Menezes Noronha. Nenhuma decisão criada, alterada ou reaberta. |

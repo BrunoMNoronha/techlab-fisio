@@ -1,16 +1,12 @@
 // TechLab Fisio — fluxo interno `profissional.situacao.alterada`
 // (Etapa 2.3B; PRO-005, D-AUD-01 docs/09 §12.2, D-1 da autorização da 2.3B).
 //
-// FATIA TÉCNICA INTERNA — LIMITE DE AUTORIZAÇÃO (vinculante):
-//   - NÃO existe controller, endpoint ou rota para esta operação; ela é
-//     exercitada exclusivamente por testes de integração;
-//   - a validação de ator EXISTENTE e ATIVO é INTEGRIDADE da operação
-//     (o evento de auditoria precisa de um ator real e válido — RN-061),
-//     NUNCA autorização: RBAC/`profissionais.gerenciar` NÃO está
-//     implementado nesta fatia e continua obrigatório antes de qualquer
-//     exposição futura do fluxo;
-//   - a funcionalidade administrativa de gestão de profissionais NÃO está
-//     disponível ao usuário.
+// EXPOSIÇÃO HTTP (fatia PRO-A, `docs/18` D-PRO1-06): a operação é exposta por
+// `PATCH /profissionais/:profissionalId/situacao`, sob
+// `@RequerPermissao("profissionais.gerenciar")` — a autorização vive no
+// controller. A validação de ator EXISTENTE e ATIVO permanece como
+// INTEGRIDADE da operação (o evento precisa de ator real e válido — RN-061),
+// nunca como autorização.
 //
 // PROPRIEDADE TRANSACIONAL (obrigatória): mutação de negócio + evento de
 // auditoria = UMA única transação. Falha da auditoria → rollback da mutação;
@@ -18,11 +14,13 @@
 // explicitamente ao AuditWriter.
 //
 // CONCORRÊNCIA: a mutação é CONDICIONAL (`updateMany` com o estado anterior
-// no WHERE). Sob READ COMMITTED, uma segunda transação concorrente bloqueia
-// no lock da linha e reavalia o predicado sobre o estado commitado — para o
-// mesmo novo estado, exatamente uma vence (count=1) e a outra observa
-// count=0 (SITUACAO_JA_VIGENTE), sem evento duplicado. Não há SELECT →
-// decisão em memória → UPDATE incondicional.
+// no WHERE), o que toma o lock da linha — a mesma linha que o cadastro
+// bloqueia com `FOR UPDATE` (D-PRO1-10). Sob READ COMMITTED, uma segunda
+// transação concorrente bloqueia e reavalia o predicado sobre o estado
+// commitado — para o mesmo novo estado, exatamente uma muta (count=1) e a
+// outra observa count=0 e devolve o estado vigente como NO-OP (D-PRO1-06:
+// 200 sem mutação e sem evento). Não há SELECT → decisão em memória →
+// UPDATE incondicional.
 //
 // AUDITORIA (whitelist VAZIA — D-AUD-07): nenhum contexto é persistido —
 // nem `ativo_anterior`/`ativo_novo`/`campos_alterados` (chaves apenas
@@ -35,12 +33,12 @@ import { Injectable } from "@nestjs/common";
 
 import { AuditWriter } from "../audit/audit-writer.js";
 import { DatabaseService } from "../database/database.service.js";
+import { lerLinhaProfissional, mapearProfissional, type DadosProfissional } from "./profissional.leitura.js";
 
 export type MotivoRejeicaoSituacaoProfissional =
   | "PROFISSIONAL_INEXISTENTE"
   | "ATOR_INEXISTENTE"
-  | "ATOR_INATIVO"
-  | "SITUACAO_JA_VIGENTE";
+  | "ATOR_INATIVO";
 
 export class ErroSituacaoProfissional extends Error {
   override readonly name = "ErroSituacaoProfissional";
@@ -62,8 +60,12 @@ export interface ComandoAlterarSituacaoProfissional {
 export interface ResultadoAlterarSituacaoProfissional {
   readonly profissionalId: string;
   readonly ativo: boolean;
-  /** Correlação da operação — a mesma persistida no evento de auditoria. */
-  readonly correlacaoId: string;
+  /** Estado vigente completo após a operação (inclusive no no-op). */
+  readonly profissional: DadosProfissional;
+  /** `false` quando o estado pedido já era o vigente (D-PRO1-06). */
+  readonly mutacaoExecutada: boolean;
+  /** Correlação persistida no evento; `null` no no-op (nenhum evento). */
+  readonly correlacaoId: string | null;
 }
 
 @Injectable()
@@ -74,7 +76,7 @@ export class ProfissionalService {
   ) {}
 
   /**
-   * Operação INTERNA de ativação/inativação de profissional (PRO-005),
+   * Ativação/inativação de profissional (PRO-005; exposta em D-PRO1-06),
    * atômica com seu evento de auditoria obrigatório.
    */
   async alterarSituacao(
@@ -110,13 +112,18 @@ export class ProfissionalService {
         // Nada mudou: distinguir inexistência de estado já vigente. A leitura
         // acontece DEPOIS da tentativa condicional — a decisão nunca é feita
         // sobre snapshot anterior à disputa de lock.
-        const profissional = await tx.profissional.findUnique({
-          where: { id: comando.profissionalId },
-          select: { id: true },
-        });
-        throw new ErroSituacaoProfissional(
-          profissional === null ? "PROFISSIONAL_INEXISTENTE" : "SITUACAO_JA_VIGENTE",
-        );
+        const vigente = await lerLinhaProfissional(tx, comando.profissionalId, false);
+        if (vigente === null) {
+          throw new ErroSituacaoProfissional("PROFISSIONAL_INEXISTENTE");
+        }
+        // D-PRO1-06: no-op idempotente — sem mutação, sem evento.
+        return {
+          profissionalId: vigente.id,
+          ativo: vigente.ativo,
+          profissional: mapearProfissional(vigente),
+          mutacaoExecutada: false,
+          correlacaoId: null,
+        };
       }
 
       // 3. Evento de auditoria obrigatório — MESMA transação, mesmo tx.
@@ -132,9 +139,15 @@ export class ProfissionalService {
         // Sem `contexto`: whitelist VAZIA (D-AUD-07) — coluna fica NULL.
       });
 
+      const atualizado = await lerLinhaProfissional(tx, comando.profissionalId, false);
+      if (atualizado === null) {
+        throw new Error("Profissional desapareceu dentro da própria transação.");
+      }
       return {
         profissionalId: comando.profissionalId,
         ativo: comando.ativo,
+        profissional: mapearProfissional(atualizado),
+        mutacaoExecutada: true,
         correlacaoId,
       };
     });

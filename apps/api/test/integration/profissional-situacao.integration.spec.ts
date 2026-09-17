@@ -10,8 +10,9 @@
 //   - mutação + evento de auditoria na MESMA transação (commit conjunto);
 //   - falha do AuditWriter → ROLLBACK integral da mutação;
 //   - falha da mutação → ZERO evento;
-//   - idempotência/duplicidade: repetição e estado já vigente rejeitados
-//     sem novo evento; concorrência → exatamente um vencedor e um evento;
+//   - idempotência (D-PRO1-06, `docs/18`): repetição e estado já vigente são
+//     NO-OP (sem mutação, sem evento); concorrência → exatamente uma mutação
+//     e um evento;
 //   - campos do evento conforme D-AUD-01/02/03 + whitelist vazia (D-AUD-07):
 //     contexto NULL, justificativa NULL, resultado SUCESSO, correlacao_id
 //     único por operação.
@@ -78,6 +79,8 @@ async function criarFixtures(opcoes?: {
       data: {
         nome: "Profissional Sintético 2.3B",
         ativo: opcoes?.profissionalAtivo ?? true,
+        // ck_profissional_situacao (D-PRO1-07): inativo exige inativado_em.
+        inativadoEm: (opcoes?.profissionalAtivo ?? true) ? null : new Date(),
       },
     });
     return { atorId: ator.id, profissionalId: profissional.id };
@@ -208,38 +211,42 @@ describe("rejeições de integridade — nenhuma mutação, ZERO evento", () => 
     expect(await lerEventos()).toHaveLength(0);
   });
 
-  it("estado já desejado é rejeitado sem evento", async () => {
+});
+
+describe("no-op idempotente (D-PRO1-06) — sem mutação, ZERO evento", () => {
+  it("estado já desejado é no-op: estado vigente devolvido, sem evento", async () => {
     const { atorId, profissionalId } = await criarFixtures();
-    await expect(
-      profissionalService.alterarSituacao({
-        profissionalId,
-        atorUsuarioId: atorId,
-        ativo: true, // já é ativo
-      }),
-    ).rejects.toMatchObject({ motivo: "SITUACAO_JA_VIGENTE" });
+    const resultado = await profissionalService.alterarSituacao({
+      profissionalId,
+      atorUsuarioId: atorId,
+      ativo: true, // já é ativo
+    });
+    expect(resultado).toMatchObject({ ativo: true, mutacaoExecutada: false, correlacaoId: null });
+    expect(resultado.profissional.inativadoEm).toBeNull();
     expect(await lerEventos()).toHaveLength(0);
   });
 
-  it("repetição da mesma inativação: segunda rejeitada, ainda exatamente 1 evento", async () => {
+  it("repetição da mesma inativação: segunda é no-op, inativadoEm preservado, ainda exatamente 1 evento", async () => {
     const { atorId, profissionalId } = await criarFixtures();
-    await profissionalService.alterarSituacao({
+    const primeira = await profissionalService.alterarSituacao({
       profissionalId,
       atorUsuarioId: atorId,
       ativo: false,
     });
-    await expect(
-      profissionalService.alterarSituacao({
-        profissionalId,
-        atorUsuarioId: atorId,
-        ativo: false,
-      }),
-    ).rejects.toMatchObject({ motivo: "SITUACAO_JA_VIGENTE" });
+    const segunda = await profissionalService.alterarSituacao({
+      profissionalId,
+      atorUsuarioId: atorId,
+      ativo: false,
+    });
+    expect(primeira.mutacaoExecutada).toBe(true);
+    expect(segunda.mutacaoExecutada).toBe(false);
+    expect(segunda.profissional.inativadoEm).toEqual(primeira.profissional.inativadoEm);
     expect(await lerEventos()).toHaveLength(1);
   });
 });
 
 describe("concorrência — mutação condicional sob READ COMMITTED", () => {
-  it("duas solicitações concorrentes para o MESMO novo estado: exatamente uma vence, 1 evento", async () => {
+  it("duas solicitações concorrentes para o MESMO novo estado: exatamente uma muta, a outra é no-op, 1 evento", async () => {
     const { atorId, profissionalId } = await criarFixtures();
 
     const resultados = await Promise.allSettled([
@@ -255,12 +262,11 @@ describe("concorrência — mutação condicional sob READ COMMITTED", () => {
       }),
     ]);
 
-    const vitorias = resultados.filter((r) => r.status === "fulfilled");
-    const derrotas = resultados.filter((r) => r.status === "rejected");
-    expect(vitorias).toHaveLength(1);
-    expect(derrotas).toHaveLength(1);
-    const derrota = derrotas[0] as PromiseRejectedResult;
-    expect(derrota.reason).toMatchObject({ motivo: "SITUACAO_JA_VIGENTE" });
+    expect(resultados.every((r) => r.status === "fulfilled")).toBe(true);
+    const mutacoes = resultados
+      .map((r) => (r as PromiseFulfilledResult<{ mutacaoExecutada: boolean }>).value.mutacaoExecutada)
+      .sort();
+    expect(mutacoes).toEqual([false, true]);
 
     expect((await lerProfissional(profissionalId)).ativo).toBe(false);
     const eventos = await lerEventos();

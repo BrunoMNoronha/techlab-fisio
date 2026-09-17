@@ -108,7 +108,7 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
     expect(documento.paths["/health"]).toBeDefined();
   });
 
-  it("as rotas publicadas são EXATAMENTE as da F3, F6, P-2.3D-07, P-2.3D-08, AUT-005, P-2.3D-10, CFG-001A, CFG-002 e CFG-003 — nenhuma outra vazou", () => {
+  it("as rotas publicadas são EXATAMENTE as da F3, F6, P-2.3D-07, P-2.3D-08, AUT-005, P-2.3D-10, CFG-001A, CFG-002, CFG-003, CFG-004, CFG-005, PAC-A e PRO-A — nenhuma outra vazou", () => {
     // ATUALIZADO NA F6 / P-2.3D-07 / P-2.3D-08: as duas rotas de recuperação de senha (AUT-004),
     // a rota de revogação de sessão (P-2.3D-07 / AUT-002) e a consulta da sessão
     // autenticada atual (P-2.3D-08 / D-2.3D-20) foram autorizadas e passam a pertencer
@@ -119,6 +119,9 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
     // CFG-001A (`docs/14`, D-CFG-03) acrescentou GET/PUT /clinica.
     // CFG-002 (`docs/14`, D-CFG-15) acrescentou GET/PUT /horario-funcionamento.
     // CFG-003 (`docs/14`, D-CFG-24) acrescentou /servicos, /servicos/{servicoId} e a situação.
+    // CFG-004 (`docs/14`, D-CFG-36) acrescentou /formas-pagamento, /formas-pagamento/{formaPagamentoId} e a situação.
+    // CFG-005 (`docs/14`, D-CFG-48) acrescentou /motivos-cancelamento, o item e a situação.
+    // PRO-A (`docs/18`, D-PRO1-02/05/06) acrescentou /profissionais, o recurso individual, a situação e os serviços.
     const caminhos = Object.keys(documento.paths);
     expect(caminhos.sort()).toEqual([
       "/auditoria/eventos",
@@ -131,17 +134,31 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
       "/auth/usuarios/{usuarioId}/sessoes",
       "/auth/usuarios/{usuarioId}/situacao",
       "/clinica",
+      "/formas-pagamento",
+      "/formas-pagamento/{formaPagamentoId}",
+      "/formas-pagamento/{formaPagamentoId}/situacao",
       "/health",
       "/horario-funcionamento",
+      "/motivos-cancelamento",
+      "/motivos-cancelamento/{motivoCancelamentoId}",
+      "/motivos-cancelamento/{motivoCancelamentoId}/situacao",
+      "/pacientes",
+      "/pacientes/busca",
+      "/pacientes/{pacienteId}",
+      "/pacientes/{pacienteId}/situacao",
+      "/profissionais",
+      "/profissionais/{profissionalId}",
+      "/profissionais/{profissionalId}/servicos",
+      "/profissionais/{profissionalId}/situacao",
       "/servicos",
       "/servicos/{servicoId}",
       "/servicos/{servicoId}/situacao",
     ]);
+    // PAC-A (`docs/17` D-PAC-02) autorizou /pacientes: o termo saiu desta lista por
+    // DECISÃO, e a igualdade exata acima continua barrando qualquer outra rota.
     for (const proibido of [
       "papeis",
       "permissoes",
-      "profissionais",
-      "pacientes",
       "agenda",
       "refresh",
     ]) {
@@ -199,6 +216,20 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
       { caminho: "/servicos", metodo: "post" },
       { caminho: "/servicos/{servicoId}", metodo: "put" },
       { caminho: "/servicos/{servicoId}/situacao", metodo: "patch" },
+      { caminho: "/formas-pagamento", metodo: "post" },
+      { caminho: "/formas-pagamento/{formaPagamentoId}", metodo: "put" },
+      { caminho: "/formas-pagamento/{formaPagamentoId}/situacao", metodo: "patch" },
+      { caminho: "/motivos-cancelamento", metodo: "post" },
+      { caminho: "/motivos-cancelamento/{motivoCancelamentoId}", metodo: "put" },
+      { caminho: "/motivos-cancelamento/{motivoCancelamentoId}/situacao", metodo: "patch" },
+      { caminho: "/pacientes/busca", metodo: "post" },
+      { caminho: "/pacientes", metodo: "post" },
+      { caminho: "/pacientes/{pacienteId}", metodo: "put" },
+      { caminho: "/pacientes/{pacienteId}/situacao", metodo: "patch" },
+      { caminho: "/profissionais", metodo: "post" },
+      { caminho: "/profissionais/{profissionalId}", metodo: "put" },
+      { caminho: "/profissionais/{profissionalId}/situacao", metodo: "patch" },
+      { caminho: "/profissionais/{profissionalId}/servicos", metodo: "put" },
     ];
     for (const { caminho, metodo } of mutacoes) {
       const parametros = operacao(caminho, metodo)["parameters"] as Array<
@@ -296,6 +327,103 @@ describe("CFG-003 — contratos de /servicos (docs/14 §3.11)", () => {
 
   it("não existe DELETE em /servicos (D-CFG-24)", () => {
     for (const caminho of ["/servicos", "/servicos/{servicoId}", "/servicos/{servicoId}/situacao"]) {
+      expect((documento.paths[caminho] as Record<string, unknown>)["delete"]).toBeUndefined();
+    }
+  });
+});
+
+describe("CFG-004 — contratos de /formas-pagamento (docs/14 §3.12)", () => {
+  const esperados: Array<[string, "get" | "post" | "put" | "patch", string[]]> = [
+    ["/formas-pagamento", "get", ["200", "400", "401", "403", "500"]],
+    ["/formas-pagamento", "post", ["201", "400", "401", "403", "404", "409", "413", "500"]],
+    ["/formas-pagamento/{formaPagamentoId}", "get", ["200", "400", "401", "403", "404", "500"]],
+    ["/formas-pagamento/{formaPagamentoId}", "put", ["200", "400", "401", "403", "404", "409", "413", "500"]],
+    ["/formas-pagamento/{formaPagamentoId}/situacao", "patch", ["200", "400", "401", "403", "404", "413", "500"]],
+  ];
+
+  it.each(esperados)("%s %s documenta exatamente os status do contrato", (caminho, metodo, status) => {
+    expect(Object.keys(respostas(caminho, metodo)).sort()).toEqual(status);
+    expect(operacao(caminho, metodo)["security"]).toBeDefined();
+  });
+
+  it("as consultas GET de /formas-pagamento NÃO declaram o header CSRF", () => {
+    for (const caminho of ["/formas-pagamento", "/formas-pagamento/{formaPagamentoId}"]) {
+      const parametros = (operacao(caminho, "get")["parameters"] ?? []) as Array<Record<string, unknown>>;
+      expect(parametros.find((p) => p["in"] === "header" && p["name"] === "x-tlf-requisicao")).toBeUndefined();
+    }
+  });
+
+  it("não existe DELETE em /formas-pagamento (D-CFG-36)", () => {
+    for (const caminho of [
+      "/formas-pagamento",
+      "/formas-pagamento/{formaPagamentoId}",
+      "/formas-pagamento/{formaPagamentoId}/situacao",
+    ]) {
+      expect((documento.paths[caminho] as Record<string, unknown>)["delete"]).toBeUndefined();
+    }
+  });
+});
+
+describe("CFG-005 — contratos de /motivos-cancelamento (docs/14 §3.13)", () => {
+  const ITEM = "/motivos-cancelamento/{motivoCancelamentoId}";
+  const esperados: Array<[string, "get" | "post" | "put" | "patch", string[]]> = [
+    ["/motivos-cancelamento", "get", ["200", "400", "401", "403", "500"]],
+    ["/motivos-cancelamento", "post", ["201", "400", "401", "403", "404", "409", "413", "500"]],
+    [ITEM, "get", ["200", "400", "401", "403", "404", "500"]],
+    [ITEM, "put", ["200", "400", "401", "403", "404", "409", "413", "500"]],
+    [`${ITEM}/situacao`, "patch", ["200", "400", "401", "403", "404", "413", "500"]],
+  ];
+
+  it.each(esperados)("%s %s documenta exatamente os status do contrato", (caminho, metodo, status) => {
+    expect(Object.keys(respostas(caminho, metodo)).sort()).toEqual(status);
+    expect(operacao(caminho, metodo)["security"]).toBeDefined();
+  });
+
+  it("as consultas GET de /motivos-cancelamento NÃO declaram o header CSRF", () => {
+    for (const caminho of ["/motivos-cancelamento", ITEM]) {
+      const parametros = (operacao(caminho, "get")["parameters"] ?? []) as Array<Record<string, unknown>>;
+      expect(parametros.find((p) => p["in"] === "header" && p["name"] === "x-tlf-requisicao")).toBeUndefined();
+    }
+  });
+
+  it("o 409 do PUT documenta os dois códigos de conflito (D-CFG-46, D-CFG-50)", () => {
+    const descricao = String((respostas(ITEM, "put")["409"] as Record<string, unknown>)["description"]);
+    expect(descricao).toContain("MOTIVO_CANCELAMENTO_DUPLICADO");
+    expect(descricao).toContain("MOTIVO_CANCELAMENTO_EM_USO");
+  });
+
+  it("não existe DELETE em /motivos-cancelamento (D-CFG-48)", () => {
+    for (const caminho of ["/motivos-cancelamento", ITEM, `${ITEM}/situacao`]) {
+      expect((documento.paths[caminho] as Record<string, unknown>)["delete"]).toBeUndefined();
+    }
+  });
+});
+
+describe("PRO-A — contratos de /profissionais (docs/18 §4)", () => {
+  const esperados: Array<[string, "get" | "post" | "put" | "patch", string[]]> = [
+    ["/profissionais", "get", ["200", "400", "401", "403", "500"]],
+    ["/profissionais", "post", ["201", "400", "401", "403", "409", "413", "422", "500"]],
+    ["/profissionais/{profissionalId}", "get", ["200", "400", "401", "403", "404", "500"]],
+    ["/profissionais/{profissionalId}", "put", ["200", "400", "401", "403", "404", "409", "413", "422", "500"]],
+    ["/profissionais/{profissionalId}/situacao", "patch", ["200", "400", "401", "403", "404", "413", "500"]],
+    ["/profissionais/{profissionalId}/servicos", "get", ["200", "400", "401", "403", "404", "500"]],
+    ["/profissionais/{profissionalId}/servicos", "put", ["200", "400", "401", "403", "404", "413", "422", "500"]],
+  ];
+
+  it.each(esperados)("%s %s documenta exatamente os status do contrato", (caminho, metodo, status) => {
+    expect(Object.keys(respostas(caminho, metodo)).sort()).toEqual(status);
+    expect(operacao(caminho, metodo)["security"]).toBeDefined();
+  });
+
+  it("as consultas GET de /profissionais NÃO declaram o header CSRF", () => {
+    for (const caminho of ["/profissionais", "/profissionais/{profissionalId}", "/profissionais/{profissionalId}/servicos"]) {
+      const parametros = (operacao(caminho, "get")["parameters"] ?? []) as Array<Record<string, unknown>>;
+      expect(parametros.find((p) => p["in"] === "header" && p["name"] === "x-tlf-requisicao")).toBeUndefined();
+    }
+  });
+
+  it("não existe DELETE em /profissionais", () => {
+    for (const caminho of ["/profissionais", "/profissionais/{profissionalId}", "/profissionais/{profissionalId}/situacao", "/profissionais/{profissionalId}/servicos"]) {
       expect((documento.paths[caminho] as Record<string, unknown>)["delete"]).toBeUndefined();
     }
   });
@@ -859,5 +987,31 @@ describe("AUD-004 — consulta da trilha de auditoria documentada", () => {
       "REQUISICAO_INVALIDA",
       "SESSAO_INVALIDA",
     ]);
+  });
+});
+
+describe("PAC-A — contratos de /pacientes (docs/17)", () => {
+  const esperados: Array<[string, "get" | "post" | "put" | "patch", string[]]> = [
+    ["/pacientes/busca", "post", ["200", "400", "401", "403", "413", "500"]],
+    ["/pacientes", "post", ["201", "400", "401", "403", "404", "409", "413", "500"]],
+    ["/pacientes/{pacienteId}", "get", ["200", "400", "401", "403", "404", "500"]],
+    ["/pacientes/{pacienteId}", "put", ["200", "400", "401", "403", "404", "409", "413", "500"]],
+    ["/pacientes/{pacienteId}/situacao", "patch", ["200", "400", "401", "403", "404", "413", "500"]],
+  ];
+
+  it.each(esperados)("%s %s documenta exatamente os status do contrato", (caminho, metodo, status) => {
+    expect(Object.keys(respostas(caminho, metodo)).sort()).toEqual(status);
+    expect(operacao(caminho, metodo)["security"]).toBeDefined();
+  });
+
+  it("a busca é POST (filtros pessoais nunca em query string) e não existe GET /pacientes nem DELETE", () => {
+    const caminhos = documento.paths as Record<string, Record<string, unknown>>;
+    expect(caminhos["/pacientes/busca"]?.["get"]).toBeUndefined();
+    expect(caminhos["/pacientes"]?.["get"]).toBeUndefined();
+    for (const caminho of ["/pacientes", "/pacientes/busca", "/pacientes/{pacienteId}", "/pacientes/{pacienteId}/situacao"]) {
+      expect(caminhos[caminho]?.["delete"]).toBeUndefined();
+    }
+    const parametros = (operacao("/pacientes/busca", "post")["parameters"] ?? []) as Array<{ in?: string }>;
+    expect(parametros.some((p) => p.in === "query")).toBe(false);
   });
 });

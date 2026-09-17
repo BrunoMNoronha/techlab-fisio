@@ -162,6 +162,11 @@ jobs:
       # Executa ciclo completo ponta a ponta: PostgreSQL 18 descartável +
       # NestJS compilado + Next.js compilado + proxy same-origin + CSRF +
       # cookie real + GET /auth/sessao (D-2.3D-20) + encerramento limpo.
+      # Desde CFG-002/D-CFG-66 (17/09/2026) também dirige a tela de horário de
+      # funcionamento em Chromium real — por isso o Chromium é instalado antes.
+      - name: "E2E (FRONT-E2E0) — instalar Chromium com dependências de sistema"
+        run: pnpm --filter @techlab-fisio/web exec playwright install --with-deps chromium
+
       - name: "E2E — prova real same-origin Web + API + PostgreSQL (P-2.3D-08 / D-2.3D-20)"
         run: pnpm run verify:web-api-e2e
 
@@ -180,9 +185,6 @@ jobs:
       # "retain-on-failure"` — o trace.zip de testes que falham vai em test-results/,
       # publicado pelo passo de artefatos abaixo.
       # ------------------------------------------------------------------
-
-      - name: "E2E (FRONT-E2E0) — instalar Chromium com dependências de sistema"
-        run: pnpm --filter @techlab-fisio/web exec playwright install --with-deps chromium
 
       - name: "E2E (FRONT-E2E0) — smoke tests Playwright (/, /login, 404) em Chromium real"
         run: pnpm --filter @techlab-fisio/web run test:e2e

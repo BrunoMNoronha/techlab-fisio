@@ -631,3 +631,25 @@ São **obrigações distintas**: a primeira governa *o que pode ser escrito dent
 **Fim — §§1..11: proposta histórica; §12: decisão homologada em 25/08/2026 (`D-AUD-01`..`D-AUD-08`); §13: decisão homologada em 05/09/2026 (`PBACK-AUD-01`..`PBACK-AUD-08`); §13.4.1: `PBACK-AUD-09` decidida em 05/09/2026 (reavaliação de `L-07` — auditoria restrita, `autorizacao.negada` homologada). `P-E14-01` ENCERRADA; `T-AUD-CONTEXTO` EXECUTADO (`docs/10` §8.1); `L-05` e `L-08` (política) FECHADAS; `L-07` DECIDIDA (§13.4.1) — implementação autorizada, materializada e **integrada na `main` em 05/09/2026 (PR #23, merge `e1459f6`)**; `D-6` registrou a não autorização no ato da decisão e a publicação foi ato posterior de Bruno Menezes Noronha; `L-06` ABERTA / BLOQUEADA POR DEPENDÊNCIA FUNCIONAL-TÉCNICA; §14: `D-AUD-09` homologada em 15/09/2026 (semântica de valor das três whitelists positivas).**
 >
 > **Atualização de 15/09/2026 — `D-AUD-09` (§14).** A linha acima descreve o estado até 05/09/2026 e fica preservada como registro histórico: `R2.2-04` estava então ABERTO / MITIGADO PARCIALMENTE, exatamente porque faltava a regra semântica das datas e do uuid. Com §14 essa condição normativa foi suprida e materializada; o estado factual corrente de `R2.2-04` é registrado em `docs/10` §7.2. §14.8 **não** declarou `R2.2-04` encerrado, por causa da cláusula final de §13.3 — divergência de leitura registrada e devolvida naquela subseção. **Em 15/09/2026, §14.9 (`D-AUD-09-A`) resolveu a divergência**: Bruno Menezes Noronha homologou a **leitura restrita (a)** de “por esta via”, de modo que `L-06` **não** é pré-condição global de `R2.2-04`; o encerramento formal do risco consta do estado vivo (`docs/10` §7.2). `P-BACK-01` **não** é encerrada por §14 nem por §14.9, e `L-06` permanece ABERTA / BLOQUEADA — nenhuma rota de leitura clínica autorizada, `prontuario.acessado` não criada.
+
+---
+
+## 15. Materialização de `L-08` — ações de auditoria de paciente (`docs/17` `D-PAC-07`) — **HOMOLOGADA EM 17/09/2026**
+
+**Origem.** `docs/17` (pacote mínimo de pacientes, REV. 2) — `D-PAC-07`, aprovada por Bruno Menezes Noronha em 17/09/2026 (`P-PAC-08`), materializa a forma técnica que §13.5 remeteu expressamente "à fatia do módulo de pacientes". A **política** de §13.5 (o que é sensível) **não** é alterada.
+
+**Decidido.**
+
+- **Duas ações entram no catálogo**, ao final, depois de `autorizacao.negada`:
+  - `paciente.cadastro.alterado` — emitida quando o **CPF** passa a ter valor na criação ou é **incluído, alterado ou removido** na edição;
+  - `paciente.situacao.alterada` — inativação e reativação efetivas.
+- `alvo_tipo = "paciente"`, `alvo_id = paciente.id`, ator da sessão, `resultado = SUCESSO`, `justificativa = null`.
+- **Whitelist de `contexto`: VAZIA** para ambas. `campos_alterados` **continua não homologada** — o conflito com a política de escalares registrado em §13.5 deixa de existir porque a ação só é emitida por mudança de CPF.
+- Responsável legal e consentimentos (também sensíveis por §13.5) serão materializados nas fatias PAC-B e PAC-C, por decisão própria.
+- Nenhum valor pessoal (nome, CPF, contatos) é registrado em evento, log ou erro (RN-062, RN-063).
+
+**Estado do catálogo.** **27 ações · 3 whitelists positivas · 24 vazias** (antes: 25 · 3 · 22). A afirmação de §14 ("O catálogo permanece com **25** ações") é preservada como registro histórico da data de §14.
+
+**Lacuna `L-08`.** Passa de **POLÍTICA FECHADA / MATERIALIZAÇÃO PENDENTE** para **POLÍTICA FECHADA / MATERIALIZADA PARA CPF E SITUAÇÃO** (PAC-A); responsável legal e consentimentos seguem pendentes com PAC-B/PAC-C.
+
+**Materialização técnica (local, não publicada).** `apps/api/src/audit/audit.catalog.ts` e `apps/api/test/audit-context.validator.spec.ts`; emissores em `apps/api/src/pacientes/pacientes.service.ts`. Registro factual em `docs/10` §6-AC.
