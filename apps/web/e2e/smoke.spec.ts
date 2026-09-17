@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "@playwright/test";
 
 // TechLab Fisio — Smoke Tests E2E da Fundação Frontend (FRONT-E2E0).
 //
@@ -76,6 +76,29 @@ function instalarMonitores(page: Page, rota404Esperada?: string): Monitor {
       expect(requisicoesExternas, "Nenhuma chamada a recursos externos de terceiros").toEqual([]);
     },
   };
+}
+
+// Foco visível: o elemento focado por teclado casa com :focus-visible e o
+// indicador (outline de globals.css) não foi removido nem zerado.
+async function validarFocoVisivel(elemento: Locator, rotulo: string): Promise<void> {
+  const foco = await elemento.evaluate((el) => {
+    const estilo = getComputedStyle(el);
+    return {
+      focusVisible: el.matches(":focus-visible"),
+      outlineStyle: estilo.outlineStyle,
+      outlineWidth: Number.parseFloat(estilo.outlineWidth),
+      outlineColor: estilo.outlineColor,
+    };
+  });
+  // Cor computada vem como rgb(r, g, b) ou rgba(r, g, b, a) / rgb(r g b / a);
+  // alfa ausente equivale a opaco. Alfa 0 (ex.: transparent) = foco invisível.
+  const canais = /rgba?\(([^)]*)\)/.exec(foco.outlineColor)?.[1]?.split(/[\s,/]+/).filter(Boolean);
+  const alfa = canais?.[3] !== undefined ? Number.parseFloat(canais[3]) : 1;
+  expect(foco.focusVisible, `${rotulo}: deveria casar com :focus-visible`).toBe(true);
+  expect(foco.outlineStyle, `${rotulo}: indicador de foco removido (outline-style)`).not.toBe("none");
+  expect(foco.outlineWidth, `${rotulo}: indicador de foco sem espessura`).toBeGreaterThan(0);
+  expect(canais, `${rotulo}: cor de outline em formato inesperado (${foco.outlineColor})`).toBeDefined();
+  expect(alfa, `${rotulo}: indicador de foco transparente (${foco.outlineColor})`).toBeGreaterThan(0);
 }
 
 async function validarSemOverflowHorizontal(page: Page, rotulo: string): Promise<void> {
@@ -168,9 +191,11 @@ test.describe("FRONT-E2E0 — Smoke E2E da Fundação Frontend", () => {
 
     await page.keyboard.press("Tab");
     await expect(inputSenha).toBeFocused();
+    await validarFocoVisivel(inputSenha, "campo Senha");
 
     await page.keyboard.press("Tab");
     await expect(botaoEntrar).toBeFocused();
+    await validarFocoVisivel(botaoEntrar, "botão Entrar");
 
     // Responsividade sem overflow
     for (const vp of VIEWPORTS) {
@@ -204,6 +229,7 @@ test.describe("FRONT-E2E0 — Smoke E2E da Fundação Frontend", () => {
     // Link de retorno para a aplicação
     const linkRetorno = page.getByRole("link", { name: /voltar para a página inicial/i });
     await expect(linkRetorno).toBeVisible();
+    await expect(linkRetorno).toHaveAttribute("href", "/");
 
     // Responsividade sem overflow na página 404
     for (const vp of VIEWPORTS) {
