@@ -97,6 +97,35 @@ describe("FiltroErroAutenticacao — Escopo de rotas e métodos", () => {
     expect(res.json).toHaveBeenCalledWith({ erro: ERRO.CREDENCIAIS_INVALIDAS });
   });
 
+  it("intercepta GET /auth/usuarios/:usuarioId/sessoes (P-2.3D-10) e normaliza falha técnica para 500 FALHA_INTERNA", () => {
+    jest.spyOn(Logger.prototype, "error").mockImplementation(() => {});
+    const req = { url: "/auth/usuarios/a0000000-0000-4000-8000-000000000001/sessoes/", method: "GET" };
+    const res = criarRespostaFicticia();
+    const host = criarHostFicticio(req, res);
+
+    filtro.catch(new Error("falha simulada de banco"), host);
+
+    expect(superCatchSpy).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
+    expect(res.json).toHaveBeenCalledWith({ erro: ERRO.FALHA_INTERNA });
+  });
+
+  it.each([
+    { url: "/auth/usuarios/a0000000-0000-4000-8000-000000000001/sessoes", method: "POST" },
+    { url: "/auth/usuarios/a/b/sessoes", method: "GET" },
+    { url: "/auth/usuarios/a0000000-0000-4000-8000-000000000001/sessoes/extra", method: "GET" },
+    { url: "/auth/usuarios/sessoes", method: "GET" },
+  ])("NÃO amplia o escopo além da listagem exata ($method $url)", (req) => {
+    const res = criarRespostaFicticia();
+    const host = criarHostFicticio(req, res);
+    const excecao = new Error("fora do escopo");
+
+    filtro.catch(excecao, host);
+
+    expect(superCatchSpy).toHaveBeenCalledWith(excecao, host);
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
   it("trata variações de caminho como maiúsculas e barra final no POST", () => {
     const req = { url: "/AUTH/LOGIN/", method: "post" };
     const res = criarRespostaFicticia();
