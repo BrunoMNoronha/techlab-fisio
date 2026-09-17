@@ -805,7 +805,10 @@ describe("CFG-003 — atomicidade, concorrência e invariantes físicas (D-CFG-2
     expect(await eventos()).toHaveLength(1);
   });
 
-  it("CA-SRV-17: PUT e PATCH concorrentes serializam — ambos aplicados, 2 eventos", async () => {
+  // Colunas disjuntas: este teste prova que as duas mutações concorrentes são
+  // aplicadas e auditadas, NÃO que a leitura do PATCH ocorre sob o lock — essa
+  // prova está nos dois testes seguintes (revisão pós-merge, achado B-1).
+  it("CA-SRV-17: PUT e PATCH concorrentes — ambos aplicados, 2 eventos", async () => {
     await provisionarClinica();
     const { cookie } = await administrador();
     const criado = await criarViaApi(cookie);
@@ -819,6 +822,76 @@ describe("CFG-003 — atomicidade, concorrência e invariantes físicas (D-CFG-2
     expect(linha).toMatchObject({ preco_referencia: "200.00", ativo: false });
     expect(linha?.inativado_em).not.toBeNull();
     expect(await eventos()).toHaveLength(3);
+  });
+
+  it("CA-SRV-17: o PATCH lê SOB o lock (SELECT ... FOR UPDATE) — enxerga a inativação concorrente", async () => {
+    await provisionarClinica();
+    const { cookie } = await administrador();
+    const criado = await criarViaApi(cookie);
+
+    let liberar!: () => void;
+    const barreira = new Promise<void>((r) => (liberar = r));
+    let lockAdquirido!: () => void;
+    const adquirido = new Promise<void>((r) => (lockAdquirido = r));
+
+    const bloqueador = database.transacao(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM servico WHERE id = ${criado.id}::uuid FOR UPDATE`;
+      lockAdquirido();
+      await barreira;
+      await tx.$executeRaw`UPDATE servico SET ativo = false, inativado_em = now() WHERE id = ${criado.id}::uuid`;
+    });
+    await adquirido;
+
+    let concluido = false;
+    const patch = requisitar("PATCH", `/servicos/${criado.id}/situacao`, { cookie, corpo: { ativo: false } }).then(
+      (r) => {
+        concluido = true;
+        return r;
+      },
+    );
+
+    let esperando = 0;
+    for (let i = 0; i < 50 && esperando === 0; i++) {
+      const r = await database.transacao((tx) =>
+        tx.$queryRaw<Array<{ n: bigint }>>`
+          SELECT count(*) AS n FROM pg_stat_activity
+           WHERE wait_event_type = 'Lock' AND datname = current_database()`,
+      );
+      esperando = Number(r[0]?.n ?? 0);
+      if (esperando === 0) await new Promise((res) => setTimeout(res, 100));
+    }
+    expect(esperando).toBeGreaterThanOrEqual(1);
+    expect(concluido).toBe(false);
+
+    liberar();
+    await bloqueador;
+    const [gravadaPeloConcorrente] = await lerServicos();
+    const res = await patch;
+    expect(res.status).toBe(200);
+    // Leitura sob lock: o serviço já está inativo -> no-op, `inativado_em` do
+    // concorrente preservado e nenhum evento além da criação. Sem o lock, o
+    // PATCH leria `ativo = true`, regravaria `inativado_em` e auditaria.
+    expect(res.body).toMatchObject({ ativo: false });
+    expect(await lerServicos()).toEqual([gravadaPeloConcorrente]);
+    expect(await eventos()).toHaveLength(1);
+  });
+
+  it("CA-SRV-17: PATCHs concorrentes de inativação -> exatamente 1 mutação e 1 evento", async () => {
+    await provisionarClinica();
+    const { cookie } = await administrador();
+    const criado = await criarViaApi(cookie);
+
+    const respostas = await Promise.all(
+      Array.from({ length: 6 }, () =>
+        requisitar("PATCH", `/servicos/${criado.id}/situacao`, { cookie, corpo: { ativo: false } }),
+      ),
+    );
+    expect(respostas.every((r) => r.status === 200)).toBe(true);
+    const [linha] = await lerServicos();
+    for (const r of respostas) {
+      expect(r.body.inativadoEm).toBe(linha?.inativado_em?.toISOString());
+    }
+    expect(await eventos()).toHaveLength(2);
   });
 
   it("D-CFG-23: o banco rejeita duração <= 0, preço negativo, situação incoerente e nome equivalente", async () => {
