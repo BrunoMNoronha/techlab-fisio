@@ -242,9 +242,9 @@ describe("AuthModule — fronteira da F1+F2+F3 preservada", () => {
     expect(imports ?? []).toEqual([DatabaseModule, AuditModule]);
   });
 
-  it("as rotas expostas pela aplicação são SÓ as da F3, F6, P-2.3D-07, AUT-005, P-2.3D-10, CFG-001A, CFG-002, AUD-004 e CFG-003", () => {
+  it("as rotas expostas pela aplicação são SÓ as da F3, F6, P-2.3D-07, AUT-005, P-2.3D-10, CFG-001A, CFG-002, AUD-004, CFG-003, CFG-004, CFG-005, PAC-A e PRO-A", () => {
     // Prova de fronteira contra o ROUTER real, e não contra metadados: se um
-    // endpoint de F4+ (profissionais, pacientes, agenda, refresh)
+    // endpoint de F4+ (agenda, refresh)
     // entrar acidentalmente no `AppModule`, esta asserção falha.
     // ATUALIZADO NA F6 / P-2.3D-07 / AUT-005: as rotas autorizadas vivem em módulos PRÓPRIOS
     // (`RecuperacaoSenhaModule`, `SessoesModule`, `UsuariosModule`, `ClinicaModule`), não no AuthModule.
@@ -254,6 +254,9 @@ describe("AuthModule — fronteira da F1+F2+F3 preservada", () => {
     // A asserção continua sendo de igualdade exata sobre o ROUTER real.
     // AUD-004: `/auditoria/eventos` vive no `AuditoriaConsultaModule`.
     // CFG-003 (`docs/14` §3.11): `/servicos` vive no `ServicosModule`.
+    // CFG-004 (`docs/14` §3.12): `/formas-pagamento` vive no `FormasPagamentoModule`.
+    // CFG-005 (`docs/14` §3.13): `/motivos-cancelamento` vive no `MotivosCancelamentoModule`.
+    // PRO-A (`docs/18` §4): `/profissionais` vive no `ProfissionalModule`.
     const caminhos = Object.keys(documentoDaAplicacao.paths).sort();
     expect(caminhos).toEqual([
       "/auditoria/eventos",
@@ -266,8 +269,22 @@ describe("AuthModule — fronteira da F1+F2+F3 preservada", () => {
       "/auth/usuarios/{usuarioId}/sessoes",
       "/auth/usuarios/{usuarioId}/situacao",
       "/clinica",
+      "/formas-pagamento",
+      "/formas-pagamento/{formaPagamentoId}",
+      "/formas-pagamento/{formaPagamentoId}/situacao",
       "/health",
       "/horario-funcionamento",
+      "/motivos-cancelamento",
+      "/motivos-cancelamento/{motivoCancelamentoId}",
+      "/motivos-cancelamento/{motivoCancelamentoId}/situacao",
+      "/pacientes",
+      "/pacientes/busca",
+      "/pacientes/{pacienteId}",
+      "/pacientes/{pacienteId}/situacao",
+      "/profissionais",
+      "/profissionais/{profissionalId}",
+      "/profissionais/{profissionalId}/servicos",
+      "/profissionais/{profissionalId}/situacao",
       "/servicos",
       "/servicos/{servicoId}",
       "/servicos/{servicoId}/situacao",

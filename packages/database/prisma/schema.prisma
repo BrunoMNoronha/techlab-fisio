@@ -416,6 +416,10 @@ model Servico {
 }
 
 /// CFG-004, RN-007.
+/// Invariantes físicas de CFG-004 (`docs/14` D-CFG-34/D-CFG-35), só na
+/// migration `20260917170000_forma_pagamento_invariantes` (não representáveis
+/// na Prisma Schema Language): `ux_forma_pagamento_clinica_descricao` sobre
+/// `(clinica_id, lower(btrim(descricao)))` e `ck_forma_pagamento_situacao`.
 model FormaPagamento {
   id          String    @id @default(uuid(7)) @db.Uuid
   clinicaId   String    @map("clinica_id") @db.Uuid
@@ -431,6 +435,11 @@ model FormaPagamento {
 }
 
 /// CFG-005, RN-007.
+/// Invariantes físicas de CFG-005 (`docs/14` D-CFG-46/D-CFG-47), só na
+/// migration `20260917180000_motivo_cancelamento_invariantes` (não
+/// representáveis na Prisma Schema Language):
+/// `ux_motivo_cancelamento_clinica_descricao` sobre
+/// `(clinica_id, lower(btrim(descricao)))` e `ck_motivo_cancelamento_situacao`.
 model MotivoCancelamento {
   id          String    @id @default(uuid(7)) @db.Uuid
   clinicaId   String    @map("clinica_id") @db.Uuid
@@ -451,6 +460,9 @@ model MotivoCancelamento {
 // ---------------------------------------------------------------------------
 
 /// PRO-001, PRO-005.
+/// Invariante física de PRO-005 (`docs/18` D-PRO1-07), só na migration
+/// `20260917200000_profissional_situacao_coerente` (CHECK não representável na
+/// Prisma Schema Language): `ck_profissional_situacao`.
 model Profissional {
   id                   String    @id @default(uuid(7)) @db.Uuid
   /// U-08 — PRO-001; anulável (`docs/07` §10.1). NULLs não colidem.
@@ -534,6 +546,9 @@ model DisponibilidadeProfissional {
 /// `cpf` é armazenado NORMALIZADO — somente os 11 dígitos, sem máscara
 /// (§11.4.1). A CHECK de forma pertence a `E-09`.
 /// `telefone`/`email` materializam "contatos" de §7.4, que a fonte não decompõe.
+/// PAC-A (`docs/17` D-PAC-09), migration `20260917180000_paciente_situacao_invariantes`:
+/// `ck_paciente_situacao` (`ativo = (inativado_em IS NULL)`) — não representável na
+/// Prisma Schema Language — e `ix_paciente_data_nascimento` (declarado abaixo).
 model Paciente {
   id             String    @id @default(uuid(7)) @db.Uuid
   nome           String
@@ -560,6 +575,8 @@ model Paciente {
   pacotes                    Pacote[]
   cobrancas                  Cobranca[]
 
+  /// D-PAC-09 — coincidência forte e busca por data (`docs/17` §4.3, §4.4).
+  @@index([dataNascimento], map: "ix_paciente_data_nascimento")
   @@map("paciente")
 }
 

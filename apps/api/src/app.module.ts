@@ -23,6 +23,9 @@ import { AuthModule } from "./auth/auth.module.js";
 import { AuthzModule } from "./authz/authz.module.js";
 import { ClinicaModule } from "./clinica/clinica.module.js";
 import { ServicosModule } from "./servicos/servicos.module.js";
+import { FormasPagamentoModule } from "./formas-pagamento/formas-pagamento.module.js";
+import { MotivosCancelamentoModule } from "./motivos-cancelamento/motivos-cancelamento.module.js";
+import { PacientesModule } from "./pacientes/pacientes.module.js";
 import { RecuperacaoSenhaModule } from "./recuperacao-senha/recuperacao-senha.module.js";
 import { CobrancaModule } from "./cobranca/cobranca.module.js";
 import { DatabaseModule } from "./database/database.module.js";
@@ -46,6 +49,9 @@ import { UsuariosModule } from "./auth/usuarios.module.js";
     CobrancaModule,
     ClinicaModule,
     ServicosModule,
+    FormasPagamentoModule,
+    MotivosCancelamentoModule,
+    PacientesModule,
   ],
 })
 export class AppModule {}

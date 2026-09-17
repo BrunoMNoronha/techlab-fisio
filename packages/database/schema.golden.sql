@@ -394,7 +394,8 @@ CREATE TABLE public.forma_pagamento (
     descricao text NOT NULL,
     ativo boolean NOT NULL,
     inativado_em timestamp(6) with time zone,
-    criado_em timestamp(6) with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+    criado_em timestamp(6) with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT ck_forma_pagamento_situacao CHECK ((ativo = (inativado_em IS NULL)))
 );
 
 
@@ -445,7 +446,8 @@ CREATE TABLE public.motivo_cancelamento (
     descricao text NOT NULL,
     ativo boolean NOT NULL,
     inativado_em timestamp(6) with time zone,
-    criado_em timestamp(6) with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+    criado_em timestamp(6) with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT ck_motivo_cancelamento_situacao CHECK ((ativo = (inativado_em IS NULL)))
 );
 
 
@@ -497,7 +499,8 @@ CREATE TABLE public.paciente (
     ativo boolean NOT NULL,
     inativado_em timestamp(6) with time zone,
     criado_em timestamp(6) with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    CONSTRAINT ck_paciente_cpf_formato CHECK (((cpf IS NULL) OR (cpf ~ '^[0-9]{11}$'::text)))
+    CONSTRAINT ck_paciente_cpf_formato CHECK (((cpf IS NULL) OR (cpf ~ '^[0-9]{11}$'::text))),
+    CONSTRAINT ck_paciente_situacao CHECK ((ativo = (inativado_em IS NULL)))
 );
 
 
@@ -586,7 +589,8 @@ CREATE TABLE public.profissional (
     registro_profissional text,
     ativo boolean NOT NULL,
     inativado_em timestamp(6) with time zone,
-    criado_em timestamp(6) with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+    criado_em timestamp(6) with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT ck_profissional_situacao CHECK ((ativo = (inativado_em IS NULL)))
 );
 
 
@@ -1161,6 +1165,13 @@ CREATE INDEX ix_cobranca_data_referencia_ativa ON public.cobranca USING btree (d
 
 
 --
+-- Name: ix_paciente_data_nascimento; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_paciente_data_nascimento ON public.paciente USING btree (data_nascimento);
+
+
+--
 -- Name: ix_pacote_validade_ativa; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1305,6 +1316,20 @@ CREATE UNIQUE INDEX usuario_email_key ON public.usuario USING btree (email);
 --
 
 CREATE UNIQUE INDEX ux_clinica_linha_unica ON public.clinica USING btree ((true));
+
+
+--
+-- Name: ux_forma_pagamento_clinica_descricao; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX ux_forma_pagamento_clinica_descricao ON public.forma_pagamento USING btree (clinica_id, lower(btrim(descricao)));
+
+
+--
+-- Name: ux_motivo_cancelamento_clinica_descricao; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX ux_motivo_cancelamento_clinica_descricao ON public.motivo_cancelamento USING btree (clinica_id, lower(btrim(descricao)));
 
 
 --

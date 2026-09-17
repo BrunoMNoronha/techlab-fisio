@@ -143,7 +143,7 @@ try {
 
   const caminhos = Object.keys(documento.paths ?? {}).sort();
   conferir(
-    "rotas da F3, F6, P-2.3D-07, P-2.3D-08, AUT-005, P-2.3D-10, CFG-001A, CFG-002, AUD-004 e CFG-003 presentes e nenhuma outra vazou",
+    "rotas da F3, F6, P-2.3D-07, P-2.3D-08, AUT-005, P-2.3D-10, CFG-001A, CFG-002, AUD-004, CFG-003, CFG-004, CFG-005, PAC-A e PRO-A presentes e nenhuma outra vazou",
     JSON.stringify(caminhos) ===
       JSON.stringify([
         "/auditoria/eventos",
@@ -156,8 +156,22 @@ try {
         "/auth/usuarios/{usuarioId}/sessoes",
         "/auth/usuarios/{usuarioId}/situacao",
         "/clinica",
+        "/formas-pagamento",
+        "/formas-pagamento/{formaPagamentoId}",
+        "/formas-pagamento/{formaPagamentoId}/situacao",
         "/health",
         "/horario-funcionamento",
+        "/motivos-cancelamento",
+        "/motivos-cancelamento/{motivoCancelamentoId}",
+        "/motivos-cancelamento/{motivoCancelamentoId}/situacao",
+        "/pacientes",
+        "/pacientes/busca",
+        "/pacientes/{pacienteId}",
+        "/pacientes/{pacienteId}/situacao",
+        "/profissionais",
+        "/profissionais/{profissionalId}",
+        "/profissionais/{profissionalId}/servicos",
+        "/profissionais/{profissionalId}/situacao",
         "/servicos",
         "/servicos/{servicoId}",
         "/servicos/{servicoId}/situacao",
@@ -294,6 +308,91 @@ try {
   conferir(
     "nenhum DELETE em /servicos",
     ["/servicos", "/servicos/{servicoId}", "/servicos/{servicoId}/situacao"].every(
+      (caminho) => documento.paths[caminho]?.delete === undefined,
+    ),
+  );
+  // PAC-A — pacientes (docs/17 D-PAC-02); busca por POST, sem GET de coleção e sem DELETE.
+  for (const [caminho, metodo, esperado] of [
+    ["/pacientes/busca", "post", "200,400,401,403,413,500"],
+    ["/pacientes", "post", "201,400,401,403,404,409,413,500"],
+    ["/pacientes/{pacienteId}", "get", "200,400,401,403,404,500"],
+    ["/pacientes/{pacienteId}", "put", "200,400,401,403,404,409,413,500"],
+    ["/pacientes/{pacienteId}/situacao", "patch", "200,400,401,403,404,413,500"],
+  ]) {
+    const status = Object.keys(documento.paths[caminho]?.[metodo]?.responses ?? {})
+      .sort()
+      .join(",");
+    conferir(`${metodo.toUpperCase()} ${caminho} documenta ${esperado}`, status === esperado, `status=${status}`);
+  }
+  conferir(
+    "nenhum DELETE e nenhum GET de coleção em /pacientes",
+    ["/pacientes", "/pacientes/busca", "/pacientes/{pacienteId}", "/pacientes/{pacienteId}/situacao"].every(
+      (caminho) => documento.paths[caminho]?.delete === undefined,
+    ) &&
+      documento.paths["/pacientes"]?.get === undefined &&
+      documento.paths["/pacientes/busca"]?.get === undefined,
+  );
+
+  // CFG-004 — formas de pagamento (docs/14 §3.12); sem DELETE.
+  for (const [caminho, metodo, esperado] of [
+    ["/formas-pagamento", "get", "200,400,401,403,500"],
+    ["/formas-pagamento", "post", "201,400,401,403,404,409,413,500"],
+    ["/formas-pagamento/{formaPagamentoId}", "get", "200,400,401,403,404,500"],
+    ["/formas-pagamento/{formaPagamentoId}", "put", "200,400,401,403,404,409,413,500"],
+    ["/formas-pagamento/{formaPagamentoId}/situacao", "patch", "200,400,401,403,404,413,500"],
+  ]) {
+    const status = Object.keys(documento.paths[caminho]?.[metodo]?.responses ?? {})
+      .sort()
+      .join(",");
+    conferir(`${metodo.toUpperCase()} ${caminho} documenta ${esperado}`, status === esperado, `status=${status}`);
+  }
+  conferir(
+    "nenhum DELETE em /formas-pagamento",
+    ["/formas-pagamento", "/formas-pagamento/{formaPagamentoId}", "/formas-pagamento/{formaPagamentoId}/situacao"].every(
+      (caminho) => documento.paths[caminho]?.delete === undefined,
+    ),
+  );
+
+  // CFG-005 — motivos de cancelamento (docs/14 §3.13); sem DELETE.
+  for (const [caminho, metodo, esperado] of [
+    ["/motivos-cancelamento", "get", "200,400,401,403,500"],
+    ["/motivos-cancelamento", "post", "201,400,401,403,404,409,413,500"],
+    ["/motivos-cancelamento/{motivoCancelamentoId}", "get", "200,400,401,403,404,500"],
+    ["/motivos-cancelamento/{motivoCancelamentoId}", "put", "200,400,401,403,404,409,413,500"],
+    ["/motivos-cancelamento/{motivoCancelamentoId}/situacao", "patch", "200,400,401,403,404,413,500"],
+  ]) {
+    const status = Object.keys(documento.paths[caminho]?.[metodo]?.responses ?? {})
+      .sort()
+      .join(",");
+    conferir(`${metodo.toUpperCase()} ${caminho} documenta ${esperado}`, status === esperado, `status=${status}`);
+  }
+  conferir(
+    "nenhum DELETE em /motivos-cancelamento",
+    [
+      "/motivos-cancelamento",
+      "/motivos-cancelamento/{motivoCancelamentoId}",
+      "/motivos-cancelamento/{motivoCancelamentoId}/situacao",
+    ].every((caminho) => documento.paths[caminho]?.delete === undefined),
+  );
+
+  // PRO-A — cadastro de profissionais (docs/18 §4); sem DELETE.
+  for (const [caminho, metodo, esperado] of [
+    ["/profissionais", "get", "200,400,401,403,500"],
+    ["/profissionais", "post", "201,400,401,403,409,413,422,500"],
+    ["/profissionais/{profissionalId}", "get", "200,400,401,403,404,500"],
+    ["/profissionais/{profissionalId}", "put", "200,400,401,403,404,409,413,422,500"],
+    ["/profissionais/{profissionalId}/situacao", "patch", "200,400,401,403,404,413,500"],
+    ["/profissionais/{profissionalId}/servicos", "get", "200,400,401,403,404,500"],
+    ["/profissionais/{profissionalId}/servicos", "put", "200,400,401,403,404,413,422,500"],
+  ]) {
+    const status = Object.keys(documento.paths[caminho]?.[metodo]?.responses ?? {})
+      .sort()
+      .join(",");
+    conferir(`${metodo.toUpperCase()} ${caminho} documenta ${esperado}`, status === esperado, `status=${status}`);
+  }
+  conferir(
+    "nenhum DELETE em /profissionais",
+    ["/profissionais", "/profissionais/{profissionalId}", "/profissionais/{profissionalId}/situacao", "/profissionais/{profissionalId}/servicos"].every(
       (caminho) => documento.paths[caminho]?.delete === undefined,
     ),
   );

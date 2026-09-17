@@ -2,7 +2,13 @@
 
 > **Arquivo:** `docs/10-backend-implementacao.md`
 > **Natureza:** documento **MUTÁVEL** — registro vivo de implementação da frente de backend (`apps/api`)
-> **Revisão vigente:** REV. 61 (17/09/2026) — **`CFG-003` — REFORÇO DE TESTES PÓS-INTEGRAÇÃO (ACHADOS B-1/B-2/B-3 DA REVISÃO INDEPENDENTE DA PR #80)** (§6-Z.8). Dois testes de integração provam a leitura sob lock do `PATCH /servicos/:servicoId/situacao`; spec unitário prova que só o `23505` de `ux_servico_clinica_nome` vira `SERVICO_DUPLICADO`; correção editorial de §6-Z.6. Nenhuma linha de código de produção, schema, migration, contrato, dependência ou CI alterada; nenhuma decisão criada, alterada ou reaberta.
+> **Revisão vigente:** REV. 67 (17/09/2026) — **CORREÇÃO PÓS-REVISÃO DA PR [#86](https://github.com/BrunoMNoronha/techlab-fisio/pull/86): `PATCH /profissionais/:profissionalId/situacao` PASSA A LER A LINHA SOB `FOR UPDATE` ANTES DE DECIDIR O NO-OP** (§6-AE.6). Cumprimento de `D-PRO1-10` (homologada), que a implementação não atendia para transições opostas concorrentes; teste de regressão e mutation challenge. Nenhuma decisão, contrato, schema, migration ou permissão alterado.
+> **Estado anterior preservado:** REV. 66 (17/09/2026) — **CONSOLIDAÇÃO LOCAL DAS QUATRO FRENTES (`CFG-004`, `CFG-005`, frente de configuração horária/`PAC-A`, `PRO-A`) NA BRANCH `integration/local-fase4` — NÃO PUBLICADA NA `main`** (§6-AE). Registro da integração e da bateria consolidada pós-integração; fechamento documental autorizado por Bruno Menezes Noronha (`D-INTEG-01`: `docs/17-pacote-decisao-cadastro-profissionais.md` → `docs/18-pacote-decisao-cadastro-profissionais.md`; `D-INTEG-02`: status de `docs/14`, `docs/15`, `docs/17`). Nenhuma decisão normativa criada, alterada ou reaberta; nenhum comportamento de runtime alterado nesta revisão (só comentários de referência a `docs/18`).
+> **Estado anterior preservado:** REV. 65 (17/09/2026; numeração fixada na integração local `integration/local-fase4` — provisória na origem como REV. 62 / §6-AB) — **PRO-A — CADASTRO DE PROFISSIONAIS (`PRO-001`, `PRO-004`, `PRO-005`) IMPLEMENTADO E MEDIDO EM BRANCH LOCAL (`agent/pro-a-cadastro-profissionais`, a partir de `origin/main` = `218960c`) — SEM COMMIT, NÃO INTEGRADO** (§6-AD). Materializa `D-PRO1-01`..`D-PRO1-10` (`docs/18`, renumerado por `D-INTEG-01` — REV. 66); migration `20260917200000_profissional_situacao_coerente`; rotas `/profissionais` sob `profissionais.gerenciar`; no-op de situação passa a `200` sem evento; 11 mutation challenges detectados. Nenhuma permissão, ação de auditoria, chave de `contexto` ou dependência nova.
+> **Estado anterior preservado:** REV. 64 (17/09/2026) — **`PAC-A` — PACIENTES (CADASTRO ADMINISTRATIVO, LOCALIZAÇÃO, DUPLICIDADE E SITUAÇÃO) IMPLEMENTADA E MEDIDA LOCALMENTE — SEM COMMIT, NÃO INTEGRADA** (§6-AC). Materializa `docs/17` `D-PAC-01`..`D-PAC-10`; migration `20260917180000_paciente_situacao_invariantes`; catálogo de auditoria com 27 ações (`docs/09` §15). *(numeração fixada na integração local `integration/local-fase4`: registrada na origem como REV. 61 / §6-AA; a REV. 61 já pertence à `main` (#85), §6-AA a `CFG-004` e §6-AB a `CFG-005`)*
+> **Estado anterior preservado:** REV. 63 (17/09/2026) — **`CFG-005` — MOTIVOS DE CANCELAMENTO IMPLEMENTADOS E MEDIDOS NO AMBIENTE LOCAL — NÃO COMMITADOS E NÃO INTEGRADOS** (§6-AB). Materializa `D-CFG-46`..`D-CFG-57` (`docs/14` §3.13); migration `20260917180000_motivo_cancelamento_invariantes`; rotas `/motivos-cancelamento` sob `clinica.configurar`. Nenhuma decisão, permissão, ação de auditoria, chave de `contexto` ou dependência nova. *(numeração fixada na integração local `integration/local-fase4`: registrada na origem como REV. 61 / §6-AA; a REV. 61 já pertence à `main` (#85) e §6-AA a `CFG-004`)*
+> **Estado anterior preservado:** REV. 62 (17/09/2026) — **`CFG-004` — FORMAS DE PAGAMENTO IMPLEMENTADAS E MEDIDAS EM BRANCH LOCAL (`agent/cfg-004-formas-pagamento`, a partir de `origin/main` = `218960c`) — SEM COMMIT, NÃO INTEGRADAS** (§6-AA). Materializa `D-CFG-34`..`D-CFG-45` (`docs/14` §3.12); migration `20260917170000_forma_pagamento_invariantes` (índice único de descrição e CHECK de situação) e golden atualizado; rotas `/formas-pagamento` sob `clinica.configurar`; `409 FORMA_PAGAMENTO_EM_USO` para forma referenciada por `pagamento`; 10 mutation challenges detectados. Nenhuma decisão criada, alterada ou reaberta; nenhuma permissão, ação de auditoria, chave de `contexto` ou dependência nova.
+> **Estado anterior preservado:** REV. 61 (17/09/2026) — **`CFG-003` — REFORÇO DE TESTES PÓS-INTEGRAÇÃO (ACHADOS B-1/B-2/B-3 DA REVISÃO INDEPENDENTE DA PR #80)** (§6-Z.8). Dois testes de integração provam a leitura sob lock do `PATCH /servicos/:servicoId/situacao`; spec unitário prova que só o `23505` de `ux_servico_clinica_nome` vira `SERVICO_DUPLICADO`; correção editorial de §6-Z.6. Nenhuma linha de código de produção, schema, migration, contrato, dependência ou CI alterada; nenhuma decisão criada, alterada ou reaberta.
 > **Estado anterior preservado:** REV. 60 (17/09/2026) — **ALINHAMENTO EDITORIAL DE `docs/07` ÀS RESTRIÇÕES FÍSICAS DE `CFG-003`** (§6-Z.7). `docs/07` REV. 2.3 absorve `U-14` e as três CHECKs de `servico`; nenhuma decisão, código, teste, schema ou migration alterado.
 > **Estado anterior preservado:** REV. 59 (17/09/2026) — **REGISTRO PÓS-INTEGRAÇÃO DE `CFG-003` NA `main` (PR [#80](https://github.com/BrunoMNoronha/techlab-fisio/pull/80), MERGE `fd3c205`)** (§6-Z.7). Registro **exclusivamente factual**; nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código, teste, schema, migration, contrato, dependência ou CI alterada.
 > **Estado anterior preservado:** REV. 58 (17/09/2026) — **`CFG-003` — CATÁLOGO DE SERVIÇOS IMPLEMENTADO E MEDIDO EM BRANCH PRÓPRIA (`agent/cfg-003-catalogo-servicos`) — NÃO INTEGRADO NA `main`** (§6-Z). Materializa `D-CFG-22`..`D-CFG-33` (`docs/14` §3.11); migration `20260917120000_servico_catalogo_invariantes` (índice único de nome e três CHECKs) e golden atualizado; rotas `/servicos` sob `clinica.configurar`; 10 mutation challenges detectados. Nenhuma decisão criada, alterada ou reaberta; nenhuma permissão, ação de auditoria, chave de `contexto` ou dependência nova.
@@ -4090,6 +4096,363 @@ Registro **exclusivamente factual**, no precedente `MEDIR → REGISTRAR` de §6-
 - `pnpm run verify:api-integration`: **19 suites · 640 passed · 2 skipped** (antes 638; `servicos-catalogo.integration.spec.ts` passa a **72 testes**); 0 resíduos.
 - Sem migration, schema ou contrato alterados: `lint:migrations`, `schema:verify`, `verify:from-scratch` e `verify:openapi-runtime` não são afetados (medidos verdes na revisão sobre `ba0ae3b`, código idêntico ao integrado).
 
+## 6-AA. `CFG-004` — Formas de pagamento
+
+**Estado atual: IMPLEMENTADA E MEDIDA — INTEGRADA NA BRANCH LOCAL `integration/local-fase4` (§6-AE), NÃO PUBLICADA NA `main`.** *Contexto da implementação original:* implementada e medida em branch local (`agent/cfg-004-formas-pagamento`, worktree `techlab-fisio-cfg004`, a partir de `origin/main` = `218960c`), sem commit. Implementação autorizada por Bruno Menezes Noronha em 17/09/2026, sob a diretriz de desenvolvimento local (sem commit, push, PR ou merge). Decisões normativas: `docs/14` §3.12 (`D-CFG-34`..`D-CFG-45`, pacote `CFG-PREP4`, inclusive a alteração estrutural de banco de `D-CFG-35`). Auditoria: `docs/09` §13.6. Nenhuma decisão criada, alterada ou reaberta; nenhuma permissão, ação de auditoria, chave de `contexto` ou dependência nova.
+
+### 6-AA.1 Componentes
+
+- **Persistência:** migration `20260917170000_forma_pagamento_invariantes` — `ux_forma_pagamento_clinica_descricao` (índice único sobre `(clinica_id, lower(btrim(descricao)))`, `D-CFG-34`) e `ck_forma_pagamento_situacao` (`ativo = (inativado_em IS NULL)`, `D-CFG-35`). `schema.golden.sql` regerado por reconstrução limpa; `schema.prisma` recebeu **apenas comentário** (objetos não representáveis na PSL; `migrate diff` exit 0). `protected-objects.json` e o inventário fixo de `verify:from-scratch` **inalterados**, no precedente de §6-W.1 e §6-Z.1.
+- **`apps/api/src/formas-pagamento/`:** `FormasPagamentoModule`; `FormasPagamentoController` (`GET /formas-pagamento[?ativo=]`, `GET /formas-pagamento/:formaPagamentoId`, `POST /formas-pagamento`, `PUT /formas-pagamento/:formaPagamentoId`, `PATCH /formas-pagamento/:formaPagamentoId/situacao`, todas sob `@RequerPermissao("clinica.configurar")`; `ProtecaoCsrfGuard` só nas mutações, avaliada antes da sessão; GETs com `Cache-Control: no-store`; **sem DELETE**); `FormasPagamentoService` (transação única; `clinica_id` pela linha única; `SELECT ... FOR UPDATE` em `PUT`/`PATCH`; no-op decidido sob o lock e **antes** da verificação de uso; `PUT` sobre forma referenciada por `pagamento` → `FORMA_PAGAMENTO_EM_USO`, verificado sob o lock; `23505` **somente** de `ux_forma_pagamento_clinica_descricao` → `FORMA_PAGAMENTO_DUPLICADA`; `configuracao.alterada` com `alvo_tipo = forma_pagamento`, `contexto` vazio; `pagamento` nunca é escrito); `formas-pagamento.dto.ts` (corpo estrito `{ descricao }`, 1–100 code points após `trim`, sem caractere de controle C0/C1; situação `{ ativo }`; filtro `ativo=true|false`); `FiltroErroFormasPagamento` (mesmo desenho de `FiltroErroServicos`).
+- **Registro:** `AppModule` importa `FormasPagamentoModule`; listas fechadas de rotas em `openapi.spec.ts`, `auth.module.integration.spec.ts` e `verify-openapi-runtime.mjs` incluem as três rotas, com status por operação e ausência de `DELETE`.
+
+### 6-AA.2 Decisões × prova
+
+| Decisão | Prova | Status |
+| --- | --- | --- |
+| `D-CFG-34` unicidade (caixa, espaços, inativa não liberada; concorrência 201+409; tradução restrita do `23505`) | integração + `formas-pagamento-duplicidade.spec.ts` | **OK** |
+| `D-CFG-35` banco rejeita situação incoerente e descrição equivalente | integração (SQL direto como `tlf_app`) | **OK** |
+| `D-CFG-36` contrato (4 campos, 404/400, sem DELETE, `CLINICA_NAO_CONFIGURADA`) | integração + `openapi.spec.ts` + `verify:openapi-runtime` | **OK** |
+| `D-CFG-37` criação ativa; inativação/reativação auditadas; no-op idempotente sem `UPDATE` (xmin) nem evento; forma em uso pode mudar de situação sem alterar `pagamento` | integração | **OK** |
+| `D-CFG-38` validação da descrição | `formas-pagamento-dto.spec.ts` + integração | **OK** |
+| `D-CFG-39` nenhuma forma pré-cadastrada | integração (listagem inicial vazia); nenhum seed ou migration de dados | **OK** |
+| `D-CFG-40` `PUT` em forma usada → 409 sem mutação; no-op precede o uso; forma inativa em uso também 409; uso de outra forma não bloqueia | integração | **OK** |
+| `D-CFG-41` leitura sob lock (`PUT`, `PATCH`) e verificação de uso sob o lock contra pagamento concorrente com `FOR SHARE` | integração | **OK** |
+| `D-CFG-42` ordem canônica, filtro, `no-store` | integração | **OK** |
+| `D-CFG-43` 401 / 403 sem evento / CSRF antes da sessão / GET sem CSRF | integração | **OK** |
+| `D-CFG-44` 1 evento por mutação efetiva, sem valores; falha da auditoria → 500 e rollback (POST, PUT, PATCH) | integração | **OK** |
+| `D-CFG-45` fronteira com T-03 | registro — nenhum runtime de pagamento criado | **N/A** |
+
+### 6-AA.3 Mutation challenges (aplicados, observados e revertidos; SHA-256 conferido)
+
+Executados contra `formas-pagamento.integration.spec.ts` (67 testes) em PostgreSQL 18 descartável próprio (`techlab-fisio-mutfp-*`).
+
+| # | Mutação | Resultado |
+| --- | --- | --- |
+| M1 | remover `FOR UPDATE` | **DETECTADA** (4 testes) |
+| M2 | remover a verificação de uso | **DETECTADA** (3) |
+| M3 | verificar uso antes do no-op | **DETECTADA** (1) |
+| M4 | não traduzir o `23505` do índice | **DETECTADA** (6) |
+| M5 | auditar no-op de situação | **DETECTADA** (3) |
+| M6 | remover CSRF do `POST` | **DETECTADA** (2) |
+| M7 | limite da descrição 101 | **DETECTADA** (1) |
+| M8 | inativar sem `inativado_em` | **DETECTADA** (6) |
+| M9 | remover `@RequerPermissao` da listagem | **DETECTADA** (2) |
+| M10 | ignorar o filtro `ativo` | **DETECTADA** (1) |
+
+### 6-AA.4 Baterias medidas na origem (17/09/2026, host Windows, worktree local — `main` + `CFG-004`; bateria consolidada em §6-AE.4)
+
+- `pnpm run schema:golden:update`: golden regerado (somente `ck_forma_pagamento_situacao` e `ux_forma_pagamento_clinica_descricao` acrescentados).
+- `pnpm run typecheck` (monorepo): **verde**. `pnpm run lint:migrations`: **OK**, 13 migrations, 37 objetos protegidos.
+- `pnpm run verify:from-scratch`: **13/13 migrations aplicadas em instância limpa e catálogo inventariado OK**; o script terminou com **exit 1** na sua guarda de árvore limpa (`git status --porcelain -- packages/database/prisma`), inevitável sem commit. A suíte de integração de `packages/database` foi então executada à parte em instância descartável: **10 suites · 87 passed**.
+- `pnpm run schema:verify` (Guarda 3 + `migrate diff`): **OK**.
+- `pnpm run build`; `verify:argon2-runtime`; `verify:openapi-runtime`: **44 verificações OK**.
+- `pnpm run test:api`: **43 suites · 1258 passed**.
+- `pnpm run verify:api-integration`: **20 suites · 707 passed · 2 skipped** (inclui `formas-pagamento.integration.spec.ts`, 67 testes).
+- `pnpm run smoke:api`, `pnpm --filter @techlab-fisio/web run test` (57), `pnpm run verify:web-api-e2e` (24) e `pnpm --filter @techlab-fisio/web run test:e2e` (3): **verdes**.
+- **CI remota não executada** (diretriz de desenvolvimento local).
+
+### 6-AA.5 Limitações declaradas
+
+- **Atualização perdida** entre administradores concorrentes não é detectada (`D-CFG-41`, aceita).
+- **Estado anterior** não é preservado na trilha (`docs/09` §13.6, aceita).
+- **Erros do body parser** nascem antes do roteamento (mesmo limite de §6-W.5 e §6-Z.5).
+- **Unicidade e collation:** equivalência além de caixa simples e espaços de borda não é normalizada, como decidido.
+- **`verify:from-scratch`** só fica integralmente verde com a migration versionada (commit). *(Tratado na consolidação — §6-AE.4.)*
+- **`docs/07` §10.1/§10.2** ainda não lista as novas restrições — alinhamento após a integração (`D-CFG-35`).
+- **Conflito previsível de integração** com a frente paralela `CFG-005` (worktree `claude/cfg-005-motivos-cancelamento-*`): mesmas listas fechadas de rotas, `app.module.ts`, `schema.golden.sql` e ordem de migrations (`20260917170000` × `20260917180000`). *(Resolvido na consolidação — §6-AE.3.)*
+- Leitura das formas por outros papéis e bloqueio da forma em T-03 permanecem na fatia de pagamentos (`D-CFG-43`, `D-CFG-45`).
+
+## 6-AB. `CFG-005` — Motivos de cancelamento
+
+**Estado atual: IMPLEMENTADA E MEDIDA — INTEGRADA NA BRANCH LOCAL `integration/local-fase4` (§6-AE), NÃO PUBLICADA NA `main`.** *Contexto da implementação original:* implementada e medida no ambiente local (worktree `claude/cfg-005-motivos-cancelamento-d0690a`, a partir de `main` = `bd772a3`), sem commit, por diretriz do proprietário de desenvolvimento somente local até a conclusão da FASE 4. Implementação autorizada por Bruno Menezes Noronha em 17/09/2026. Decisões normativas: `docs/14` §3.13 (`D-CFG-46`..`D-CFG-57`, inclusive a alteração estrutural de banco de `D-CFG-47`). Auditoria: `docs/09` §13.6. Nenhuma decisão criada, alterada ou reaberta; nenhuma permissão, ação de auditoria, chave de `contexto` ou dependência nova.
+
+### 6-AB.1 Componentes
+
+- **Persistência:** migration `20260917180000_motivo_cancelamento_invariantes` — `ux_motivo_cancelamento_clinica_descricao` (índice único sobre `(clinica_id, lower(btrim(descricao)))`, ativos e inativos, `D-CFG-46`) e `ck_motivo_cancelamento_situacao` (`ativo = (inativado_em IS NULL)`, `D-CFG-47`). **Nenhuma** restrição em `agendamento` ou `historico_agendamento` (`D-CFG-51`). `schema.golden.sql` regerado por reconstrução limpa; `schema.prisma` recebeu apenas comentário (`migrate diff` exit 0). `protected-objects.json` e o inventário fixo de `verify:from-scratch` **inalterados**, no precedente de §6-Z.1. Sem seed nem motivos pré-cadastrados (`D-CFG-52`).
+- **`apps/api/src/motivos-cancelamento/`:** `MotivosCancelamentoModule` (importa `AuthzModule` e `AuditModule`); `MotivosCancelamentoController` (`GET /motivos-cancelamento`, `GET /motivos-cancelamento/:motivoCancelamentoId`, `POST /motivos-cancelamento`, `PUT /motivos-cancelamento/:motivoCancelamentoId`, `PATCH /motivos-cancelamento/:motivoCancelamentoId/situacao`, todas sob `@RequerPermissao("clinica.configurar")`; `ProtecaoCsrfGuard` só nas mutações; GETs com `Cache-Control: no-store`; **sem DELETE**); `MotivosCancelamentoService` (transação única por operação; `clinica_id` pela linha única; `SELECT ... FOR UPDATE` em `PUT`/`PATCH`; no-op decidido sob o lock **antes** da verificação de uso; uso verificado em `agendamento` **e** `historico_agendamento` sob o lock → `MOTIVO_CANCELAMENTO_EM_USO`; `23505` **somente** de `ux_motivo_cancelamento_clinica_descricao` → `MOTIVO_CANCELAMENTO_DUPLICADO`, sem comparação de caixa em JavaScript; `configuracao.alterada` com `alvo_tipo = motivo_cancelamento`, `contexto` vazio); `motivos-cancelamento.dto.ts` (validação pura: corpo estrito `{ descricao }`, 1–100 code points após `trim`, sem caractere de controle, filtro `ativo=true|false`); `FiltroErroMotivosCancelamento` (filtro de controller). Módulo separado, **sem abstração genérica** com `/servicos` (`D-CFG-48`).
+- **Registro:** `AppModule` importa `MotivosCancelamentoModule`. As listas fechadas de rotas em `openapi.spec.ts`, `auth.module.integration.spec.ts` e `verify-openapi-runtime.mjs` incluem as três rotas, com status por operação, o `409` do `PUT` documentando os dois códigos e prova de ausência de `DELETE`.
+- **Frontend:** **fora da fatia** — nenhum cadastro de configuração (`CFG-001`..`CFG-005`) possui interface em `apps/web`, e `docs/14` §3.13 não define tela; a interface administrativa fica para fatia própria.
+
+### 6-AB.2 Critérios de aceite × prova
+
+| Regra | Prova | Status |
+| --- | --- | --- |
+| `D-CFG-46` duplicidade exata, de caixa, de bordas e contra motivo **inativo** → `409` em `POST` e `PUT` | integração | **OK** |
+| `D-CFG-46` criações e renomeações concorrentes equivalentes → um sucesso e um `409`, sem vazar erro do banco | integração | **OK** |
+| `D-CFG-47` banco rejeita situação incoerente (INSERT e UPDATE) e descrição equivalente | integração (SQL direto como `tlf_app`) | **OK** |
+| `D-CFG-48` rotas, status, resposta exata com 4 campos, `404`/`400`, sem `DELETE` | integração + `openapi.spec.ts` + `verify:openapi-runtime` | **OK** |
+| `D-CFG-49` criação ativa; inativação/reativação com `inativado_em`; repetição idempotente sem `UPDATE` (xmin) nem evento; corpo estrito; limites 1/100; caracteres de controle | unitário (`motivos-cancelamento-dto.spec.ts`) + integração | **OK** |
+| `D-CFG-50` `EM_USO` via `agendamento`, via **somente** `historico_agendamento`; no-op antes do uso; verificação sob lock | integração | **OK** |
+| `D-CFG-51` nenhuma restrição nova em `agendamento` | golden + integração | **OK** |
+| `D-CFG-52` lista vazia sem pré-cadastro | integração | **OK** |
+| `D-CFG-53` leitura sob `FOR UPDATE`; `PUT` × `PATCH` serializados | integração | **OK** |
+| `D-CFG-54` ordem canônica, filtro, inativo referenciável; inativar/reativar motivo em uso não altera a agenda | integração | **OK** |
+| `D-CFG-55` `401`; `403` com `agenda.gerenciar` sem evento; CSRF; GET sem CSRF; usuário inativado → `401` | integração | **OK** |
+| `D-CFG-56` 1 evento por mutação efetiva, sem a descrição; falha da auditoria → `500` e rollback (POST, PUT, PATCH) | integração | **OK** |
+
+### 6-AB.3 Mutation challenges (aplicados, observados e revertidos)
+
+Executados um a um contra a suíte de integração da API em PostgreSQL 18 descartável; o arquivo original foi restaurado após cada execução. Linha de base: 708 passed · 2 skipped.
+
+| # | Mutação | Resultado |
+| --- | --- | --- |
+| M1 | remover `FOR UPDATE` da leitura | **DETECTADA** (2 testes: leitura sob lock; uso sob lock) |
+| M2 | verificar uso só em `agendamento` (ignorar `historico_agendamento`) | **DETECTADA** (1 teste) |
+| M3 | não traduzir o `23505` do índice em `409` | **DETECTADA** (9 testes) |
+| M4 | inativar sem gravar `inativado_em` | **DETECTADA** (7 testes; `ck_motivo_cancelamento_situacao` rejeita) |
+| M5 | remover o no-op do `PUT` | **DETECTADA** (3 testes) |
+| M6 | `PATCH` de situação não idempotente | **DETECTADA** (1 teste) |
+| M7 | limite da descrição 200 em vez de 100 | **DETECTADA** (1 teste) |
+| M8 | remover a rejeição `MOTIVO_CANCELAMENTO_EM_USO` | **DETECTADA** (3 testes) |
+
+### 6-AB.4 Baterias medidas na origem (17/09/2026, host Windows, árvore local não commitada — `bd772a3` + `CFG-005`; bateria consolidada em §6-AE.4)
+
+- `pnpm run typecheck`: **verde**. `prisma validate`: **válido**.
+- `pnpm run lint:migrations`: **OK**, 13 migrations, 37 objetos protegidos.
+- `verify:from-scratch`: **OK** — 13/13 migrations, catálogo inventariado OK; `packages/database` **10 suites · 87 passed**. (*)
+- `pnpm run schema:verify`: **OK**, dump idêntico ao golden (61086 bytes) e `migrate diff` exit 0.
+- `pnpm run build` (database → api → web): **verde**. `verify:argon2-runtime`: **OK**. `verify:openapi-runtime`: **44 verificações OK**.
+- `test:api`: **41 suites · 1223 passed**. (*)
+- `verify:api-integration`: **20 suites · 708 passed · 2 skipped**; a nova `motivos-cancelamento.integration.spec.ts` contribui 70 testes. (*)
+- `smoke:api`: **OK**. `@techlab-fisio/web test`: **57 OK**. `verify:web-api-e2e`: **OK**. Playwright (`test:e2e`): **3 passed**.
+- (*) **Limitação ambiental do worktree:** o caminho contém o segmento oculto `.claude`, e o `testMatch` em glob do Jest não encontra arquivos sob ele (`No tests found`). As três suítes foram executadas com configs-wrapper fora do repositório que trocam o glob por `testRegex` equivalente (41, 20 e 10 arquivos, as contagens esperadas) e com cópias dos runners apontando para elas. O guard de `verify:from-scratch` que exige `packages/database/prisma` sem mudanças não commitadas foi substituído, **só na cópia local**, por comparação de impressão digital antes/depois. Nenhum arquivo do projeto foi alterado para isso; em checkout fora de `.claude` (ou no CI, com a árvore commitada) os comandos oficiais se aplicam sem adaptação.
+
+### 6-AB.5 Limitações declaradas
+
+- **Atualização perdida** entre administradores concorrentes não é detectada (`D-CFG-53`, aceita).
+- **Estado anterior** (descrição anterior) não é preservado na trilha (`docs/09` §13.6, aceita).
+- **Erros do body parser** (JSON malformado, `null`, `413`) nascem antes do roteamento: status correto, corpo padrão da plataforma (mesmo limite de §6-Z.5).
+- **Unicidade e collation:** equivalência além de caixa simples e espaços de borda (acentos, espaços internos, formas Unicode) **não** é normalizada, como decidido.
+- **`docs/07` §10.1/§10.2** não lista as novas restrições — por `D-CFG-47`, só após a migration integrada.
+- Obrigatoriedade do motivo no cancelamento, cancelamento sem motivos ativos, leitura por outros papéis e bloqueio do motivo no cancelamento permanecem na fatia de agenda (`D-CFG-51`, `D-CFG-52`, `D-CFG-55`, `D-CFG-57`).
+- Interface administrativa inexistente; fatia futura.
+
+## 6-AC. `PAC-A` — Pacientes: cadastro administrativo, localização, duplicidade e situação
+
+**Estado atual: IMPLEMENTADA E MEDIDA — INTEGRADA NA BRANCH LOCAL `integration/local-fase4` (§6-AE), NÃO PUBLICADA NA `main`.** *Contexto da implementação original:* implementada e medida localmente (worktree `claude/cfg-configuracao-horaria-1c3d5f`, a partir de `main` = `bd772a3`), sem commit. Implementação autorizada por Bruno Menezes Noronha em 17/09/2026, sob a diretriz de desenvolvimento somente local até a FASE 4. Decisões normativas: `docs/17` (`D-PAC-01`..`D-PAC-10`, REV. 2 homologada, inclusive a ampliação do catálogo de `D-PAC-07` e a migration de `D-PAC-09`). Auditoria: `docs/09` §15.
+
+### 6-AC.1 Componentes
+
+- **Persistência:** migration `20260917180000_paciente_situacao_invariantes` — `ck_paciente_situacao` (`ativo = (inativado_em IS NULL)`) e `ix_paciente_data_nascimento` (`D-PAC-09`). `schema.prisma`: comentário do CHECK e `@@index([dataNascimento], map: "ix_paciente_data_nascimento")`. `schema.golden.sql` regerado por reconstrução limpa (`schema:golden:update`); diff restrito ao CHECK e ao índice. `data_nascimento` segue anulável no banco.
+- **Catálogo de auditoria (`D-PAC-07`):** `paciente.cadastro.alterado` e `paciente.situacao.alterada` acrescentadas ao final de `ACOES_AUDITORIA`, whitelist vazia — **27 ações · 3 positivas · 24 vazias**; `audit-context.validator.spec.ts` atualizado (contagens, posição e variantes rejeitadas).
+- **`apps/api/src/pacientes/`:** `PacientesModule` (importa `AuthzModule` e `AuditModule`); `PacientesController` — `POST /pacientes/busca` e `GET /pacientes/:pacienteId` sob `pacientes.localizar`; `POST /pacientes`, `PUT /pacientes/:pacienteId` e `PATCH /pacientes/:pacienteId/situacao` sob `pacientes.administrativo.gerenciar`; `ProtecaoCsrfGuard` em todos os `POST`/`PUT`/`PATCH` (inclusive a busca); `no-store` na busca e no detalhe; sem `DELETE` e sem `GET` de coleção. `pacientes.dto.ts` (validação pura: nome, data civil, CPF com DV e máscara, telefone, e-mail de `D-CFG-04-A`, corpos estritos, busca). `pacientes.service.ts` (escopo por código de papel, duplicidade, busca parametrizada sem SQL dinâmico e com `position` em vez de `LIKE`, `FOR UPDATE`, auditoria na mesma transação). `FiltroErroPacientes` (contrato `{ erro }`; log só de classe e correlação).
+- **Reuso:** a data civil corrente no fuso da clínica usa `paraInstanteLocal` do componente local de RN-014 (`apps/api/src/agenda/horario-funcionamento.regra.ts`, `docs/14` §5).
+- **Registro:** `AppModule` importa `PacientesModule`; listas fechadas de rotas em `openapi.spec.ts`, `auth.module.integration.spec.ts` e `verify-openapi-runtime.mjs` incluem as quatro rotas de `/pacientes`. O termo `pacientes` saiu da lista de termos proibidos de `openapi.spec.ts` **por decisão** (a igualdade exata da lista de rotas permanece).
+
+### 6-AC.2 Escolhas técnicas locais (reversíveis, sem decisão de produto)
+
+- **`CLINICA_NAO_CONFIGURADA` também no `PUT`:** a regra "não futura" de `D-PAC-01` depende do fuso da clínica; sem a linha de `clinica`, o `PUT` responde `404 CLINICA_NAO_CONFIGURADA` (o quadro de `D-PAC-02` só o listava no `POST`). Documentado no OpenAPI.
+- **Data de nascimento futura → `400 REQUISICAO_INVALIDA`**, avaliada no serviço (depende do fuso), com o mesmo código da validação estrutural.
+- **Escopo "relacionado" com agendamento em qualquer estado**, como decidido; o predicado usa `profissional.usuario_id`.
+- **Verificação prévia de CPF** antes da escrita (determinismo da ordem de erros) mantendo o índice `paciente_cpf_key` como garantia contra corrida.
+
+### 6-AC.3 Critérios de aceite × prova (`docs/17` §6)
+
+| TP | Prova | Status |
+| --- | --- | --- |
+| TP-01 criação sem CPF, 8 campos, sem evento | integração | **OK** |
+| TP-02 CPF mascarado normalizado + 1 evento sem valores | integração | **OK** |
+| TP-03 CPF/data/nome/corpo inválidos → 400, nada persistido | unitário (`pacientes-dto.spec.ts`) + integração (inclui data de amanhã no fuso da clínica) | **OK** |
+| TP-04 CPF de inativo → 409 sem dados; busca pelo CPF localiza o inativo | integração | **OK** |
+| TP-05 criações concorrentes mesmo CPF → 201 + 409 | integração | **OK** |
+| TP-06 coincidência forte (caixa/acentos/espaços; inclusive inativo) → 409; confirmada → 201 | unitário + integração | **OK** |
+| TP-07 mesmo nome, data diferente → 201 | integração | **OK** |
+| TP-08 edição: telefone sem evento; CPF incluído/alterado/removido com evento; no-op; CPF de outro → 409 | integração | **OK** |
+| TP-09 situação com evento; repetição idempotente; `inativadoEm` coerente; agendamento intacto | integração | **OK** |
+| TP-10/11 busca inválida → 400; limite 20 + `truncado`; curingas do cliente não interpretados | unitário + integração | **OK** |
+| TP-12 escopo: sem permissão 403; Gestor 403; Fisioterapeuta só relacionados, detalhe fora do escopo 404 | unitário (`resolverEscopoPacientes`) + integração | **OK** |
+| TP-13 401; Fisioterapeuta sem `gerenciar` → 403 sem evento; CSRF → 403; sem `DELETE`/`GET` de coleção | integração + OpenAPI | **OK** |
+| TP-14 nenhum nome, CPF ou telefone em chamadas de `Logger` (sucesso, 409, 400 e 500) | integração (espião em `Logger.prototype`) | **OK** |
+| TP-15 banco rejeita situação incoerente e CPF mascarado | integração (SQL direto como `tlf_app`) | **OK** |
+| Falha da auditoria → 500 e rollback conjunto (POST, PUT, PATCH) | integração (sabotagem do `AuditWriter`) | **OK** |
+| OpenAPI × runtime (rotas, status, busca por POST, sem DELETE) | `openapi.spec.ts` + `verify:openapi-runtime` | **OK** |
+
+### 6-AC.4 Mutation challenges (aplicados, observados e revertidos; restauração conferida com `cmp`)
+
+| # | Mutação | Resultado |
+| --- | --- | --- |
+| MU1 | aceitar CPF de dígitos repetidos | **DETECTADA** (unitário, 2 testes) |
+| MU2 | Gestor com escopo relacionado | **DETECTADA** (unitário) |
+| MU3 | busca por nome com 2 caracteres | **DETECTADA** (unitário) |
+| MI1 | edição de CPF sem auditoria | **DETECTADA** (TP-08 e rollback do `PUT`) |
+| MI2 | busca ignorando o escopo relacionado | **DETECTADA** (TP-12) |
+| MI3 | coincidência forte sensível a caixa/acentos | **DETECTADA** (TP-06) |
+| MI4 | situação sem no-op | **DETECTADA** (TP-09) |
+
+MI1..MI4 foram aplicadas **juntas** numa única execução da suíte `pacientes.integration.spec.ts`, com a falha de cada teste-alvo atribuída à mutação correspondente (alvos disjuntos).
+
+### 6-AC.5 Baterias medidas na origem (17/09/2026, host Windows, worktree local — `bd772a3` + frente de configuração horária/`PAC-A`; bateria consolidada em §6-AE.4)
+
+- `pnpm run typecheck` de `apps/api` (inclui testes): **verde**.
+- `pnpm run lint:migrations` (Guarda 1): **OK**, 13 migrations, 37 objetos protegidos.
+- `schema-snapshot.mjs --verify` (Guarda 3 + `prisma migrate diff`): **OK**, dump idêntico ao golden (61011 bytes) e exit 0.
+- `verify-from-scratch` (E-15 + Guarda 2): **OK** — 13/13 migrations, catálogo inventariado OK (26 CHECKs); integração de `packages/database` **10 suites · 87 passed**.
+- `pnpm run build` e `verify:openapi-runtime` sobre `dist/`: **44 verificações OK**.
+- Suíte unitária de `apps/api`: **42 suites · 1236 passed**.
+- Integração de `apps/api` (PostgreSQL 18 descartável, `tlf_app`): **21 suites · 687 passed · 2 skipped** (inclui `pacientes.integration.spec.ts`, **42 testes**).
+- `verify-web-api-e2e.mjs` (PostgreSQL 18 + NestJS + Next.js compilados, Chromium real): **50 verificações OK** — sem regressão com o `AppModule` ampliado.
+- **Condição de medição local:** neste worktree o caminho contém `.claude`, e o glob padrão do Jest (`testMatch`) não encontra os testes. As baterias do Jest foram medidas com `--testMatch` explícito na linha de comando ou em **cópias temporárias** dos scripts `verify-api-integration.mjs` e `verify-from-scratch.mjs`, removidas depois. Na cópia de `verify-from-scratch`, a guarda "git status limpo em `packages/database/prisma`" foi substituída pela comparação com o estado git capturado **antes** da prova (as mudanças locais não estão commitadas). Nenhum arquivo versionado de script ou configuração foi alterado para isso. A CI permanece a prova canônica quando houver publicação.
+
+### 6-AC.6 Limitações declaradas
+
+- Busca por nome **sensível a acentos** (`D-PAC-04`); coincidência forte sem CPF **não** serializada (`D-PAC-08`); "continuidade justificada" sem texto persistido (`D-PAC-03`).
+- Atualização perdida entre operadores concorrentes não detectada.
+- Erros do body parser (JSON malformado, `413`) com corpo padrão da plataforma (mesmo limite de §6-Z.5).
+- Escopo "relacionado" depende de `agendamento`, que ainda não tem runtime: o Fisioterapeuta não localiza pacientes até a agenda existir.
+- `docs/07` §7.4/§10 não lista `ck_paciente_situacao` nem `ix_paciente_data_nascimento` — alinhamento **após** integração (`D-PAC-09`).
+- PAC-B (contato de emergência, responsável legal), PAC-C (consentimentos) e PAC-D (observações) não implementadas.
+
+## 6-AD. PRO-A — Cadastro de profissionais (`PRO-001`, `PRO-004`, `PRO-005`)
+
+**Estado atual: IMPLEMENTADA E MEDIDA — INTEGRADA NA BRANCH LOCAL `integration/local-fase4` (§6-AE), NÃO PUBLICADA NA `main`.** *Contexto da implementação original:* implementada e medida em branch local (`agent/pro-a-cadastro-profissionais`, worktree `techlab-fisio-pro-prep1`, a partir de `origin/main` = `218960c`), sem commit. Decisões e autorização: `docs/18` (criado como `docs/17`; `D-INTEG-01`) (`D-PRO1-01`..`D-PRO1-10`, pacote `PRO-PREP1`, homologado integralmente por Bruno Menezes Noronha em 17/09/2026, inclusive a alteração estrutural de `D-PRO1-07`). Auditoria: `docs/09` §12.2. Nenhuma decisão criada, alterada ou reaberta além de `docs/17`; nenhuma permissão, ação de auditoria, chave de `contexto` ou dependência nova. **Numeração provisória:** a branch local de `CFG-004` também parte de `218960c` e registra §6-AA / REV. 62; a ordem final é fixada na integração. *(Fixada na integração local `integration/local-fase4`: `CFG-004` §6-AA/REV. 62, `CFG-005` §6-AB/REV. 63, `PAC-A` §6-AC/REV. 64 e esta fatia §6-AD/REV. 65.)*
+
+### 6-AD.1 Componentes
+
+- **Persistência:** migration `20260917200000_profissional_situacao_coerente` — `ck_profissional_situacao` (`ativo = (inativado_em IS NULL)`, `D-PRO1-07`). Golden regerado (somente a CHECK); `schema.prisma` só com comentário; `protected-objects.json` e o inventário fixo de `verify:from-scratch` inalterados (precedente de §6-Z.1).
+- **`apps/api/src/profissional/`:**
+  - `ProfissionaisController`: `GET/POST /profissionais`, `GET/PUT /profissionais/:profissionalId`, `PATCH /profissionais/:profissionalId/situacao`, `GET/PUT /profissionais/:profissionalId/servicos`, todas sob `@RequerPermissao("profissionais.gerenciar")`; CSRF só nas mutações, avaliada antes da sessão; GETs com `no-store`; **sem DELETE**.
+  - `ProfissionaisService` (novo): cadastro e serviços; `FOR UPDATE` na linha do profissional; no-op sob o lock; usuário vinculado lido com `FOR SHARE` e exigido existente e ativo **somente quando o vínculo muda**; `23505` **somente** de `profissional_usuario_id_key` (U-08) → `USUARIO_JA_VINCULADO`; serviços por substituição do conjunto, serviço **novo** lido com `FOR SHARE` e exigido existente e ativo, associação mantida com serviço inativo preservada; sem auditoria (`D-PRO1-08`).
+  - `ProfissionalService.alterarSituacao` (existente, Etapa 2.3B): **no-op passa a devolver o estado vigente** (`mutacaoExecutada = false`, sem evento), substituindo o erro interno `SITUACAO_JA_VIGENTE` (`D-PRO1-06`); mutação condicional e evento na mesma transação preservados; *(corrigido na revisão da PR #86 — §6-AE.6: a linha passa a ser lida com `FOR UPDATE` e o no-op é decidido sob o lock, como exige `D-PRO1-10`)*; o cabeçalho de "fatia interna sem rota" foi atualizado.
+  - `profissional.leitura.ts` (leitura compartilhada), `profissionais.dto.ts` (validação pura), `FiltroErroProfissionais`; `ProfissionalModule` passa a importar `AuthzModule` e registrar o controller.
+- **Registro:** listas fechadas de rotas em `openapi.spec.ts` (inclusive remoção de `profissionais` da lista de rotas proibidas), `auth.module.integration.spec.ts` e `verify-openapi-runtime.mjs`.
+- **Teste existente ajustado:** `profissional-situacao.integration.spec.ts` — fixture de profissional inativo com `inativadoEm` (exigido pela CHECK); casos de estado vigente, repetição e concorrência passam a provar o no-op (`D-PRO1-06`).
+
+### 6-AD.2 Matriz TP × prova
+
+| TP | Prova | Status |
+| --- | --- | --- |
+| TP-01 criação com/sem registro e vínculo; 6 campos; sem evento | integração | **OK** |
+| TP-02 validação → 400 sem escrita | `profissionais-dto.spec.ts` + integração | **OK** |
+| TP-03 usuário inexistente/inativo → 422 | integração | **OK** |
+| TP-04 vínculo duplicado (POST, PUT, concorrente 201+409) → 409; tradução restrita do `23505` | integração + `profissionais-vinculo.spec.ts` | **OK** |
+| TP-05 PUT idêntico sem UPDATE (xmin); troca/remoção de vínculo; inativo editável | integração | **OK** |
+| TP-06 listagem, filtro, GET/PUT 200/404/400 | integração | **OK** |
+| TP-07 serviços: substituição, ordem, idêntico sem escrita, novo inexistente/inativo 422, inativo mantido, duplicata 400, 404, profissional inativo, agendamento intacto | integração | **OK** |
+| TP-08 situação: eventos, no-op 200 sem evento, agendamento intacto | integração | **OK** |
+| TP-09 falha da auditoria → 500 e rollback | integração | **OK** |
+| TP-10 401 / 403 sem evento / CSRF / GET sem CSRF / sem DELETE | integração | **OK** |
+| TP-11 leitura sob lock (PUT, PUT de serviços, PATCH) | integração | **OK** |
+| TP-12 banco rejeita situação incoerente | integração (SQL direto) | **OK** |
+| TP-13 OpenAPI × runtime | `openapi.spec.ts` + `verify:openapi-runtime` | **OK** |
+
+### 6-AD.3 Mutation challenges (aplicados, observados e revertidos; SHA-256 conferido)
+
+Contra `profissionais-cadastro.integration.spec.ts` + `profissional-situacao.integration.spec.ts` (66 testes), PostgreSQL 18 descartável próprio.
+
+| # | Mutação | Resultado |
+| --- | --- | --- |
+| M1 | remover `FOR UPDATE` | **DETECTADA** (2) |
+| M2 | `PUT` sem no-op | **DETECTADA** (2) |
+| M3 | não traduzir o `23505` de U-08 | **DETECTADA** (2) |
+| M4 | não validar o usuário vinculado | **DETECTADA** (2) |
+| M5 | aceitar serviço novo inativo | **DETECTADA** (1) |
+| M6 | remover CSRF do `PUT` de serviços | **DETECTADA** (1) |
+| M7 | remover permissão do `GET` de serviços | **DETECTADA** (2) |
+| M8 | no-op de situação volta a ser erro | **DETECTADA** (5) |
+| M9 | limite do registro 51 | **DETECTADA** (1) |
+| M10 | aceitar duplicatas de serviço | **DETECTADA** (1) |
+| M11 | inativar sem `inativado_em` | **DETECTADA** (8) |
+| M12 *(revisão da PR #86, §6-AE.6)* | `PATCH /situacao` lê a linha sem `FOR UPDATE` | **DETECTADA** (2: transição oposta concorrente; serialização com o cadastro) |
+
+### 6-AD.4 Baterias medidas na origem (17/09/2026, host Windows, worktree local — `main` + `PRO-A`; bateria consolidada em §6-AE.4)
+
+- `pnpm run typecheck`: **verde**. `lint:migrations`: **OK** (13 migrations, 37 objetos protegidos).
+- `verify:from-scratch`: **13/13 migrations e catálogo OK**; exit 1 na guarda de árvore limpa (inevitável sem commit). Suíte de `packages/database` executada à parte em instância descartável: **10 suites · 87 passed**.
+- `schema:verify`: **OK**. `build`, `verify:argon2-runtime`, `verify:openapi-runtime` (**46 verificações** — valor da origem `main` + `PRO-A`, **reproduzido** na integração: `main` = 38, `main` + `PRO-A` = 46; no estado consolidado, 64 — §6-AE.4): **OK**.
+- `test:api`: **43 suites · 1271 passed**. `verify:api-integration`: **20 suites · 693 passed · 2 skipped**.
+- `smoke:api`, `web test` (57), `verify:web-api-e2e` (24), Playwright (3): **verdes**. **CI remota não executada.**
+
+### 6-AD.5 Limitações declaradas
+
+- **Sem auditoria** de criação, edição, troca de vínculo e serviços (`D-PRO1-08`); a troca de `usuarioId` muda o escopo "próprio" da agenda sem trilha.
+- **Sem histórico** de associações de serviços (tabela de junção sem versão).
+- **Atualização perdida** entre administradores concorrentes não é detectada.
+- **Vínculo mantido** com usuário que ficou inativo é permitido (a elegibilidade só é verificada quando o vínculo muda).
+- **Consulta por outros papéis** não existe (`D-PRO1-09`); PRO-002 (especialidades) adiado (`D-PRO1-01`).
+- **Conflitos de integração previsíveis** com as frentes locais `CFG-004`, `CFG-005`, agenda (`docs/15`) e disponibilidade (`docs/16`): listas de rotas, golden, ordem de migrations, numeração de `docs/10` e o módulo `profissional/`. *(Resolvidos na consolidação — §6-AE.3.)*
+
+## 6-AE. Consolidação local das quatro frentes — `integration/local-fase4`
+
+**Estado: CONSOLIDADA NA BRANCH LOCAL `integration/local-fase4`, a partir de `main` = `218960c` — NÃO PUBLICADA NA `main`** (sem push, PR ou merge remoto). Integração executada em 17/09/2026 em worktree dedicada (`techlab-fisio-integracao-fase4`), preservando as quatro worktrees de origem. Autorizações de Bruno Menezes Noronha: escopo das quatro frentes; confirmação das autorizações da frente de configuração horária/`PAC-A`; `D-INTEG-01` (renumeração documental) e `D-INTEG-02` (sincronização de status). Nenhuma decisão normativa criada, alterada ou reaberta.
+
+### 6-AE.1 Frentes e ordem
+
+| Ordem | Frente | Origem (contexto histórico) | Base da origem | Registro |
+| --- | --- | --- | --- | --- |
+| 1 | `CFG-004` — formas de pagamento | `agent/cfg-004-formas-pagamento` | `218960c` | §6-AA |
+| 2 | `CFG-005` — motivos de cancelamento | `claude/cfg-005-motivos-cancelamento-d0690a` | `bd772a3` | §6-AB |
+| 3 | Configuração horária (`D-CFG-58`..`D-CFG-66`, tela web, componente de RN-014) e `PAC-A`; pacotes `docs/15`, `docs/16`, `docs/17` | `claude/cfg-configuracao-horaria-1c3d5f` | `bd772a3` | `docs/14` §3.14 e §5; §6-AC |
+| 4 | `PRO-A` — cadastro de profissionais | `agent/pro-a-cadastro-profissionais` | `218960c` | §6-AD; `docs/18` |
+
+Ordem por dependência: não há dependência de código entre as frentes; `CFG-004` → `CFG-005` pela ordem das migrations; a frente de configuração horária antes de `PRO-A` porque `docs/18` cita `docs/15`/`docs/16`; `PRO-A` por último por alterar código existente (`ProfissionalService`). Método: patch congelado de cada origem aplicado com `git apply --3way`, arquivos novos copiados e conferidos por SHA-256, validação completa após cada frente.
+
+### 6-AE.2 Componentes consolidados
+
+- **Migrations (4):** `20260917170000_forma_pagamento_invariantes`, `20260917180000_motivo_cancelamento_invariantes`, `20260917180000_paciente_situacao_invariantes`, `20260917200000_profissional_situacao_coerente` — 16 migrations no histórico. As duas de mesmo timestamp tocam tabelas independentes e são aplicadas em ordem lexicográfica estável; mantidas sem renomeação.
+- **Rotas:** `/formas-pagamento`, `/motivos-cancelamento`, `/pacientes` (busca por `POST`) e `/profissionais` (inclusive serviços), todas sem `DELETE`; listas fechadas de `openapi.spec.ts`, `auth.module.integration.spec.ts` e `verify-openapi-runtime.mjs` com as quatro frentes.
+- **Auditoria:** catálogo com 27 ações (`docs/09` §15). **Permissões:** nenhuma nova.
+- **Web:** tela `/configuracoes/horario-funcionamento` (`D-CFG-66`).
+
+### 6-AE.3 Conflitos e resolução
+
+| Ponto | Frentes | Resolução |
+| --- | --- | --- |
+| `app.module.ts` e listas fechadas de rotas | todas | união em ordem alfabética; blocos `describe` intercalados pelo diff reconstruídos integralmente |
+| Termos proibidos de `openapi.spec.ts` | `PAC-A` × `PRO-A` | removidos `pacientes` **e** `profissionais` (cada origem removia só o seu); a igualdade exata da lista de rotas continua barrando qualquer outra rota |
+| `schema.golden.sql` | `CFG-004` × `CFG-005` | união; confirmada por `schema:verify` (dump byte a byte) |
+| Numeração deste documento | todas | §6-AA/REV. 62 `CFG-004`; §6-AB/REV. 63 `CFG-005`; §6-AC/REV. 64 `PAC-A`; §6-AD/REV. 65 `PRO-A` (na origem: REV. 61/62 e §6-AA/§6-AB) |
+| Numeração de `docs/14` | `CFG-004`, `CFG-005`, configuração horária | REV. 18..23 mantidas (citadas por `docs/15`..`docs/17`); `CFG-004` → REV. 24, `CFG-005` → REV. 25 |
+| Dois `docs/17` | configuração horária/`PAC-A` × `PRO-A` | `D-INTEG-01`: `docs/17-pacote-decisao-pacientes.md` mantido; cadastro de profissionais → `docs/18-pacote-decisao-cadastro-profissionais.md`; referências atualizadas (docs, comentários de código e testes, `schema.prisma`, comentário da migration `20260917200000` — nenhuma base persistente a havia aplicado); `D-PRO1-*` e `D-PAC-*` inalterados |
+| Status documentais | configuração horária/`PAC-A`, `CFG-005`, `PRO-A` | `D-INTEG-02`: `docs/14` REV. 26, `docs/15` REV. 5, `docs/16` REV. 4, `docs/17` REV. 4, `docs/18` REV. 3 |
+
+Nenhuma verificação cruzada revelou regressão; nenhum fixture de outra frente viola as novas CHECKs de situação.
+
+### 6-AE.4 Validação consolidada (após a integração das quatro frentes)
+
+Executada em 17/09/2026, host Windows, na worktree de integração, sobre a árvore consolidada antes do commit local. A coluna "Origem" repete o que cada frente mediu isoladamente (§6-AA.4, §6-AB.4, §6-AC.5, §6-AD.4); a coluna "Consolidado" é a medição do conjunto.
+
+| Verificação | Origem (isolada) | Consolidado (quatro frentes) |
+| --- | --- | --- |
+| `pnpm run typecheck` | verde em cada frente | **exit 0** |
+| `prisma validate` | válido | **válido** |
+| `pnpm run lint:migrations` | 13 migrations em cada origem | **OK — 16 migrations, 37 objetos protegidos** |
+| `pnpm run test:api` | `CFG-004` 43 · 1258; `CFG-005` 41 · 1223; `PRO-A` 43 · 1271 | **48 suites · 1466 passed** |
+| `pnpm run schema:verify` | OK | **OK — dump idêntico ao golden (61735 bytes); `migrate diff` exit 0** |
+| `pnpm run build`; `verify:argon2-runtime` | verdes | **exit 0; OK** |
+| `verify:openapi-runtime` | `CFG-004` 44; `CFG-005` 44; configuração horária/`PAC-A` 44; `PRO-A` 46 | **64 verificações OK** (reprodução em checkout temporário: `main` = 38; `main` + `PRO-A` = 46) |
+| `pnpm run verify:api-integration` | `CFG-004` 20 · 707; `CFG-005` 20 · 708; `PRO-A` 20 · 693 | **24 suites · 879 passed · 2 skipped; 0 resíduos** |
+| `verify:from-scratch` | 13/13 migrations; guarda de árvore limpa exige commit | **16/16 migrations aplicadas e catálogo OK**; guarda de árvore limpa **exit 1** (sem commit, esperado); cópia local fora do repositório com a guarda trocada por impressão digital de `packages/database/prisma` antes/depois: **16/16 · catálogo OK · `packages/database` 10 suites · 87 passed · 0 resíduos**. A execução oficial ocorre após o commit local |
+| `pnpm run smoke:api` | verde | **OK** |
+| `@techlab-fisio/web test` | 57 (mais 21 da grade na origem da tela) | **78 verificações OK** (57 + grade 21/21) |
+| `pnpm run verify:web-api-e2e` | 24 / 50 (com os Cenários 8 e 9) | **50 verificações OK** |
+| Playwright `test:e2e` | 3 / 7 | **10 passed** |
+
+Progressão por etapa (`test:api` · integração da API · `verify:openapi-runtime`): `main` + `CFG-004` = 1258 · 707 · 44; + `CFG-005` = 1313 · 777 · 50; + configuração horária/`PAC-A` = 1381 · 826 · 56; + `PRO-A` = 1466 · 879 · 64 — cada incremento igual à soma do que a frente acrescenta. **CI remota não executada.**
+
+### 6-AE.5 Limitações e pendências
+
+- **Publicação:** branch publicada como PR [#86](https://github.com/BrunoMNoronha/techlab-fisio/pull/86) (autorização de Bruno Menezes Noronha); o merge na `main` depende de autorização própria.
+- **`docs/07` §10.1/§10.2** ainda não lista `ux_forma_pagamento_clinica_descricao`, `ck_forma_pagamento_situacao`, `ux_motivo_cancelamento_clinica_descricao`, `ck_motivo_cancelamento_situacao`, `ck_paciente_situacao`, `ix_paciente_data_nascimento` e `ck_profissional_situacao` — alinhamento após a integração na `main` (`D-CFG-35`, `D-CFG-47`, `D-PAC-09`, `D-PRO1-07`).
+- As limitações declaradas de cada frente (§6-AA.5, §6-AB.5, §6-AC.6, §6-AD.5) permanecem, exceto as marcadas como tratadas.
+
+### 6-AE.6 Correção pós-revisão da PR #86 — serialização do `PATCH` de situação (`D-PRO1-10`)
+
+**Origem.** Apontamento P2 da revisão automatizada do Codex sobre `c90271a` (`apps/api/src/profissional/profissional.service.ts`), verificado diretamente no código, na decisão e em teste antes de qualquer alteração. **Classificação: erro confirmado**, dentro do escopo da PR.
+
+**Causa.** `D-PRO1-10` (homologada) exige que `PUT`, `PATCH` e `PUT .../servicos` serializem por `SELECT ... FOR UPDATE` na linha do profissional, com o no-op decidido sob o lock. `ProfissionalService.alterarSituacao` decidia pela mutação condicional (`UPDATE ... WHERE ativo = !pedido`) seguida de releitura **sem** lock. Sob READ COMMITTED, quando outra transação ainda não commitada fazia a transição **oposta**, a linha do snapshot não casava com o predicado, o `UPDATE` **não esperava** o lock, afetava 0 linhas e a releitura devolvia o estado antigo como no-op (`200`, sem evento); ao commitar, a transação concorrente sobrescrevia o estado pedido. O teste de concorrência existente cobria só pedidos do **mesmo** estado, em que o `UPDATE` espera.
+
+**Reprodução.** Teste novo em `profissionais-cadastro.integration.spec.ts` (inativação concorrente segurando o lock × `PATCH { ativo: true }`) falhou antes da correção: nenhuma sessão em espera de lock (`esperarAlguemBloqueado` = 0).
+
+**Correção (menor alteração segura).** A linha é lida com `lerLinhaProfissional(tx, id, true)` (`FOR UPDATE`) antes da decisão; inexistência e no-op são decididos sob o lock; a mutação permanece condicional como defesa adicional e passa a exigir `count = 1`. Contrato HTTP, respostas, auditoria (1 evento por mutação efetiva; nenhum no no-op), schema e permissões inalterados; `D-PRO1-06` preservada.
+
+**Provas.**
+
+- Teste novo: o `PATCH` de reativação **espera** o lock, reativa sobre o estado commitado (`ativo = true`, `inativado_em = NULL`) e emite exatamente um `profissional.situacao.alterada`.
+- Suítes `profissionais-cadastro` + `profissional-situacao`: **67 passed** (antes 66).
+- Mutation challenge M12 (leitura sem `FOR UPDATE`): **DETECTADA** por 2 testes; arquivo restaurado com SHA-256 conferido.
+- `pnpm run typecheck`, `pnpm run build`: **exit 0**. `pnpm run lint:migrations`: **OK**. `pnpm run test:api`: **48 suites · 1466 passed**. `verify:openapi-runtime`: **64 verificações OK**. `pnpm run verify:api-integration`: **24 suites · 880 passed · 2 skipped** (antes 879), 0 resíduos. `pnpm run smoke:api`: **OK**. Sem alteração de schema, migration, contrato ou web: `schema:verify`, `verify:from-scratch` e as provas web não são afetados (medidos verdes em §6-AE.4 e após o commit `c90271a`).
+
 ## 7. Auditoria — `P-BACK-01`
 
 ### 7.1 Estado
@@ -4608,11 +4971,21 @@ Sujeitas a autorização própria, nesta ordem provável:
 20. ~~**`CFG-001A` e `CFG-001B` — dados e provisionamento da clínica única**~~ — **CONCLUÍDAS / INTEGRADAS NA `main` em 17/09/2026** (PR [#65](https://github.com/BrunoMNoronha/techlab-fisio/pull/65), commit `6ee19f27afc5d7c55667ef910536baa924ecc990`; PR [#69](https://github.com/BrunoMNoronha/techlab-fisio/pull/69), merge commit `02cc93d5770003775d3417b1d2ee08a874675d30`) (§6-W, §6-X, §6-X.5). Logotipo, duração padrão e `CFG-002`..`CFG-005` seguem pendentes.
 21. ~~**`CFG-002` — horário de funcionamento da clínica**~~ — **CONCLUÍDA / INTEGRADA NA `main` em 17/09/2026** (PR [#76](https://github.com/BrunoMNoronha/techlab-fisio/pull/76), merge commit `ad2bcf8041635f469db6c799e7405f455d836d30`, CI runs `35200219052` e `35200224060` sobre o HEAD `12948f4`) (§6-Y, §6-Y.6). Exceções/feriados e aplicação de RN-014 seguem pendentes.
 22. ~~**`CFG-003` — catálogo de serviços**~~ — **CONCLUÍDA / INTEGRADA NA `main` em 17/09/2026** (PR [#80](https://github.com/BrunoMNoronha/techlab-fisio/pull/80), merge commit `fd3c205f420b9cb201dad46fe946b3df7354b9ba`, CI runs `35203981793` e `35203985987` sobre o HEAD `10baa64`) (§6-Z, §6-Z.7). `docs/07` §10.1/§10.2 alinhado na REV. 2.3.
+23. **`CFG-005` — motivos de cancelamento** — **IMPLEMENTADA E MEDIDA — CONSOLIDADA NA BRANCH LOCAL `integration/local-fase4`, NÃO PUBLICADA NA `main`** (§6-AB, §6-AE). Pendente: revisão, publicação e integração na `main`; após integrar, alinhar `docs/07` §10.1/§10.2; interface administrativa em fatia própria.
+24. **`PAC-A` — pacientes (cadastro administrativo, localização, duplicidade, situação)** — **IMPLEMENTADA E MEDIDA — CONSOLIDADA NA BRANCH LOCAL `integration/local-fase4`, NÃO PUBLICADA NA `main`** (§6-AC, §6-AE; decisões `docs/17`).
+25. **`CFG-004` — formas de pagamento** — **IMPLEMENTADA E MEDIDA — CONSOLIDADA NA BRANCH LOCAL `integration/local-fase4`, NÃO PUBLICADA NA `main`** (§6-AA, §6-AE). Após integrar na `main`, alinhar `docs/07` §10.1/§10.2.
+26. **`PRO-A` — cadastro de profissionais** — **IMPLEMENTADA E MEDIDA — CONSOLIDADA NA BRANCH LOCAL `integration/local-fase4`, NÃO PUBLICADA NA `main`** (§6-AD, §6-AE; decisões `docs/18`).
 
 ## 11. Histórico de revisões
 
 | REV. | Data | Conteúdo |
 | --- | --- | --- |
+| **67** | **17/09/2026** | **CORREÇÃO PÓS-REVISÃO DA PR #86** (§6-AE.6). `PATCH /profissionais/:profissionalId/situacao` passa a ler a linha sob `FOR UPDATE` antes de decidir o no-op, cumprindo `D-PRO1-10` para transições opostas concorrentes; teste de regressão; M12 detectada; test:api 48 suites · 1466 passed; integração da API 24 suites · 880 passed · 2 skipped. Nenhuma decisão, contrato, schema, migration ou permissão alterado. |
+| **66** | **17/09/2026** | **CONSOLIDAÇÃO LOCAL DAS QUATRO FRENTES NA BRANCH `integration/local-fase4`** (§6-AE). Ordem, conflitos e resoluções; bateria consolidada (test:api 48 suites · 1466 passed; integração da API 24 suites · 879 passed · 2 skipped; `verify:openapi-runtime` 64; 16 migrations; web 78; E2E 50; Playwright 10). Fechamento documental: `D-INTEG-01` (`docs/17` de profissionais → `docs/18`) e `D-INTEG-02` (status de `docs/14`, `docs/15`, `docs/17`); estados das §6-AA..§6-AD atualizados, com o contexto das origens preservado; contagem OpenAPI de §6-AD.4 (46) confirmada por reprodução. Nenhuma decisão ou comportamento de runtime alterado. |
+| **65** | **17/09/2026** | **PRO-A — CADASTRO DE PROFISSIONAIS IMPLEMENTADO E MEDIDO EM BRANCH LOCAL, SEM COMMIT** (§6-AD; numeração fixada na integração local, provisória na origem como REV. 62 / §6-AB). `D-PRO1-01`..`D-PRO1-10` materializadas; migration `20260917200000_profissional_situacao_coerente`; rotas `/profissionais`; test:api 43 suites · 1271 passed; integração da API 20 suites · 693 passed · 2 skipped; `packages/database` 87 passed; 11 mutation challenges detectados. |
+| **64** | **17/09/2026** | **`PAC-A` — PACIENTES IMPLEMENTADA E MEDIDA LOCALMENTE — SEM COMMIT, NÃO INTEGRADA** (§6-AC; renumerada na integração local, na origem REV. 61). Migration de CHECK de situação e índice por data de nascimento; `POST /pacientes/busca`, `GET/PUT /pacientes/:pacienteId`, `POST /pacientes`, `PATCH /pacientes/:pacienteId/situacao`; duplicidade por CPF e coincidência forte; escopo por código de papel; `paciente.cadastro.alterado` e `paciente.situacao.alterada` com contexto vazio. Nenhuma decisão normativa criada, alterada ou reaberta. |
+| **63** | **17/09/2026** | **`CFG-005` — MOTIVOS DE CANCELAMENTO IMPLEMENTADOS E MEDIDOS NO AMBIENTE LOCAL — NÃO COMMITADOS** (§6-AB; renumerada na integração local, na origem REV. 61). Migration de unicidade da descrição e CHECK de situação; cinco operações em `/motivos-cancelamento`; test:api 1223 passed; integração da API 20 suites · 708 passed · 2 skipped; `packages/database` 87 passed; mutation challenges em §6-AA.3. Nenhuma decisão, permissão, ação, chave ou dependência nova. |
+| **62** | **17/09/2026** | **`CFG-004` — FORMAS DE PAGAMENTO IMPLEMENTADAS E MEDIDAS EM BRANCH LOCAL, SEM COMMIT** (§6-AA). `D-CFG-34`..`D-CFG-45` materializadas; migration `20260917170000_forma_pagamento_invariantes`; rotas `/formas-pagamento`; test:api 43 suites · 1258 passed; integração da API 20 suites · 707 passed · 2 skipped; `packages/database` 87 passed; 10 mutation challenges detectados. Nenhuma decisão criada, alterada ou reaberta. |
 | **61** | **17/09/2026** | **`CFG-003` — REFORÇO DE TESTES PÓS-INTEGRAÇÃO** (§6-Z.8). Achados BAIXOS B-1/B-2/B-3 da revisão independente da PR #80: dois testes de integração da leitura sob lock do `PATCH /situacao`, spec unitário da tradução restrita do `23505` e correção editorial de §6-Z.6. test:api 41 suites · 1186 passed; integração da API 19 suites · 640 passed · 2 skipped; mutation challenges M11 e M12 detectados. Nenhum código de produção, schema, migration, contrato, dependência ou CI alterado; nenhuma decisão criada, alterada ou reaberta. |
 | **60** | **17/09/2026** | **ALINHAMENTO EDITORIAL DE `docs/07` ÀS RESTRIÇÕES FÍSICAS DE `CFG-003`** — `docs/07` REV. 2.3 (`U-14`, três CHECKs de `servico`); pendência de §6-Z.7 e §10 item 22 marcada como resolvida. Nenhuma decisão, código, teste, schema ou migration alterado. |
 | **59** | **17/09/2026** | **REGISTRO PÓS-INTEGRAÇÃO DE `CFG-003` NA `main` (PR [#80](https://github.com/BrunoMNoronha/techlab-fisio/pull/80), MERGE `fd3c205`)** (§6-Z.7). Registro **exclusivamente factual**; merge commit com árvore idêntica ao HEAD `10baa64`, CI verde sobre esse HEAD; nenhuma decisão, código, teste, schema ou migration alterado. |

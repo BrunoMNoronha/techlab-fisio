@@ -29,7 +29,13 @@ export default function PaginaInicial() {
             <li>TypeScript estrito</li>
             <li>Tailwind CSS 4 com tokens semânticos</li>
           </ul>
-          <div className="mt-6 border-t border-border pt-4">
+          <div className="mt-6 flex flex-col gap-3 border-t border-border pt-4 sm:flex-row">
+            <Link
+              href="/configuracoes/horario-funcionamento"
+              className="inline-flex items-center justify-center rounded-md border border-border bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground transition-opacity hover:opacity-90"
+            >
+              Horário de funcionamento
+            </Link>
             <Link
               href="/login"
               className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"

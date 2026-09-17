@@ -20,6 +20,13 @@
 // pelo emissor em `authz/auditoria-negacao-autorizacao.ts`, não aqui: este
 // catálogo declara ações e chaves, não regras de emissão).
 //
+// docs/17 D-PAC-07 (PAC-A, homologada em 17/09/2026) ACRESCENTOU DUAS AÇÕES
+// ao final, materializando a política de L-08 (docs/09 §13.5):
+// `paciente.cadastro.alterado` (CPF incluído/alterado/removido) e
+// `paciente.situacao.alterada` (inativação/reativação), ambas com whitelist
+// VAZIA e `alvo_tipo = "paciente"` — 27 ações · 3 positivas · 24 vazias.
+// `campos_alterados` continua NÃO homologada.
+//
 // D-AUD-09 (docs/09 §14, 15/09/2026) ACRESCENTOU REGRAS SEMÂNTICAS às duas
 // whitelists positivas que permaneciam sem validação semântica desde a 2.3C:
 //   - `cobranca.data_referencia_recalculada`: `data_referencia_anterior` e
@@ -44,8 +51,7 @@
 //
 // Regras de manutenção (vinculantes):
 //   - nenhuma ação entra aqui sem decisão homologada própria — em particular
-//     as demais ações RC/SF de docs/09 §5 (`paciente.cadastro.alterado`,
-//     `prontuario.acessado`, `auditoria.consultada`, ...) permanecem FORA
+//     as demais ações RC/SF de docs/09 §5 (`prontuario.acessado`, `auditoria.consultada`, ...) permanecem FORA
 //     (D-AUD-04/D-AUD-05, confirmados por §13);
 //   - nenhuma chave entra em whitelist sem decisão homologada própria — em
 //     particular as "chaves mínimas" apenas propostas em docs/09 §§1..11
@@ -76,9 +82,9 @@
 //     permissão `senha.recuperar_terceiro`; Q2 em falha de gravação; V0 sem
 //     limitação. Nenhuma outra permissão, guard ou `403` é auditado por
 //     implicação;
-//   - L-08 (paciente) — POLÍTICA FECHADA / MATERIALIZAÇÃO PENDENTE (§13.5):
-//     `paciente.cadastro.alterado`, `paciente.situacao.alterada` e
-//     `campos_alterados` NÃO são criados nesta etapa;
+//   - L-08 (paciente) — POLÍTICA FECHADA (§13.5); MATERIALIZADA por docs/17
+//     D-PAC-07 com `paciente.cadastro.alterado` e `paciente.situacao.alterada`
+//     (whitelist VAZIA); a chave `campos_alterados` segue NÃO homologada;
 //   - `configuracao.alterada` — FECHADA (§13.6): ação única, entidade por
 //     `alvo_tipo`, abrangência CFG-001..CFG-006, whitelist VAZIA;
 //   - `prontuario.exportado` — FECHADO (§13.7): `alvo_tipo = "paciente"`,
@@ -128,13 +134,17 @@ export const ACOES_AUDITORIA = [
   // `resultado = NEGADO`, `alvo_tipo = "permissao"`, `alvo_id = permissao.id`.
   // Emissão RESTRITA por lista fechada (hoje: só `senha.recuperar_terceiro`).
   "autorizacao.negada",
+  // docs/17 D-PAC-07 (PAC-A) — política de L-08 (docs/09 §13.5);
+  // `alvo_tipo = "paciente"`, `alvo_id = paciente.id`, contexto VAZIO.
+  "paciente.cadastro.alterado",
+  "paciente.situacao.alterada",
 ] as const;
 
 export type AcaoAuditoria = (typeof ACOES_AUDITORIA)[number];
 
 const ACOES_CONHECIDAS: ReadonlySet<string> = new Set(ACOES_AUDITORIA);
 
-/** `true` sse `acao` é uma das 25 ações homologadas (D-AUD-01 + PBACK-AUD-09). */
+/** `true` sse `acao` é uma das 27 ações homologadas (D-AUD-01 + PBACK-AUD-09 + D-PAC-07). */
 export function ehAcaoAuditoria(acao: string): acao is AcaoAuditoria {
   return ACOES_CONHECIDAS.has(acao);
 }
@@ -143,7 +153,8 @@ export function ehAcaoAuditoria(acao: string): acao is AcaoAuditoria {
  * D-AUD-07 (docs/09 §12.6) — whitelist fail-closed de `contexto`, EXAUSTIVA.
  *
  * Regra base: whitelist VAZIA. Somente as três ações abaixo possuem chaves
- * expressamente homologadas; as demais 22 ações (inclusive
+ * expressamente homologadas; as demais 24 ações (inclusive as duas de
+ * paciente de D-PAC-07 e
  * `autorizacao.negada` — PBACK-AUD-09 recusou `permissao_requerida`, `motivo`
  * e qualquer outra chave: a permissão exigida É o alvo) não admitem contexto
  * não vazio. O `satisfies` garante em compilação que TODA ação do catálogo
@@ -305,4 +316,6 @@ export const WHITELIST_CONTEXTO = {
   "pagamento.registrado": [],
   "pagamento.estornado": [],
   "autorizacao.negada": [],
+  "paciente.cadastro.alterado": [],
+  "paciente.situacao.alterada": [],
 } as const satisfies Record<AcaoAuditoria, readonly string[]>;
