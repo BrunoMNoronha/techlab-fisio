@@ -732,6 +732,31 @@ describe("PRO-A — concorrência e invariante física (TP-11, TP-12, D-PRO1-07,
     expect(await eventos()).toHaveLength(0);
   });
 
+  it("o PATCH de situação serializa com a transição OPOSTA — espera o lock e reativa sobre o estado commitado", async () => {
+    // D-PRO1-10: no-op decidido SOB o lock. Sem `FOR UPDATE`, o `UPDATE ... WHERE ativo = false`
+    // não casa com o snapshot (ainda ativo), não espera o lock e a releitura sem lock devolve o
+    // estado antigo como no-op — a inativação concorrente commita depois e a reativação se perde.
+    const { cookie } = await administrador();
+    const pro = await criarViaApi(cookie);
+    const { liberar, bloqueador } = await comLockNoProfissional(pro.id, (tx) =>
+      tx.$executeRaw`UPDATE profissional SET ativo = false, inativado_em = now() WHERE id = ${pro.id}::uuid`,
+    );
+    let concluido = false;
+    const patch = requisitar("PATCH", `${BASE}/${pro.id}/situacao`, { cookie, corpo: { ativo: true } }).then((r) => {
+      concluido = true;
+      return r;
+    });
+    expect(await esperarAlguemBloqueado()).toBeGreaterThanOrEqual(1);
+    expect(concluido).toBe(false);
+    liberar();
+    await bloqueador;
+    const res = await patch;
+    expect(res.status).toBe(200);
+    expect(res.body.ativo).toBe(true);
+    expect(await lerProfissionais()).toEqual([expect.objectContaining({ id: pro.id, ativo: true, inativado_em: null })]);
+    expect((await eventos()).map((e) => e.acao)).toEqual(["profissional.situacao.alterada"]);
+  });
+
   it("TP-12: o banco rejeita situação incoerente (ck_profissional_situacao)", async () => {
     const inserir = (ativo: boolean, inativado: boolean) =>
       erroSql((tx) =>

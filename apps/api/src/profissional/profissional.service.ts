@@ -13,14 +13,15 @@
 // falha da mutação → zero evento. O cliente transacional é passado
 // explicitamente ao AuditWriter.
 //
-// CONCORRÊNCIA: a mutação é CONDICIONAL (`updateMany` com o estado anterior
-// no WHERE), o que toma o lock da linha — a mesma linha que o cadastro
-// bloqueia com `FOR UPDATE` (D-PRO1-10). Sob READ COMMITTED, uma segunda
-// transação concorrente bloqueia e reavalia o predicado sobre o estado
-// commitado — para o mesmo novo estado, exatamente uma muta (count=1) e a
-// outra observa count=0 e devolve o estado vigente como NO-OP (D-PRO1-06:
-// 200 sem mutação e sem evento). Não há SELECT → decisão em memória →
-// UPDATE incondicional.
+// CONCORRÊNCIA (D-PRO1-10): a linha do profissional é lida com
+// `SELECT ... FOR UPDATE` ANTES de decidir — a mesma serialização do cadastro
+// (`PUT`, `PUT .../servicos`). O no-op (D-PRO1-06: 200 sem mutação e sem
+// evento) é decidido SOB o lock, sobre o estado commitado. Só a mutação
+// condicional não bastava: sob READ COMMITTED, um `UPDATE ... WHERE ativo = X`
+// cuja linha não casa com o snapshot NÃO espera o lock de uma transição
+// oposta ainda não commitada — devolvia no-op sobre o estado antigo e a
+// transição concorrente sobrescrevia a pedida em seguida (revisão da PR #86).
+// A mutação permanece condicional como defesa adicional.
 //
 // AUDITORIA (whitelist VAZIA — D-AUD-07): nenhum contexto é persistido —
 // nem `ativo_anterior`/`ativo_novo`/`campos_alterados` (chaves apenas
@@ -98,24 +99,13 @@ export class ProfissionalService {
         throw new ErroSituacaoProfissional("ATOR_INATIVO");
       }
 
-      // 2. Mutação CONDICIONAL: só transiciona a partir do estado oposto.
-      const ocorridoEm = new Date();
-      const mutacao = await tx.profissional.updateMany({
-        where: { id: comando.profissionalId, ativo: !comando.ativo },
-        data: {
-          ativo: comando.ativo,
-          inativadoEm: comando.ativo ? null : ocorridoEm,
-        },
-      });
-
-      if (mutacao.count === 0) {
-        // Nada mudou: distinguir inexistência de estado já vigente. A leitura
-        // acontece DEPOIS da tentativa condicional — a decisão nunca é feita
-        // sobre snapshot anterior à disputa de lock.
-        const vigente = await lerLinhaProfissional(tx, comando.profissionalId, false);
-        if (vigente === null) {
-          throw new ErroSituacaoProfissional("PROFISSIONAL_INEXISTENTE");
-        }
+      // 2. Leitura SOB lock (D-PRO1-10): inexistência e no-op decididos sobre
+      //    o estado commitado, depois de qualquer transição concorrente.
+      const vigente = await lerLinhaProfissional(tx, comando.profissionalId, true);
+      if (vigente === null) {
+        throw new ErroSituacaoProfissional("PROFISSIONAL_INEXISTENTE");
+      }
+      if (vigente.ativo === comando.ativo) {
         // D-PRO1-06: no-op idempotente — sem mutação, sem evento.
         return {
           profissionalId: vigente.id,
@@ -126,7 +116,20 @@ export class ProfissionalService {
         };
       }
 
-      // 3. Evento de auditoria obrigatório — MESMA transação, mesmo tx.
+      // 3. Mutação CONDICIONAL (defesa adicional sob o lock já adquirido).
+      const ocorridoEm = new Date();
+      const mutacao = await tx.profissional.updateMany({
+        where: { id: comando.profissionalId, ativo: !comando.ativo },
+        data: {
+          ativo: comando.ativo,
+          inativadoEm: comando.ativo ? null : ocorridoEm,
+        },
+      });
+      if (mutacao.count !== 1) {
+        throw new Error("Transição de situação não aplicada sob o lock da linha.");
+      }
+
+      // 4. Evento de auditoria obrigatório — MESMA transação, mesmo tx.
       await this.auditWriter.registrar(tx, {
         acao: "profissional.situacao.alterada",
         ocorridoEm,
