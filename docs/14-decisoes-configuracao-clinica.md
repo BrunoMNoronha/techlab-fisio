@@ -3,9 +3,9 @@
 > **Documento:** `docs/14-decisoes-configuracao-clinica.md`
 > **Projeto:** TechLab Fisio
 > **Frente:** Fase 3 — Configuração da Clínica (módulo M2, `CFG-001..CFG-006`)
-> **Status:** **DECIDIDO — `D-CFG-01`..`D-CFG-08` E ADENDOS `D-CFG-03-A` E `D-CFG-04-A` HOMOLOGADOS POR BRUNO MENEZES NORONHA EM 17/09/2026; `D-CFG-09`..`D-CFG-12` (PROVISIONAMENTO DA CLÍNICA) HOMOLOGADAS EM 17/09/2026; `D-CFG-13`..`D-CFG-21` (HORÁRIO DE FUNCIONAMENTO, CFG-002) HOMOLOGADAS EM 17/09/2026; `D-CFG-22`..`D-CFG-33` (CATÁLOGO DE SERVIÇOS, CFG-003) HOMOLOGADAS EM 17/09/2026; `D-CFG-34`..`D-CFG-45` (FORMAS DE PAGAMENTO, CFG-004) HOMOLOGADAS EM 17/09/2026** (TLF-BASE-V1 §15, item 1).
+> **Status:** **DECIDIDO — `D-CFG-01`..`D-CFG-08` E ADENDOS `D-CFG-03-A` E `D-CFG-04-A` HOMOLOGADOS POR BRUNO MENEZES NORONHA EM 17/09/2026; `D-CFG-09`..`D-CFG-12` (PROVISIONAMENTO DA CLÍNICA) HOMOLOGADAS EM 17/09/2026; `D-CFG-13`..`D-CFG-21` (HORÁRIO DE FUNCIONAMENTO, CFG-002) HOMOLOGADAS EM 17/09/2026; `D-CFG-22`..`D-CFG-33` (CATÁLOGO DE SERVIÇOS, CFG-003) HOMOLOGADAS EM 17/09/2026; `D-CFG-34`..`D-CFG-45` (FORMAS DE PAGAMENTO, CFG-004) HOMOLOGADAS EM 17/09/2026; `D-CFG-46`..`D-CFG-57` (MOTIVOS DE CANCELAMENTO, CFG-005) HOMOLOGADAS EM 17/09/2026** (TLF-BASE-V1 §15, item 1).
 > **Data:** 17 de setembro de 2026
-> **Insumo decisório:** pacotes de análise somente leitura `CFG-PREP0` (`D-CFG-01`..`D-CFG-08`, sobre `origin/main` = `63bb058`), `CFG-PREP1` (`D-CFG-09`..`D-CFG-12`), `CFG-PREP2` (`D-CFG-13`..`D-CFG-21`), `CFG-PREP3` (`D-CFG-22`..`D-CFG-33`) e `CFG-PREP4` (`D-CFG-34`..`D-CFG-45`); a base medida de cada um consta da respectiva seção.
+> **Insumo decisório:** pacotes de análise somente leitura `CFG-PREP0` (`D-CFG-01`..`D-CFG-08`, sobre `origin/main` = `63bb058`), `CFG-PREP1` (`D-CFG-09`..`D-CFG-12`), `CFG-PREP2` (`D-CFG-13`..`D-CFG-21`), `CFG-PREP3` (`D-CFG-22`..`D-CFG-33`), `CFG-PREP4` (`D-CFG-34`..`D-CFG-45`) e `CFG-PREP5` (`D-CFG-46`..`D-CFG-57`); a base medida de cada um consta da respectiva seção.
 > **Natureza:** registro normativo das decisões. A materialização da fatia `CFG-001A` (autorizada por Bruno em 17/09/2026) é registrada factualmente em `docs/10` §6-W; nenhuma decisão foi alterada por ela.
 > **Por que um documento próprio:** precedente do projeto para decisões por frente (`docs/09`, `docs/11`, `docs/12`, `docs/13`). Um documento dedicado também evita edição concorrente de `docs/10` e `docs/12`, em uso por frentes paralelas.
 
@@ -386,9 +386,109 @@ Registro de fronteira; **nenhum** destes módulos é implementado ou decidido aq
 - **Serialização com `D-CFG-40`:** T-03 deve bloquear a linha da forma (`SELECT ... FOR SHARE` ou mais forte) ao verificar sua situação, para que o registro de pagamento não corra com edição ou inativação concorrente.
 - **Pendências de fronteira:** leitura das formas ativas pela Recepção (`D-CFG-43`) e o detalhamento de T-03 ficam para a fatia de pagamentos.
 
+### 3.13 Motivos de cancelamento (`CFG-005`) — `D-CFG-46`..`D-CFG-57` *(homologadas em 17/09/2026; insumo: pacote `CFG-PREP5`)*
+
+Homologadas por Bruno Menezes Noronha em 17/09/2026, que aprovou integralmente as recomendações do pacote `CFG-PREP5` (somente leitura, medido sobre `origin/main` = `113acbd`), **incluindo a alteração estrutural de banco de `D-CFG-47`** e a regra de edição de `D-CFG-50`. **Registro normativo; nenhum código, schema, migration ou teste alterado.** A aprovação autoriza a materialização documental; **não** autoriza ainda implementação de runtime, schema ou migration.
+
+**Fatos de partida (`CFG-PREP5`).** A tabela `motivo_cancelamento` já existe com a mesma forma de `forma_pagamento` (`id uuid PK`; `clinica_id` FK NN `RESTRICT`; `descricao text NN`; `ativo boolean NN` sem default; `inativado_em timestamptz ∅`; `criado_em`), **sem** unicidade, **sem** CHECK e **sem** índice além da PK. É referenciada por `agendamento.motivo_cancelamento_id` e por `historico_agendamento.motivo_cancelamento_id` (ambas FK **anuláveis** `RESTRICT`); `historico_agendamento` é append-only (AGD-009, RN-017) e **não copia** a descrição. `pacote.motivo_cancelamento` e `cobranca.motivo_cancelamento` são **texto livre**, sem FK: CFG-005 abrange somente a agenda ("cancelamento da agenda", `docs/02`). AGD-003 prevê "motivo padronizado", mas o schema não exige o motivo nem o vincula a `estado = CANCELADO`, e CFG-005 fala em "cancelamento **que exige** motivo". **RN-007 não lista motivos de cancelamento**; `docs/07` §23 os agrupa com serviço e forma de pagamento (ativo/inativo com preservação histórica). `docs/04` §4 atribui "Gerenciar motivos de cancelamento" somente ao Administrador; "Cancelar agendamento" usa `agenda.gerenciar`. `configuracao.alterada` já abrange `motivo_cancelamento` (`docs/09` §13.6). Não existe runtime de CFG-005 nem de agenda.
+
+#### 3.13.1 `D-CFG-46` — Unicidade da descrição
+
+- Descrição **única por clínica**, abrangendo motivos **ativos e inativos**, comparada **sem distinção de caixa e sem espaços nas bordas**: chave `(clinica_id, lower(btrim(descricao)))`.
+- A descrição de motivo inativo **não é liberada para reuso**; o caminho é a reativação.
+- Violação → **`409 MOTIVO_CANCELAMENTO_DUPLICADO`**, em criação e em edição. A rejeição concorrente pelo índice (`23505` **naquele índice**) tem o mesmo desfecho; `23505` em qualquer outra restrição não é traduzido para `409`. A detecção de duplicidade **não** compara caixa em JavaScript.
+
+#### 3.13.2 `D-CFG-47` — Invariantes físicas
+
+- **Autorizada a futura migration** com:
+  - índice único `(clinica_id, lower(btrim(descricao)))` (`D-CFG-46`);
+  - `CHECK` de coerência `ativo = (inativado_em IS NULL)`.
+- Nomes físicos, verificação de dados e fixtures, golden SQL, inventário protegido e o alinhamento de `docs/07` §10.1/§10.2 pertencem à fatia de implementação; `docs/07` **só é atualizado após a migration integrada**.
+- **Nenhuma** restrição é criada em `agendamento` ou `historico_agendamento` por esta frente (`D-CFG-51`).
+
+#### 3.13.3 `D-CFG-48` — Contrato HTTP
+
+Rotas de nível superior, em módulo próprio:
+
+| Rota | Sucesso | Erros específicos |
+| --- | --- | --- |
+| `GET /motivos-cancelamento[?ativo=true\|false]` | `200` lista | `400` filtro inválido |
+| `GET /motivos-cancelamento/:motivoCancelamentoId` | `200` | `400` id malformado; `404 MOTIVO_CANCELAMENTO_NAO_ENCONTRADO` |
+| `POST /motivos-cancelamento` | `201` | `400`; `404 CLINICA_NAO_CONFIGURADA`; `409 MOTIVO_CANCELAMENTO_DUPLICADO` |
+| `PUT /motivos-cancelamento/:motivoCancelamentoId` | `200` | `400`; `404 MOTIVO_CANCELAMENTO_NAO_ENCONTRADO`; `409 MOTIVO_CANCELAMENTO_DUPLICADO`; `409 MOTIVO_CANCELAMENTO_EM_USO` |
+| `PATCH /motivos-cancelamento/:motivoCancelamentoId/situacao` | `200` | `400`; `404 MOTIVO_CANCELAMENTO_NAO_ENCONTRADO` |
+
+- Corpo de `POST` e `PUT` — **exatamente** `{ descricao }`; `PUT` é substituição total.
+- Resposta — **exatamente** `{ id, descricao, ativo, inativadoEm }`; `inativadoEm` em ISO-8601 ou `null`; `clinicaId` e `criadoEm` **não** são expostos. No `PUT` e no `PATCH`, o corpo é o estado vigente após a operação, inclusive no no-op.
+- `clinica_id` é resolvido no servidor a partir da linha única de `clinica`; nunca vem do cliente.
+- **Não existe rota de exclusão** (`DELETE`), em nenhuma condição (`D-CFG-54`, `docs/07` §23).
+- Erros no envelope `{ erro: <código> }`; `401`, `403` e `500 FALHA_INTERNA` pelos contratos gerais. Códigos novos: somente `MOTIVO_CANCELAMENTO_NAO_ENCONTRADO`, `MOTIVO_CANCELAMENTO_DUPLICADO` e `MOTIVO_CANCELAMENTO_EM_USO`.
+- Módulo **separado** de `/formas-pagamento`, **sem abstração genérica** compartilhada: as regras de uso diferem (`D-CFG-40` × `D-CFG-50`).
+
+#### 3.13.4 `D-CFG-49` — Criação, situação e validação
+
+- Criação sempre com `ativo = true` e `inativado_em = NULL`; o corpo não aceita `ativo`.
+- Situação alterada **somente** por `PATCH /motivos-cancelamento/:motivoCancelamentoId/situacao` com corpo exato `{ ativo: boolean }`. Inativação: `ativo = false`, `inativado_em = now()`; reativação: `ativo = true`, `inativado_em = NULL`.
+- Pedido cujo `ativo` já é o vigente → `200` com o estado corrente, **sem** mutação, **sem** alterar `inativado_em` e **sem** auditoria.
+- Inativar ou reativar é permitido **com ou sem** referências e **nunca** altera `agendamento` ou `historico_agendamento`.
+- `descricao`: string; aplicar `trim`; **1–100** caracteres (code points) após `trim`; **sem caracteres de controle**; persistida já sem espaços de borda. Sem campo de tipo/categoria.
+- **Sem coerção de tipos**; corpo estrito (chave extra ou ausente, `null`, array ou objeto não plano → `400 REQUISICAO_INVALIDA`); sem dependência nova.
+
+#### 3.13.5 `D-CFG-50` — Edição de motivo já utilizado
+
+- `PUT` sobre motivo **referenciado por qualquer linha de `agendamento` ou de `historico_agendamento`** → **`409 MOTIVO_CANCELAMENTO_EM_USO`**, sem mutação e sem auditoria. A correção é inativar o motivo e criar outro.
+- A verificação de uso consulta **as duas tabelas**: um motivo pode permanecer apenas no histórico (ex.: agendamento posteriormente alterado).
+- `PUT` sobre motivo **sem** referência é permitido, inclusive se inativo, e não altera a situação.
+- A comparação de no-op **precede** a verificação de uso: `PUT` idêntico ao vigente sobre motivo em uso → `200` sem mutação e sem auditoria.
+- A verificação ocorre **sob o lock** de `D-CFG-53`, na mesma transação da mutação.
+- Fundamento: `historico_agendamento` é a reconstrução append-only das mudanças de agenda (AGD-009) e referencia o motivo sem copiar sua descrição; renomear motivo usado reescreveria retroativamente a causa de cancelamentos passados. Mesmo racional de `D-CFG-40`.
+
+#### 3.13.6 `D-CFG-51` — Obrigatoriedade do motivo no cancelamento
+
+- **Não decidida nesta frente.** Se todo cancelamento de agendamento exige motivo (AGD-003) ou apenas o "cancelamento que exige motivo" (CFG-005), e a eventual `CHECK` de coerência entre `agendamento.estado` e `motivo_cancelamento_id`, pertencem à **fatia de agenda**.
+- CFG-005 apenas mantém o catálogo e **não** cria restrição em `agendamento` ou `historico_agendamento`.
+
+#### 3.13.7 `D-CFG-52` — Sem motivos pré-cadastrados
+
+- Nenhum motivo é criado por provisionamento, seed ou migration; o Administrador os cadastra pela API.
+- `bootstrap-clinica` (`D-CFG-10`..`D-CFG-12`) permanece inalterado.
+- **Consequência registrada para a agenda:** a fatia de agenda deve definir o comportamento do cancelamento quando **não houver motivo ativo** cadastrado, coerente com o que decidir em `D-CFG-51`.
+
+#### 3.13.8 `D-CFG-53` — Concorrência
+
+- `PUT` e `PATCH` serializam por `SELECT ... FOR UPDATE` na linha de `motivo_cancelamento`; comparação de no-op e verificação de uso ocorrem **sob o lock**; a **última escrita válida prevalece**.
+- **Sem** coluna de versão, `If-Match` ou controle otimista; `409` existe **somente** por `D-CFG-46` e `D-CFG-50`.
+- Limitação aceita: atualização perdida entre administradores concorrentes não é detectada.
+
+#### 3.13.9 `D-CFG-54` — Preservação histórica e listagem
+
+- Motivo inativo **permanece referenciável** em `agendamento` e `historico_agendamento` e nunca é apagado. Fundamento: invariante de CFG-005 ("motivo desativado não deve desaparecer do histórico") e `docs/07` §23. **RN-007 não é citada como fonte direta**, pois não lista motivos; `docs/03` não é alterado.
+- Listagem **sem paginação** e sem busca textual; retorna ativos e inativos; filtro opcional `?ativo=true|false` (qualquer outro valor → `400`); ordem canônica `ativo DESC`, `lower(descricao)`, `id`; `GET` com `Cache-Control: no-store`.
+
+#### 3.13.10 `D-CFG-55` — Autorização
+
+- Todas as rotas exigem **`clinica.configurar`**; `ProtecaoCsrfGuard` **somente** em `POST`, `PUT` e `PATCH`.
+- Leitura por outros papéis (ex.: seleção de motivo ativo pela Recepção ao cancelar agendamento com `agenda.gerenciar`) **não** é concedida agora; será decidida na fatia de agenda. **Nenhuma permissão nova.**
+- `403` por falta de permissão **não** gera evento (lista fechada de `L-07`).
+
+#### 3.13.11 `D-CFG-56` — Auditoria
+
+- Criação, edição efetiva, inativação e reativação emitem, cada uma, **um** `configuracao.alterada` com `alvo_tipo = "motivo_cancelamento"`, `alvo_id = motivo_cancelamento.id`, ator da sessão, `resultado = SUCESSO`, `justificativa = null`, `contexto` **vazio**, na **mesma transação** da mutação (falha → rollback conjunto).
+- No-op, consulta, validação rejeitada, `409` e negação de autorização **não** emitem evento.
+- A descrição **nunca** é registrada. Aplicação direta de `docs/09` §13.6; nenhuma ação, chave de `contexto` ou `alvo_tipo` novo. Permanece a limitação declarada de §13.6 (estado anterior não preservado).
+
+#### 3.13.12 `D-CFG-57` — Contrato oferecido à agenda
+
+Registro de fronteira; a agenda **não** é implementada nem decidida aqui.
+
+- **Identidade:** `motivo_cancelamento.id` é o identificador estável referenciado por `agendamento` e `historico_agendamento`.
+- **Elegibilidade:** `ativo = true` é o predicado para **novo** cancelamento que informe motivo; referências existentes permanecem íntegras após inativação (`D-CFG-54`).
+- **Serialização com `D-CFG-50`:** o cancelamento de agendamento deve bloquear a linha do motivo (`SELECT ... FOR SHARE` ou mais forte) ao verificar sua situação, para não correr com edição ou inativação concorrente.
+- **Pendências de fronteira:** obrigatoriedade do motivo e CHECK de coerência (`D-CFG-51`); cancelamento sem motivos ativos (`D-CFG-52`); leitura pela Recepção (`D-CFG-55`). Os motivos de cancelamento de pacote e de cobrança permanecem texto livre, **fora** de CFG-005.
+
 ## 4. Consequências normativas já definidas (sem ampliação)
 
-- **Auditoria** (`docs/09` §13.6): mutação efetiva de `clinica` (`CFG-001`, `CFG-006`) emite `configuracao.alterada` com ator da sessão, `alvo_tipo = "clinica"`, `alvo_id = clinica.id`, `resultado = SUCESSO`, `justificativa = null`, `contexto` vazio, na **mesma transação** da mutação; falha da auditoria implica rollback conjunto. Nenhum valor de campo é registrado. *Alcance por frente:* `CFG-002` usa o mesmo alvo `clinica` por leitura homologada (`D-CFG-17`); `CFG-003` usa `alvo_tipo = "servico"` e `alvo_id = servico.id` (`D-CFG-32`); `CFG-004` usa `alvo_tipo = "forma_pagamento"` e `alvo_id = forma_pagamento.id` (`D-CFG-44`). Em todas, `contexto` vazio e nenhum valor de campo registrado.
+- **Auditoria** (`docs/09` §13.6): mutação efetiva de `clinica` (`CFG-001`, `CFG-006`) emite `configuracao.alterada` com ator da sessão, `alvo_tipo = "clinica"`, `alvo_id = clinica.id`, `resultado = SUCESSO`, `justificativa = null`, `contexto` vazio, na **mesma transação** da mutação; falha da auditoria implica rollback conjunto. Nenhum valor de campo é registrado. *Alcance por frente:* `CFG-002` usa o mesmo alvo `clinica` por leitura homologada (`D-CFG-17`); `CFG-003` usa `alvo_tipo = "servico"` e `alvo_id = servico.id` (`D-CFG-32`); `CFG-004` usa `alvo_tipo = "forma_pagamento"` e `alvo_id = forma_pagamento.id` (`D-CFG-44`); `CFG-005` usa `alvo_tipo = "motivo_cancelamento"` e `alvo_id = motivo_cancelamento.id` (`D-CFG-56`). Em todas, `contexto` vazio e nenhum valor de campo registrado.
 - **Autorização** (`D-2.3D-09`): sem sessão → `401`; sem permissão → `403`; CSRF obrigatório somente na rota mutante.
 - **Não ampliação:** nenhuma permissão, ação de auditoria, chave de `contexto` ou dependência nova decorre deste registro.
 
@@ -409,7 +509,9 @@ Registro de fronteira; **nenhum** destes módulos é implementado ou decidido aq
 | `P-CFG-05` — implementação de `CFG-004` (`D-CFG-34`..`D-CFG-45`: migration de unicidade e CHECK de `forma_pagamento`, rotas `/formas-pagamento`, testes) | **DECIDIDO — IMPLEMENTAÇÃO NÃO AUTORIZADA** |
 | Alinhamento de `docs/07` §10.1/§10.2 às restrições de `D-CFG-35` | **PENDENTE** — após integração da migration |
 | Leitura das formas de pagamento por outros papéis; bloqueio da forma em T-03 (`D-CFG-43`, `D-CFG-45`) | **PENDENTE DA FATIA DE PAGAMENTOS** |
-| CFG-005 | **NÃO INICIADO** |
+| `P-CFG-06` — implementação de `CFG-005` (`D-CFG-46`..`D-CFG-57`: migration de unicidade e CHECK de `motivo_cancelamento`, rotas `/motivos-cancelamento`, testes) | **DECIDIDO — IMPLEMENTAÇÃO NÃO AUTORIZADA** |
+| Alinhamento de `docs/07` §10.1/§10.2 às restrições de `D-CFG-47` | **PENDENTE** — após integração da migration |
+| Obrigatoriedade do motivo no cancelamento e CHECK de coerência `estado`/motivo; cancelamento sem motivos ativos; leitura dos motivos por outros papéis; bloqueio do motivo no cancelamento (`D-CFG-51`, `D-CFG-52`, `D-CFG-55`, `D-CFG-57`) | **PENDENTE DA FATIA DE AGENDA** |
 | Inclusão da clínica no subcomando `provisionar` (`D-CFG-12`) | **NÃO AUTORIZADA** — reavaliação futura possível |
 | Alinhamento de `docs/07` (afirmava restrição então inexistente) | **RESOLVIDO** — migration `20260917060000_clinica_linha_unica` (`ux_clinica_linha_unica`) integrada na `main` pela PR #65 |
 
@@ -417,6 +519,7 @@ Registro de fronteira; **nenhum** destes módulos é implementado ou decidido aq
 
 | REV. | Data | Descrição |
 | --- | --- | --- |
+| **13** | 17/09/2026 | Acréscimo de `D-CFG-46`..`D-CFG-57` (§3.13) — motivos de cancelamento (`CFG-005`) —, homologadas por Bruno Menezes Noronha a partir das recomendações do pacote `CFG-PREP5`: unicidade da descrição e CHECK de coerência (migration futura autorizada); rotas `/motivos-cancelamento` sem `DELETE`; descrição 1–100; `409 MOTIVO_CANCELAMENTO_EM_USO` na edição de motivo referenciado por `agendamento` ou `historico_agendamento`; obrigatoriedade do motivo, ausência de motivos ativos e leitura por outros papéis remetidas à fatia de agenda; sem motivos pré-cadastrados; preservação fundamentada em CFG-005 e `docs/07` §23 (RN-007 não os lista); `FOR UPDATE`; `clinica.configurar`; auditoria com `alvo_tipo = "motivo_cancelamento"`. Cabeçalho, §4 e §5 atualizados. Nenhuma decisão anterior alterada; nenhum código alterado; implementação não autorizada. Registrada originalmente como REV. 12 (PR #79, base `113acbd`); renumerada para REV. 13 na reconciliação com a PR #78 (base `7e67765`), sem alteração de conteúdo decisório. |
 | **12** | 17/09/2026 | Reconciliação factual pós-integração de §5: `P-CFG-03` / `CFG-002` integrada pela PR #76 (merge `ad2bcf8`). O registro da REV. 10 permanece como histórico. Nenhuma decisão normativa criada, alterada ou reaberta. |
 | **11** | 17/09/2026 | Acréscimo de `D-CFG-34`..`D-CFG-45` (§3.12) — formas de pagamento (`CFG-004`) —, homologadas por Bruno Menezes Noronha a partir das recomendações do pacote `CFG-PREP4`: unicidade da descrição e CHECK de coerência (migration futura autorizada); rotas `/formas-pagamento` sem `DELETE`; descrição 1–100 sem campo de tipo; sem formas pré-cadastradas; `409 FORMA_PAGAMENTO_EM_USO` na edição de forma referenciada por pagamento; `FOR UPDATE`; `clinica.configurar`; auditoria com `alvo_tipo = "forma_pagamento"`; contrato de fronteira com T-03. Cabeçalho, §4 e §5 atualizados. Nenhuma decisão anterior alterada; nenhum código alterado; implementação não autorizada. |
 | **10** | 17/09/2026 | Atualização factual de §5: `P-CFG-03` implementada e medida em branch própria (`docs/10` §6-Y); nenhuma decisão criada, alterada ou reaberta. |
