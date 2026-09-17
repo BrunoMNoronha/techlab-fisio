@@ -3,7 +3,7 @@
 > **Documento:** `docs/14-decisoes-configuracao-clinica.md`
 > **Projeto:** TechLab Fisio
 > **Frente:** Fase 3 — Configuração da Clínica (módulo M2, `CFG-001..CFG-006`)
-> **Status:** **DECIDIDO — `D-CFG-01`..`D-CFG-08` E ADENDOS `D-CFG-03-A` E `D-CFG-04-A` HOMOLOGADOS POR BRUNO MENEZES NORONHA EM 17/09/2026** (TLF-BASE-V1 §15, item 1).
+> **Status:** **DECIDIDO — `D-CFG-01`..`D-CFG-08` E ADENDOS `D-CFG-03-A` E `D-CFG-04-A` HOMOLOGADOS POR BRUNO MENEZES NORONHA EM 17/09/2026; `D-CFG-09`..`D-CFG-12` (PROVISIONAMENTO DA CLÍNICA) HOMOLOGADAS EM 17/09/2026** (TLF-BASE-V1 §15, item 1).
 > **Data:** 17 de setembro de 2026
 > **Insumo decisório:** pacote de análise `CFG-PREP0` (somente leitura), executado sobre `origin/main` = `63bb058`.
 > **Natureza:** registro normativo das decisões. A materialização da fatia `CFG-001A` (autorizada por Bruno em 17/09/2026) é registrada factualmente em `docs/10` §6-W; nenhuma decisão foi alterada por ela.
@@ -107,6 +107,34 @@ Nenhuma outra restrição é aplicada (Unicode e TLD de um caractere são aceito
 - Nesta fatia, **GET e PUT exigem `clinica.configurar`**.
 - A **troca de fuso é permitida** enquanto não existirem módulos dependentes que exijam regra de transição adicional; a introdução de tais módulos deve reavaliar este ponto.
 
+### 3.9 Provisionamento da linha única — `D-CFG-09`..`D-CFG-12` *(homologadas em 17/09/2026; insumo: pacote `CFG-PREP1`)*
+
+**Fatos de base.** `D-CFG-01` atribui a criação da linha a processo de provisionamento, sem fatia. O único acionador de provisionamento é `apps/api/src/provisionamento/cli.ts` (`seed`, `bootstrap-admin`, `provisionar`), fora do `AppModule`. Não há Administrador autenticado no momento da criação. `D-2.3D-15` (`docs/12` §5.15) é o precedente de autoria nula com justificativa obrigatória. A unicidade física `ux_clinica_linha_unica` (`D-CFG-02`) impede segunda linha.
+
+#### 3.9.1 `D-CFG-09` — Autoria e auditoria da criação
+
+- A criação emite `configuracao.alterada` com `alvo_tipo = "clinica"`, `alvo_id = clinica.id`, `resultado = SUCESSO` e `contexto` **vazio**, na **mesma transação** do `INSERT` (falha da auditoria → rollback conjunto).
+- **`ator_usuario_id = NULL`** — sem identidade sintética —, estendendo a esta operação inaugural o precedente de `D-2.3D-15`.
+- **Justificativa operacional obrigatória**, não vazia e sem caractere de controle, validada antes da transação, persistida em `evento_auditoria.justificativa`, **nunca impressa** e fora de `contexto`.
+- Nenhuma ação, chave de `contexto` ou whitelist é criada ou ampliada.
+
+#### 3.9.2 `D-CFG-10` — Reexecução
+
+- Linha existente com **mesmos** `nomeCadastral` e `fusoHorario` (após normalização de `D-CFG-04`) → desfecho **`JA_CONFORME`**, saída `0`, **sem escrita e sem evento**.
+- Linha existente com dados **divergentes** → **`CLINICA_JA_EXISTE`**, saída `1`, **sem sobrescrever**; alterações seguem por `PUT /clinica`.
+- Criação concorrente perdida (`23505` em `ux_clinica_linha_unica`) é tratada pela mesma regra, nunca como falha não controlada.
+
+#### 3.9.3 `D-CFG-11` — Entrada
+
+- Somente por variáveis de ambiente (nunca `argv`): `TLF_BOOTSTRAP_CLINICA_NOME_CADASTRAL`, `TLF_BOOTSTRAP_CLINICA_FUSO_HORARIO` e `TLF_BOOTSTRAP_CLINICA_JUSTIFICATIVA`.
+- `nomeCadastral` e `fusoHorario` validados e normalizados por `D-CFG-04`; campos opcionais da clínica ficam `NULL` e são preenchidos por `PUT /clinica`.
+- Mensagens e saídas usam motivos de conjunto fechado, sem valores.
+
+#### 3.9.4 `D-CFG-12` — Encaixe na CLI
+
+- Subcomando **novo `bootstrap-clinica`**.
+- `seed`, `bootstrap-admin` e **`provisionar` permanecem inalterados**; a inclusão da clínica em `provisionar` poderá ser reavaliada posteriormente, sem que isso esteja autorizado por este registro.
+
 ## 4. Consequências normativas já definidas (sem ampliação)
 
 - **Auditoria** (`docs/09` §13.6): mutação efetiva emite `configuracao.alterada` com ator da sessão, `alvo_tipo = "clinica"`, `alvo_id = clinica.id`, `resultado = SUCESSO`, `justificativa = null`, `contexto` vazio, na **mesma transação** da mutação; falha da auditoria implica rollback conjunto. Nenhum valor de campo é registrado.
@@ -118,7 +146,7 @@ Nenhuma outra restrição é aplicada (Unicode e TLD de um caractere são aceito
 | Item | Estado |
 | --- | --- |
 | `P-CFG-01` — implementação da fatia `CFG-001A` (migration de linha única, GET/PUT `/clinica`, testes) | **IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA (`agent/cfg-001a-dados-clinica`) — NÃO INTEGRADA** (`docs/10` §6-W) |
-| Provisionamento da linha de `clinica` (`D-CFG-01`) | **SEM FATIA ATRIBUÍDA** |
+| `P-CFG-02` — provisionamento da linha de `clinica` (`CFG-001B`; `D-CFG-01`, `D-CFG-09`..`D-CFG-12`) | **DECIDIDO — IMPLEMENTAÇÃO NÃO AUTORIZADA** |
 | Logotipo e duração padrão (`D-CFG-07`) | **FUTURO DO MVP** |
 | CFG-002..CFG-005 | **NÃO INICIADOS** |
 | Alinhamento de `docs/07` (afirma restrição ainda inexistente) | resolvido factualmente pela migration `20260917060000_clinica_linha_unica` (`ux_clinica_linha_unica`), quando integrada |
@@ -127,6 +155,7 @@ Nenhuma outra restrição é aplicada (Unicode e TLD de um caractere são aceito
 
 | REV. | Data | Descrição |
 | --- | --- | --- |
+| **4** | 17/09/2026 | Acréscimo de `D-CFG-09`..`D-CFG-12` (§3.9) — autoria nula com justificativa, reexecução idempotente, entrada por ambiente e subcomando `bootstrap-clinica` —, homologadas por Bruno Menezes Noronha a partir do pacote `CFG-PREP1` (opções conservadoras). Nenhuma decisão anterior alterada; nenhum código alterado. |
 | **3** | 17/09/2026 | Adendos `D-CFG-03-A` (representação da resposta) e `D-CFG-04-A` (predicado exato do e-mail), homologados por Bruno Menezes Noronha em 17/09/2026 em resposta à revisão do PR #60. Formalizam o comportamento já implementado em `CFG-001A`; nenhuma decisão anterior alterada. |
 | **2** | 17/09/2026 | Atualização factual de §5: `P-CFG-01` implementada e medida em branch própria (`docs/10` §6-W); nenhuma decisão criada, alterada ou reaberta. |
 | **1** | 17/09/2026 | Registro inicial: `D-CFG-01`..`D-CFG-08` homologadas por Bruno Menezes Noronha a partir do pacote `CFG-PREP0`. Somente documental; nenhum código, migration ou teste alterado. |
