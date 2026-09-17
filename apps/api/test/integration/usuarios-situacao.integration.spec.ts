@@ -22,6 +22,7 @@ import { ERRO } from "../../src/auth/auth.dto.js";
 import { ERRO_AUTORIZACAO } from "../../src/authz/erro-autorizacao.js";
 import { ERRO_USUARIOS } from "../../src/auth/usuarios.dto.js";
 import { AutenticacaoService } from "../../src/auth/autenticacao.service.js";
+import { RecuperacaoSenhaService } from "../../src/recuperacao-senha/recuperacao-senha.service.js";
 
 const MINUTO = 60_000;
 const T0 = new Date("2026-08-25T10:00:00.000Z");
@@ -51,6 +52,7 @@ let credenciais: CredencialService;
 let sessoes: SessaoService;
 let autenticacao: AutenticacaoService;
 let auditWriter: AuditWriter;
+let recuperacao: RecuperacaoSenhaService;
 let politicaCookie: PoliticaCookieSessao;
 let hashDaSenha: string;
 
@@ -72,6 +74,7 @@ beforeAll(async () => {
   sessoes = moduleRef.get(SessaoService);
   autenticacao = moduleRef.get(AutenticacaoService);
   auditWriter = moduleRef.get(AuditWriter);
+  recuperacao = moduleRef.get(RecuperacaoSenhaService);
   politicaCookie = moduleRef.get<PoliticaCookieSessao>(POLITICA_COOKIE_SESSAO);
   hashDaSenha = await credenciais.gerarHash(SENHA);
 }, 180_000);
@@ -477,7 +480,7 @@ describe("AUT-005 — Integração E2E contra PostgreSQL Real", () => {
     });
   });
 
-  describe("Concorrência Real (C1, C2, C3, A-16)", () => {
+  describe("Concorrência Real (C1, C3, A-16)", () => {
     it("C1: Dois administradores inativando simultaneamente convergem: exatamente uma mutação e um evento de auditoria", async () => {
       const admin1 = await criarUsuario();
       await darPermissao(admin1.id, "usuarios.gerenciar");
@@ -542,6 +545,267 @@ describe("AUT-005 — Integração E2E contra PostgreSQL Real", () => {
         }),
       );
       expect(sessoesAtivas).toBe(0);
+    });
+  });
+  // Reforço de provas de P-2.3D-09 (sem mudança normativa): C2, C5, C6, C7 e
+  // rollback por falha na revogação. Cenários concorrentes são repetidos para
+  // exercitar as duas ordens de aquisição do lock de `usuario`.
+  describe("Reforço de provas — atomicidade e concorrência adicionais", () => {
+    const RODADAS = 5;
+
+    async function criarAdministrador(): Promise<{ id: string; cookie: string }> {
+      const admin = await criarUsuario();
+      await darPermissao(admin.id, "usuarios.gerenciar");
+      const { cookie } = await emitirCookieSessao(admin.id);
+      return { id: admin.id, cookie };
+    }
+
+    async function lerUsuario(id: string) {
+      return database.transacao((tx) => tx.usuario.findUnique({ where: { id } }));
+    }
+
+    async function lerSessao(id: string) {
+      return database.transacao((tx) => tx.sessaoAutenticacao.findUnique({ where: { id } }));
+    }
+
+    async function contarSessoesAtivas(usuarioId: string): Promise<number> {
+      return database.transacao((tx) =>
+        tx.sessaoAutenticacao.count({ where: { usuarioId, estado: "ATIVA" } }),
+      );
+    }
+
+    async function contarEventos(acao: string, alvoId: string): Promise<number> {
+      return database.transacao((tx) => tx.eventoAuditoria.count({ where: { acao, alvoId } }));
+    }
+
+    /** Invariante RN-001: usuário inativo nunca convive com sessão ATIVA após o commit. */
+    async function provarInvarianteSituacao(usuarioId: string, atoresPossiveis: string[]): Promise<void> {
+      const usuario = await lerUsuario(usuarioId);
+      if (usuario?.ativo === false) {
+        expect(usuario.inativadoEm).not.toBeNull();
+        expect(atoresPossiveis).toContain(usuario.inativadoPorUsuarioId);
+        expect(await contarSessoesAtivas(usuarioId)).toBe(0);
+      } else {
+        expect(usuario?.inativadoEm).toBeNull();
+        expect(usuario?.inativadoPorUsuarioId).toBeNull();
+      }
+    }
+
+    it("Falha na revogação das sessões causa rollback conjunto: usuário ativo, sessão ATIVA e nenhuma auditoria", async () => {
+      const admin = await criarAdministrador();
+      const alvo = await criarUsuario();
+      const sessaoAlvo = await emitirCookieSessao(alvo.id);
+
+      const spy = jest
+        .spyOn(sessoes, "revogarTodasPorAdministradorEm")
+        .mockRejectedValue(new Error("FALHA_SIMULADA_REVOGACAO"));
+      try {
+        const res = await requisitarAlterarSituacao(alvo.id, { ativo: false }, admin.cookie);
+        expect(res.status).toBe(500);
+        expect(spy).toHaveBeenCalledTimes(1);
+      } finally {
+        spy.mockRestore();
+      }
+
+      const usuario = await lerUsuario(alvo.id);
+      expect(usuario?.ativo).toBe(true);
+      expect(usuario?.inativadoEm).toBeNull();
+      expect(usuario?.inativadoPorUsuarioId).toBeNull();
+      expect((await lerSessao(sessaoAlvo.sessaoId))?.estado).toBe("ATIVA");
+      expect(await contarEventos("usuario.situacao.alterada", alvo.id)).toBe(0);
+    });
+
+    it("C2: ativação × inativação concorrentes convergem para estado coerente, com um evento por transição real", async () => {
+      for (let rodada = 0; rodada < RODADAS; rodada++) {
+        const adminInativa = await criarAdministrador();
+        const adminAtiva = await criarAdministrador();
+        const alvo = await criarUsuario({ ativo: true });
+        const sessaoAlvo = await emitirCookieSessao(alvo.id);
+
+        const [resInativa, resAtiva] = await Promise.all([
+          requisitarAlterarSituacao(alvo.id, { ativo: false }, adminInativa.cookie),
+          requisitarAlterarSituacao(alvo.id, { ativo: true }, adminAtiva.cookie),
+        ]);
+        expect(resInativa.status).toBe(200);
+        expect(resInativa.body.ativo).toBe(false);
+        expect(resAtiva.status).toBe(200);
+        expect(resAtiva.body.ativo).toBe(true);
+
+        // O alvo começa ativo, então a inativação é sempre transição real. Se a
+        // ativação serializou antes, foi no-op (1 evento, final inativo); se
+        // depois, reativou (2 eventos, final ativo com metadados limpos).
+        const usuario = await lerUsuario(alvo.id);
+        expect(await contarEventos("usuario.situacao.alterada", alvo.id)).toBe(usuario?.ativo ? 2 : 1);
+        await provarInvarianteSituacao(alvo.id, [adminInativa.id]);
+
+        // Em qualquer ordem a inativação ocorreu: a sessão prévia nunca volta a autorizar.
+        const sessao = await lerSessao(sessaoAlvo.sessaoId);
+        expect(sessao?.estado).toBe("REVOGADA");
+        expect(sessao?.revogadaPorUsuarioId).toBe(adminInativa.id);
+        expect((await sessoes.validar(sessaoAlvo.token)).valida).toBe(false);
+      }
+    });
+
+    it("C5: revogação individual de sessão × inativação concorrentes revogam a sessão exatamente uma vez", async () => {
+      for (let rodada = 0; rodada < RODADAS; rodada++) {
+        const adminInativa = await criarAdministrador();
+        const adminRevoga = await criarAdministrador();
+        await darPermissao(adminRevoga.id, "sessoes.revogar_terceiro");
+        const alvo = await criarUsuario({ ativo: true });
+        const sessaoAlvo = await emitirCookieSessao(alvo.id);
+
+        const [resInativa, resRevoga] = await Promise.all([
+          requisitarAlterarSituacao(alvo.id, { ativo: false }, adminInativa.cookie),
+          fetch(`${baseUrl}/auth/sessoes/${sessaoAlvo.sessaoId}`, {
+            method: "DELETE",
+            headers: {
+              "content-type": "application/json",
+              cookie: adminRevoga.cookie,
+              [CABECALHO_REQUISICAO_TLF]: "1",
+              "sec-fetch-site": "same-origin",
+              "sec-fetch-mode": "cors",
+              "sec-fetch-dest": "empty",
+            },
+          }),
+        ]);
+        expect(resInativa.status).toBe(200);
+        expect(resRevoga.status).toBe(204);
+
+        const sessao = await lerSessao(sessaoAlvo.sessaoId);
+        expect(sessao?.estado).toBe("REVOGADA");
+        expect([adminInativa.id, adminRevoga.id]).toContain(sessao?.revogadaPorUsuarioId);
+
+        // A auditoria da revogação individual só existe se ela foi quem mutou.
+        const eventosRevogacao = await contarEventos("usuario.sessao.revogacao", sessaoAlvo.sessaoId);
+        expect(eventosRevogacao).toBe(sessao?.revogadaPorUsuarioId === adminRevoga.id ? 1 : 0);
+        expect(await contarEventos("usuario.situacao.alterada", alvo.id)).toBe(1);
+        await provarInvarianteSituacao(alvo.id, [adminInativa.id]);
+      }
+    });
+
+    it("C6: conclusão de recuperação de senha × inativação: sem deadlock, sem sessão ATIVA e sem senha trocada quando a inativação vence", async () => {
+      const NOVA_SENHA = "nova-senha-sintetica-concorrente-aut005";
+      for (let rodada = 0; rodada < RODADAS; rodada++) {
+        const admin = await criarAdministrador();
+        const alvo = await criarUsuario({ ativo: true });
+        await emitirCookieSessao(alvo.id);
+
+        const inicio = await recuperacao.iniciar({ identificador: alvo.email, atorUsuarioId: admin.id });
+        if (inicio.desfecho !== "EMITIDO") throw new Error(`início inesperado: ${inicio.desfecho}`);
+
+        const [resConclusao, resInativa] = await Promise.all([
+          recuperacao.concluir({ segredo: inicio.segredo, novaSenha: NOVA_SENHA, ip: `10.9.0.${rodada + 1}` }),
+          requisitarAlterarSituacao(alvo.id, { ativo: false }, admin.cookie),
+        ]);
+        expect(resInativa.status).toBe(200);
+        expect(["CONCLUIDA", "RECUPERACAO_INVALIDA"]).toContain(resConclusao.desfecho);
+
+        const usuario = await lerUsuario(alvo.id);
+        expect(usuario?.ativo).toBe(false);
+        await provarInvarianteSituacao(alvo.id, [admin.id]);
+
+        const senhaTrocada = !(await credenciais.verificarSenha(usuario!.senhaHash, SENHA));
+        const eventosRecuperacao = await contarEventos("usuario.senha.recuperacao_concluida", alvo.id);
+        if (resConclusao.desfecho === "CONCLUIDA") {
+          // A recuperação serializou antes da inativação.
+          expect(senhaTrocada).toBe(true);
+          expect(eventosRecuperacao).toBe(1);
+        } else {
+          // A inativação venceu: a credencial NÃO pode ter sido trocada nem auditada.
+          expect(senhaTrocada).toBe(false);
+          expect(eventosRecuperacao).toBe(0);
+        }
+        expect(await contarEventos("usuario.situacao.alterada", alvo.id)).toBe(1);
+      }
+    });
+
+    it("C7: requisições autenticadas em voo concorrentes com a inativação não mantêm nem ressuscitam a sessão", async () => {
+      const admin = await criarAdministrador();
+      const alvo = await criarUsuario({ ativo: true });
+      const sessaoAlvo = await emitirCookieSessao(alvo.id);
+
+      const consultar = (): Promise<number> =>
+        fetch(`${baseUrl}/auth/sessao`, {
+          method: "GET",
+          headers: { cookie: sessaoAlvo.cookie, "sec-fetch-site": "same-origin" },
+        }).then((r) => r.status);
+
+      const [resInativa, ...statusEmVoo] = await Promise.all([
+        requisitarAlterarSituacao(alvo.id, { ativo: false }, admin.cookie),
+        ...Array.from({ length: 10 }, () => consultar()),
+      ]);
+      expect(resInativa.status).toBe(200);
+      for (const status of statusEmVoo) expect([200, 401]).toContain(status);
+
+      // Após o commit, nenhuma leitura em voo devolveu a sessão a ATIVA.
+      const sessao = await lerSessao(sessaoAlvo.sessaoId);
+      expect(sessao?.estado).toBe("REVOGADA");
+      expect(sessao?.revogadaPorUsuarioId).toBe(admin.id);
+      expect(await consultar()).toBe(401);
+      expect((await sessoes.validar(sessaoAlvo.token)).valida).toBe(false);
+      await provarInvarianteSituacao(alvo.id, [admin.id]);
+    });
+    it("C3 determinístico: inativação que comita entre a leitura do login e a emissão impede a sessão", async () => {
+      const admin = await criarAdministrador();
+      const alvo = await criarUsuario({ ativo: true });
+
+      // Força a pior ordem: o login já leu `ativo = true` e conferiu a senha;
+      // a inativação comita ANTES de o login abrir a transação de emissão.
+      const original = credenciais.verificarComCaminhoDummy.bind(credenciais);
+      let statusInativacao = 0;
+      const spy = jest
+        .spyOn(credenciais, "verificarComCaminhoDummy")
+        .mockImplementationOnce(async (hash, senha) => {
+          const confere = await original(hash, senha);
+          statusInativacao = (await requisitarAlterarSituacao(alvo.id, { ativo: false }, admin.cookie)).status;
+          return confere;
+        });
+      let resLogin;
+      try {
+        resLogin = await autenticacao.autenticar({ identificador: alvo.email, senha: SENHA, ip: "10.8.0.1" });
+      } finally {
+        spy.mockRestore();
+      }
+
+      expect(statusInativacao).toBe(200);
+      expect(resLogin.desfecho).not.toBe("AUTENTICADO");
+      expect(await database.transacao((tx) => tx.sessaoAutenticacao.count({ where: { usuarioId: alvo.id } }))).toBe(0);
+      await provarInvarianteSituacao(alvo.id, [admin.id]);
+    });
+
+    it("C6 determinístico: inativação que comita durante o Argon2 da recuperação impede a troca de senha", async () => {
+      const admin = await criarAdministrador();
+      const alvo = await criarUsuario({ ativo: true });
+      await emitirCookieSessao(alvo.id);
+      const inicio = await recuperacao.iniciar({ identificador: alvo.email, atorUsuarioId: admin.id });
+      if (inicio.desfecho !== "EMITIDO") throw new Error(`início inesperado: ${inicio.desfecho}`);
+
+      // A conclusão já validou segredo e `ativo = true`; a inativação comita
+      // enquanto o novo hash é calculado, antes da transação T-07.
+      const original = credenciais.gerarHash.bind(credenciais);
+      let statusInativacao = 0;
+      const spy = jest.spyOn(credenciais, "gerarHash").mockImplementationOnce(async (senha) => {
+        const hash = await original(senha);
+        statusInativacao = (await requisitarAlterarSituacao(alvo.id, { ativo: false }, admin.cookie)).status;
+        return hash;
+      });
+      let resConclusao;
+      try {
+        resConclusao = await recuperacao.concluir({
+          segredo: inicio.segredo,
+          novaSenha: "nova-senha-sintetica-deterministica",
+          ip: "10.8.0.2",
+        });
+      } finally {
+        spy.mockRestore();
+      }
+
+      expect(statusInativacao).toBe(200);
+      expect(resConclusao.desfecho).toBe("RECUPERACAO_INVALIDA");
+      const usuario = await lerUsuario(alvo.id);
+      expect(await credenciais.verificarSenha(usuario!.senhaHash, SENHA)).toBe(true);
+      expect(await contarEventos("usuario.senha.recuperacao_concluida", alvo.id)).toBe(0);
+      await provarInvarianteSituacao(alvo.id, [admin.id]);
     });
   });
 });
