@@ -3,7 +3,7 @@
 > **Documento:** `docs/14-decisoes-configuracao-clinica.md`
 > **Projeto:** TechLab Fisio
 > **Frente:** Fase 3 — Configuração da Clínica (módulo M2, `CFG-001..CFG-006`)
-> **Status:** **DECIDIDO — `D-CFG-01`..`D-CFG-08` E ADENDOS `D-CFG-03-A` E `D-CFG-04-A` HOMOLOGADOS POR BRUNO MENEZES NORONHA EM 17/09/2026; `D-CFG-09`..`D-CFG-12` (PROVISIONAMENTO DA CLÍNICA) HOMOLOGADAS EM 17/09/2026; `D-CFG-13`..`D-CFG-21` (HORÁRIO DE FUNCIONAMENTO, CFG-002) HOMOLOGADAS EM 17/09/2026** (TLF-BASE-V1 §15, item 1).
+> **Status:** **DECIDIDO — `D-CFG-01`..`D-CFG-08` E ADENDOS `D-CFG-03-A` E `D-CFG-04-A` HOMOLOGADOS POR BRUNO MENEZES NORONHA EM 17/09/2026; `D-CFG-09`..`D-CFG-12` (PROVISIONAMENTO DA CLÍNICA) HOMOLOGADAS EM 17/09/2026; `D-CFG-13`..`D-CFG-21` (HORÁRIO DE FUNCIONAMENTO, CFG-002) HOMOLOGADAS EM 17/09/2026; `D-CFG-22`..`D-CFG-33` (CATÁLOGO DE SERVIÇOS, CFG-003) HOMOLOGADAS EM 17/09/2026** (TLF-BASE-V1 §15, item 1).
 > **Data:** 17 de setembro de 2026
 > **Insumo decisório:** pacote de análise `CFG-PREP0` (somente leitura), executado sobre `origin/main` = `63bb058`.
 > **Natureza:** registro normativo das decisões. A materialização da fatia `CFG-001A` (autorizada por Bruno em 17/09/2026) é registrada factualmente em `docs/10` §6-W; nenhuma decisão foi alterada por ela.
@@ -188,6 +188,105 @@ Homologadas por Bruno Menezes Noronha em 17/09/2026, que adotou integralmente as
 - `GET` e `PUT` exigem `clinica.configurar`; CSRF somente no `PUT`.
 - Clínica sem grade → `200` com lista vazia; linha de `clinica` ausente → `404 CLINICA_NAO_CONFIGURADA`.
 - Nenhuma permissão nova.
+### 3.11 Catálogo de serviços (`CFG-003`) — `D-CFG-22`..`D-CFG-33` *(homologadas em 17/09/2026; insumo: pacote `CFG-PREP3`)*
+
+Homologadas por Bruno Menezes Noronha em 17/09/2026, que aprovou integralmente as decisões `DS-01`..`DS-12` do pacote `CFG-PREP3` (somente leitura, medido sobre `origin/main` = `02cc93d`), **incluindo expressamente a alteração estrutural de banco de `DS-01` e `DS-08`**. **Registro normativo; nenhum código, schema, migration ou teste alterado.** A aprovação autoriza a materialização documental; **não** autoriza ainda implementação de runtime, schema ou migration.
+
+**Fatos de partida (`CFG-PREP3`).** A tabela `servico` já existe (`id uuid PK`; `clinica_id` FK NN `RESTRICT`; `nome text NN`; `duracao_min integer NN`; `preco_referencia numeric(12,2) NN`; `ativo boolean NN` sem default; `inativado_em timestamptz ∅`; `criado_em`), **sem** unicidade, **sem** CHECK, **sem** índice além da PK e **sem** `atualizado_em`. É referenciada por `profissional_servico`, `agendamento` e `pacote` (todas as FKs `RESTRICT`). `docs/07` §23 classifica Serviço como ativo/inativo com preservação histórica e exclusão física **não oferecida pelo fluxo**. `cobranca.valor_bruto` **copia** o preço de referência na criação (`docs/07` §7.2). `configuracao.alterada` já abrange `servico` (`docs/09` §13.6).
+
+#### 3.11.1 `D-CFG-22` — Unicidade do nome (`DS-01`)
+
+- Nome **único por clínica**, abrangendo serviços **ativos e inativos**, comparado **sem distinção de caixa e sem espaços nas bordas**: chave `(clinica_id, lower(btrim(nome)))`.
+- O nome de um serviço inativo **não é liberado para reuso**; o caminho é a reativação (mesmo racional de `H2.2-13`).
+- Violação → **`409 SERVICO_DUPLICADO`**, em criação e em edição. A rejeição concorrente pelo índice (`23505` **naquele índice**) tem o mesmo desfecho; `23505` em qualquer outra restrição não é traduzido para `409`.
+
+#### 3.11.2 `D-CFG-23` — Invariantes físicas (`DS-08`)
+
+- **Autorizada a futura migration** com:
+  - índice único `(clinica_id, lower(btrim(nome)))` (`D-CFG-22`);
+  - `CHECK (duracao_min > 0)`;
+  - `CHECK (preco_referencia >= 0)`;
+  - `CHECK` de coerência `ativo = (inativado_em IS NULL)`.
+- As invariantes passam a não depender unicamente da aplicação. Nomes físicos das restrições, verificação de dados e fixtures existentes, golden SQL e o alinhamento editorial de `docs/07` §10.1/§10.2 pertencem à fatia de implementação — `docs/07` **só é atualizado após a migration integrada**, pelo precedente da sua REV. 2.2.
+
+#### 3.11.3 `D-CFG-24` — Contrato HTTP (`DS-02`)
+
+Rotas de nível superior, em módulo próprio:
+
+| Rota | Sucesso | Erros específicos |
+| --- | --- | --- |
+| `GET /servicos[?ativo=true\|false]` | `200` lista | `400` filtro inválido |
+| `GET /servicos/:servicoId` | `200` | `400` id malformado; `404 SERVICO_NAO_ENCONTRADO` |
+| `POST /servicos` | `201` | `400`; `404 CLINICA_NAO_CONFIGURADA`; `409 SERVICO_DUPLICADO` |
+| `PUT /servicos/:servicoId` | `200` | `400`; `404 SERVICO_NAO_ENCONTRADO`; `409 SERVICO_DUPLICADO` |
+| `PATCH /servicos/:servicoId/situacao` | `200` | `400`; `404 SERVICO_NAO_ENCONTRADO` |
+
+- Corpo de `POST` e `PUT` — **exatamente** `{ nome, duracaoMin, precoReferencia }`; `PUT` é substituição total desses três campos.
+- Resposta — **exatamente** `{ id, nome, duracaoMin, precoReferencia, ativo, inativadoEm }`; `inativadoEm` em ISO-8601 ou `null`; `clinicaId` e `criadoEm` **não** são expostos. No `PUT` e no `PATCH`, o corpo é o estado vigente após a operação, inclusive no no-op.
+- `clinica_id` é resolvido no servidor a partir da linha única de `clinica`; nunca vem do cliente.
+- **Não existe rota de exclusão** (`DELETE`), em nenhuma condição (`docs/07` §23, RN-007).
+- Erros no envelope `{ erro: <código> }`; `401`, `403` e `500 FALHA_INTERNA` pelos contratos gerais. Códigos novos: somente `SERVICO_NAO_ENCONTRADO` e `SERVICO_DUPLICADO`.
+
+#### 3.11.4 `D-CFG-25` — Situação (`DS-03`)
+
+- Alterada **somente** por `PATCH /servicos/:servicoId/situacao` com corpo exato `{ ativo: boolean }`; o `PUT` não aceita `ativo`.
+- Inativação: `ativo = false`, `inativado_em = now()`. Reativação: `ativo = true`, `inativado_em = NULL`.
+- Pedido cujo `ativo` já é o vigente → `200` com o estado corrente, **sem** mutação, **sem** alterar `inativado_em` e **sem** auditoria (mesmo critério de `D21-03`).
+- Inativar ou reativar **nunca** altera `profissional_servico`, `agendamento`, `pacote` ou `cobranca`.
+
+#### 3.11.5 `D-CFG-26` — Criação sempre ativa (`DS-04`)
+
+- `POST /servicos` cria sempre com `ativo = true` e `inativado_em = NULL`; o corpo não aceita `ativo`.
+
+#### 3.11.6 `D-CFG-27` — Validação e representação (`DS-05`, `DS-06`, `DS-07`)
+
+| Campo | Regra |
+| --- | --- |
+| `nome` | string; aplicar `trim`; **1–200** caracteres após `trim`; **sem caracteres de controle**; persistido já sem espaços de borda |
+| `duracaoMin` | inteiro JSON; **1..1440** minutos; sem exigência de múltiplos |
+| `precoReferencia` | **string decimal canônica não negativa** compatível com `numeric(12,2)`: `^(0\|[1-9]\d{0,9})\.\d{2}$`; `"0.00"` aceito; `number` JSON rejeitado |
+
+- **Sem coerção de tipos**; corpo estrito (chave extra ou ausente, `null`, array ou objeto não plano → `400 REQUISICAO_INVALIDA`); sem dependência nova.
+- **Dinheiro sem float:** a resposta devolve o preço como string canônica de duas casas, lida do banco sem passar por `number`; comparações (inclusive de no-op) usam a forma canônica ou centavos inteiros — mesmo contrato de `ehDecimalMonetarioCanonico` e `CobrancaService`.
+
+#### 3.11.7 `D-CFG-28` — Listagem (`DS-09`)
+
+- **Sem paginação** e sem busca textual.
+- Retorna ativos e inativos; filtro opcional `?ativo=true|false` (qualquer outro valor → `400`).
+- Ordem canônica determinística: `ativo DESC`, `lower(nome)`, `id`.
+- `GET` com `Cache-Control: no-store`.
+
+#### 3.11.8 `D-CFG-29` — Concorrência (`DS-10`)
+
+- `PUT` e `PATCH` serializam por `SELECT ... FOR UPDATE` na linha de `servico`; a comparação de no-op ocorre **sob o lock**; a **última escrita válida prevalece**.
+- **Sem** coluna de versão, `If-Match` ou controle otimista nesta fase; `409` existe **somente** por `D-CFG-22`.
+- Limitação aceita: atualização perdida entre administradores concorrentes não é detectada (mesma de `D-CFG-05`).
+
+#### 3.11.9 `D-CFG-30` — Autorização (`DS-11`)
+
+- Todas as rotas exigem **`clinica.configurar`**; `ProtecaoCsrfGuard` **somente** em `POST`, `PUT` e `PATCH`.
+- Leitura por outros papéis (ex.: seleção de serviço pela Recepção) **não** é concedida agora; será decidida na fatia de agenda. **Nenhuma permissão nova.**
+- `403` por falta de permissão **não** gera evento (lista fechada de `L-07`).
+
+#### 3.11.10 `D-CFG-31` — Edição de serviço inativo (`DS-12`)
+
+- `PUT` é **permitido** sobre serviço inativo e **não** altera a situação.
+
+#### 3.11.11 `D-CFG-32` — Auditoria
+
+- Criação, edição efetiva, inativação e reativação emitem, cada uma, **um** `configuracao.alterada` com `alvo_tipo = "servico"`, `alvo_id = servico.id`, ator da sessão, `resultado = SUCESSO`, `justificativa = null`, `contexto` **vazio**, na **mesma transação** da mutação (falha → rollback conjunto).
+- No-op, consulta, validação rejeitada e negação de autorização **não** emitem evento.
+- Nome, duração e preço **nunca** são registrados. Aplicação direta de `docs/09` §13.6; nenhuma ação, chave de `contexto` ou `alvo_tipo` novo. Permanece a limitação declarada de §13.6 (estado anterior, inclusive preço anterior, não preservado).
+
+#### 3.11.12 `D-CFG-33` — Contrato oferecido aos módulos futuros
+
+Registro de fronteira; **nenhum** destes módulos é implementado ou decidido aqui.
+
+- **Identidade:** `servico.id` é o identificador estável referenciado por `profissional_servico` (PRO-004), `agendamento` e `pacote` (H2-07).
+- **Elegibilidade:** `ativo = true` é o predicado para **novo** uso operacional (CFG-003, RN-008, RN-013); referências existentes permanecem íntegras após inativação (RN-007).
+- **Duração:** `duracao_min` é **valor padrão** para o fim proposto de um novo agendamento; o agendamento persiste `inicio`/`fim` próprios e alterações do serviço não os reescrevem. Se a duração é sobrescrevível por agendamento é decisão da fatia de agenda.
+- **Preço:** `preco_referencia` é referência para **novas** cobranças, que copiam o valor na criação; alterações nunca reescrevem cobranças existentes.
+- **Pendências de fronteira:** novo pacote com serviço inativo e agendamento por pacote cujo serviço foi inativado (H2-07 × RN-013) ficam para as fatias de pacotes e agenda; a relação entre `clinica.duracao_padrao_atendimento_min` (`D-CFG-07`) e `servico.duracao_min` fica para a retomada de `D-CFG-07`.
 
 ## 4. Consequências normativas já definidas (sem ampliação)
 
@@ -206,7 +305,11 @@ Homologadas por Bruno Menezes Noronha em 17/09/2026, que adotou integralmente as
 | Exceções e feriados do horário de funcionamento (`D-CFG-19`) | **FUTURO DO MVP** |
 | Aplicação de RN-014 e reavaliação da troca de fuso (`D-CFG-20`, `D-CFG-08`) | **PENDENTE DA FATIA DE AGENDA** |
 | CFG-002 | **DECIDIDO, NÃO IMPLEMENTADO** |
-| CFG-003..CFG-005 | **NÃO INICIADOS** |
+| `P-CFG-04` — implementação de `CFG-003` (`D-CFG-22`..`D-CFG-33`: migration de unicidade e CHECKs de `servico`, rotas `/servicos`, testes) | **DECIDIDA — IMPLEMENTAÇÃO NÃO AUTORIZADA** por este registro |
+| Alinhamento de `docs/07` §10.1/§10.2 às restrições de `D-CFG-23` | **PENDENTE** — após integração da migration |
+| Leitura do catálogo de serviços por outros papéis; pacote/agendamento com serviço inativo; duração sobrescrevível (`D-CFG-30`, `D-CFG-33`) | **PENDENTE DAS FATIAS DE AGENDA E PACOTES** |
+| CFG-003 | **DECIDIDO, NÃO IMPLEMENTADO** |
+| CFG-004, CFG-005 | **NÃO INICIADOS** |
 | Inclusão da clínica no subcomando `provisionar` (`D-CFG-12`) | **NÃO AUTORIZADA** — reavaliação futura possível |
 | Alinhamento de `docs/07` (afirmava restrição então inexistente) | **RESOLVIDO** — migration `20260917060000_clinica_linha_unica` (`ux_clinica_linha_unica`) integrada na `main` pela PR #65 |
 
@@ -214,6 +317,7 @@ Homologadas por Bruno Menezes Noronha em 17/09/2026, que adotou integralmente as
 
 | REV. | Data | Descrição |
 | --- | --- | --- |
+| **8** | 17/09/2026 | Acréscimo de `D-CFG-22`..`D-CFG-33` (§3.11) — catálogo de serviços (`CFG-003`) —, homologadas por Bruno Menezes Noronha a partir do pacote `CFG-PREP3` (`DS-01`..`DS-12`), incluindo a autorização expressa da futura migration de unicidade do nome e CHECKs de `servico`. §5 atualizada. Integrada após `CFG-002` (REV. 7, PR #72), cujas `D-CFG-13`..`D-CFG-21` e §3.10 são preservadas. Nenhuma decisão anterior alterada; nenhum código, schema ou migration alterado. |
 | **7** | 17/09/2026 | Acréscimo de `D-CFG-13`..`D-CFG-21` (§3.10) — horário de funcionamento (`CFG-002`) —, homologadas por Bruno Menezes Noronha a partir do pacote `CFG-PREP2` (opções recomendadas, inclusive 0 = domingo e limite de 4 janelas/dia). Inclui leitura homologada de `docs/09` §13.6 (alvo `clinica`). §5 atualizada. Nenhuma decisão anterior alterada; nenhum código alterado. |
 | **6** | 17/09/2026 | Reconciliação factual pós-integração (`CFG-POST1`) de §5: `P-CFG-01` integrada pela PR #65 (`6ee19f2`) e `P-CFG-02` integrado pela PR #69 (`02cc93d`); alinhamento de `docs/07` resolvido; restrição de `provisionar` (`D-CFG-12`) explicitada como pendência. Os registros das REV. 2 e 5 permanecem como histórico. Nenhuma decisão normativa criada, alterada ou reaberta. |
 | **5** | 17/09/2026 | Atualização factual de §5: `P-CFG-02` implementado e medido em branch própria (`docs/10` §6-X); nenhuma decisão criada, alterada ou reaberta. |
