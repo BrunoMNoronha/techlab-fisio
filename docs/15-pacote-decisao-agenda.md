@@ -3,7 +3,9 @@
 > **Documento:** `docs/15-pacote-decisao-agenda.md`
 > **Projeto:** TechLab Fisio
 > **Frente:** Agenda (módulo M5 — Scheduling)
-> **Status:** **HOMOLOGADO — `D-AGD-01`..`D-AGD-17` APROVADAS INTEGRALMENTE CONFORME AS RECOMENDAÇÕES POR BRUNO MENEZES NORONHA EM 17/09/2026** (TLF-BASE-V1 §15, item 1), inclusive as decisões **[ESCOLHA]** `P-AGD-01`..`P-AGD-12` e a **alteração estrutural de banco** de `D-AGD-07` (CHECK de coerência do cancelamento). As marcas **[DERIVADA]**/**[ESCOLHA]** permanecem como registro da origem de cada decisão. A homologação autoriza a materialização documental; **não** autoriza ainda implementação de runtime, schema ou migration.
+> **Status:** **HOMOLOGADO — `D-AGD-01`..`D-AGD-17` APROVADAS INTEGRALMENTE CONFORME AS RECOMENDAÇÕES POR BRUNO MENEZES NORONHA EM 17/09/2026** (TLF-BASE-V1 §15, item 1), inclusive as decisões **[ESCOLHA]** `P-AGD-01`..`P-AGD-12` e a **alteração estrutural de banco** de `D-AGD-07` (CHECK de coerência do cancelamento). As marcas **[DERIVADA]**/**[ESCOLHA]** permanecem como registro da origem de cada decisão.
+> **Implementação de AGD-A: AUTORIZADA E EXECUTADA** por Bruno Menezes Noronha em 17/09/2026 — autorização expressa e específica da fatia **AGD-A** e da migration estrutural de `D-AGD-07`. A materialização está registrada em §8 e em `docs/10` §6-AI. **AGD-B, AGD-C, AGD-D e AGD-E permanecem sem autorização de implementação.** Nenhuma decisão foi criada, alterada ou reaberta pela implementação.
+> *(Registro histórico, preservado: até a REV. 5 este cabeçalho declarava que a homologação autorizava a materialização documental e **não** a implementação de runtime, schema ou migration. Essa era a situação então vigente; a autorização acima a substitui apenas quanto a AGD-A.)*
 > **Data:** 17 de setembro de 2026
 > **Base medida:** workspace local sobre `bd772a3` (branch local, sem publicação), incluindo o componente local de RN-014 (`apps/api/src/agenda/`, `docs/14` §5).
 > **Natureza:** registro normativo das decisões da agenda, originado do pacote de análise `AGD-PREP0`. **Nenhum código, schema, migration ou teste alterado.** Nenhuma implementação é autorizada por este documento.
@@ -229,10 +231,10 @@ As decisões **[DERIVADAS]** (`D-AGD-08`, `D-AGD-10`, `D-AGD-11`, `D-AGD-15`, `D
 
 | Item | Estado |
 | --- | --- |
-| Pacote de decisão de **PRO-003** (disponibilidade: vigência, sobreposição, erro) | **HOMOLOGADO** — `docs/16` REV. 2 (`D-PRO3-01`..`D-PRO3-10`); implementação não autorizada |
-| Decisões mínimas de pacientes (PAC) e profissionais (PRO-001, PRO-004) para AGD-A | **PAC: HOMOLOGADO** — `docs/17` REV. 2 (fatia PAC-A, implementada — `docs/10` §6-AC); **PRO-001/PRO-004: HOMOLOGADO** — `docs/18` (`D-PRO1-01`..`D-PRO1-10`; fatia PRO-A implementada — `docs/10` §6-AD); ambas integradas na branch local `integration/local-fase4`, não publicadas na `main` — pré-requisitos de AGD-A |
-| Implementação de CFG-005 (`P-CFG-06`) | **IMPLEMENTADA** (autorizada por Bruno Menezes Noronha em 17/09/2026; `docs/10` §6-AB) — integrada na branch local `integration/local-fase4`, não publicada na `main` — pré-requisito operacional do cancelamento (`D-AGD-07`) |
-| Implementação de AGD-A (rotas, T-01 avulso, histórico, auditoria, escopo, `GET /agenda/opcoes`) e migration do CHECK de `D-AGD-07` | **DECIDIDO — IMPLEMENTAÇÃO NÃO AUTORIZADA** |
+| Pacote de decisão de **PRO-003** (disponibilidade: vigência, sobreposição, erro) | **HOMOLOGADO E IMPLEMENTADO** — `docs/16` REV. 5 (`D-PRO3-01`..`D-PRO3-10`); publicado na `main` pela PR [#89](https://github.com/BrunoMNoronha/techlab-fisio/pull/89). *(Correção factual da REV. 6: até a REV. 5 esta linha dizia "implementação não autorizada".)* |
+| Decisões mínimas de pacientes (PAC) e profissionais (PRO-001, PRO-004) para AGD-A | **PAC: HOMOLOGADO** — `docs/17` REV. 2 (fatia PAC-A, implementada — `docs/10` §6-AC); **PRO-001/PRO-004: HOMOLOGADO** — `docs/18` (`D-PRO1-01`..`D-PRO1-10`; fatia PRO-A implementada — `docs/10` §6-AD); ambas **publicadas na `main`** pela PR [#89](https://github.com/BrunoMNoronha/techlab-fisio/pull/89) (merge `4b2e2c0`) — pré-requisitos de AGD-A **satisfeitos**. *(Correção factual da REV. 6: até a REV. 5 esta linha dizia "integradas na branch local `integration/local-fase4`, não publicadas na `main`", o que era verdade na data daquela medição.)* |
+| Implementação de CFG-005 (`P-CFG-06`) | **IMPLEMENTADA** (autorizada por Bruno Menezes Noronha em 17/09/2026; `docs/10` §6-AB) — **publicada na `main`** pela PR [#89](https://github.com/BrunoMNoronha/techlab-fisio/pull/89) (merge `4b2e2c0`) — pré-requisito operacional do cancelamento (`D-AGD-07`) **satisfeito**. *(Correção factual da REV. 6, mesma razão da linha anterior.)* |
+| Implementação de AGD-A (rotas, T-01 avulso, histórico, auditoria, escopo, `GET /agenda/opcoes`) e migration do CHECK de `D-AGD-07` | **AUTORIZADA E IMPLEMENTADA** em 17/09/2026 (autorização expressa de Bruno Menezes Noronha) — branch local `agent/agd-a-agenda-core`, **não publicada**; materialização em §8 e `docs/10` §6-AI |
 | AGD-B, AGD-C, AGD-D | **DECIDIDOS NO NÍVEL DESTE PACOTE** — detalhamento na respectiva fatia; implementação não autorizada |
 | AGD-E (iniciar/concluir), permissão correspondente, P2.2-05 e `AGUARDANDO → CANCELADO` | **FORA DESTE PACOTE** (`D-AGD-02`, `D-AGD-17`) |
 | Remoção de bloqueio (`D-AGD-16`) | **PACOTE PRÓPRIO FUTURO** |
@@ -263,10 +265,56 @@ As decisões **[DERIVADAS]** (`D-AGD-08`, `D-AGD-10`, `D-AGD-11`, `D-AGD-15`, `D
 | TA-18 | Consulta com intervalo > 7 dias ou invertido | `400` |
 | TA-19 | `GET /agenda/opcoes` | só ativos, sem preço |
 
+## 8. Registro de materialização de AGD-A (REV. 6, 17/09/2026)
+
+> **Natureza desta seção:** registro **posterior** e **factual** do que foi implementado. Ela **não** altera, reinterpreta nem reabre `D-AGD-01`..`D-AGD-17` ou `P-AGD-01`..`P-AGD-12`: §§1–6 permanecem exatamente como homologadas. O detalhamento técnico vive em `docs/10` §6-AI.
+
+### 8.1 Autorização e fronteira
+
+Bruno Menezes Noronha autorizou expressamente, em 17/09/2026, a implementação da fatia **AGD-A** e da **migration estrutural** prevista em `D-AGD-07`. A autorização é específica: **AGD-B, AGD-C, AGD-D e AGD-E não foram autorizadas** e nenhuma rota, coluna, permissão ou ação de auditoria delas foi criada. `P2.2-05` **não** foi implementada genericamente — o escopo continua derivado do código do papel, exatamente como `D-AGD-12` decidiu e com a mesma limitação declarada.
+
+Trabalho feito em branch e worktree dedicados (`agent/agd-a-agenda-core`), a partir de `origin/main` = `4b2e2c0`. **Sem push, PR, merge ou deploy.**
+
+### 8.2 Decisões materializadas
+
+| Decisão | Materialização |
+| --- | --- |
+| `D-AGD-01` | Somente AGD-A: seis rotas de `/agendamentos` + `GET /agenda/opcoes`. Pré-requisitos (PAC-A, PRO-A, PRO-004, PRO-003, CFG-005) confirmados na `main` antes de implementar |
+| `D-AGD-02` | `agenda.estados.ts` — função pura; confirmar `CONFIRMADO` é no-op sem histórico e sem auditoria; transição fora da tabela é `409 TRANSICAO_INVALIDA` |
+| `D-AGD-03` | `inicio >= instante do servidor`, avaliado dentro da transação; sem lançamento retroativo |
+| `D-AGD-04` | Ordem e códigos exatos dos 11 passos, no `AgendamentosService` |
+| `D-AGD-05` | Contrato HTTP literal; corpo de criação **sem** `modalidade` e `pacoteId`; resposta exata; sem `DELETE` |
+| `D-AGD-06` | Remarcação só de intervalo; revalida os itens 3 e 5..11; `CONFIRMADO` volta a `AGENDADO`; mesmo intervalo é no-op |
+| `D-AGD-07` | Motivo obrigatório, existente e ativo sob `FOR SHARE`; quatro campos gravados juntos; **migration `20260917230000_agendamento_cancelamento_coerente`** |
+| `D-AGD-08` | Nenhuma chave de idempotência; reenvio colide na exclusion constraint |
+| `D-AGD-09` | Catálogo fechado de operações; uma linha por mutação efetiva, na mesma transação |
+| `D-AGD-10` | Três ações, `contexto` vazio, mesma transação; confirmação só no histórico |
+| `D-AGD-11` | Exclusion constraints na gravação; `FOR UPDATE` no agendamento; ordem `agendamento -> motivo (FOR SHARE)`; sem versão e sem `If-Match` |
+| `D-AGD-12` | `EscopoAgendaService` — operacional (Administrador/Recepcionista que **concedam** a permissão) × próprio (demais, fail-closed) |
+| `D-AGD-13` | `GET /agenda/opcoes` com o contrato exato, só ativos, sem preço |
+| `D-AGD-14` | `[de, ate)` de no máximo 7 dias, intersecção, todos os estados, ordem `inicio, id`, sem paginação, `no-store` |
+| `D-AGD-15` / `D-AGD-17` | Nada de `PACOTE`, `reserva_sessao`, check-in, falta, bloqueio, início ou conclusão |
+
+### 8.3 Correlação histórico × auditoria — decisão local declarada
+
+`historico_agendamento` **não possui coluna `correlacao_id`**, e a persistência da Fase 2 está encerrada: esta fatia só foi autorizada a criar o CHECK de `D-AGD-07`. A exigência de `docs/07` §22.4 e de `D-AGD-10` — "as duas linhas com o mesmo `correlacao_id`" — foi materializada usando o **mesmo UUID** como `historico_agendamento.id` e como `evento_auditoria.correlacao_id`, de modo que a junção `evento_auditoria.correlacao_id = historico_agendamento.id` é exata. Nenhuma coluna nova foi criada. Alternativa registrada e **não** adotada: acrescentar `correlacao_id` a `historico_agendamento`, o que exigiria decisão estrutural própria.
+
+### 8.4 Matriz `TA-01`..`TA-19` — cobertura
+
+Todos os dezenove cenários estão cobertos por teste automatizado; `TA-09` é provado contra **PostgreSQL real**, com duas requisições HTTP concorrentes. A tabela cenário × teste × resultado está em `docs/10` §6-AI.3.
+
+### 8.5 Limites declarados da implementação
+
+- **Race residual aceita** (`D-AGD-11`, `R2.2-09`, `D-CFG-63`): grade da clínica, disponibilidade e bloqueio são validados **sem lock**; alteração concorrente entre a validação e a gravação não é detectada. Só o conflito entre agendamentos é estrutural.
+- **Escopo por código de papel** (`D-AGD-12`): limitação homologada, mantida. `P2.2-05` continua não iniciada.
+- **CHECK de `D-AGD-07`**: a expressão homologada compara a **conjunção** dos três campos, de modo que um resíduo parcial em agendamento não cancelado não é rejeitado pelo banco. Nenhum caminho da aplicação o produz; o limite está registrado em teste de efeito e em `docs/07` §10.2 (nota da REV. 2.6).
+- **`protected-objects.json` não foi ampliado** (fora do escopo autorizado): a nova CHECK fica coberta pelo golden (Guarda 3) e pelo teste de efeito (Guarda 2), no mesmo precedente de `CFG-003`, `CFG-004`, `CFG-005`, `PAC-A`, `PRO-A` e `PRO-003`.
+
 ## 7. Histórico de revisões
 
 | REV. | Data | Descrição |
 | --- | --- | --- |
+| **6** | 17/09/2026 | **Registro de materialização de AGD-A** (§8), após autorização expressa e específica de Bruno Menezes Noronha para implementar a fatia AGD-A e a migration estrutural de `D-AGD-07`. Cabeçalho e §5.2 atualizados: a implementação de AGD-A passa de `DECIDIDO — IMPLEMENTAÇÃO NÃO AUTORIZADA` para `AUTORIZADA E IMPLEMENTADA` (branch local, não publicada). Correções **factuais** em §5.2, com registro da correção: CFG-005, PAC-A, PRO-A e PRO-003 deixaram de estar "não publicadas na `main`" — todas foram publicadas pela PR [#89](https://github.com/BrunoMNoronha/techlab-fisio/pull/89) (merge `4b2e2c0`). **Nenhuma decisão `D-AGD-*` ou `P-AGD-*` criada, alterada ou reaberta; §§1–6 preservadas byte a byte.** AGD-B, AGD-C, AGD-D e AGD-E seguem sem autorização de implementação. |
 | **5** | 17/09/2026 | Alinhamento editorial `D-INTEG-02` (Bruno Menezes Noronha), na integração local das quatro frentes: §5.2 deixa de afirmar que a implementação de CFG-005 não está autorizada (autorizada e implementada — `docs/10` §6-AB) e registra PRO-001/PRO-004 homologados em `docs/18` com a fatia PRO-A implementada; FA-05 recebe nota de que descreve a base medida. Nenhuma decisão `D-AGD-*` criada, alterada ou reaberta; AGD-A..AGD-D seguem sem autorização de implementação. |
 | **4** | 17/09/2026 | Atualização factual de §5.2: pacote mínimo de pacientes homologado (`docs/17` REV. 2); PRO-001/PRO-004 em preparação em outra branch/sessão. Nenhuma decisão alterada. |
 | **3** | 17/09/2026 | Atualização factual de §5.2: pacote de PRO-003 homologado (`docs/16` REV. 2). Nenhuma decisão alterada. |
