@@ -113,19 +113,49 @@ export interface DadosClinicaValidados {
   readonly fusoHorario: string;
 }
 
-let fusosReconhecidos: ReadonlySet<string> | null = null;
+let fusosPreferidos: ReadonlySet<string> | null = null;
+
+/** Nome IANA: segmentos separados por `/`, cada um iniciando por maiúscula (ex.: `Etc/GMT+3`, `US/Eastern`). */
+const FORMA_NOME_IANA = /^[A-Z][A-Za-z0-9_+-]*(\/[A-Z][A-Za-z0-9_+-]*)*$/;
 
 /**
- * Fuso IANA reconhecido pelo runtime (D-CFG-04): comparação EXATA
- * (case-sensitive) contra `Intl.supportedValuesOf("timeZone")`, com `UTC`
- * aceito explicitamente (o runtime não o lista).
+ * Fuso IANA reconhecido pelo runtime (D-CFG-04), case-sensitive, com `UTC`
+ * aceito explicitamente.
+ *
+ * `Intl.supportedValuesOf("timeZone")` lista só identificadores PREFERIDOS;
+ * links IANA válidos (`US/Eastern`, `Etc/GMT+3`,
+ * `America/Argentina/Buenos_Aires`) são reconhecidos por `Intl.DateTimeFormat`.
+ * Regra aplicada:
+ *   1. `UTC` ou identificador preferido exato -> aceito;
+ *   2. senão, exige forma de nome IANA (rejeita offsets como `-03:00`, que o
+ *      runtime aceita mas não são IANA), reconhecimento pelo runtime e que o
+ *      valor NÃO seja variante de caixa do identificador canônico resolvido.
+ * Limite: o runtime não expõe a grafia dos links; uma variante de caixa de um
+ * link cujo primeiro caractere de cada segmento é maiúsculo (`US/eastern`) não
+ * é distinguível e é aceita.
  */
 export function ehFusoHorarioValido(valor: string): boolean {
   if (valor === "UTC") return true;
-  if (fusosReconhecidos === null) {
-    fusosReconhecidos = new Set(Intl.supportedValuesOf("timeZone"));
+  if (fusosPreferidos === null) {
+    fusosPreferidos = new Set(Intl.supportedValuesOf("timeZone"));
   }
-  return fusosReconhecidos.has(valor);
+  if (fusosPreferidos.has(valor)) return true;
+  if (!FORMA_NOME_IANA.test(valor)) return false;
+
+  let canonico: string;
+  try {
+    canonico = new Intl.DateTimeFormat("en-US", { timeZone: valor }).resolvedOptions().timeZone;
+  } catch {
+    return false;
+  }
+  return !(canonico !== valor && canonico.toLowerCase() === valor.toLowerCase());
+}
+
+/** Quantidade de CARACTERES (code points), não de unidades UTF-16. */
+export function contarCaracteres(valor: string): number {
+  let total = 0;
+  for (const _ of valor) total++;
+  return total;
 }
 
 /**
@@ -152,7 +182,7 @@ function ehObjetoPlano(corpo: unknown): corpo is Record<string, unknown> {
 function textoObrigatorio(valor: unknown, maximo: number): string | undefined {
   if (typeof valor !== "string") return undefined;
   const aparado = valor.trim();
-  if (aparado.length === 0 || aparado.length > maximo) return undefined;
+  if (aparado.length === 0 || contarCaracteres(aparado) > maximo) return undefined;
   return aparado;
 }
 
@@ -162,7 +192,7 @@ function textoOpcional(valor: unknown, maximo: number): string | null | undefine
   if (typeof valor !== "string") return undefined;
   const aparado = valor.trim();
   if (aparado.length === 0) return null;
-  if (aparado.length > maximo) return undefined;
+  if (contarCaracteres(aparado) > maximo) return undefined;
   return aparado;
 }
 

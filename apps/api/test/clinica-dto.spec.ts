@@ -138,6 +138,17 @@ describe("D-CFG-04 — normalização e limites", () => {
     invalido({ ...corpoValido(), email: "a".repeat(LIMITES_CLINICA.EMAIL + 1 - dominio.length) + dominio });
   });
 
+  it("limites contam caracteres Unicode (code points), não unidades UTF-16", () => {
+    const emoji = "😀";
+    expect(emoji.length).toBe(2);
+    valido({ ...corpoValido(), nomeCadastral: emoji.repeat(LIMITES_CLINICA.NOME_CADASTRAL) });
+    invalido({ ...corpoValido(), nomeCadastral: emoji.repeat(LIMITES_CLINICA.NOME_CADASTRAL + 1) });
+    valido({ ...corpoValido(), telefone: emoji.repeat(LIMITES_CLINICA.TELEFONE) });
+    const dominio = "@clinica.exemplo";
+    valido({ ...corpoValido(), email: emoji.repeat(LIMITES_CLINICA.EMAIL - dominio.length) + dominio });
+    invalido({ ...corpoValido(), email: emoji.repeat(LIMITES_CLINICA.EMAIL + 1 - dominio.length) + dominio });
+  });
+
   it("telefone é texto livre", () => {
     expect(valido({ ...corpoValido(), telefone: "ramal 12 / recepção" }).telefone).toBe("ramal 12 / recepção");
   });
@@ -158,12 +169,12 @@ describe("D-CFG-04-A — predicado exato do e-mail", () => {
 });
 
 describe("D-CFG-04 — fuso IANA case-sensitive, UTC aceito", () => {
-  it.each(["UTC", "America/Sao_Paulo", "America/Manaus", "Europe/Lisbon"])("aceita %s", (fuso) => {
+  it.each(["UTC", "America/Sao_Paulo", "America/Manaus", "Europe/Lisbon", "US/Eastern", "Etc/GMT+3", "America/Argentina/Buenos_Aires", "Etc/UTC"])("aceita %s", (fuso) => {
     expect(ehFusoHorarioValido(fuso)).toBe(true);
     expect(valido({ ...corpoValido(), fusoHorario: fuso }).fusoHorario).toBe(fuso);
   });
 
-  it.each(["", "   ", "Foo/Bar", "-03:00", "GMT-3", "america/sao_paulo", "AMERICA/SAO_PAULO", "utc"])(
+  it.each(["", "   ", "Foo/Bar", "-03:00", "+03:00", "GMT-3", "america/sao_paulo", "AMERICA/SAO_PAULO", "utc", "us/eastern", "Etc/gmt+3", "America/sao_Paulo"])(
     "rejeita %p",
     (fuso) => {
       invalido({ ...corpoValido(), fusoHorario: fuso });

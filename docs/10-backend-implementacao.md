@@ -3791,6 +3791,7 @@ Os 4 mutation challenges obrigatórios estabelecidos em `docs/12` §10.5 foram t
 - **Erros do body parser** (JSON malformado, `413`) nascem antes do roteamento: o status é o correto, mas o corpo é o padrão da plataforma — o filtro global `FiltroErroAutenticacao` (`apps/api/src/auth/**`) não foi alterado por esta fatia. Mesmo estado vigente em `PATCH /auth/usuarios/:usuarioId/situacao`.
 - **Provisionamento** da linha de `clinica` (`D-CFG-01`) permanece **sem fatia atribuída**: sem ele, a API responde `404 CLINICA_NAO_CONFIGURADA`.
 - Logotipo e duração padrão fora (`D-CFG-07`); CFG-002..CFG-005 não iniciados.
+- **Correção pós-revisão do PR #65:** o fuso aceita também links IANA reconhecidos pelo runtime (`US/Eastern`, `Etc/GMT+3`, `America/Argentina/Buenos_Aires`) além dos identificadores preferidos, rejeitando offsets (`-03:00`) e variantes de caixa do canônico; limite residual: variante de caixa de um link com segmentos iniciados por maiúscula (`US/eastern`) não é distinguível pelo runtime e é aceita. Limites de tamanho passam a contar **caracteres Unicode** (code points), coerentes com `maxLength` do OpenAPI.
 
 ## 7. Auditoria — `P-BACK-01`
 
