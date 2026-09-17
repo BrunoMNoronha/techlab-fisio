@@ -242,7 +242,7 @@ describe("AuthModule — fronteira da F1+F2+F3 preservada", () => {
     expect(imports ?? []).toEqual([DatabaseModule, AuditModule]);
   });
 
-  it("as rotas expostas pela aplicação são SÓ as da F3, F6, P-2.3D-07, AUT-005, P-2.3D-10, CFG-001A, AUD-004 e CFG-003", () => {
+  it("as rotas expostas pela aplicação são SÓ as da F3, F6, P-2.3D-07, AUT-005, P-2.3D-10, CFG-001A, CFG-002, AUD-004 e CFG-003", () => {
     // Prova de fronteira contra o ROUTER real, e não contra metadados: se um
     // endpoint de F4+ (profissionais, pacientes, agenda, refresh)
     // entrar acidentalmente no `AppModule`, esta asserção falha.
@@ -250,6 +250,7 @@ describe("AuthModule — fronteira da F1+F2+F3 preservada", () => {
     // (`RecuperacaoSenhaModule`, `SessoesModule`, `UsuariosModule`, `ClinicaModule`), não no AuthModule.
     // P-2.3D-10 (`D-2.3D-22`): a listagem de sessões ativas vive no `SessoesModule`.
     // CFG-001A (`docs/14`): GET/PUT /clinica vivem no `ClinicaModule`.
+    // CFG-002 (`docs/14`): GET/PUT /horario-funcionamento também vivem no `ClinicaModule`.
     // A asserção continua sendo de igualdade exata sobre o ROUTER real.
     // AUD-004: `/auditoria/eventos` vive no `AuditoriaConsultaModule`.
     // CFG-003 (`docs/14` §3.11): `/servicos` vive no `ServicosModule`.
@@ -266,6 +267,7 @@ describe("AuthModule — fronteira da F1+F2+F3 preservada", () => {
       "/auth/usuarios/{usuarioId}/situacao",
       "/clinica",
       "/health",
+      "/horario-funcionamento",
       "/servicos",
       "/servicos/{servicoId}",
       "/servicos/{servicoId}/situacao",

@@ -143,7 +143,7 @@ try {
 
   const caminhos = Object.keys(documento.paths ?? {}).sort();
   conferir(
-    "rotas da F3, F6, P-2.3D-07, P-2.3D-08, AUT-005, P-2.3D-10, CFG-001A, AUD-004 e CFG-003 presentes e nenhuma outra vazou",
+    "rotas da F3, F6, P-2.3D-07, P-2.3D-08, AUT-005, P-2.3D-10, CFG-001A, CFG-002, AUD-004 e CFG-003 presentes e nenhuma outra vazou",
     JSON.stringify(caminhos) ===
       JSON.stringify([
         "/auditoria/eventos",
@@ -157,6 +157,7 @@ try {
         "/auth/usuarios/{usuarioId}/situacao",
         "/clinica",
         "/health",
+        "/horario-funcionamento",
         "/servicos",
         "/servicos/{servicoId}",
         "/servicos/{servicoId}/situacao",
@@ -267,6 +268,16 @@ try {
     conferir(`${metodo.toUpperCase()} /clinica documenta ${esperado}`, status === esperado, `status=${status}`);
   }
 
+  // CFG-002 — horário de funcionamento (docs/14 D-CFG-15, D-CFG-21).
+  for (const [metodo, esperado] of [
+    ["get", "200,401,403,404,500"],
+    ["put", "200,400,401,403,404,413,500"],
+  ]) {
+    const status = Object.keys(documento.paths["/horario-funcionamento"]?.[metodo]?.responses ?? {})
+      .sort()
+      .join(",");
+    conferir(`${metodo.toUpperCase()} /horario-funcionamento documenta ${esperado}`, status === esperado, `status=${status}`);
+  }
   // CFG-003 — catálogo de serviços (docs/14 §3.11); sem DELETE.
   for (const [caminho, metodo, esperado] of [
     ["/servicos", "get", "200,400,401,403,500"],
