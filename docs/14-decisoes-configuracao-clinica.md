@@ -399,13 +399,14 @@ Registro de fronteira; **nenhum** destes módulos é implementado ou decidido aq
 | `P-CFG-01` — implementação da fatia `CFG-001A` (migration de linha única, GET/PUT `/clinica`, testes) | **INTEGRADA NA `main`** — PR [#65](https://github.com/BrunoMNoronha/techlab-fisio/pull/65), commit de integração `6ee19f27afc5d7c55667ef910536baa924ecc990` (`docs/10` §6-W, §6-X.5) |
 | `P-CFG-02` — provisionamento da linha de `clinica` (`CFG-001B`; `D-CFG-01`, `D-CFG-09`..`D-CFG-12`) | **INTEGRADO NA `main`** — PR [#69](https://github.com/BrunoMNoronha/techlab-fisio/pull/69), merge commit `02cc93d5770003775d3417b1d2ee08a874675d30` (`docs/10` §6-X, §6-X.5) |
 | Logotipo e duração padrão (`D-CFG-07`) | **FUTURO DO MVP** — não implementados |
-| `P-CFG-03` — implementação de `CFG-002` (`D-CFG-13`..`D-CFG-21`) | **IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA (`agent/cfg-002-horario-funcionamento`) — NÃO INTEGRADA** (`docs/10` §6-Y); implementação autorizada por Bruno em 17/09/2026 |
+| `P-CFG-03` — implementação de `CFG-002` (`D-CFG-13`..`D-CFG-21`) | **INTEGRADA NA `main`** — PR [#76](https://github.com/BrunoMNoronha/techlab-fisio/pull/76), merge commit `ad2bcf8041635f469db6c799e7405f455d836d30` (`docs/10` §6-Y, §6-Y.6) |
 | Exceções e feriados do horário de funcionamento (`D-CFG-19`) | **FUTURO DO MVP** |
 | Aplicação de RN-014 e reavaliação da troca de fuso (`D-CFG-20`, `D-CFG-08`) | **PENDENTE DA FATIA DE AGENDA** |
 | CFG-002 | **IMPLEMENTADO EM BRANCH — NÃO INTEGRADO** |
 | `P-CFG-04` — implementação de `CFG-003` (`D-CFG-22`..`D-CFG-33`: migration de unicidade e CHECKs de `servico`, rotas `/servicos`, testes) | **IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA (`agent/cfg-003-catalogo-servicos`) — NÃO INTEGRADA** (`docs/10` §6-Z); implementação autorizada por Bruno Menezes Noronha em 17/09/2026 |
 | Alinhamento de `docs/07` §10.1/§10.2 às restrições de `D-CFG-23` | **PENDENTE** — após integração da migration |
 | Leitura do catálogo de serviços por outros papéis; pacote/agendamento com serviço inativo; duração sobrescrevível (`D-CFG-30`, `D-CFG-33`) | **PENDENTE DAS FATIAS DE AGENDA E PACOTES** |
+| CFG-002 | **INTEGRADO NA `main`** (exceto exceções/feriados e aplicação de RN-014, acima) |
 | CFG-003 | **IMPLEMENTADO EM BRANCH PRÓPRIA — NÃO INTEGRADO** (`docs/10` §6-Z) |
 | `P-CFG-05` — implementação de `CFG-004` (`D-CFG-34`..`D-CFG-45`: migration de unicidade e CHECK de `forma_pagamento`, rotas `/formas-pagamento`, testes) | **DECIDIDO — IMPLEMENTAÇÃO NÃO AUTORIZADA** |
 | Alinhamento de `docs/07` §10.1/§10.2 às restrições de `D-CFG-35` | **PENDENTE** — após integração da migration |
@@ -418,7 +419,8 @@ Registro de fronteira; **nenhum** destes módulos é implementado ou decidido aq
 
 | REV. | Data | Descrição |
 | --- | --- | --- |
-| **12** | 17/09/2026 | Atualização factual de §5: `P-CFG-04` (`CFG-003`) implementada e medida em branch própria (`docs/10` §6-Z), após autorização de implementação por Bruno Menezes Noronha. Nenhuma decisão criada, alterada ou reaberta. |
+| **13** | 17/09/2026 | Atualização factual de §5: `P-CFG-04` (`CFG-003`) implementada e medida em branch própria (`docs/10` §6-Z), após autorização de implementação por Bruno Menezes Noronha. Nenhuma decisão criada, alterada ou reaberta. |
+| **12** | 17/09/2026 | Reconciliação factual pós-integração de §5: `P-CFG-03` / `CFG-002` integrada pela PR #76 (merge `ad2bcf8`). O registro da REV. 10 permanece como histórico. Nenhuma decisão normativa criada, alterada ou reaberta. |
 | **11** | 17/09/2026 | Acréscimo de `D-CFG-34`..`D-CFG-45` (§3.12) — formas de pagamento (`CFG-004`) —, homologadas por Bruno Menezes Noronha a partir das recomendações do pacote `CFG-PREP4`: unicidade da descrição e CHECK de coerência (migration futura autorizada); rotas `/formas-pagamento` sem `DELETE`; descrição 1–100 sem campo de tipo; sem formas pré-cadastradas; `409 FORMA_PAGAMENTO_EM_USO` na edição de forma referenciada por pagamento; `FOR UPDATE`; `clinica.configurar`; auditoria com `alvo_tipo = "forma_pagamento"`; contrato de fronteira com T-03. Cabeçalho, §4 e §5 atualizados. Nenhuma decisão anterior alterada; nenhum código alterado; implementação não autorizada. |
 | **10** | 17/09/2026 | Atualização factual de §5: `P-CFG-03` implementada e medida em branch própria (`docs/10` §6-Y); nenhuma decisão criada, alterada ou reaberta. |
 | **9** | 17/09/2026 | Correções editoriais: título e insumo decisório do cabeçalho abrangem `CFG-001`..`CFG-006` e os pacotes `CFG-PREP0`..`CFG-PREP3`; referência de exclusão física em §3.10.3 corrigida de `docs/07` §28 para §23; nota de alcance da auditoria em §4 (`D-CFG-17`, `D-CFG-32`); §5 sem linhas duplicadas de CFG-002/CFG-003 e `P-CFG-03` com a autorização de implementação dada por Bruno em 17/09/2026. Nenhuma decisão criada, alterada ou reaberta. |
