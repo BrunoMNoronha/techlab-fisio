@@ -2,7 +2,8 @@
 
 > **Arquivo:** `docs/10-backend-implementacao.md`
 > **Natureza:** documento **MUTÁVEL** — registro vivo de implementação da frente de backend (`apps/api`)
-> **Revisão vigente:** REV. 50 (17/09/2026) — **`PBACK-AUD-08` / AUD-004 — CONSULTA DA TRILHA DE AUDITORIA IMPLEMENTADA EM BRANCH / NÃO INTEGRADA** (§7.6). Branch `agent/p-back-01-aud-004-consulta-trilha-r2` a partir de `origin/main` = `bc6a763`. Rota `GET /auditoria/eventos` sob `@RequerPermissao("auditoria.ler")`, materializando a política fechada de `docs/09` §13.9 sem reinterpretá-la. Nenhuma decisão normativa criada, alterada ou reaberta; nenhuma permissão nova; catálogo de ações (25) e whitelist inalterados; `auditoria.consultada` **não** criada; zero drift de persistência; zero dependências. Revisão independente aprovada com ressalvas; por decisão de Bruno Menezes Noronha (17/09/2026) `justificativa` é **omitida** da resposta e o contrato local (path, limite 20/50, cursor keyset — §7.6.2) é **aceito**. **`P-BACK-01` permanece EM ANDAMENTO**; `L-06` ABERTA / BLOQUEADA; AUT-005 não tocada.
+> **Revisão vigente:** REV. 51 (17/09/2026) — **`PBACK-AUD-08` / AUD-004 — CONSULTA DA TRILHA DE AUDITORIA IMPLEMENTADA EM BRANCH / NÃO INTEGRADA** (§7.6). Branch `agent/p-back-01-aud-004-consulta-trilha-r2` a partir de `origin/main` = `9b403a8`. Rota `GET /auditoria/eventos` sob `@RequerPermissao("auditoria.ler")`, materializando a política fechada de `docs/09` §13.9 sem reinterpretá-la. Nenhuma decisão normativa criada, alterada ou reaberta; nenhuma permissão nova; catálogo de ações (25) e whitelist inalterados; `auditoria.consultada` **não** criada; zero drift de persistência; zero dependências. Revisão independente aprovada com ressalvas; por decisão de Bruno Menezes Noronha (17/09/2026) `justificativa` é **omitida** da resposta e o contrato local (path, limite 20/50, cursor keyset — §7.6.2) é **aceito**. **`P-BACK-01` permanece EM ANDAMENTO**; `L-06` ABERTA / BLOQUEADA; AUT-005 não tocada.
+> **Estado anterior preservado:** REV. 50 (17/09/2026) — **`CFG-001A` — CONSULTA E ATUALIZAÇÃO DOS DADOS DA CLÍNICA ÚNICA (CFG-001 SEM LOGOTIPO + CFG-006) IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA (`agent/cfg-001a-dados-clinica`) — NÃO INTEGRADA NA `main`** (§6-W). Materialização de `D-CFG-01`..`D-CFG-08` (`docs/14`, homologadas por Bruno Menezes Noronha em 17/09/2026); nenhuma decisão criada, alterada ou reaberta. Migration nova `20260917060000_clinica_linha_unica` (`ux_clinica_linha_unica`) e golden atualizado; rotas `GET /clinica` e `PUT /clinica`; nenhuma permissão, ação de auditoria, chave de `contexto` ou dependência nova.
 > **Estado anterior preservado:** REV. 49 (17/09/2026) — **`P-2.3D-10` / AUT-002 / `D-2.3D-22` — LISTAGEM ADMINISTRATIVA DAS SESSÕES ATIVAS DE UM USUÁRIO IMPLEMENTADA EM BRANCH PRÓPRIA (`agent/sessoes-admin-next`) — NÃO INTEGRADA NA `main`** (§6-V). Decisão `D-2.3D-22` homologada por Bruno Menezes Noronha em 17/09/2026 (`docs/12` §5.22, REV. 18). Zero drift de persistência; nenhuma dependência, permissão ou ação de auditoria nova; CI e Playwright intocados.
 > **Estado anterior preservado:** REV. 48 (17/09/2026) — **REGISTRO PÓS-INTEGRAÇÃO DE `CI-E2E0` NA `main` — SMOKE E2E PLAYWRIGHT OBRIGATÓRIO NA CI (PR [#58](https://github.com/BrunoMNoronha/techlab-fisio/pull/58), [#59](https://github.com/BrunoMNoronha/techlab-fisio/pull/59) E [#61](https://github.com/BrunoMNoronha/techlab-fisio/pull/61); MERGES `4156689`, `63bb058` E `e7abe30`)** (§6-U). Registro **exclusivamente factual**, no precedente `MEDIR → REGISTRAR`; nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código de produção, schema, migration, contrato ou dependência alterada por este registro. Fatos: PR [#58](https://github.com/BrunoMNoronha/techlab-fisio/pull/58) (merge **`4156689f78fae9f27241d7ed85e417b9486ede98`**, 17/09/2026 04:26:50Z, CI verde na run `35181522998`), PR [#59](https://github.com/BrunoMNoronha/techlab-fisio/pull/59) (merge **`63bb058c2134aac9c57f8fca8245588c915826e5`**, 04:41:17Z, run `35182242657`) e PR [#61](https://github.com/BrunoMNoronha/techlab-fisio/pull/61) (merge **`e7abe300e49b0fb1427fc19ef7843774b67212d5`**, 05:06:36Z, runs `35184127602` push e `35184130714` pull_request), todos por merge commit, sem squash/rebase. Proteção da `main` com o job de CI como required check, inclusive para administradores.
 > **Estado anterior preservado:** REV. 47 (17/09/2026) — **REGISTRO PÓS-INTEGRAÇÃO DO REFORÇO DE PROVAS DE `P-2.3D-09` / AUT-005 / `D-2.3D-21` NA `main` (PR [#55](https://github.com/BrunoMNoronha/techlab-fisio/pull/55), MERGE `bce22e8`)** (§6-T.3). Registro **exclusivamente factual**, no precedente `MEDIR → REGISTRAR`; nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código de produção, schema, migration, contrato, dependência ou CI alterada. Fatos: PR [#55](https://github.com/BrunoMNoronha/techlab-fisio/pull/55), commit `4d95c386d15d08060c319300a09a1f4eef5f3590` (somente `apps/api/test/integration/usuarios-situacao.integration.spec.ts`), merge commit **`bce22e8265317be16bf78fcb1861aafdc4b05b0c`** (merge commit, sem squash/rebase), 17/09/2026 03:54:24Z, CI verde na run `35179564801`. `docs/12` sincronizado na REV. 17 (§10.6.1).
@@ -3761,6 +3762,67 @@ Os 4 mutation challenges obrigatórios estabelecidos em `docs/12` §10.5 foram t
 
 ---
 
+## 6-W. `CFG-001A` — Dados da clínica única (CFG-001 sem logotipo + CFG-006)
+
+**Estado: IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA (`agent/cfg-001a-dados-clinica`, a partir de `main` = `21e2fa0`) — NÃO INTEGRADA.** Decisões normativas: `docs/14` (`D-CFG-01`..`D-CFG-08` e adendos `D-CFG-03-A` — representação da resposta — e `D-CFG-04-A` — predicado exato do e-mail, que formalizam o comportamento já implementado). Auditoria: `docs/09` §13.6.
+
+### 6-W.1 Componentes
+
+- **Persistência:** migration `20260917060000_clinica_linha_unica` — `CREATE UNIQUE INDEX "ux_clinica_linha_unica" ON "clinica" ((true))` (`D-CFG-02`; `docs/07` §7.2; `docs/08` §8 Categoria C). `schema.golden.sql` regerado por reconstrução limpa (`schema:golden:update`); `schema.prisma` e `protected-objects.json` **inalterados** — a proteção do índice é o golden (Guarda 3) e o teste `CA-14`; o inventário da Guarda 1/2 não foi ampliado.
+- **`apps/api/src/clinica/`:** `ClinicaModule` (importa `AuthzModule` e `AuditModule`); `ClinicaController` (`GET /clinica` e `PUT /clinica`, ambos sob `@RequerPermissao("clinica.configurar")`; `ProtecaoCsrfGuard` só no `PUT`, avaliada antes da sessão; `GET` com `Cache-Control: no-store`); `ClinicaService` (transação única: `SELECT ... FOR UPDATE` → comparação campo a campo → `UPDATE` explícito das 6 colunas → `AuditWriter.registrar` com `configuracao.alterada`, `alvo_tipo = clinica`, `alvo_id = clinica.id`, `contexto` vazio); `clinica.dto.ts` (validação pura, corpo estrito, normalização e limites de `D-CFG-04`, fuso por `Intl.supportedValuesOf("timeZone")` ∪ `{UTC}`, sem dependência nova); `FiltroErroClinica` (filtro **de controller**: contrato `{ erro }` fechado e `500 FALHA_INTERNA` sem vazamento).
+- **Registro:** `AppModule` importa `ClinicaModule`. As listas fechadas de rotas em `openapi.spec.ts`, `auth.module.integration.spec.ts` e `verify-openapi-runtime.mjs` passam a incluir `/clinica`.
+
+### 6-W.2 Critérios de aceite × prova
+
+| CA | Prova | Status |
+| --- | --- | --- |
+| CA-01 GET 200 com 7 campos, `no-store` | integração | **OK** |
+| CA-02 PUT válido persistido | integração | **OK** |
+| CA-03 sem sessão → 401 | integração | **OK** |
+| CA-04 sem permissão → 403 `ACESSO_NEGADO`, sem evento | integração | **OK** |
+| CA-05 sem CSRF → 403 `REQUISICAO_NAO_AUTORIZADA` | integração | **OK** |
+| CA-06 chave extra/ausente/tipo → 400 | unitário + integração | **OK** |
+| CA-07 fuso inválido/caixa errada → 400 | unitário + integração | **OK** |
+| CA-08 `nomeCadastral` vazio → 400 | unitário + integração | **OK** |
+| CA-09 1 evento `configuracao.alterada` com ator/alvo corretos | integração | **OK** |
+| CA-10 nenhum valor de campo no evento | integração | **OK** |
+| CA-11 falha da auditoria → 500 e rollback conjunto | integração (sabotagem do `AuditWriter`) | **OK** |
+| CA-12 no-op → 200 sem `UPDATE` (xmin inalterado) e sem evento | integração | **OK** |
+| CA-13 sem linha → 404 `CLINICA_NAO_CONFIGURADA` | integração | **OK** |
+| CA-14 segunda linha → `23505` `ux_clinica_linha_unica` | integração | **OK** |
+| CA-15 lock real e leitura sob lock; PUTs concorrentes serializados | integração | **OK** |
+| CA-16 OpenAPI: rotas e status declarados; GET sem header CSRF | `openapi.spec.ts` + `verify:openapi-runtime` | **OK** |
+| CA-17 regressão integral, zero permissão/ação/chave/dependência nova | baterias abaixo | **OK** |
+
+### 6-W.3 Mutation challenges (aplicados, observados e revertidos)
+
+| # | Mutação | Resultado |
+| --- | --- | --- |
+| M1 | remover `FOR UPDATE` | **DETECTADA** (CA-15 leitura sob lock) — a primeira versão da prova **não** detectava (o `UPDATE` também espera o lock); a prova foi reforçada para distinguir leitura obsoleta |
+| M2 | remover a chamada ao `AuditWriter` | **DETECTADA** (CA-09, CA-11, CA-15) |
+| M3 | aceitar chave extra | **DETECTADA** (CA-06) |
+| M4 | pular validação de fuso | **DETECTADA** (CA-07) |
+| M5 | auditar o no-op | **DETECTADA** (CA-12, CA-15) |
+
+### 6-W.4 Baterias medidas (17/09/2026, host Windows)
+
+- `pnpm run typecheck` (monorepo): **verde**.
+- `pnpm run test:api`: **36 suites · 916 passed**.
+- Integração de `apps/api` em PostgreSQL 18 descartável (`tlf_app`): **14 suites · 474 passed · 2 skipped** (inclui `clinica-configuracao.integration.spec.ts`, **31 testes**).
+- Integração de `packages/database` em PostgreSQL 18 descartável: **10 suites · 87 passed**.
+- `lint:migrations` (Guarda 1): **OK**, 11 migrations. `schema:verify` (Guarda 3 + `migrate diff`): **OK**, dump idêntico ao golden e exit 0.
+- `verify:openapi-runtime` sobre `dist/`: **26 verificações OK**.
+- **Nota operacional:** `verify:api-integration` foi derrubado duas vezes pela limpeza de órfãos de uma execução paralela de outra frente (mesmo prefixo `techlab-fisio-apiit-`). As medições acima usaram o **mesmo** mecanismo (`scripts/lib/instancia-descartavel.mjs`) com prefixo próprio, fora do repositório. A CI da PR é a prova canônica.
+
+### 6-W.5 Limitações declaradas
+
+- **Atualização perdida** entre administradores concorrentes não é detectada (`D-CFG-05`, aceita).
+- **Estado anterior** da configuração não é preservado na trilha (`docs/09` §13.6, aceita).
+- **Erros do body parser** (JSON malformado, `413`) nascem antes do roteamento: o status é o correto, mas o corpo é o padrão da plataforma — o filtro global `FiltroErroAutenticacao` (`apps/api/src/auth/**`) não foi alterado por esta fatia. Mesmo estado vigente em `PATCH /auth/usuarios/:usuarioId/situacao`.
+- **Provisionamento** da linha de `clinica` (`D-CFG-01`) permanece **sem fatia atribuída**: sem ele, a API responde `404 CLINICA_NAO_CONFIGURADA`.
+- Logotipo e duração padrão fora (`D-CFG-07`); CFG-002..CFG-005 não iniciados.
+- **Correção pós-revisão do PR #65:** o fuso aceita também links IANA reconhecidos pelo runtime (`US/Eastern`, `Etc/GMT+3`, `America/Argentina/Buenos_Aires`) além dos identificadores preferidos, rejeitando offsets (`-03:00`) e variantes de caixa do canônico; limite residual: variante de caixa de um link com segmentos iniciados por maiúscula (`US/eastern`) não é distinguível pelo runtime e é aceita. Limites de tamanho passam a contar **caracteres Unicode** (code points), coerentes com `maxLength` do OpenAPI.
+
 ## 7. Auditoria — `P-BACK-01`
 
 ### 7.1 Estado
@@ -3787,7 +3849,7 @@ P-BACK-01 — EM ANDAMENTO
 - `configuracao.alterada` — **FECHADA** (`docs/09` §13.6): ação única, entidade concreta por `alvo_tipo`, abrangência CFG-001..CFG-006, whitelist **vazia**. Limitação declarada: a trilha não preserva necessariamente o estado anterior da configuração.
 - `prontuario.exportado` — **FECHADO** (`docs/09` §13.7): `alvo_tipo = "paciente"`, `alvo_id = paciente.id`, uniformemente; nenhuma chave de contexto.
 - `autor_original_usuario_id` — **REJEIÇÃO CONFIRMADA** (`docs/09` §13.8): derivável por `registro_original_id → registro_clinico.autor_usuario_id`, sobre valor tornado imutável por `trg_registro_clinico_imutavel_finalizado`. Segue **rejeitada** pelo validator; nenhum código mudou.
-- Consulta da trilha (AUD-004) — **política FECHADA, implementação PENDENTE** (`docs/09` §13.9): usará exclusivamente `auditoria.ler`, já homologada; **nenhuma permissão nova**; somente leitura, filtros fechados sobre colunas próprias, paginação obrigatória, sem busca livre e **sem resolver/expandir** `alvo_tipo`+`alvo_id`. O endpoint **não** foi implementado. **Atualização REV. 50 (17/09/2026): IMPLEMENTADA EM BRANCH / NÃO INTEGRADA** — §7.6.
+- Consulta da trilha (AUD-004) — **política FECHADA, implementação PENDENTE** (`docs/09` §13.9): usará exclusivamente `auditoria.ler`, já homologada; **nenhuma permissão nova**; somente leitura, filtros fechados sobre colunas próprias, paginação obrigatória, sem busca livre e **sem resolver/expandir** `alvo_tipo`+`alvo_id`. O endpoint **não** foi implementado. **Atualização REV. 51 (17/09/2026): IMPLEMENTADA EM BRANCH / NÃO INTEGRADA** — §7.6.
 
 **Ainda aberto — `L-06` (acesso a dados clínicos):** **ABERTA / BLOQUEADA POR DEPENDÊNCIA FUNCIONAL-TÉCNICA** (`docs/09` §13.3). **Não foi encerrada por escopo.** `TLF-BASE-V1` §10 exige trilha de auditoria para **acesso** a dados sensíveis, de modo que não é permitido concluir que a leitura clínica ordinária ficará sem auditoria no MVP — e **não se registra** que AUD-002 esteja satisfeita por exportação/finalização/retificação. Ao mesmo tempo, a regra não pode ser definida agora: o módulo de prontuário não existe, `P2.2-05` (relação fisioterapeuta↔paciente / escopo) não foi materializada, e não há superfície real sobre a qual medir volume e comportamento. **Retomada obrigatória** antes da disponibilização de qualquer superfície real de leitura de prontuário/dados clínicos sensíveis, vinculada a `P2.2-05` e às rotas de leitura clínica. `prontuario.acessado` **não** foi criado.
 
@@ -4060,7 +4122,7 @@ Registro **exclusivamente factual**, no precedente `MEDIR → REGISTRAR` de §7.
 
 ### 7.6 `PBACK-AUD-08` / AUD-004 — consulta da trilha de auditoria (implementação, 17/09/2026)
 
-> **Estado:** **`PBACK-AUD-08` / AUD-004 — IMPLEMENTADA EM BRANCH / NÃO INTEGRADA.** Branch `agent/p-back-01-aud-004-consulta-trilha-r2`, base `origin/main` = `5ff445263b4230e8a38a5cbcc166e77a2c209c1f`, atualizada por fast-forward para `c9b33f21c03ef5ef4b16ccca2ac141c2a5d021fb` depois para `21e2fa06c7d621fa4b7e0731b17e03781cf51920` e, por merge de `origin/main`, integrada com `bc6a763` (`P-2.3D-10`). Sem commit, push, PR ou merge nesta rodada. **`P-BACK-01` NÃO é encerrada** — seguem `L-06` (ABERTA / BLOQUEADA), a materialização técnica de `L-08` e os emissores de domínio ausentes.
+> **Estado:** **`PBACK-AUD-08` / AUD-004 — IMPLEMENTADA EM BRANCH / NÃO INTEGRADA.** Branch `agent/p-back-01-aud-004-consulta-trilha-r2`, base `origin/main` = `5ff445263b4230e8a38a5cbcc166e77a2c209c1f`, atualizada por fast-forward para `c9b33f21c03ef5ef4b16ccca2ac141c2a5d021fb` depois para `21e2fa06c7d621fa4b7e0731b17e03781cf51920` e, por merge de `origin/main`, integrada com `bc6a763` (`P-2.3D-10`) e `9b403a8` (`CFG-001A`). Sem commit, push, PR ou merge nesta rodada. **`P-BACK-01` NÃO é encerrada** — seguem `L-06` (ABERTA / BLOQUEADA), a materialização técnica de `L-08` e os emissores de domínio ausentes.
 
 #### 7.6.1 Política aplicada — normativa, sem reinterpretação (`docs/09` §13.9)
 
@@ -4098,7 +4160,7 @@ Nenhuma fonte homologada fixa o contrato HTTP. Adotado, por coerência com os pr
 
 #### 7.6.3 Índices — inspeção, nenhuma migration
 
-Valores de teste medidos sobre a árvore final, após merge de `origin/main` = `bc6a763`.
+Valores de teste medidos sobre a árvore final, após merge de `origin/main` = `9b403a8`.
 
 Existentes: `(alvo_tipo, alvo_id, ocorrido_em)`, `(ator_usuario_id, ocorrido_em)`, `(correlacao_id)`. Consultas por alvo, ator e correlação têm índice; consulta sem esses filtros (só período, ação ou resultado) faz varredura + ordenação, limitada a 51 linhas por página. **Volume real não medido** (não há carga representativa); nenhuma migration, índice ou alteração de schema criada.
 
@@ -4197,7 +4259,7 @@ Registrada no relatório de consolidação da 2.3A: `npm ci`; `db:generate`; `db
 | `configuracao.alterada` (granularidade/abrangência/whitelist) | **FECHADA em 05/09/2026** — `docs/09` §13.6 (`PBACK-AUD-05`): ação única; entidade concreta por `alvo_tipo`; abrangência CFG-001..CFG-006; whitelist **vazia**. Limitação declarada: o estado anterior da configuração não é necessariamente preservado — reavaliável com emissor real |
 | `prontuario.exportado` (alvo definitivo) | **FECHADO em 05/09/2026** — `docs/09` §13.7 (`PBACK-AUD-06`): `alvo_tipo = "paciente"`, `alvo_id = paciente.id`, uniformemente; sem chave de contexto (`formato` não homologada) |
 | `autor_original_usuario_id` | **REJEIÇÃO CONFIRMADA em 05/09/2026** — `docs/09` §13.8 (`PBACK-AUD-07`): derivável por `registro_original_id → registro_clinico.autor_usuario_id`, imutável por `trg_registro_clinico_imutavel_finalizado`. Segue rejeitada pelo validator; nenhum código alterado |
-| Consulta da trilha de auditoria (AUD-004) | **POLÍTICA FECHADA / IMPLEMENTAÇÃO PENDENTE** — `docs/09` §13.9 (`PBACK-AUD-08`): usará exclusivamente `auditoria.ler` (**nenhuma permissão nova**); somente leitura; filtros fechados sobre colunas próprias; paginação obrigatória; sem busca livre, sem filtro por `contexto`/`justificativa` e **sem resolver/expandir** `alvo_tipo`+`alvo_id`. `auditoria.consultada` não criada. Endpoint **não** implementado — unidade de trabalho própria. **REV. 50: IMPLEMENTADA EM BRANCH / NÃO INTEGRADA** (§7.6) |
+| Consulta da trilha de auditoria (AUD-004) | **POLÍTICA FECHADA / IMPLEMENTAÇÃO PENDENTE** — `docs/09` §13.9 (`PBACK-AUD-08`): usará exclusivamente `auditoria.ler` (**nenhuma permissão nova**); somente leitura; filtros fechados sobre colunas próprias; paginação obrigatória; sem busca livre, sem filtro por `contexto`/`justificativa` e **sem resolver/expandir** `alvo_tipo`+`alvo_id`. `auditoria.consultada` não criada. Endpoint **não** implementado — unidade de trabalho própria. **REV. 51: IMPLEMENTADA EM BRANCH / NÃO INTEGRADA** (§7.6) |
 | `P2.2-05` (fisioterapeuta ↔ paciente relacionado) | **PENDENTE** — fatia futura de autorização clínica |
 | `F-REV-03`..`F-REV-08` (revisão da 2.3B) | **NÃO BLOQUEANTES / NÃO CORRIGIDOS por decisão** — `F-REV-03` BAIXO; `F-REV-04`..`F-REV-08` INFORMATIVOS, conforme o relatório de revisão; permanecem documentados para eventual tratamento futuro |
 | `R-BL-09` (`deepmerge-ts` transitivo) | **ABERTO** — aceitação temporária monitorada (`docs/08` §15.2); **remedido na 2.3B sem alteração**: mesma cadeia (`prisma@7.9.1 → @prisma/config@7.9.1 → deepmerge-ts@7.1.5`), mesmas 3 high (GHSA-ggr8-5vv4-36mx); nenhuma dependência nova instalada na 2.3B; reavaliação obrigatória a cada atualização do Prisma 7 e antes de CI de produção/deploy |
@@ -4265,7 +4327,8 @@ Sujeitas a autorização própria, nesta ordem provável:
 
 | REV. | Data | Conteúdo |
 | --- | --- | --- |
-| **50** | **17/09/2026** | **`PBACK-AUD-08` / AUD-004 — CONSULTA DA TRILHA DE AUDITORIA IMPLEMENTADA EM BRANCH / NÃO INTEGRADA** (§7.6). `GET /auditoria/eventos` sob `auditoria.ler`; filtros fechados de `docs/09` §13.9; cursor keyset `(ocorrido_em DESC, id DESC)`, limite 20/50; sem join, sem expansão de alvo, sem auto-auditoria. Nenhuma decisão normativa criada/alterada; nenhuma permissão, ação, chave de whitelist, migration ou dependência. Revisão independente tratada: `justificativa` omitida e contrato local aceitos por Bruno; errata do fato sobre emissores de `justificativa`. Mutation challenges M1..M7 mortos e revertidos. `P-BACK-01` EM ANDAMENTO; AUT-005 não tocada. |
+| **51** | **17/09/2026** | **`PBACK-AUD-08` / AUD-004 — CONSULTA DA TRILHA DE AUDITORIA IMPLEMENTADA EM BRANCH / NÃO INTEGRADA** (§7.6). `GET /auditoria/eventos` sob `auditoria.ler`; filtros fechados de `docs/09` §13.9; cursor keyset `(ocorrido_em DESC, id DESC)`, limite 20/50; sem join, sem expansão de alvo, sem auto-auditoria. Nenhuma decisão normativa criada/alterada; nenhuma permissão, ação, chave de whitelist, migration ou dependência. Revisão independente tratada: `justificativa` omitida e contrato local aceitos por Bruno; errata do fato sobre emissores de `justificativa`. Mutation challenges M1..M7 mortos e revertidos. `P-BACK-01` EM ANDAMENTO; AUT-005 não tocada. |
+| **50** | **17/09/2026** | **`CFG-001A` — DADOS DA CLÍNICA ÚNICA (CFG-001 SEM LOGOTIPO + CFG-006) IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA — NÃO INTEGRADA** (§6-W). Materializa `D-CFG-01`..`D-CFG-08` (`docs/14`) sem criar, alterar ou reabrir decisão. Migration `20260917060000_clinica_linha_unica` + golden; `GET/PUT /clinica` sob `clinica.configurar`; `configuracao.alterada` atômica com `contexto` vazio; 5 mutation challenges detectados; baterias verdes (§6-V.4). Nenhuma permissão, ação de auditoria, chave de `contexto` ou dependência nova. |
 | **49** | **17/09/2026** | **`P-2.3D-10` / AUT-002 / `D-2.3D-22` — LISTAGEM ADMINISTRATIVA DAS SESSÕES ATIVAS DE UM USUÁRIO IMPLEMENTADA EM BRANCH PRÓPRIA (`agent/sessoes-admin-next`) — NÃO INTEGRADA NA `main`** (§6-V). Decisão `D-2.3D-22` homologada por Bruno Menezes Noronha (`docs/12` §5.22, REV. 18). `GET /auth/usuarios/:usuarioId/sessoes` sob `sessoes.revogar_terceiro`, sem CSRF, somente sessões ativas e temporalmente válidas, projeção fechada de quatro campos, lista vazia anti-oráculo, sem auditoria. CSRF do `DELETE` movida para o handler com ordem de guards preservada. Critérios `L-01`..`L-14` e M1..M4 provados; `test:api` 861/861, integração 455 + 2 pulados, `verify:openapi-runtime` 26/26. Zero drift; sem commit, push, PR ou merge. |
 | **48** | **17/09/2026** | **REGISTRO PÓS-INTEGRAÇÃO DE `CI-E2E0` NA `main` — SMOKE E2E PLAYWRIGHT OBRIGATÓRIO NA CI (PR [#58](https://github.com/BrunoMNoronha/techlab-fisio/pull/58), [#59](https://github.com/BrunoMNoronha/techlab-fisio/pull/59) E [#61](https://github.com/BrunoMNoronha/techlab-fisio/pull/61); MERGES `4156689`, `63bb058` E `e7abe30`)** (§6-U). Registro **exclusivamente factual**, no precedente `MEDIR → REGISTRAR`; nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código de produção, schema, migration, contrato ou dependência alterada por este registro. Fatos: PR [#58](https://github.com/BrunoMNoronha/techlab-fisio/pull/58) (merge **`4156689f78fae9f27241d7ed85e417b9486ede98`**, 17/09/2026 04:26:50Z, CI verde na run `35181522998`), PR [#59](https://github.com/BrunoMNoronha/techlab-fisio/pull/59) (merge **`63bb058c2134aac9c57f8fca8245588c915826e5`**, 04:41:17Z, run `35182242657`) e PR [#61](https://github.com/BrunoMNoronha/techlab-fisio/pull/61) (merge **`e7abe300e49b0fb1427fc19ef7843774b67212d5`**, 05:06:36Z, runs `35184127602` push e `35184130714` pull_request), todos por merge commit, sem squash/rebase. Proteção da `main` com o job de CI como required check, inclusive para administradores. |
 | **47** | **17/09/2026** | **REGISTRO PÓS-INTEGRAÇÃO DO REFORÇO DE PROVAS DE `P-2.3D-09` / AUT-005 / `D-2.3D-21` NA `main` (PR [#55](https://github.com/BrunoMNoronha/techlab-fisio/pull/55), MERGE `bce22e8`)** (§6-T.3). Registro **exclusivamente factual**; nenhuma decisão normativa criada, alterada ou reaberta. Fatos: PR [#55](https://github.com/BrunoMNoronha/techlab-fisio/pull/55), commit `4d95c386d15d08060c319300a09a1f4eef5f3590` (somente `apps/api/test/integration/usuarios-situacao.integration.spec.ts`), merge commit **`bce22e8265317be16bf78fcb1861aafdc4b05b0c`** (merge commit, sem squash/rebase), 17/09/2026 03:54:24Z, CI verde na run `35179564801`. Provas acrescentadas (falha na revogação; C2, C5, C6, C7; C3 e C6 determinísticos) e mutation challenges M1..M7 (M7a/M7b) detectados. Estado da `main` atualizado para `cb11f72` (inclui PRs #53, #54 e #55). `docs/12` REV. 17. |
