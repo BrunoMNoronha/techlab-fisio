@@ -51,7 +51,7 @@ afterAll(async () => {
 
 function operacao(
   caminho: string,
-  metodo: "post" | "get" | "delete" | "patch",
+  metodo: "post" | "get" | "delete" | "patch" | "put",
 ): Record<string, unknown> {
   const item = documento.paths[caminho];
   expect(item).toBeDefined();
@@ -62,7 +62,7 @@ function operacao(
 
 function respostas(
   caminho: string,
-  metodo: "post" | "get" | "delete" | "patch",
+  metodo: "post" | "get" | "delete" | "patch" | "put",
 ): Record<string, unknown> {
   return operacao(caminho, metodo)["responses"] as Record<string, unknown>;
 }
@@ -108,7 +108,7 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
     expect(documento.paths["/health"]).toBeDefined();
   });
 
-  it("as rotas publicadas são EXATAMENTE as da F3, F6, P-2.3D-07, P-2.3D-08, AUT-005 e P-2.3D-10 — nenhuma outra vazou", () => {
+  it("as rotas publicadas são EXATAMENTE as da F3, F6, P-2.3D-07, P-2.3D-08, AUT-005, P-2.3D-10 e CFG-001A — nenhuma outra vazou", () => {
     // ATUALIZADO NA F6 / P-2.3D-07 / P-2.3D-08: as duas rotas de recuperação de senha (AUT-004),
     // a rota de revogação de sessão (P-2.3D-07 / AUT-002) e a consulta da sessão
     // autenticada atual (P-2.3D-08 / D-2.3D-20) foram autorizadas e passam a pertencer
@@ -116,6 +116,7 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
     // além destas oito falha aqui. AUT-005 (`D-2.3D-21`) acrescentou a alteração
     // administrativa de situação de usuário. P-2.3D-10 (`D-2.3D-22`) acrescentou a
     // listagem administrativa das sessões ativas de um usuário.
+    // CFG-001A (`docs/14`, D-CFG-03) acrescentou GET/PUT /clinica.
     const caminhos = Object.keys(documento.paths);
     expect(caminhos.sort()).toEqual([
       "/auth/login",
@@ -126,6 +127,7 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
       "/auth/sessoes/{sessaoId}",
       "/auth/usuarios/{usuarioId}/sessoes",
       "/auth/usuarios/{usuarioId}/situacao",
+      "/clinica",
       "/health",
     ]);
     for (const proibido of [
@@ -138,6 +140,15 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
     ]) {
       expect(caminhos.some((c) => c.includes(proibido))).toBe(false);
     }
+  });
+
+  it("a consulta segura GET /clinica NÃO declara o header CSRF (CFG-001A)", () => {
+    const parametros = (operacao("/clinica", "get")["parameters"] ?? []) as Array<
+      Record<string, unknown>
+    >;
+    expect(
+      parametros.find((p) => p["in"] === "header" && p["name"] === "x-tlf-requisicao"),
+    ).toBeUndefined();
   });
 
   it("a consulta segura GET /auth/sessao NÃO declara e NÃO exige o header CSRF x-tlf-requisicao", () => {
@@ -160,13 +171,14 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
   });
 
   it("o custom header CSRF é declarado como obrigatório em TODAS as mutações", () => {
-    const mutacoes: Array<{ caminho: string; metodo: "post" | "delete" | "patch" }> = [
+    const mutacoes: Array<{ caminho: string; metodo: "post" | "delete" | "patch" | "put" }> = [
       { caminho: "/auth/login", metodo: "post" },
       { caminho: "/auth/logout", metodo: "post" },
       { caminho: "/auth/recuperacao-senha", metodo: "post" },
       { caminho: "/auth/recuperacao-senha/concluir", metodo: "post" },
       { caminho: "/auth/sessoes/{sessaoId}", metodo: "delete" },
       { caminho: "/auth/usuarios/{usuarioId}/situacao", metodo: "patch" },
+      { caminho: "/clinica", metodo: "put" },
     ];
     for (const { caminho, metodo } of mutacoes) {
       const parametros = operacao(caminho, metodo)["parameters"] as Array<
@@ -177,6 +189,36 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
       );
       expect(header).toBeDefined();
       expect(header?.["required"]).toBe(true);
+    }
+  });
+});
+
+describe("CFG-001A — contratos de resposta de /clinica (docs/14)", () => {
+  it("GET /clinica documenta 200, 401, 403, 404 e 500", () => {
+    expect(Object.keys(respostas("/clinica", "get")).sort()).toEqual([
+      "200",
+      "401",
+      "403",
+      "404",
+      "500",
+    ]);
+  });
+
+  it("PUT /clinica documenta 200, 400, 401, 403, 404, 413 e 500 — sem 409 (D-CFG-05)", () => {
+    expect(Object.keys(respostas("/clinica", "put")).sort()).toEqual([
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "413",
+      "500",
+    ]);
+  });
+
+  it("GET e PUT /clinica exigem o cookie de sessão", () => {
+    for (const metodo of ["get", "put"] as const) {
+      expect(operacao("/clinica", metodo)["security"]).toBeDefined();
     }
   });
 });
