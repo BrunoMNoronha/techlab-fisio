@@ -226,6 +226,10 @@ function ehOperacaoDaFronteira(requisicao: RequisicaoDaFronteira): boolean {
   if (metodo === "GET" && ROTA_LISTAGEM_SESSOES_USUARIO.test(caminho)) {
     return true;
   }
+  // AUD-004: mesmo contrato fechado `{ "erro": "<CODIGO>" }` para 400/401/403/500.
+  if (metodo === "GET" && caminho === "/auditoria/eventos") {
+    return true;
+  }
   return false;
 }
 

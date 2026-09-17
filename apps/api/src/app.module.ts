@@ -18,6 +18,7 @@
 import { Module } from "@nestjs/common";
 
 import { AuditModule } from "./audit/audit.module.js";
+import { AuditoriaConsultaModule } from "./audit/auditoria-consulta.module.js";
 import { AuthModule } from "./auth/auth.module.js";
 import { AuthzModule } from "./authz/authz.module.js";
 import { ClinicaModule } from "./clinica/clinica.module.js";
@@ -38,6 +39,7 @@ import { UsuariosModule } from "./auth/usuarios.module.js";
     RecuperacaoSenhaModule,
     SessoesModule,
     UsuariosModule,
+    AuditoriaConsultaModule,
     DatabaseModule,
     ProfissionalModule,
     CobrancaModule,

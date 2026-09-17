@@ -143,9 +143,10 @@ try {
 
   const caminhos = Object.keys(documento.paths ?? {}).sort();
   conferir(
-    "rotas da F3, F6, P-2.3D-07, P-2.3D-08, AUT-005, P-2.3D-10 e CFG-001A presentes e nenhuma outra vazou",
+    "rotas da F3, F6, P-2.3D-07, P-2.3D-08, AUT-005, P-2.3D-10, CFG-001A e AUD-004 presentes e nenhuma outra vazou",
     JSON.stringify(caminhos) ===
       JSON.stringify([
+        "/auditoria/eventos",
         "/auth/login",
         "/auth/logout",
         "/auth/recuperacao-senha",
@@ -216,6 +217,28 @@ try {
     "GET /auth/usuarios/{usuarioId}/sessoes documenta 200,400,401,403,500",
     statusListagem === "200,400,401,403,500",
     `status=${statusListagem}`,
+  );
+
+  // AUD-004 — consulta da trilha de auditoria (PBACK-AUD-08).
+  const statusAuditoria = Object.keys(
+    documento.paths["/auditoria/eventos"]?.get?.responses ?? {},
+  )
+    .sort()
+    .join(",");
+  conferir(
+    "GET /auditoria/eventos documenta 200,400,401,403,500",
+    statusAuditoria === "200,400,401,403,500",
+    `status=${statusAuditoria}`,
+  );
+  const parametrosAuditoria = (documento.paths["/auditoria/eventos"]?.get?.parameters ?? [])
+    .map((p) => `${p.in}:${p.name}`)
+    .sort()
+    .join(",");
+  conferir(
+    "GET /auditoria/eventos declara SÓ os 10 parâmetros de query homologados",
+    parametrosAuditoria ===
+      "query:acao,query:alvoId,query:alvoTipo,query:atorUsuarioId,query:correlacaoId,query:cursor,query:limite,query:ocorridoAte,query:ocorridoDe,query:resultado",
+    parametrosAuditoria,
   );
 
   // AUT-005 — alteração administrativa de situação de usuário.
@@ -303,6 +326,9 @@ try {
     "ErroAutenticacaoDto",
     "ErroRecuperacaoSenhaDto",
     "ErroSessaoAdministrativaDto",
+    "ErroConsultaAuditoriaDto",
+    "PaginaEventosAuditoriaDto",
+    "EventoAuditoriaDto",
   ].flatMap((nome) => propriedades(nome).filter((p) => PROIBIDAS.has(p.toLowerCase())));
   conferir(
     "nenhum schema de resposta declara campo secreto",

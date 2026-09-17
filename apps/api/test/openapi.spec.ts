@@ -119,6 +119,7 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
     // CFG-001A (`docs/14`, D-CFG-03) acrescentou GET/PUT /clinica.
     const caminhos = Object.keys(documento.paths);
     expect(caminhos.sort()).toEqual([
+      "/auditoria/eventos",
       "/auth/login",
       "/auth/logout",
       "/auth/recuperacao-senha",
@@ -332,6 +333,9 @@ describe("D-2.3D-11 — nenhum campo secreto no contrato", () => {
       "ErroAutenticacaoDto",
       "ErroRecuperacaoSenhaDto",
       "ErroSessaoAdministrativaDto",
+      "ErroConsultaAuditoriaDto",
+      "PaginaEventosAuditoriaDto",
+      "EventoAuditoriaDto",
     ]) {
       for (const propriedade of propriedadesDe(nome)) {
         expect(PROIBIDAS).not.toContain(propriedade.toLowerCase());
@@ -699,5 +703,84 @@ describe("P-2.3D-10 — listagem administrativa de sessões ativas documentada",
     for (const nome of Object.keys(item.properties ?? {})) {
       expect(proibidos.some((p) => nome.toLowerCase().includes(p))).toBe(false);
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// AUD-004 / PBACK-AUD-08 — consulta da trilha de auditoria (docs/09 §13.9)
+// ---------------------------------------------------------------------------
+
+describe("AUD-004 — consulta da trilha de auditoria documentada", () => {
+  const CAMINHO = "/auditoria/eventos";
+
+  it("GET é a ÚNICA operação do caminho, com AUD-004, tag Auditoria e cookie de sessão", () => {
+    expect(Object.keys(documento.paths[CAMINHO] ?? {}).filter((k) => k !== "parameters")).toEqual(["get"]);
+    const op = operacao(CAMINHO, "get");
+    expect(op["summary"]).toEqual(expect.stringContaining("AUD-004"));
+    expect(op["tags"]).toEqual(["Auditoria"]);
+    const seguranca = op["security"] as Array<Record<string, unknown>> | undefined;
+    expect(seguranca?.some((s) => NOME_ESQUEMA_SESSAO in s)).toBe(true);
+    expect(op["requestBody"]).toBeUndefined();
+  });
+
+  it("GET documenta 200, 400, 401, 403 e 500", () => {
+    expect(Object.keys(respostas(CAMINHO, "get")).sort()).toEqual(["200", "400", "401", "403", "500"]);
+  });
+
+  it("parâmetros: SÓ os 10 de query homologados, sem header CSRF", () => {
+    const params = (operacao(CAMINHO, "get")["parameters"] ?? []) as Array<Record<string, unknown>>;
+    expect(params.every((p) => p["in"] === "query")).toBe(true);
+    expect(params.every((p) => p["required"] === false)).toBe(true);
+    expect(params.map((p) => p["name"]).sort()).toEqual([
+      "acao",
+      "alvoId",
+      "alvoTipo",
+      "atorUsuarioId",
+      "correlacaoId",
+      "cursor",
+      "limite",
+      "ocorridoAte",
+      "ocorridoDe",
+      "resultado",
+    ]);
+    const limite = params.find((p) => p["name"] === "limite")?.["schema"] as Record<string, unknown>;
+    expect(limite).toEqual(expect.objectContaining({ type: "integer", minimum: 1, maximum: 50, default: 20 }));
+  });
+
+  it("PaginaEventosAuditoriaDto expõe SÓ itens e proximoCursor", () => {
+    const schema = documento.components?.schemas?.["PaginaEventosAuditoriaDto"] as {
+      properties?: Record<string, unknown>;
+    };
+    expect(Object.keys(schema.properties ?? {}).sort()).toEqual(["itens", "proximoCursor"]);
+  });
+
+  it("EventoAuditoriaDto expõe SÓ colunas próprias de evento_auditoria — sem justificativa, sem dado resolvido do ator/alvo", () => {
+    const schema = documento.components?.schemas?.["EventoAuditoriaDto"] as {
+      properties?: Record<string, unknown>;
+    };
+    expect(Object.keys(schema.properties ?? {}).sort()).toEqual([
+      "acao",
+      "alvoId",
+      "alvoTipo",
+      "atorUsuarioId",
+      "contexto",
+      "correlacaoId",
+      "id",
+      "ocorridoEm",
+      "resultado",
+    ]);
+  });
+
+  it("Erros usam ErroConsultaAuditoriaDto com conjunto fechado", () => {
+    const schema = documento.components?.schemas?.["ErroConsultaAuditoriaDto"] as {
+      properties?: Record<string, { enum?: string[] }>;
+    };
+    expect(Object.keys(schema.properties ?? {})).toEqual(["erro"]);
+    expect(schema.properties?.["erro"]?.enum?.sort()).toEqual([
+      "ACESSO_NEGADO",
+      "FALHA_INTERNA",
+      "REQUISICAO_INVALIDA",
+      "SESSAO_INVALIDA",
+    ]);
   });
 });
