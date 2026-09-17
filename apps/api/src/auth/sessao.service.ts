@@ -471,6 +471,51 @@ export class SessaoService {
   }
 
   /**
+   * REVOGAÇÃO EM MASSA ADMINISTRATIVA das sessões de um usuário (AUT-005, RN-001,
+   * `D-2.3D-21`), sobre uma transação JÁ ABERTA pelo chamador.
+   *
+   * Dois UPDATEs condicionais, na ORDEM de `C-01` e pelas MESMAS razões:
+   *   1. sessões `ATIVA` já vencidas (absoluta ou ociosa) são fechadas como
+   *      `EXPIRADA` — o estado verdadeiro — e não como `REVOGADA`;
+   *   2. as `ATIVA` restantes passam a `REVOGADA`, com `encerrada_em` no
+   *      instante da operação e `revogada_por_usuario_id = atorUsuarioId`.
+   *
+   * `revogada_por_usuario_id` = o Administrador executor autenticado (`D-2.3D-21`),
+   * distinguindo-se da revogação da T-07 (`D-2.3D-18`, onde o próprio usuário titular
+   * é o autor) e do logout próprio (`D-2.3D-05`).
+   *
+   * Nenhum statement devolve sessão a `ATIVA`; `expira_em` não é tocado;
+   * `IDX-S1` (`usuario_id, estado`) é exatamente o índice previsto para esta
+   * operação (`docs/07` §10-A).
+   */
+  async revogarTodasPorAdministradorEm(
+    tx: TransacaoPersistencia,
+    usuarioId: string,
+    atorUsuarioId: string,
+  ): Promise<{ readonly expiradas: number; readonly revogadas: number }> {
+    const agora = this.relogio.agora();
+    const limiteOcioso = new Date(agora.getTime() - POLITICA_SESSAO.timeoutOciosoMs);
+    const expiradas = await tx.$executeRaw`
+      UPDATE sessao_autenticacao
+         SET estado       = 'EXPIRADA',
+             encerrada_em = ${agora}::timestamptz
+       WHERE usuario_id = ${usuarioId}::uuid
+         AND estado     = 'ATIVA'
+         AND (   expira_em           <= ${agora}::timestamptz
+              OR ultima_atividade_em <= ${limiteOcioso}::timestamptz)
+    `;
+    const revogadas = await tx.$executeRaw`
+      UPDATE sessao_autenticacao
+         SET estado                  = 'REVOGADA',
+             encerrada_em            = ${agora}::timestamptz,
+             revogada_por_usuario_id = ${atorUsuarioId}::uuid
+       WHERE usuario_id = ${usuarioId}::uuid
+         AND estado     = 'ATIVA'
+    `;
+    return { expiradas, revogadas };
+  }
+
+  /**
    * REVOGAÇÃO ADMINISTRATIVA DE SESSÃO DE TERCEIRO (`D-2.3D-19`; P-2.3D-07; AUT-002),
    * sobre uma transação JÁ ABERTA pelo chamador.
    *

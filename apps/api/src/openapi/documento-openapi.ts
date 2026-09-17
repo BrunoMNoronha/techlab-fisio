@@ -63,7 +63,8 @@ export function construirDocumentoOpenApi(app: INestApplication): OpenAPIObject 
     .setDescription(
       "API REST do TechLab Fisio. Nesta versão o contrato cobre a fronteira de " +
         "autenticação (AUT-001/AUT-002), a recuperação segura de senha " +
-        "(AUT-004/D-04) e a revogação administrativa de sessões (P-2.3D-07/D-2.3D-19). " +
+        "(AUT-004/D-04), a revogação administrativa de sessões (P-2.3D-07/D-2.3D-19) " +
+        "e a gestão administrativa de situação de usuários (AUT-005/D-2.3D-21). " +
         "Os demais módulos ainda não possuem exposição HTTP.",
     )
     .setVersion(VERSAO_CONTRATO)

@@ -143,7 +143,7 @@ try {
 
   const caminhos = Object.keys(documento.paths ?? {}).sort();
   conferir(
-    "rotas da F3, F6, P-2.3D-07 e P-2.3D-08 presentes e nenhuma outra vazou",
+    "rotas da F3, F6, P-2.3D-07, P-2.3D-08 e AUT-005 presentes e nenhuma outra vazou",
     JSON.stringify(caminhos) ===
       JSON.stringify([
         "/auth/login",
@@ -152,6 +152,7 @@ try {
         "/auth/recuperacao-senha/concluir",
         "/auth/sessao",
         "/auth/sessoes/{sessaoId}",
+        "/auth/usuarios/{usuarioId}/situacao",
         "/health",
       ]),
     `caminhos=${caminhos.join(", ")}`,
@@ -201,6 +202,18 @@ try {
     "DELETE /auth/sessoes/{sessaoId} documenta 204,400,401,403,413,500",
     statusRevogacao === "204,400,401,403,413,500",
     `status=${statusRevogacao}`,
+  );
+
+  // AUT-005 — alteração administrativa de situação de usuário.
+  const statusSituacao = Object.keys(
+    documento.paths["/auth/usuarios/{usuarioId}/situacao"]?.patch?.responses ?? {},
+  )
+    .sort()
+    .join(",");
+  conferir(
+    "PATCH /auth/usuarios/{usuarioId}/situacao documenta 200,400,401,403,404,413,422,500",
+    statusSituacao === "200,400,401,403,404,413,422,500",
+    `status=${statusSituacao}`,
   );
 
   const statusLogin = Object.keys(documento.paths["/auth/login"]?.post?.responses ?? {})
