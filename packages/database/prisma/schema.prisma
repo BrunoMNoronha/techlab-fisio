@@ -392,6 +392,11 @@ model HorarioFuncionamento {
 
 /// CFG-003, RN-008. O preço de referência NUNCA reescreve cobrança histórica:
 /// `cobranca.valor_bruto` copia o valor na criação (`docs/07` §7.2, §19.1).
+/// Invariantes físicas de CFG-003 (`docs/14` D-CFG-22/D-CFG-23), só na
+/// migration `20260917120000_servico_catalogo_invariantes` (não representáveis
+/// na Prisma Schema Language): `ux_servico_clinica_nome` sobre
+/// `(clinica_id, lower(btrim(nome)))`, `ck_servico_duracao_positiva`,
+/// `ck_servico_preco_nao_negativo` e `ck_servico_situacao`.
 model Servico {
   id              String    @id @default(uuid(7)) @db.Uuid
   clinicaId       String    @map("clinica_id") @db.Uuid

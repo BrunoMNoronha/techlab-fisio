@@ -22,6 +22,7 @@ import { AuditoriaConsultaModule } from "./audit/auditoria-consulta.module.js";
 import { AuthModule } from "./auth/auth.module.js";
 import { AuthzModule } from "./authz/authz.module.js";
 import { ClinicaModule } from "./clinica/clinica.module.js";
+import { ServicosModule } from "./servicos/servicos.module.js";
 import { RecuperacaoSenhaModule } from "./recuperacao-senha/recuperacao-senha.module.js";
 import { CobrancaModule } from "./cobranca/cobranca.module.js";
 import { DatabaseModule } from "./database/database.module.js";
@@ -44,6 +45,7 @@ import { UsuariosModule } from "./auth/usuarios.module.js";
     ProfissionalModule,
     CobrancaModule,
     ClinicaModule,
+    ServicosModule,
   ],
 })
 export class AppModule {}

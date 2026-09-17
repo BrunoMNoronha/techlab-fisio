@@ -703,7 +703,10 @@ CREATE TABLE public.servico (
     preco_referencia numeric(12,2) NOT NULL,
     ativo boolean NOT NULL,
     inativado_em timestamp(6) with time zone,
-    criado_em timestamp(6) with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+    criado_em timestamp(6) with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT ck_servico_duracao_positiva CHECK ((duracao_min > 0)),
+    CONSTRAINT ck_servico_preco_nao_negativo CHECK ((preco_referencia >= (0)::numeric)),
+    CONSTRAINT ck_servico_situacao CHECK ((ativo = (inativado_em IS NULL)))
 );
 
 
@@ -1316,6 +1319,13 @@ CREATE UNIQUE INDEX ux_movimento_sessao_consumo_atendimento_pacote ON public.mov
 --
 
 CREATE UNIQUE INDEX ux_reserva_sessao_ativa_agendamento ON public.reserva_sessao USING btree (agendamento_id) WHERE (encerrada_em IS NULL);
+
+
+--
+-- Name: ux_servico_clinica_nome; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX ux_servico_clinica_nome ON public.servico USING btree (clinica_id, lower(btrim(nome)));
 
 
 --
