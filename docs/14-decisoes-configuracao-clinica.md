@@ -402,7 +402,6 @@ Registro de fronteira; **nenhum** destes módulos é implementado ou decidido aq
 | `P-CFG-03` — implementação de `CFG-002` (`D-CFG-13`..`D-CFG-21`) | **INTEGRADA NA `main`** — PR [#76](https://github.com/BrunoMNoronha/techlab-fisio/pull/76), merge commit `ad2bcf8041635f469db6c799e7405f455d836d30` (`docs/10` §6-Y, §6-Y.6) |
 | Exceções e feriados do horário de funcionamento (`D-CFG-19`) | **FUTURO DO MVP** |
 | Aplicação de RN-014 e reavaliação da troca de fuso (`D-CFG-20`, `D-CFG-08`) | **PENDENTE DA FATIA DE AGENDA** |
-| CFG-002 | **IMPLEMENTADO EM BRANCH — NÃO INTEGRADO** |
 | `P-CFG-04` — implementação de `CFG-003` (`D-CFG-22`..`D-CFG-33`: migration de unicidade e CHECKs de `servico`, rotas `/servicos`, testes) | **IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA (`agent/cfg-003-catalogo-servicos`) — NÃO INTEGRADA** (`docs/10` §6-Z); implementação autorizada por Bruno Menezes Noronha em 17/09/2026 |
 | Alinhamento de `docs/07` §10.1/§10.2 às restrições de `D-CFG-23` | **PENDENTE** — após integração da migration |
 | Leitura do catálogo de serviços por outros papéis; pacote/agendamento com serviço inativo; duração sobrescrevível (`D-CFG-30`, `D-CFG-33`) | **PENDENTE DAS FATIAS DE AGENDA E PACOTES** |
