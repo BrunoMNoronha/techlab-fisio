@@ -1,11 +1,11 @@
-# Decisões da Configuração da Clínica — Primeira fatia (`CFG-001A`)
+# Decisões da Configuração da Clínica (`CFG-001`..`CFG-006`)
 
 > **Documento:** `docs/14-decisoes-configuracao-clinica.md`
 > **Projeto:** TechLab Fisio
 > **Frente:** Fase 3 — Configuração da Clínica (módulo M2, `CFG-001..CFG-006`)
 > **Status:** **DECIDIDO — `D-CFG-01`..`D-CFG-08` E ADENDOS `D-CFG-03-A` E `D-CFG-04-A` HOMOLOGADOS POR BRUNO MENEZES NORONHA EM 17/09/2026; `D-CFG-09`..`D-CFG-12` (PROVISIONAMENTO DA CLÍNICA) HOMOLOGADAS EM 17/09/2026; `D-CFG-13`..`D-CFG-21` (HORÁRIO DE FUNCIONAMENTO, CFG-002) HOMOLOGADAS EM 17/09/2026; `D-CFG-22`..`D-CFG-33` (CATÁLOGO DE SERVIÇOS, CFG-003) HOMOLOGADAS EM 17/09/2026** (TLF-BASE-V1 §15, item 1).
 > **Data:** 17 de setembro de 2026
-> **Insumo decisório:** pacote de análise `CFG-PREP0` (somente leitura), executado sobre `origin/main` = `63bb058`.
+> **Insumo decisório:** pacotes de análise somente leitura `CFG-PREP0` (`D-CFG-01`..`D-CFG-08`, sobre `origin/main` = `63bb058`), `CFG-PREP1` (`D-CFG-09`..`D-CFG-12`), `CFG-PREP2` (`D-CFG-13`..`D-CFG-21`) e `CFG-PREP3` (`D-CFG-22`..`D-CFG-33`); a base medida de cada um consta da respectiva seção.
 > **Natureza:** registro normativo das decisões. A materialização da fatia `CFG-001A` (autorizada por Bruno em 17/09/2026) é registrada factualmente em `docs/10` §6-W; nenhuma decisão foi alterada por ela.
 > **Por que um documento próprio:** precedente do projeto para decisões por frente (`docs/09`, `docs/11`, `docs/12`, `docs/13`). Um documento dedicado também evita edição concorrente de `docs/10` e `docs/12`, em uso por frentes paralelas.
 
@@ -154,7 +154,7 @@ Homologadas por Bruno Menezes Noronha em 17/09/2026, que adotou integralmente as
 
 - `GET /horario-funcionamento` e `PUT /horario-funcionamento`.
 - O `PUT` **substitui a grade semanal inteira**, em transação única serializada por `SELECT ... FOR UPDATE` na linha de `clinica`.
-- A substituição **remove fisicamente** as linhas anteriores de `horario_funcionamento` (tabela sem dependentes), o que é aceito expressamente para esta entidade; a regra geral de não oferecer exclusão física de cadastros (`docs/07` §28) não é alterada para as demais.
+- A substituição **remove fisicamente** as linhas anteriores de `horario_funcionamento` (tabela sem dependentes), o que é aceito expressamente para esta entidade; a regra geral de não oferecer exclusão física de cadastros (`docs/07` §23) não é alterada para as demais.
 - Grade idêntica à vigente → `200` **sem escrita e sem auditoria** (mesmo critério de `D-CFG-06`).
 
 #### 3.10.4 `D-CFG-16` — Garantia de não sobreposição
@@ -290,7 +290,7 @@ Registro de fronteira; **nenhum** destes módulos é implementado ou decidido aq
 
 ## 4. Consequências normativas já definidas (sem ampliação)
 
-- **Auditoria** (`docs/09` §13.6): mutação efetiva emite `configuracao.alterada` com ator da sessão, `alvo_tipo = "clinica"`, `alvo_id = clinica.id`, `resultado = SUCESSO`, `justificativa = null`, `contexto` vazio, na **mesma transação** da mutação; falha da auditoria implica rollback conjunto. Nenhum valor de campo é registrado.
+- **Auditoria** (`docs/09` §13.6): mutação efetiva de `clinica` (`CFG-001`, `CFG-006`) emite `configuracao.alterada` com ator da sessão, `alvo_tipo = "clinica"`, `alvo_id = clinica.id`, `resultado = SUCESSO`, `justificativa = null`, `contexto` vazio, na **mesma transação** da mutação; falha da auditoria implica rollback conjunto. Nenhum valor de campo é registrado. *Alcance por frente:* `CFG-002` usa o mesmo alvo `clinica` por leitura homologada (`D-CFG-17`); `CFG-003` usa `alvo_tipo = "servico"` e `alvo_id = servico.id` (`D-CFG-32`). Em todas, `contexto` vazio e nenhum valor de campo registrado.
 - **Autorização** (`D-2.3D-09`): sem sessão → `401`; sem permissão → `403`; CSRF obrigatório somente na rota mutante.
 - **Não ampliação:** nenhuma permissão, ação de auditoria, chave de `contexto` ou dependência nova decorre deste registro.
 
@@ -301,14 +301,12 @@ Registro de fronteira; **nenhum** destes módulos é implementado ou decidido aq
 | `P-CFG-01` — implementação da fatia `CFG-001A` (migration de linha única, GET/PUT `/clinica`, testes) | **INTEGRADA NA `main`** — PR [#65](https://github.com/BrunoMNoronha/techlab-fisio/pull/65), commit de integração `6ee19f27afc5d7c55667ef910536baa924ecc990` (`docs/10` §6-W, §6-X.5) |
 | `P-CFG-02` — provisionamento da linha de `clinica` (`CFG-001B`; `D-CFG-01`, `D-CFG-09`..`D-CFG-12`) | **INTEGRADO NA `main`** — PR [#69](https://github.com/BrunoMNoronha/techlab-fisio/pull/69), merge commit `02cc93d5770003775d3417b1d2ee08a874675d30` (`docs/10` §6-X, §6-X.5) |
 | Logotipo e duração padrão (`D-CFG-07`) | **FUTURO DO MVP** — não implementados |
-| `P-CFG-03` — implementação de `CFG-002` (`D-CFG-13`..`D-CFG-21`) | **DECIDIDA — IMPLEMENTAÇÃO NÃO AUTORIZADA** por este registro |
+| `P-CFG-03` — implementação de `CFG-002` (`D-CFG-13`..`D-CFG-21`) | **DECIDIDO — IMPLEMENTAÇÃO AUTORIZADA POR BRUNO MENEZES NORONHA EM 17/09/2026, NÃO INTEGRADA** |
 | Exceções e feriados do horário de funcionamento (`D-CFG-19`) | **FUTURO DO MVP** |
 | Aplicação de RN-014 e reavaliação da troca de fuso (`D-CFG-20`, `D-CFG-08`) | **PENDENTE DA FATIA DE AGENDA** |
-| CFG-002 | **DECIDIDO, NÃO IMPLEMENTADO** |
-| `P-CFG-04` — implementação de `CFG-003` (`D-CFG-22`..`D-CFG-33`: migration de unicidade e CHECKs de `servico`, rotas `/servicos`, testes) | **DECIDIDA — IMPLEMENTAÇÃO NÃO AUTORIZADA** por este registro |
+| `P-CFG-04` — implementação de `CFG-003` (`D-CFG-22`..`D-CFG-33`: migration de unicidade e CHECKs de `servico`, rotas `/servicos`, testes) | **DECIDIDO — IMPLEMENTAÇÃO NÃO AUTORIZADA** |
 | Alinhamento de `docs/07` §10.1/§10.2 às restrições de `D-CFG-23` | **PENDENTE** — após integração da migration |
 | Leitura do catálogo de serviços por outros papéis; pacote/agendamento com serviço inativo; duração sobrescrevível (`D-CFG-30`, `D-CFG-33`) | **PENDENTE DAS FATIAS DE AGENDA E PACOTES** |
-| CFG-003 | **DECIDIDO, NÃO IMPLEMENTADO** |
 | CFG-004, CFG-005 | **NÃO INICIADOS** |
 | Inclusão da clínica no subcomando `provisionar` (`D-CFG-12`) | **NÃO AUTORIZADA** — reavaliação futura possível |
 | Alinhamento de `docs/07` (afirmava restrição então inexistente) | **RESOLVIDO** — migration `20260917060000_clinica_linha_unica` (`ux_clinica_linha_unica`) integrada na `main` pela PR #65 |
@@ -317,6 +315,7 @@ Registro de fronteira; **nenhum** destes módulos é implementado ou decidido aq
 
 | REV. | Data | Descrição |
 | --- | --- | --- |
+| **9** | 17/09/2026 | Correções editoriais: título e insumo decisório do cabeçalho abrangem `CFG-001`..`CFG-006` e os pacotes `CFG-PREP0`..`CFG-PREP3`; referência de exclusão física em §3.10.3 corrigida de `docs/07` §28 para §23; nota de alcance da auditoria em §4 (`D-CFG-17`, `D-CFG-32`); §5 sem linhas duplicadas de CFG-002/CFG-003 e `P-CFG-03` com a autorização de implementação dada por Bruno em 17/09/2026. Nenhuma decisão criada, alterada ou reaberta. |
 | **8** | 17/09/2026 | Acréscimo de `D-CFG-22`..`D-CFG-33` (§3.11) — catálogo de serviços (`CFG-003`) —, homologadas por Bruno Menezes Noronha a partir do pacote `CFG-PREP3` (`DS-01`..`DS-12`), incluindo a autorização expressa da futura migration de unicidade do nome e CHECKs de `servico`. §5 atualizada. Integrada após `CFG-002` (REV. 7, PR #72), cujas `D-CFG-13`..`D-CFG-21` e §3.10 são preservadas. Nenhuma decisão anterior alterada; nenhum código, schema ou migration alterado. |
 | **7** | 17/09/2026 | Acréscimo de `D-CFG-13`..`D-CFG-21` (§3.10) — horário de funcionamento (`CFG-002`) —, homologadas por Bruno Menezes Noronha a partir do pacote `CFG-PREP2` (opções recomendadas, inclusive 0 = domingo e limite de 4 janelas/dia). Inclui leitura homologada de `docs/09` §13.6 (alvo `clinica`). §5 atualizada. Nenhuma decisão anterior alterada; nenhum código alterado. |
 | **6** | 17/09/2026 | Reconciliação factual pós-integração (`CFG-POST1`) de §5: `P-CFG-01` integrada pela PR #65 (`6ee19f2`) e `P-CFG-02` integrado pela PR #69 (`02cc93d`); alinhamento de `docs/07` resolvido; restrição de `provisionar` (`D-CFG-12`) explicitada como pendência. Os registros das REV. 2 e 5 permanecem como histórico. Nenhuma decisão normativa criada, alterada ou reaberta. |
