@@ -2,7 +2,8 @@
 
 > **Arquivo:** `docs/10-backend-implementacao.md`
 > **Natureza:** documento **MUTÁVEL** — registro vivo de implementação da frente de backend (`apps/api`)
-> **Revisão vigente:** REV. 60 (17/09/2026) — **ALINHAMENTO EDITORIAL DE `docs/07` ÀS RESTRIÇÕES FÍSICAS DE `CFG-003`** (§6-Z.7). `docs/07` REV. 2.3 absorve `U-14` e as três CHECKs de `servico`; nenhuma decisão, código, teste, schema ou migration alterado.
+> **Revisão vigente:** REV. 61 (17/09/2026) — **`CFG-003` — REFORÇO DE TESTES PÓS-INTEGRAÇÃO (ACHADOS B-1/B-2/B-3 DA REVISÃO INDEPENDENTE DA PR #80)** (§6-Z.8). Dois testes de integração provam a leitura sob lock do `PATCH /servicos/:servicoId/situacao`; spec unitário prova que só o `23505` de `ux_servico_clinica_nome` vira `SERVICO_DUPLICADO`; correção editorial de §6-Z.6. Nenhuma linha de código de produção, schema, migration, contrato, dependência ou CI alterada; nenhuma decisão criada, alterada ou reaberta.
+> **Estado anterior preservado:** REV. 60 (17/09/2026) — **ALINHAMENTO EDITORIAL DE `docs/07` ÀS RESTRIÇÕES FÍSICAS DE `CFG-003`** (§6-Z.7). `docs/07` REV. 2.3 absorve `U-14` e as três CHECKs de `servico`; nenhuma decisão, código, teste, schema ou migration alterado.
 > **Estado anterior preservado:** REV. 59 (17/09/2026) — **REGISTRO PÓS-INTEGRAÇÃO DE `CFG-003` NA `main` (PR [#80](https://github.com/BrunoMNoronha/techlab-fisio/pull/80), MERGE `fd3c205`)** (§6-Z.7). Registro **exclusivamente factual**; nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código, teste, schema, migration, contrato, dependência ou CI alterada.
 > **Estado anterior preservado:** REV. 58 (17/09/2026) — **`CFG-003` — CATÁLOGO DE SERVIÇOS IMPLEMENTADO E MEDIDO EM BRANCH PRÓPRIA (`agent/cfg-003-catalogo-servicos`) — NÃO INTEGRADO NA `main`** (§6-Z). Materializa `D-CFG-22`..`D-CFG-33` (`docs/14` §3.11); migration `20260917120000_servico_catalogo_invariantes` (índice único de nome e três CHECKs) e golden atualizado; rotas `/servicos` sob `clinica.configurar`; 10 mutation challenges detectados. Nenhuma decisão criada, alterada ou reaberta; nenhuma permissão, ação de auditoria, chave de `contexto` ou dependência nova.
 > **Estado anterior preservado:** REV. 57 (17/09/2026) — **REGISTRO PÓS-INTEGRAÇÃO DE `CFG-002` NA `main` (PR [#76](https://github.com/BrunoMNoronha/techlab-fisio/pull/76), MERGE `ad2bcf8`)** (§6-Y.6). Registro **exclusivamente factual**, no precedente `MEDIR → REGISTRAR`; nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código, teste, schema, migration, contrato, dependência ou CI alterada. O estado "NÃO INTEGRADO" de §6-Y fica como registro histórico da rodada de implementação.
@@ -4041,7 +4042,7 @@ Executados um a um contra a suíte `servicos-catalogo.integration.spec.ts` em Po
 
 ### 6-Z.6 Revalidação após incorporar `CFG-002` (`origin/main` = `ad2bcf8`)
 
-A `main` recebeu `CFG-002` (PR #76) durante a medição. A branch incorporou-a por merge; os conflitos foram textuais (listas fechadas de rotas em `openapi.spec.ts`, `auth.module.integration.spec.ts` e `verify-openapi-runtime.mjs`; cabeçalho, §6 e §11 deste documento; §5 e §6 de `docs/14`) e resolvidos preservando as duas frentes — `CFG-002` permanece em §6-Y/REV. 56 e `CFG-003` passa a §6-Z/REV. 57. Nenhum código de produção de nenhuma das frentes foi alterado na resolução. Baterias sobre a árvore mesclada:
+A `main` recebeu `CFG-002` (PR #76) durante a medição. A branch incorporou-a por merge; os conflitos foram textuais (listas fechadas de rotas em `openapi.spec.ts`, `auth.module.integration.spec.ts` e `verify-openapi-runtime.mjs`; cabeçalho, §6 e §11 deste documento; §5 e §6 de `docs/14`) e resolvidos preservando as duas frentes — `CFG-002` permanece em §6-Y/REV. 56 e `CFG-003` passa a §6-Z/REV. 58 *(corrigido na REV. 61; constava "REV. 57" — ver §6-Z.8)*. Nenhum código de produção de nenhuma das frentes foi alterado na resolução. Baterias sobre a árvore mesclada:
 
 - `pnpm run typecheck`: **verde** (a primeira execução acusou erro de sintaxe introduzido na resolução de `openapi.spec.ts`, corrigido e remedido).
 - `pnpm run lint:migrations`: **OK**. `pnpm run schema:verify`: **OK**, golden idêntico e `migrate diff` exit 0.
@@ -4062,6 +4063,32 @@ Registro **exclusivamente factual**, no precedente `MEDIR → REGISTRAR` de §6-
 | Validação local | Baterias de §6-Z.4 e §6-Z.6; depois de `2e934f6` os merges alteraram apenas `docs/10` e `docs/14` |
 | Arquivos integrados pela fatia | migration `20260917120000_servico_catalogo_invariantes`, `schema.prisma` (comentário), `schema.golden.sql`, `apps/api/src/servicos/**`, `app.module.ts`, `servicos-dto.spec.ts`, `integration/servicos-catalogo.integration.spec.ts`, `openapi.spec.ts`, `auth.module.integration.spec.ts`, `verify-openapi-runtime.mjs`, `docs/10`, `docs/14` |
 | Estados vivos | `CFG-003` **INTEGRADO**. Seguem as limitações de §6-Z.5. Alinhamento editorial de `docs/07` §10.1/§10.2 às restrições de `D-CFG-23`: pendente neste registro; **resolvido depois pela `docs/07` REV. 2.3** (REV. 60 deste documento). Leitura por outros papéis e uso em agenda/pacotes seguem nas fatias futuras |
+
+### 6-Z.8 Reforço de testes pós-integração — revisão independente da PR #80 (17/09/2026)
+
+**Origem.** Revisão técnica independente, somente leitura, do código integrado (SHA revisado `ba0ae3b`; o head integrado `10baa64` difere só em `docs/14`). Conclusão: **sem bloqueios**; `D-CFG-22`..`D-CFG-33` atendidas; baterias oficiais verdes. O alinhamento de `docs/07` que a revisão também apontou já foi resolvido pela REV. 60 (PRs #83 e #84). Três achados BAIXOS são tratados aqui, sem tocar código de produção:
+
+| Achado | Descrição | Tratamento |
+| --- | --- | --- |
+| **B-1** | O teste "PUT e PATCH concorrentes serializam" atua em colunas disjuntas e passaria sem `FOR UPDATE`; nada provava a leitura sob lock do `PATCH /situacao` | Teste renomeado (sem a alegação de serialização) e **dois testes novos** em `servicos-catalogo.integration.spec.ts`: bloqueador com `FOR UPDATE` inativa a linha → o `PATCH` espera o lock (`pg_stat_activity`), vira no-op, preserva o `inativado_em` do concorrente e não audita; seis `PATCH { ativo: false }` concorrentes → um único `inativado_em` e um único evento |
+| **B-2** | Nenhuma prova de que `23505` em **outra** restrição não é traduzido para `409` (o M3 de §6-Z.3 cobre só o sentido inverso) | **Spec unitário novo** `servicos-duplicidade.spec.ts` (18 testes): `ehNomeDuplicado` verdadeiro só para o índice de nome; falso para `servico_pkey`, índice único de outra tabela, `23505` sem nome legível, `23514` e erro genérico; `criar` e `atualizar` do `ServicosService` traduzem apenas o primeiro e propagam o erro original nos demais |
+| **B-3** | §6-Z.6 dizia "`CFG-003` passa a §6-Z/REV. 57"; a revisão da fatia é a 58 | Corrigido em §6-Z.6, com marca editorial |
+
+**Observações da revisão mantidas como estão (sem defeito ou com precedente aceito):** corpo padrão da plataforma para erros do body parser (`413`, JSON malformado), com `ErroServicoDto` documentado no `413` (§6-W.5); CSRF avaliada antes da sessão (mutação sem sessão e sem header → `403`); `lower()` dependente da collation do banco (medida `en_US.utf8`; locale de produção não fixado no repositório); índice e CHECKs novos fora de `protected-objects.json` e do inventário de `verify:from-scratch`, protegidos pelo golden (precedente de `ux_clinica_linha_unica`); timeout padrão da transação interativa do Prisma sob espera longa de lock.
+
+**Mutation challenges do reforço** (aplicados um a um sobre `servicos.service.ts`, observados e revertidos com verificação por `git diff`):
+
+| # | Mutação | Resultado |
+| --- | --- | --- |
+| M11 | `PATCH /situacao` lê sem `FOR UPDATE` (`#ler(tx, id, false)` só em `alterarSituacao`) | **DETECTADA** — falham exatamente os 2 testes novos; os 70 testes pré-existentes da suíte permaneciam verdes, confirmando B-1 |
+| M12 | `ehNomeDuplicado` aceita qualquer violação `UNIQUE` | **DETECTADA** — 9 falhas no spec novo (`servico_pkey`, índice de outra tabela e `23505` sem nome, em `ehNomeDuplicado`, `criar` e `atualizar`) |
+
+**Baterias** (17/09/2026, host Windows; testes medidos sobre `d6fe368` + este reforço — de lá até `bd772a3` a `main` alterou apenas `docs/07`, `docs/10` e `docs/14`):
+
+- `pnpm run typecheck` e `pnpm run build`: **verdes**.
+- `pnpm run test:api`: **41 suites · 1186 passed** (antes 40 · 1168; +18 de `servicos-duplicidade.spec.ts`).
+- `pnpm run verify:api-integration`: **19 suites · 640 passed · 2 skipped** (antes 638; `servicos-catalogo.integration.spec.ts` passa a **72 testes**); 0 resíduos.
+- Sem migration, schema ou contrato alterados: `lint:migrations`, `schema:verify`, `verify:from-scratch` e `verify:openapi-runtime` não são afetados (medidos verdes na revisão sobre `ba0ae3b`, código idêntico ao integrado).
 
 ## 7. Auditoria — `P-BACK-01`
 
@@ -4586,6 +4613,7 @@ Sujeitas a autorização própria, nesta ordem provável:
 
 | REV. | Data | Conteúdo |
 | --- | --- | --- |
+| **61** | **17/09/2026** | **`CFG-003` — REFORÇO DE TESTES PÓS-INTEGRAÇÃO** (§6-Z.8). Achados BAIXOS B-1/B-2/B-3 da revisão independente da PR #80: dois testes de integração da leitura sob lock do `PATCH /situacao`, spec unitário da tradução restrita do `23505` e correção editorial de §6-Z.6. test:api 41 suites · 1186 passed; integração da API 19 suites · 640 passed · 2 skipped; mutation challenges M11 e M12 detectados. Nenhum código de produção, schema, migration, contrato, dependência ou CI alterado; nenhuma decisão criada, alterada ou reaberta. |
 | **60** | **17/09/2026** | **ALINHAMENTO EDITORIAL DE `docs/07` ÀS RESTRIÇÕES FÍSICAS DE `CFG-003`** — `docs/07` REV. 2.3 (`U-14`, três CHECKs de `servico`); pendência de §6-Z.7 e §10 item 22 marcada como resolvida. Nenhuma decisão, código, teste, schema ou migration alterado. |
 | **59** | **17/09/2026** | **REGISTRO PÓS-INTEGRAÇÃO DE `CFG-003` NA `main` (PR [#80](https://github.com/BrunoMNoronha/techlab-fisio/pull/80), MERGE `fd3c205`)** (§6-Z.7). Registro **exclusivamente factual**; merge commit com árvore idêntica ao HEAD `10baa64`, CI verde sobre esse HEAD; nenhuma decisão, código, teste, schema ou migration alterado. |
 | **58** | **17/09/2026** | **`CFG-003` — CATÁLOGO DE SERVIÇOS IMPLEMENTADO E MEDIDO EM BRANCH PRÓPRIA — NÃO INTEGRADO** (§6-Z). Migration de unicidade do nome e CHECKs de `servico`; `GET/POST /servicos`, `GET/PUT /servicos/:servicoId`, `PATCH /servicos/:servicoId/situacao`; test:api 1168 passed e integração da API 19 suites · 638 passed · 2 skipped após incorporar `CFG-002` (§6-Z.6); 10 mutation challenges detectados. Nenhuma decisão, permissão, ação, chave ou dependência nova. |
