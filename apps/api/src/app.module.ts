@@ -26,6 +26,7 @@ import { DatabaseModule } from "./database/database.module.js";
 import { HealthModule } from "./health/health.module.js";
 import { ProfissionalModule } from "./profissional/profissional.module.js";
 import { SessoesModule } from "./sessoes/sessoes.module.js";
+import { UsuariosModule } from "./auth/usuarios.module.js";
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { SessoesModule } from "./sessoes/sessoes.module.js";
     AuthzModule,
     RecuperacaoSenhaModule,
     SessoesModule,
+    UsuariosModule,
     DatabaseModule,
     ProfissionalModule,
     CobrancaModule,

@@ -51,7 +51,7 @@ afterAll(async () => {
 
 function operacao(
   caminho: string,
-  metodo: "post" | "get" | "delete",
+  metodo: "post" | "get" | "delete" | "patch",
 ): Record<string, unknown> {
   const item = documento.paths[caminho];
   expect(item).toBeDefined();
@@ -62,7 +62,7 @@ function operacao(
 
 function respostas(
   caminho: string,
-  metodo: "post" | "get" | "delete",
+  metodo: "post" | "get" | "delete" | "patch",
 ): Record<string, unknown> {
   return operacao(caminho, metodo)["responses"] as Record<string, unknown>;
 }
@@ -108,12 +108,13 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
     expect(documento.paths["/health"]).toBeDefined();
   });
 
-  it("as rotas publicadas são EXATAMENTE as da F3, F6, P-2.3D-07 e P-2.3D-08 — nenhuma outra vazou", () => {
+  it("as rotas publicadas são EXATAMENTE as da F3, F6, P-2.3D-07, P-2.3D-08 e AUT-005 — nenhuma outra vazou", () => {
     // ATUALIZADO NA F6 / P-2.3D-07 / P-2.3D-08: as duas rotas de recuperação de senha (AUT-004),
     // a rota de revogação de sessão (P-2.3D-07 / AUT-002) e a consulta da sessão
     // autenticada atual (P-2.3D-08 / D-2.3D-20) foram autorizadas e passam a pertencer
     // ao contrato. A asserção continua sendo de IGUALDADE EXATA — qualquer rota
-    // além destas sete falha aqui.
+    // além destas oito falha aqui. AUT-005 (`D-2.3D-21`) acrescentou a alteração
+    // administrativa de situação de usuário.
     const caminhos = Object.keys(documento.paths);
     expect(caminhos.sort()).toEqual([
       "/auth/login",
@@ -122,6 +123,7 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
       "/auth/recuperacao-senha/concluir",
       "/auth/sessao",
       "/auth/sessoes/{sessaoId}",
+      "/auth/usuarios/{usuarioId}/situacao",
       "/health",
     ]);
     for (const proibido of [
@@ -147,12 +149,13 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
   });
 
   it("o custom header CSRF é declarado como obrigatório em TODAS as mutações", () => {
-    const mutacoes: Array<{ caminho: string; metodo: "post" | "delete" }> = [
+    const mutacoes: Array<{ caminho: string; metodo: "post" | "delete" | "patch" }> = [
       { caminho: "/auth/login", metodo: "post" },
       { caminho: "/auth/logout", metodo: "post" },
       { caminho: "/auth/recuperacao-senha", metodo: "post" },
       { caminho: "/auth/recuperacao-senha/concluir", metodo: "post" },
       { caminho: "/auth/sessoes/{sessaoId}", metodo: "delete" },
+      { caminho: "/auth/usuarios/{usuarioId}/situacao", metodo: "patch" },
     ];
     for (const { caminho, metodo } of mutacoes) {
       const parametros = operacao(caminho, metodo)["parameters"] as Array<
@@ -526,3 +529,65 @@ describe("P-2.3D-08 — consulta da sessão autenticada atual documentada", () =
   });
 });
 
+// ---------------------------------------------------------------------------
+// AUT-005 — alteração administrativa de situação de usuário (D-2.3D-21)
+// ---------------------------------------------------------------------------
+
+describe("AUT-005 — alteração de situação de usuário documentada", () => {
+  const CAMINHO = "/auth/usuarios/{usuarioId}/situacao";
+
+  it("PATCH está documentada com AUT-005 e exige cookie de sessão", () => {
+    const op = operacao(CAMINHO, "patch");
+    expect(op["summary"]).toEqual(expect.stringContaining("AUT-005"));
+    expect(op["tags"]).toEqual(["Autenticação"]);
+    const seguranca = op["security"] as Array<Record<string, unknown>> | undefined;
+    expect(seguranca?.some((s) => NOME_ESQUEMA_SESSAO in s)).toBe(true);
+  });
+
+  it("PATCH documenta 200, 400, 401, 403, 404, 413, 422 e 500", () => {
+    expect(Object.keys(respostas(CAMINHO, "patch")).sort()).toEqual([
+      "200",
+      "400",
+      "401",
+      "403",
+      "404",
+      "413",
+      "422",
+      "500",
+    ]);
+  });
+
+  it("PATCH tem parâmetro de path usuarioId obrigatório e format uuid", () => {
+    const params = operacao(CAMINHO, "patch")["parameters"] as Array<Record<string, unknown>>;
+    const param = params.find((p) => p["name"] === "usuarioId" && p["in"] === "path");
+    expect(param?.["required"]).toBe(true);
+    expect((param?.["schema"] as Record<string, unknown>)?.["format"]).toBe("uuid");
+  });
+
+  it("Erros da rota usam o schema ErroSituacaoUsuarioDto com conjunto fechado", () => {
+    const schema = documento.components?.schemas?.["ErroSituacaoUsuarioDto"] as {
+      properties?: Record<string, { enum?: string[] }>;
+    };
+    expect(Object.keys(schema.properties ?? {})).toEqual(["erro"]);
+    expect(schema.properties?.["erro"]?.enum?.sort()).toEqual([
+      "ACESSO_NEGADO",
+      "AUTO_INATIVACAO_PROIBIDA",
+      "FALHA_INTERNA",
+      "REQUISICAO_INVALIDA",
+      "REQUISICAO_NAO_AUTORIZADA",
+      "SESSAO_INVALIDA",
+      "USUARIO_INEXISTENTE",
+    ]);
+  });
+
+  it("a resposta de sucesso expõe apenas usuarioId, ativo e inativadoEm", () => {
+    const schema = documento.components?.schemas?.["AlterarSituacaoUsuarioRespostaDto"] as {
+      properties?: Record<string, unknown>;
+    };
+    expect(Object.keys(schema.properties ?? {}).sort()).toEqual([
+      "ativo",
+      "inativadoEm",
+      "usuarioId",
+    ]);
+  });
+});
