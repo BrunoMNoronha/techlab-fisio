@@ -502,11 +502,11 @@ Registro de fronteira; a agenda **não** é implementada nem decidida aqui.
 | `P-CFG-03` — implementação de `CFG-002` (`D-CFG-13`..`D-CFG-21`) | **INTEGRADA NA `main`** — PR [#76](https://github.com/BrunoMNoronha/techlab-fisio/pull/76), merge commit `ad2bcf8041635f469db6c799e7405f455d836d30` (`docs/10` §6-Y, §6-Y.6) |
 | Exceções e feriados do horário de funcionamento (`D-CFG-19`) | **FUTURO DO MVP** |
 | Aplicação de RN-014 e reavaliação da troca de fuso (`D-CFG-20`, `D-CFG-08`) | **PENDENTE DA FATIA DE AGENDA** |
-| `P-CFG-04` — implementação de `CFG-003` (`D-CFG-22`..`D-CFG-33`: migration de unicidade e CHECKs de `servico`, rotas `/servicos`, testes) | **IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA (`agent/cfg-003-catalogo-servicos`) — NÃO INTEGRADA** (`docs/10` §6-Z); implementação autorizada por Bruno Menezes Noronha em 17/09/2026 |
+| `P-CFG-04` — implementação de `CFG-003` (`D-CFG-22`..`D-CFG-33`: migration de unicidade e CHECKs de `servico`, rotas `/servicos`, testes) | **INTEGRADA NA `main`** — PR [#80](https://github.com/BrunoMNoronha/techlab-fisio/pull/80), merge commit `fd3c205f420b9cb201dad46fe946b3df7354b9ba` (`docs/10` §6-Z, §6-Z.7) |
 | Alinhamento de `docs/07` §10.1/§10.2 às restrições de `D-CFG-23` | **PENDENTE** — após integração da migration |
 | Leitura do catálogo de serviços por outros papéis; pacote/agendamento com serviço inativo; duração sobrescrevível (`D-CFG-30`, `D-CFG-33`) | **PENDENTE DAS FATIAS DE AGENDA E PACOTES** |
 | CFG-002 | **INTEGRADO NA `main`** (exceto exceções/feriados e aplicação de RN-014, acima) |
-| CFG-003 | **IMPLEMENTADO EM BRANCH PRÓPRIA — NÃO INTEGRADO** (`docs/10` §6-Z) |
+| CFG-003 | **INTEGRADO NA `main`** (exceto alinhamento de `docs/07` e pendências de fronteira, acima) |
 | `P-CFG-05` — implementação de `CFG-004` (`D-CFG-34`..`D-CFG-45`: migration de unicidade e CHECK de `forma_pagamento`, rotas `/formas-pagamento`, testes) | **DECIDIDO — IMPLEMENTAÇÃO NÃO AUTORIZADA** |
 | Alinhamento de `docs/07` §10.1/§10.2 às restrições de `D-CFG-35` | **PENDENTE** — após integração da migration |
 | Leitura das formas de pagamento por outros papéis; bloqueio da forma em T-03 (`D-CFG-43`, `D-CFG-45`) | **PENDENTE DA FATIA DE PAGAMENTOS** |
@@ -522,6 +522,7 @@ Registro de fronteira; a agenda **não** é implementada nem decidida aqui.
 
 | REV. | Data | Descrição |
 | --- | --- | --- |
+| **16** | 17/09/2026 | Reconciliação factual pós-integração de §5: `P-CFG-04` / `CFG-003` integrada pela PR #80 (merge `fd3c205`). O registro da REV. 15 permanece como histórico. Nenhuma decisão normativa criada, alterada ou reaberta. |
 | **15** | 17/09/2026 | Atualização factual de §5: `P-CFG-04` (`CFG-003`) implementada e medida em branch própria (`docs/10` §6-Z), após autorização de implementação por Bruno Menezes Noronha. Nenhuma decisão criada, alterada ou reaberta. |
 | **14** | 17/09/2026 | Atualização factual de §5 (análise `CFG-PREP6`, somente leitura sobre `origin/main` = `41cb0ff`): linha própria de `CFG-006` como decidido e integrado (PRs #65 e #69) e registro das pendências de fronteira do fuso para as fatias de agenda, indicadores e frontend. Nenhuma decisão criada, alterada ou reaberta; nenhum código alterado. |
 | **13** | 17/09/2026 | Acréscimo de `D-CFG-46`..`D-CFG-57` (§3.13) — motivos de cancelamento (`CFG-005`) —, homologadas por Bruno Menezes Noronha a partir das recomendações do pacote `CFG-PREP5`: unicidade da descrição e CHECK de coerência (migration futura autorizada); rotas `/motivos-cancelamento` sem `DELETE`; descrição 1–100; `409 MOTIVO_CANCELAMENTO_EM_USO` na edição de motivo referenciado por `agendamento` ou `historico_agendamento`; obrigatoriedade do motivo, ausência de motivos ativos e leitura por outros papéis remetidas à fatia de agenda; sem motivos pré-cadastrados; preservação fundamentada em CFG-005 e `docs/07` §23 (RN-007 não os lista); `FOR UPDATE`; `clinica.configurar`; auditoria com `alvo_tipo = "motivo_cancelamento"`. Cabeçalho, §4 e §5 atualizados. Nenhuma decisão anterior alterada; nenhum código alterado; implementação não autorizada. Registrada originalmente como REV. 12 (PR #79, base `113acbd`); renumerada para REV. 13 na reconciliação com a PR #78 (base `7e67765`), sem alteração de conteúdo decisório. |
