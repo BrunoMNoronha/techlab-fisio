@@ -13,10 +13,17 @@
 //     host/porta e nomes de recursos);
 //   - prontidão por condição real (conexão TCP como tlf_migrator, que só
 //     existe após o initdb), com teto explícito.
+//
+// Execuções concorrentes (mesmo prefixo, mesma máquina): cada container e
+// volume nasce com labels de DONO (host + PID do processo que o criou). A
+// limpeza de órfãos só remove recurso cujo dono comprovadamente morreu — nunca
+// o de uma execução viva — e a checagem final de resíduo olha apenas os
+// recursos da própria execução.
 
 import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import pg from "pg";
 
@@ -62,21 +69,81 @@ export function imagemDoCompose(raizRepo) {
   return m[1];
 }
 
-/** Remove containers/volumes órfãos do prefixo dado (fail-closed por prefixo). */
+export const LABEL_HOST = "br.techlab-fisio.descartavel.host";
+export const LABEL_PID = "br.techlab-fisio.descartavel.pid";
+
+/**
+ * Recurso sem dono verificável (sem labels, criado em outro host ou com PID
+ * vivo possivelmente reusado pelo sistema) só vira órfão depois deste prazo —
+ * nenhuma verificação descartável dura tanto.
+ */
+export const PRAZO_ORFAO_SEM_DONO_MS = 6 * 60 * 60 * 1000;
+
+function processoVivo(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (e) {
+    return e.code === "EPERM"; // existe, mas pertence a outro usuário
+  }
+}
+
+/**
+ * Decisão pura: o recurso descartável é órfão?
+ * `recurso`: { labels, criadoEm (ms epoch) }; `ambiente`: { host, agora, vivo(pid) }.
+ */
+export function ehOrfao(recurso, ambiente) {
+  const labels = recurso.labels ?? {};
+  const pid = Number(labels[LABEL_PID]);
+  const donoLocal =
+    labels[LABEL_HOST] === ambiente.host && Number.isSafeInteger(pid) && pid > 0;
+  if (donoLocal && !ambiente.vivo(pid)) return true;
+  const idade = ambiente.agora - recurso.criadoEm;
+  return Number.isFinite(idade) && idade > PRAZO_ORFAO_SEM_DONO_MS;
+}
+
+function inspecionar(tipo, nome) {
+  const r = docker([tipo, "inspect", nome]);
+  if (r.status !== 0) return null; // sumiu entre a listagem e a inspeção
+  const [dado] = JSON.parse(r.stdout);
+  const labels = tipo === "container" ? dado.Config?.Labels : dado.Labels;
+  const criado = tipo === "container" ? dado.Created : dado.CreatedAt;
+  return { labels: labels ?? {}, criadoEm: Date.parse(criado) };
+}
+
+/**
+ * Remove containers/volumes ÓRFÃOS do prefixo dado (fail-closed por prefixo).
+ * Recurso de execução em andamento — mesmo host e PID do dono vivo — é
+ * preservado, para que verificações concorrentes não derrubem umas às outras.
+ */
 export function removerOrfaos(prefixo, rotulo) {
+  const ambiente = { host: os.hostname(), agora: Date.now(), vivo: processoVivo };
   const containers = dockerOk([
     "ps", "-a", "--filter", `name=${prefixo}`, "--format", "{{.Names}}",
   ]);
   for (const nome of containers.split("\n").filter(Boolean)) {
     if (!nome.startsWith(prefixo)) continue; // fail-closed
+    const recurso = inspecionar("container", nome);
+    if (recurso === null) continue;
+    if (!ehOrfao(recurso, ambiente)) {
+      console.log(`${rotulo} preservando container de execução em andamento "${nome}"`);
+      continue;
+    }
     console.log(`${rotulo} removendo container órfão "${nome}"`);
     docker(["rm", "-f", "-v", nome]);
   }
   const volumes = dockerOk(["volume", "ls", "-q", "--filter", `name=${prefixo}`]);
   for (const nome of volumes.split("\n").filter(Boolean)) {
     if (!nome.startsWith(prefixo)) continue; // fail-closed
+    const recurso = inspecionar("volume", nome);
+    if (recurso === null) continue;
+    if (!ehOrfao(recurso, ambiente)) {
+      console.log(`${rotulo} preservando volume de execução em andamento "${nome}"`);
+      continue;
+    }
     console.log(`${rotulo} removendo volume órfão "${nome}"`);
-    docker(["volume", "rm", "-f", nome]);
+    // Sem -f de propósito: volume ainda montado por container existente não sai.
+    docker(["volume", "rm", nome]);
   }
 }
 
@@ -107,9 +174,15 @@ export async function criarInstanciaLimpa({ raizRepo, prefixo, rotulo, cred }) {
   const volume = `${container}-data`;
 
   console.log(`${rotulo} criando instância limpa "${container}" (volume "${volume}", imagem ${imagem})...`);
+  const labelsDono = [
+    "--label", `${LABEL_HOST}=${os.hostname()}`,
+    "--label", `${LABEL_PID}=${process.pid}`,
+  ];
+  dockerOk(["volume", "create", ...labelsDono, volume]);
   dockerOk([
     "run", "-d",
     "--name", container,
+    ...labelsDono,
     "-v", `${volume}:/var/lib/postgresql`,
     "-v", `${path.join(raizRepo, "infra", "postgres", "initdb")}:/docker-entrypoint-initdb.d:ro`,
     "-p", "127.0.0.1::5432",
@@ -215,19 +288,30 @@ export function migrateDeploy(raizRepo, urlMigrador, roleMigrador, rotulo) {
 }
 
 /**
- * Destrói container e volume (fail-closed por prefixo) e confirma 0 resíduos.
+ * Destrói container e volume (fail-closed por prefixo) e confirma 0 resíduos
+ * DESTA execução — recursos de execuções concorrentes com o mesmo prefixo não
+ * contam como resíduo.
  * Devolve `true` se restou resíduo (o chamador decide o exit code).
  */
 export function destruirInstancia(container, volume, prefixo, rotulo) {
+  if (!container.startsWith(prefixo) || !volume.startsWith(prefixo)) {
+    throw new Error(`${rotulo} recusa destruir recurso fora do prefixo "${prefixo}"`);
+  }
   console.log(`${rotulo} destruindo "${container}" e volume "${volume}"...`);
   docker(["rm", "-f", "-v", container]);
   docker(["volume", "rm", "-f", volume]);
-  const restoC = dockerOk(["ps", "-a", "--filter", `name=${prefixo}`, "--format", "{{.Names}}"]);
-  const restoV = dockerOk(["volume", "ls", "-q", "--filter", `name=${prefixo}`]);
-  if (restoC.trim() !== "" || restoV.trim() !== "") {
+  const existe = (saida, nome) => saida.split("\n").some((l) => l.trim() === nome);
+  const restoC = existe(
+    dockerOk(["ps", "-a", "--filter", `name=${container}`, "--format", "{{.Names}}"]),
+    container,
+  ) ? container : "";
+  const restoV = existe(dockerOk(["volume", "ls", "-q", "--filter", `name=${volume}`]), volume)
+    ? volume
+    : "";
+  if (restoC !== "" || restoV !== "") {
     console.error(`${rotulo} AVISO: resíduo descartável detectado: ${restoC} ${restoV}`);
     return true;
   }
-  console.log(`${rotulo} 0 containers e 0 volumes descartáveis remanescentes.`);
+  console.log(`${rotulo} 0 containers e 0 volumes descartáveis remanescentes desta execução.`);
   return false;
 }
