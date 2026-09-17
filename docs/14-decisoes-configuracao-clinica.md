@@ -3,7 +3,7 @@
 > **Documento:** `docs/14-decisoes-configuracao-clinica.md`
 > **Projeto:** TechLab Fisio
 > **Frente:** Fase 3 — Configuração da Clínica (módulo M2, `CFG-001..CFG-006`)
-> **Status:** **DECIDIDO — `D-CFG-01`..`D-CFG-08` E ADENDOS `D-CFG-03-A` E `D-CFG-04-A` HOMOLOGADOS POR BRUNO MENEZES NORONHA EM 17/09/2026; `D-CFG-09`..`D-CFG-12` (PROVISIONAMENTO DA CLÍNICA) HOMOLOGADAS EM 17/09/2026; `D-CFG-22`..`D-CFG-33` (CATÁLOGO DE SERVIÇOS, CFG-003) HOMOLOGADAS EM 17/09/2026** (TLF-BASE-V1 §15, item 1).
+> **Status:** **DECIDIDO — `D-CFG-01`..`D-CFG-08` E ADENDOS `D-CFG-03-A` E `D-CFG-04-A` HOMOLOGADOS POR BRUNO MENEZES NORONHA EM 17/09/2026; `D-CFG-09`..`D-CFG-12` (PROVISIONAMENTO DA CLÍNICA) HOMOLOGADAS EM 17/09/2026; `D-CFG-13`..`D-CFG-21` (HORÁRIO DE FUNCIONAMENTO, CFG-002) HOMOLOGADAS EM 17/09/2026; `D-CFG-22`..`D-CFG-33` (CATÁLOGO DE SERVIÇOS, CFG-003) HOMOLOGADAS EM 17/09/2026** (TLF-BASE-V1 §15, item 1).
 > **Data:** 17 de setembro de 2026
 > **Insumo decisório:** pacote de análise `CFG-PREP0` (somente leitura), executado sobre `origin/main` = `63bb058`.
 > **Natureza:** registro normativo das decisões. A materialização da fatia `CFG-001A` (autorizada por Bruno em 17/09/2026) é registrada factualmente em `docs/10` §6-W; nenhuma decisão foi alterada por ela.
@@ -135,6 +135,59 @@ Nenhuma outra restrição é aplicada (Unicode e TLD de um caractere são aceito
 - Subcomando **novo `bootstrap-clinica`**.
 - `seed`, `bootstrap-admin` e **`provisionar` permanecem inalterados**; a inclusão da clínica em `provisionar` poderá ser reavaliada posteriormente, sem que isso esteja autorizado por este registro.
 
+### 3.10 Horário de funcionamento (`CFG-002`) — `D-CFG-13`..`D-CFG-21` *(homologadas em 17/09/2026; insumo: pacote `CFG-PREP2`)*
+
+Homologadas por Bruno Menezes Noronha em 17/09/2026, que adotou integralmente as opções recomendadas do pacote `CFG-PREP2` (somente leitura, medido sobre `origin/main` = `6b55dec`). **Registro normativo; nenhum código, schema, migration ou teste alterado.** A implementação de `CFG-002` não é autorizada por este registro.
+
+**Fatos de partida (`CFG-PREP2`).** A tabela `horario_funcionamento` já existe (`id`, `clinica_id` FK NN `RESTRICT`, `dia_semana smallint` 0..6, `hora_inicio`/`hora_fim` `time(6)`, `criado_em`), com os CHECKs protegidos `ck_horario_funcionamento_dia_semana` e `ck_horario_funcionamento_intervalo`; não há unicidade, exclusão de sobreposição, `atualizado_em`, vigência, situação nem tabela de exceções. Não existe módulo de agenda em `apps/api`. RN-014 é garantida pelo backend na fatia de agenda (`docs/07` §17).
+
+#### 3.10.1 `D-CFG-13` — Forma da janela
+
+- **Múltiplas janelas por dia** (turnos), **sem sobreposição e sem adjacência** entre janelas do mesmo dia.
+- Dia sem janela = clínica **fechada** nesse dia.
+
+#### 3.10.2 `D-CFG-14` — Meia-noite
+
+- Janelas que atravessam a meia-noite são **proibidas**, coerentes com `ck_horario_funcionamento_intervalo` (`hora_fim > hora_inicio`). Nenhuma alteração do CHECK protegido.
+
+#### 3.10.3 `D-CFG-15` — Contrato
+
+- `GET /horario-funcionamento` e `PUT /horario-funcionamento`.
+- O `PUT` **substitui a grade semanal inteira**, em transação única serializada por `SELECT ... FOR UPDATE` na linha de `clinica`.
+- A substituição **remove fisicamente** as linhas anteriores de `horario_funcionamento` (tabela sem dependentes), o que é aceito expressamente para esta entidade; a regra geral de não oferecer exclusão física de cadastros (`docs/07` §28) não é alterada para as demais.
+- Grade idêntica à vigente → `200` **sem escrita e sem auditoria** (mesmo critério de `D-CFG-06`).
+
+#### 3.10.4 `D-CFG-16` — Garantia de não sobreposição
+
+- **Validação no backend**, sob o lock de `D-CFG-15`. **Sem migration**, sem exclusion constraint e sem `btree_gist`.
+
+#### 3.10.5 `D-CFG-17` — Auditoria
+
+- Substituição efetiva emite **um único** `configuracao.alterada` com `alvo_tipo = "clinica"`, `alvo_id = clinica.id`, ator da sessão, `resultado = SUCESSO`, `justificativa = null`, `contexto` vazio, na mesma transação.
+- **Leitura homologada de `docs/09` §13.6:** a grade semanal é tratada como **atributo da clínica**; como as instâncias de `horario_funcionamento` são recriadas a cada substituição, o alvo estável é a clínica. `docs/09` não é alterado; nenhuma ação, chave ou `alvo_tipo` novo.
+
+#### 3.10.6 `D-CFG-18` — Representação e validação
+
+- Horas em `HH:MM` (24h, sem segundos); minutos 00–59, sem arredondamento; `hora_fim > hora_inicio`.
+- `dia_semana`: **0 = domingo** .. 6 = sábado.
+- No máximo **4 janelas por dia**.
+- Corpo estrito, sem coerção de tipos; erros no contrato `{ erro: <código> }`.
+
+#### 3.10.7 `D-CFG-19` — Exceções e feriados
+
+- **Fora desta fatia.** Permanecem pendência do MVP ("quando modeladas", `docs/02` CFG-002).
+
+#### 3.10.8 `D-CFG-20` — Agenda e disponibilidade
+
+- `CFG-002` apenas **persiste e expõe** a grade. A aplicação de RN-014 (e a combinação com a disponibilidade do profissional, PRO-003, e sua vigência) pertence à fatia de agenda.
+- Sem vigência no horário da clínica nesta fatia.
+- A introdução da agenda deve reavaliar a troca de fuso (`D-CFG-08`).
+
+#### 3.10.9 `D-CFG-21` — Autorização e estados vazios
+
+- `GET` e `PUT` exigem `clinica.configurar`; CSRF somente no `PUT`.
+- Clínica sem grade → `200` com lista vazia; linha de `clinica` ausente → `404 CLINICA_NAO_CONFIGURADA`.
+- Nenhuma permissão nova.
 ### 3.11 Catálogo de serviços (`CFG-003`) — `D-CFG-22`..`D-CFG-33` *(homologadas em 17/09/2026; insumo: pacote `CFG-PREP3`)*
 
 Homologadas por Bruno Menezes Noronha em 17/09/2026, que aprovou integralmente as decisões `DS-01`..`DS-12` do pacote `CFG-PREP3` (somente leitura, medido sobre `origin/main` = `02cc93d`), **incluindo expressamente a alteração estrutural de banco de `DS-01` e `DS-08`**. **Registro normativo; nenhum código, schema, migration ou teste alterado.** A aprovação autoriza a materialização documental; **não** autoriza ainda implementação de runtime, schema ou migration.
@@ -248,11 +301,15 @@ Registro de fronteira; **nenhum** destes módulos é implementado ou decidido aq
 | `P-CFG-01` — implementação da fatia `CFG-001A` (migration de linha única, GET/PUT `/clinica`, testes) | **INTEGRADA NA `main`** — PR [#65](https://github.com/BrunoMNoronha/techlab-fisio/pull/65), commit de integração `6ee19f27afc5d7c55667ef910536baa924ecc990` (`docs/10` §6-W, §6-X.5) |
 | `P-CFG-02` — provisionamento da linha de `clinica` (`CFG-001B`; `D-CFG-01`, `D-CFG-09`..`D-CFG-12`) | **INTEGRADO NA `main`** — PR [#69](https://github.com/BrunoMNoronha/techlab-fisio/pull/69), merge commit `02cc93d5770003775d3417b1d2ee08a874675d30` (`docs/10` §6-X, §6-X.5) |
 | Logotipo e duração padrão (`D-CFG-07`) | **FUTURO DO MVP** — não implementados |
+| `P-CFG-03` — implementação de `CFG-002` (`D-CFG-13`..`D-CFG-21`) | **DECIDIDA — IMPLEMENTAÇÃO NÃO AUTORIZADA** por este registro |
+| Exceções e feriados do horário de funcionamento (`D-CFG-19`) | **FUTURO DO MVP** |
+| Aplicação de RN-014 e reavaliação da troca de fuso (`D-CFG-20`, `D-CFG-08`) | **PENDENTE DA FATIA DE AGENDA** |
+| CFG-002 | **DECIDIDO, NÃO IMPLEMENTADO** |
 | `P-CFG-04` — implementação de `CFG-003` (`D-CFG-22`..`D-CFG-33`: migration de unicidade e CHECKs de `servico`, rotas `/servicos`, testes) | **DECIDIDA — IMPLEMENTAÇÃO NÃO AUTORIZADA** por este registro |
 | Alinhamento de `docs/07` §10.1/§10.2 às restrições de `D-CFG-23` | **PENDENTE** — após integração da migration |
 | Leitura do catálogo de serviços por outros papéis; pacote/agendamento com serviço inativo; duração sobrescrevível (`D-CFG-30`, `D-CFG-33`) | **PENDENTE DAS FATIAS DE AGENDA E PACOTES** |
 | CFG-003 | **DECIDIDO, NÃO IMPLEMENTADO** |
-| CFG-002, CFG-004, CFG-005 | **NÃO INICIADOS** |
+| CFG-004, CFG-005 | **NÃO INICIADOS** |
 | Inclusão da clínica no subcomando `provisionar` (`D-CFG-12`) | **NÃO AUTORIZADA** — reavaliação futura possível |
 | Alinhamento de `docs/07` (afirmava restrição então inexistente) | **RESOLVIDO** — migration `20260917060000_clinica_linha_unica` (`ux_clinica_linha_unica`) integrada na `main` pela PR #65 |
 
@@ -260,7 +317,8 @@ Registro de fronteira; **nenhum** destes módulos é implementado ou decidido aq
 
 | REV. | Data | Descrição |
 | --- | --- | --- |
-| **8** | 17/09/2026 | Acréscimo de `D-CFG-22`..`D-CFG-33` (§3.11) — catálogo de serviços (`CFG-003`) —, homologadas por Bruno Menezes Noronha a partir do pacote `CFG-PREP3` (`DS-01`..`DS-12`), incluindo a autorização expressa da futura migration de unicidade do nome e CHECKs de `servico`. §5 atualizada. Numeração `D-CFG-13`..`D-CFG-21`, §3.10 e REV. 7 ficam reservadas à frente paralela `CFG-002` (PR #72). Nenhuma decisão anterior alterada; nenhum código, schema ou migration alterado. |
+| **8** | 17/09/2026 | Acréscimo de `D-CFG-22`..`D-CFG-33` (§3.11) — catálogo de serviços (`CFG-003`) —, homologadas por Bruno Menezes Noronha a partir do pacote `CFG-PREP3` (`DS-01`..`DS-12`), incluindo a autorização expressa da futura migration de unicidade do nome e CHECKs de `servico`. §5 atualizada. Integrada após `CFG-002` (REV. 7, PR #72), cujas `D-CFG-13`..`D-CFG-21` e §3.10 são preservadas. Nenhuma decisão anterior alterada; nenhum código, schema ou migration alterado. |
+| **7** | 17/09/2026 | Acréscimo de `D-CFG-13`..`D-CFG-21` (§3.10) — horário de funcionamento (`CFG-002`) —, homologadas por Bruno Menezes Noronha a partir do pacote `CFG-PREP2` (opções recomendadas, inclusive 0 = domingo e limite de 4 janelas/dia). Inclui leitura homologada de `docs/09` §13.6 (alvo `clinica`). §5 atualizada. Nenhuma decisão anterior alterada; nenhum código alterado. |
 | **6** | 17/09/2026 | Reconciliação factual pós-integração (`CFG-POST1`) de §5: `P-CFG-01` integrada pela PR #65 (`6ee19f2`) e `P-CFG-02` integrado pela PR #69 (`02cc93d`); alinhamento de `docs/07` resolvido; restrição de `provisionar` (`D-CFG-12`) explicitada como pendência. Os registros das REV. 2 e 5 permanecem como histórico. Nenhuma decisão normativa criada, alterada ou reaberta. |
 | **5** | 17/09/2026 | Atualização factual de §5: `P-CFG-02` implementado e medido em branch própria (`docs/10` §6-X); nenhuma decisão criada, alterada ou reaberta. |
 | **4** | 17/09/2026 | Acréscimo de `D-CFG-09`..`D-CFG-12` (§3.9) — autoria nula com justificativa, reexecução idempotente, entrada por ambiente e subcomando `bootstrap-clinica` —, homologadas por Bruno Menezes Noronha a partir do pacote `CFG-PREP1` (opções conservadoras). Nenhuma decisão anterior alterada; nenhum código alterado. |
