@@ -8,12 +8,19 @@
 //     ou autorrevogação recusada;
 //   - No-op NÃO emite auditoria falsa de sucesso;
 //   - Zero vazamento de tokens, senhas ou segredos.
+//
+// Listagem administrativa das sessões ativas de um usuário (D-2.3D-22):
+//   - somente leitura: nenhuma escrita, nem a detecção persistente de expiração;
+//   - somente sessões ATIVA ainda válidas pela política temporal de D-2.3D-04;
+//   - projeção fechada, sem token/hash; nenhum evento de auditoria.
 
 import { randomUUID } from "node:crypto";
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 
 import { AuditWriter } from "../audit/audit-writer.js";
-import { SessaoService } from "../auth/sessao.service.js";
+import { RELOGIO_SESSAO } from "../auth/relogio-sessao.js";
+import type { RelogioSessao } from "../auth/relogio-sessao.js";
+import { POLITICA_SESSAO, SessaoService } from "../auth/sessao.service.js";
 import type { ResultadoRevogacaoAdministrativaSessao } from "../auth/sessao.service.js";
 import { DatabaseService } from "../database/database.service.js";
 
@@ -24,13 +31,54 @@ export interface ComandoRevogarSessaoAdministrativa {
   readonly atorUsuarioId: string;
 }
 
+export interface SessaoAtivaUsuario {
+  readonly sessaoId: string;
+  readonly criadaEm: Date;
+  readonly ultimaAtividadeEm: Date;
+  readonly expiraEm: Date;
+}
+
 @Injectable()
 export class SessoesService {
   constructor(
     private readonly database: DatabaseService,
     private readonly sessoes: SessaoService,
     private readonly auditWriter: AuditWriter,
+    @Inject(RELOGIO_SESSAO) private readonly relogio: RelogioSessao,
   ) {}
+
+  /**
+   * Lista as sessões ATIVAS e temporalmente válidas de um usuário (D-2.3D-22).
+   *
+   * Os predicados temporais espelham D-2.3D-04 com o MESMO relógio da
+   * validação: uma sessão vencida e ainda não detectada como EXPIRADA não é
+   * listada, e não é escrita aqui — GET permanece sem efeito colateral.
+   * Usuário inexistente resulta em lista vazia.
+   */
+  async listarSessoesAtivasDoUsuario(usuarioId: string): Promise<SessaoAtivaUsuario[]> {
+    const agora = this.relogio.agora();
+    const limiteOcioso = new Date(agora.getTime() - POLITICA_SESSAO.timeoutOciosoMs);
+
+    const linhas = await this.database.transacao(async (tx) =>
+      tx.sessaoAutenticacao.findMany({
+        where: {
+          usuarioId,
+          estado: "ATIVA",
+          expiraEm: { gt: agora },
+          ultimaAtividadeEm: { gt: limiteOcioso },
+        },
+        select: { id: true, criadaEm: true, ultimaAtividadeEm: true, expiraEm: true },
+        orderBy: [{ criadaEm: "asc" }, { id: "asc" }],
+      }),
+    );
+
+    return linhas.map((linha) => ({
+      sessaoId: linha.id,
+      criadaEm: linha.criadaEm,
+      ultimaAtividadeEm: linha.ultimaAtividadeEm,
+      expiraEm: linha.expiraEm,
+    }));
+  }
 
   /**
    * Executa a revogação administrativa de sessão de terceiro.

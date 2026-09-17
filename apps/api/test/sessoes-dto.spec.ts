@@ -7,7 +7,10 @@ import "reflect-metadata";
 import { describe, expect, it } from "@jest/globals";
 
 import { AuditModule } from "../src/audit/audit.module.js";
+import { ProtecaoCsrfGuard } from "../src/auth/protecao-csrf.guard.js";
 import { AuthzModule } from "../src/authz/authz.module.js";
+import { PermissoesGuard } from "../src/authz/permissoes.guard.js";
+import { SessaoAutenticadaGuard } from "../src/authz/sessao-autenticada.guard.js";
 import { SessoesController } from "../src/sessoes/sessoes.controller.js";
 import { ehUuidValido, ErroSessaoAdministrativaDto } from "../src/sessoes/sessoes.dto.js";
 import { SessoesModule } from "../src/sessoes/sessoes.module.js";
@@ -58,5 +61,30 @@ describe("SessoesModule — fronteira", () => {
       SessoesController.prototype.revogarSessao,
     );
     expect(permissao).toBe("sessoes.revogar_terceiro");
+  });
+
+  it("a listagem de sessões (D-2.3D-22) exige a MESMA permissão sessoes.revogar_terceiro", () => {
+    const permissao: unknown = Reflect.getMetadata(
+      "tlf:permissao_exigida",
+      SessoesController.prototype.listarSessoesDoUsuario,
+    );
+    expect(permissao).toBe("sessoes.revogar_terceiro");
+  });
+
+  it("a listagem é método seguro: guards são sessão e permissão, SEM ProtecaoCsrfGuard", () => {
+    const guards: unknown = Reflect.getMetadata(
+      "__guards__",
+      SessoesController.prototype.listarSessoesDoUsuario,
+    );
+    expect(guards).toEqual([SessaoAutenticadaGuard, PermissoesGuard]);
+    expect(Reflect.getMetadata("__guards__", SessoesController) ?? []).toEqual([]);
+  });
+
+  it("a revogação mantém a CSRF avaliada ANTES da sessão e da permissão", () => {
+    const guards: unknown = Reflect.getMetadata(
+      "__guards__",
+      SessoesController.prototype.revogarSessao,
+    );
+    expect(guards).toEqual([ProtecaoCsrfGuard, SessaoAutenticadaGuard, PermissoesGuard]);
   });
 });
