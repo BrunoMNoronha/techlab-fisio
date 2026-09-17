@@ -337,3 +337,34 @@ describe("FiltroErroAutenticacao — Falhas técnicas e exceções não-HTTP", (
     expect(loggerSpy).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("FiltroErroAutenticacao — AUD-004 (GET /auditoria/eventos)", () => {
+  beforeEach(() => {
+    jest.spyOn(Logger.prototype, "error").mockImplementation(() => {});
+    jest.spyOn(BaseExceptionFilter.prototype, "catch").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it("falha técnica na consulta vira 500 FALHA_INTERNA com contrato fechado", () => {
+    const res = criarRespostaFicticia();
+    new FiltroErroAutenticacao().catch(
+      new Error("detalhe interno do driver"),
+      criarHostFicticio({ path: "/auditoria/eventos", method: "GET" }, res),
+    );
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ erro: ERRO.FALHA_INTERNA });
+  });
+
+  it("outro método no mesmo caminho NÃO é capturado pela fronteira", () => {
+    const res = criarRespostaFicticia();
+    new FiltroErroAutenticacao().catch(
+      new Error("x"),
+      criarHostFicticio({ path: "/auditoria/eventos", method: "POST" }, res),
+    );
+    expect(BaseExceptionFilter.prototype.catch).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalled();
+  });
+});

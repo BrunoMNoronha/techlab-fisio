@@ -215,6 +215,10 @@ function ehOperacaoDaFronteira(requisicao: RequisicaoDaFronteira): boolean {
   if (metodo === "GET" && caminho === "/auth/sessao") {
     return true;
   }
+  // AUD-004: mesmo contrato fechado `{ "erro": "<CODIGO>" }` para 400/401/403/500.
+  if (metodo === "GET" && caminho === "/auditoria/eventos") {
+    return true;
+  }
   return false;
 }
 
