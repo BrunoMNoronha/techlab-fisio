@@ -3,7 +3,7 @@
 > **Documento:** `docs/07-modelo-persistencia.md`
 > **Projeto:** TechLab Fisio
 > **Fase:** 2 — Modelagem — **Etapa 2.2: Modelo de Persistência, Integridade Transacional e Concorrência**
-> **Status:** **HOMOLOGADO — REV. 2 — ETAPA 2.2 CONCLUÍDA** *(correções editoriais `DIV-04`/`DIV-05` aplicadas na REV. 2.1, 25/08/2026; absorção editorial de `D-2.3D-01` aplicada na REV. 2.2, 27/08/2026 — ver §1.3; nenhuma decisão homologada da Etapa 2.2 alterada)*
+> **Status:** **HOMOLOGADO — REV. 2 — ETAPA 2.2 CONCLUÍDA** *(correções editoriais `DIV-04`/`DIV-05` aplicadas na REV. 2.1, 25/08/2026; absorção editorial de `D-2.3D-01` aplicada na REV. 2.2, 27/08/2026; absorção editorial de `D-CFG-22`/`D-CFG-23` aplicada na REV. 2.3, 17/09/2026 — ver §1.3; nenhuma decisão homologada da Etapa 2.2 alterada)*
 > **Homologação:** decisões **`H2.2-01` a `H2.2-18`**, **P-CLIN (Alternativa A)**, **`PROP-RN-2.2-01`** e **`PROP-RN-2.2-02`** aprovadas em conjunto por **Bruno Menezes Noronha** em **19 de agosto de 2026**
 > **Data:** 19 de agosto de 2026
 > **Idioma oficial:** Português do Brasil
@@ -35,6 +35,7 @@ O conteúdo desta revisão resulta de **revisão arquitetural independente e adv
 - **REV. 2 — CONSOLIDAÇÃO HOMOLOGADA** — revisão arquitetural independente seguida de homologação. Correções materiais em `H2.2-02`, `H2.2-04`, `H2.2-06`, `H2.2-10` e **substituição da recomendação de P-CLIN** (`H2.2-16`); remoção de três elementos sem sustentação nas fontes; resolução das lacunas `P2.2-03` e `P2.2-04` em regras formais; simulação de 12 cenários concorrentes (§25); matriz de homologação (§27). **Homologada em 19/08/2026** — P-CLIN resolvida pela Alternativa A e aplicada ao modelo físico; aggregate root de `Atendimento` mantido deliberadamente em aberto.
 - **REV. 2.1 (editorial) — 25/08/2026 — E-18A.** Aplicação exclusivamente **editorial** das duas correções decididas por Bruno em 21/08/2026 e remetidas a `E-18` (`docs/08` §11): **(a) `DIV-04`** — em §14, removidas a marcação `U` e a citação indevida a C-06 de `movimento_sessao.chave_idempotencia` (a coluna permanece; a decisão física vigente é: existe, **sem unicidade própria**; C-06 pertence a M8 — U-09/U-10); **(b) `DIV-05`** — em §28.2, IDX-R3 (`reserva_sessao(agendamento_id)`, índice simples de §10-A) incluído na Categoria A, da qual fora omitido. **Nenhuma decisão homologada foi alterada, nenhum objeto físico mudou, nenhuma seção foi reinterpretada** — o texto passou a refletir o que §10.1/§10-A/§18/§24.2 já determinavam e o que está implementado desde `E-07` (correção pré-versionamento, `docs/08` REV. 6).
 - **REV. 2.2 (editorial) — 27/08/2026 — Etapa 2.3D-B / F0.** Absorção exclusivamente **editorial** da decisão **`D-2.3D-01`**, homologada por Bruno Menezes Noronha em 27/08/2026 e registrada em **`docs/12-decisoes-autenticacao-autorizacao.md` §5.1** — cuja implementação física **já está integrada na `main`** (migration `20260827175151_sessao_autenticacao_token_atividade`, merge commit `f612fa7`). Atualizados: **§7.1** (`sessao_autenticacao` passa a listar `token_hash text NN` e `ultima_atividade_em timestamptz NN`), **§10.2** (acrescentada a CHECK `ck_sessao_autenticacao_atividade`; a CHECK de expiração permanece intacta) e **§28.1** (pendência `P-2.3D-01`). **Nada da Etapa 2.2 foi reaberto, revogado ou reinterpretado**: as decisões `H2.2-01`..`H2.2-18`, P-CLIN, `PROP-RN-2.2-01` e `PROP-RN-2.2-02` seguem homologadas exatamente como em 19/08/2026, e a composição de `sessao_autenticacao` descrita até a REV. 2.1 continua correta — apenas deixou de ser completa. Esta revisão **não cria norma**: a fonte normativa de `D-2.3D-01` é e continua sendo `docs/12`; `docs/07` passa a refletir o estado físico vigente, como exige TLF-BASE-V1 §4.8 ("documentação junto do código").
+- **REV. 2.3 (editorial) — 17/09/2026 — `CFG-003`.** Absorção exclusivamente **editorial** das decisões **`D-CFG-22`** e **`D-CFG-23`**, homologadas por Bruno Menezes Noronha em 17/09/2026 e registradas em **`docs/14-decisoes-configuracao-clinica.md` §3.11.1–§3.11.2** — cuja implementação física **já está integrada na `main`** (migration `20260917120000_servico_catalogo_invariantes`, PR #80, merge commit `fd3c205`). Atualizados: **§7.2** (`servico` passa a citar as restrições físicas), **§10.1** (unicidade `U-14`, `ux_servico_clinica_nome`), **§10.2** (`ck_servico_duracao_positiva`, `ck_servico_preco_nao_negativo`, `ck_servico_situacao`) e **§28.1** (pendência `P-CFG-D07-01`). **Nada da Etapa 2.2 foi reaberto, revogado ou reinterpretado**; a descrição de `servico` até a REV. 2.2 continua correta — apenas deixou de ser completa. Esta revisão **não cria norma**: a fonte normativa é `docs/14`; `docs/07` passa a refletir o estado físico vigente (TLF-BASE-V1 §4.8), no mesmo precedente da REV. 2.2. §10-A não muda: os índices das unicidades de §10.1 não são repetidos ali.
 
 ### 1.4 Registro de homologação e efeitos
 
@@ -221,7 +222,7 @@ Notação: `PK`, `FK`, `NN` = `NOT NULL`, `U` = unicidade, `∅` = anulável.
 
 **`horario_funcionamento`** — `id PK`; `clinica_id FK NN`; `dia_semana smallint NN` (0..6); `hora_inicio time NN`; `hora_fim time NN`; `CHECK (hora_fim > hora_inicio)`. *(CFG-002)*
 
-**`servico`** — `id PK`; `clinica_id FK NN`; `nome text NN`; `duracao_min integer NN`; `preco_referencia numeric(12,2) NN`; `ativo boolean NN`; `inativado_em timestamptz ∅`. **O preço de referência nunca reescreve cobrança histórica** (CFG-003) — a cobrança copia o valor na criação. *(CFG-003, RN-008)*
+**`servico`** — `id PK`; `clinica_id FK NN`; `nome text NN`; `duracao_min integer NN`; `preco_referencia numeric(12,2) NN`; `ativo boolean NN`; `inativado_em timestamptz ∅`. **O preço de referência nunca reescreve cobrança histórica** (CFG-003) — a cobrança copia o valor na criação. **Restrições físicas (REV. 2.3, `D-CFG-22`/`D-CFG-23`):** nome único por clínica, ativos e inativos, sem distinção de caixa e sem espaços de borda (`U-14`); `duracao_min > 0`; `preco_referencia >= 0`; `ativo = (inativado_em IS NULL)` (§10.2). *(CFG-003, RN-008)*
 
 **`forma_pagamento`**, **`motivo_cancelamento`** — `id PK`; `clinica_id FK NN`; descrição; `ativo boolean NN`; `inativado_em timestamptz ∅`. *(CFG-004, CFG-005, RN-007)*
 
@@ -376,6 +377,7 @@ Derivados **exclusivamente** de `docs/06` §9. Onde a Etapa 2.1 não fixou multi
 | U-11 | `permissao.codigo`, `papel.codigo` | `docs/04` §5 |
 | U-12 | `reserva_sessao.movimento_consumo_id` (anulável) | um consumo resolve no máximo uma reserva |
 | **U-13** | **`registro_clinico.atendimento_id`** | **P-CLIN Alternativa A homologada** — `Atendimento 1 → 0..1 Registro clínico`; torna a primeira finalização válida única por construção (HOM-04, RN-070) |
+| **U-14** | **`servico (clinica_id, lower(btrim(nome)))`** — `ux_servico_clinica_nome`, índice único sobre expressão | **`D-CFG-22`** (`docs/14` §3.11.1) — abrange serviços **ativos e inativos**; o nome de serviço inativo não é liberado para reuso (mesmo racional de `H2.2-13`). *Acrescentada na REV. 2.3* |
 
 **Comportamento de `NULL` em índice único (PostgreSQL):** valores `NULL` são tratados como **distintos entre si** por padrão. É o que permite que U-07, U-09, U-10 e U-12 convivam com múltiplas linhas nulas. Comportamento padrão e estável; o modificador `NULLS NOT DISTINCT`, quando disponível, **não deve ser usado** aqui.
 
@@ -401,8 +403,12 @@ Derivados **exclusivamente** de `docs/06` §9. Onde a Etapa 2.1 não fixou multi
 | `horario_funcionamento`, `disponibilidade_profissional` | `hora_fim > hora_inicio`; `dia_semana` 0..6 | CFG-002, PRO-003 |
 | `sessao_autenticacao` | `expira_em > criada_em` | AUT-002 |
 | `sessao_autenticacao` | `ultima_atividade_em >= criada_em` **e** `ultima_atividade_em <= expira_em` | **`D-2.3D-01`** — acréscimo posterior à Etapa 2.2 (ver nota abaixo) |
+| `servico` | `duracao_min > 0` (`ck_servico_duracao_positiva`); `preco_referencia >= 0` (`ck_servico_preco_nao_negativo`) | **`D-CFG-23`** (`docs/14` §3.11.2) — acréscimo posterior à Etapa 2.2 (ver nota abaixo) |
+| `servico` | `ativo = (inativado_em IS NULL)` (`ck_servico_situacao`) | **`D-CFG-23`** — coerência da situação (RN-007/RN-008); acréscimo posterior à Etapa 2.2 |
 
 > **Nota editorial (REV. 2.2).** A primeira linha de `sessao_autenticacao` é a CHECK homologada na Etapa 2.2, implementada como `ck_sessao_autenticacao_expiracao` e **preservada sem alteração**. A segunda é `ck_sessao_autenticacao_atividade`, acrescentada pela decisão **`D-2.3D-01`** (`docs/12` §5.1) e implementada na migration `20260827175151_sessao_autenticacao_token_atividade`. As duas **coexistem e são complementares**: a de expiração garante que a janela absoluta da sessão não seja degenerada; a de atividade garante que a última atividade viva **dentro** dessa janela. Os limites da segunda são **inclusivos** (`>=` / `<=`) por decisão expressa: uma sessão recém-criada tem legitimamente `ultima_atividade_em = criada_em`, e limites estritos rejeitariam fisicamente uma escrita legítima de borda. Nenhuma das 25 CHECKs da Etapa 2.2 foi alterada, renomeada ou removida.
+
+> **Nota editorial (REV. 2.3).** As três CHECKs de `servico` e a unicidade `U-14` foram acrescentadas pelas decisões **`D-CFG-22`/`D-CFG-23`** (`docs/14` §3.11) e implementadas na migration `20260917120000_servico_catalogo_invariantes`. `preco_referencia >= 0` admite `0.00` por decisão expressa (`D-CFG-27`) e é coerente com `cobranca.valor_bruto >= 0`, que copia o preço. Nenhuma das CHECKs anteriores foi alterada, renomeada ou removida.
 
 ---
 
@@ -1361,6 +1367,7 @@ Simulação obrigatória antes de recomendar homologação.
 | **`P2.2-10`** | **Aggregate root de `Atendimento`** | **Aberta por decisão expressa** — H2-06 vigente; reavaliar somente se surgir necessidade concreta (§21.6) |
 | **`P2.2-11`** | Absorção de `PROP-RN-2.2-01` e `PROP-RN-2.2-02` em `docs/03-regras-negocio.md` | **Governança documental** — até lá, este documento é a fonte vigente dessas regras |
 | ~~**`P-2.3D-01`**~~ | Absorção editorial de `D-2.3D-01` (`sessao_autenticacao.token_hash`, `sessao_autenticacao.ultima_atividade_em`, `ck_sessao_autenticacao_atividade`) neste documento | **ENCERRADA em 27/08/2026** — absorvida na REV. 2.2 (§1.3): §7.1 e §10.2 passaram a refletir o estado físico vigente. A pendência foi levantada em `docs/12` §11; **a fonte normativa de `D-2.3D-01` continua sendo `docs/12` §5.1** |
+| ~~**`P-CFG-D07-01`**~~ | Absorção editorial de `D-CFG-22`/`D-CFG-23` (`U-14` `ux_servico_clinica_nome`, `ck_servico_duracao_positiva`, `ck_servico_preco_nao_negativo`, `ck_servico_situacao`) neste documento | **ENCERRADA em 17/09/2026** — absorvida na REV. 2.3 (§1.3) |
 | `P2.2-01` | Encadeamento de retificação de retificação | Modelagem — **deixou de depender de P-CLIN**; questão isolada da cadeia |
 | `P2.2-02` | Recibo com numeração sequencial persistida? | Regra de negócio |
 | ~~`P2.2-03`~~ | **ENCERRADA** → `PROP-RN-2.2-01` homologada | — |
