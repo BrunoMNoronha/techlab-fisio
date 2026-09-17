@@ -109,6 +109,14 @@ const ROTAS_DA_FRONTEIRA: ReadonlySet<string> = new Set([
 const PREFIXO_ROTA_SESSOES = "/auth/sessoes/";
 
 /**
+ * Listagem administrativa das sessões ativas de um usuário (P-2.3D-10 /
+ * D-2.3D-22): `GET /auth/usuarios/:usuarioId/sessoes`. Um único segmento de
+ * identificador, sem sub-rotas — a mesma normalização fail-closed da fronteira
+ * (500 FALHA_INTERNA sem vazamento) se aplica às exceções não tratadas.
+ */
+const ROTA_LISTAGEM_SESSOES_USUARIO = /^\/auth\/usuarios\/[^/]+\/sessoes$/;
+
+/**
  * Método das operações da F3. `F-07`: o filtro NÃO captura outros métodos —
  * um `GET /auth/login` recebe o `404` normal da plataforma e não pertence ao
  * contrato OpenAPI dos endpoints POST. Normalizar aquele `404` para o corpo
@@ -213,6 +221,9 @@ function ehOperacaoDaFronteira(requisicao: RequisicaoDaFronteira): boolean {
     return true;
   }
   if (metodo === "GET" && caminho === "/auth/sessao") {
+    return true;
+  }
+  if (metodo === "GET" && ROTA_LISTAGEM_SESSOES_USUARIO.test(caminho)) {
     return true;
   }
   return false;
