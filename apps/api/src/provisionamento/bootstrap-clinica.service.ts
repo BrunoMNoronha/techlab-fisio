@@ -77,13 +77,19 @@ export interface ResultadoBootstrapClinica {
   readonly correlacaoId: string | null;
 }
 
-interface EntradaValidada {
+export interface EntradaValidada {
   readonly nomeCadastral: string;
   readonly fusoHorario: string;
   readonly justificativa: string;
 }
 
-function validar(comando: ComandoBootstrapClinica): EntradaValidada {
+/**
+ * Validação PURA da entrada (D-CFG-04, D-CFG-09) — exportada para que o CLI a
+ * execute ANTES de abrir o contexto Nest (cuja inicialização conecta ao banco):
+ * entrada inválida produz o motivo fechado sem contato com o banco, mesmo com
+ * o banco indisponível. O serviço a reaplica como defesa em profundidade.
+ */
+export function validarEntradaBootstrapClinica(comando: ComandoBootstrapClinica): EntradaValidada {
   const nomeBruto: unknown = comando.nomeCadastral;
   const nomeCadastral = typeof nomeBruto === "string" ? nomeBruto.trim() : "";
   if (
@@ -137,7 +143,7 @@ export class BootstrapClinicaService {
    */
   async executar(comando: ComandoBootstrapClinica): Promise<ResultadoBootstrapClinica> {
     // Validação ANTES de qualquer consulta ou transação.
-    const entrada = validar(comando);
+    const entrada = validarEntradaBootstrapClinica(comando);
 
     try {
       return await this.tentar(entrada);

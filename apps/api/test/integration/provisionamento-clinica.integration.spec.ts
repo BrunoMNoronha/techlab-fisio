@@ -326,6 +326,20 @@ talvez("CFG-001B — CLI compilado `bootstrap-clinica`", () => {
     expect(await clinicas()).toHaveLength(0);
   });
 
+  it.each([
+    [{ TLF_BOOTSTRAP_CLINICA_FUSO_HORARIO: "Foo/Bar" }, "FUSO_HORARIO_INVALIDO"],
+    [{ TLF_BOOTSTRAP_CLINICA_NOME_CADASTRAL: "a".repeat(201) }, "NOME_CADASTRAL_INVALIDO"],
+    [{ TLF_BOOTSTRAP_CLINICA_JUSTIFICATIVA: "a\u0001b" }, "JUSTIFICATIVA_INVALIDA"],
+  ])("entrada inválida %p é recusada ANTES de conectar: banco inalcançável ainda produz %s", (env, esperado) => {
+    const r = rodar(["bootstrap-clinica"], {
+      ...env,
+      DATABASE_URL: "postgresql://tlf_app:x@127.0.0.1:1/banco_inexistente",
+    });
+    expect(r.status).toBe(1);
+    expect(r.stderr).toBe(`provisionamento: ${esperado}\n`);
+    expect(r.stdout).not.toContain("Starting Nest application");
+  });
+
   it("D-CFG-12: `bootstrap-clinica` não aceita opções (nem --estrito) -> uso inválido (2)", async () => {
     for (const opcao of ["--estrito", "--nome=X"]) {
       const r = rodar(["bootstrap-clinica", opcao]);

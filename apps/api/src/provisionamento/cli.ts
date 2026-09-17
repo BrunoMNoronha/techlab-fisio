@@ -450,8 +450,13 @@ async function executarBootstrapClinica(entrada: {
   fusoHorario: string;
   justificativa: string;
 }): Promise<void> {
+  const { BootstrapClinicaService, validarEntradaBootstrapClinica } = await import(
+    "./bootstrap-clinica.service.js"
+  );
+  // Validação semântica ANTES do contexto: a inicialização do módulo conecta
+  // ao banco (eager). Entrada inválida falha com motivo fechado sem tocá-lo.
+  validarEntradaBootstrapClinica(entrada);
   const { BootstrapClinicaModule } = await import("./bootstrap-clinica.module.js");
-  const { BootstrapClinicaService } = await import("./bootstrap-clinica.service.js");
 
   const resultado = await comContexto(BootstrapClinicaModule, async (contexto) =>
     contexto.get(BootstrapClinicaService).executar(entrada),
