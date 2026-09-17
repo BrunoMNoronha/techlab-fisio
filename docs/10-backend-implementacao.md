@@ -2,8 +2,8 @@
 
 > **Arquivo:** `docs/10-backend-implementacao.md`
 > **Natureza:** documento **MUTÁVEL** — registro vivo de implementação da frente de backend (`apps/api`)
-> **Revisão vigente:** REV. 67 (17/09/2026) — **CORREÇÃO PÓS-REVISÃO DA PR [#86](https://github.com/BrunoMNoronha/techlab-fisio/pull/86): `PATCH /profissionais/:profissionalId/situacao` PASSA A LER A LINHA SOB `FOR UPDATE` ANTES DE DECIDIR O NO-OP** (§6-AE.6). Cumprimento de `D-PRO1-10` (homologada), que a implementação não atendia para transições opostas concorrentes; teste de regressão e mutation challenge. Nenhuma decisão, contrato, schema, migration ou permissão alterado.
-> **Estado anterior preservado:** REV. 66 (17/09/2026) — **CONSOLIDAÇÃO LOCAL DAS QUATRO FRENTES (`CFG-004`, `CFG-005`, frente de configuração horária/`PAC-A`, `PRO-A`) NA BRANCH `integration/local-fase4` — NÃO PUBLICADA NA `main`** (§6-AE). Registro da integração e da bateria consolidada pós-integração; fechamento documental autorizado por Bruno Menezes Noronha (`D-INTEG-01`: `docs/17-pacote-decisao-cadastro-profissionais.md` → `docs/18-pacote-decisao-cadastro-profissionais.md`; `D-INTEG-02`: status de `docs/14`, `docs/15`, `docs/17`). Nenhuma decisão normativa criada, alterada ou reaberta; nenhum comportamento de runtime alterado nesta revisão (só comentários de referência a `docs/18`).
+> **Revisão vigente:** REV. 68 (17/09/2026) — **ENCERRAMENTO DE `CI-E2E0`: A SUÍTE PLAYWRIGHT PASSA A PROVAR A AUTENTICAÇÃO REAL SAME-ORIGIN CONTRA API E POSTGRESQL DESCARTÁVEL** (§6-U.1). Comando oficial único (`pnpm run test:e2e`) com orquestrador de ambiente sintético; `autenticacao.spec.ts` acrescentada; portas efêmeras e readiness pelo proxy substituem a porta fixa 3100. Medida no ambiente local, **sem commit, push, PR, merge ou deploy**. Nenhuma decisão, contrato, schema, migration, permissão, dependência ou código de runtime alterado.
+> **Estado anterior preservado:** REV. 67 (17/09/2026) — **CORREÇÃO PÓS-REVISÃO DA PR [#86](https://github.com/BrunoMNoronha/techlab-fisio/pull/86): `PATCH /profissionais/:profissionalId/situacao` PASSA A LER A LINHA SOB `FOR UPDATE` ANTES DE DECIDIR O NO-OP** (§6-AE.6); e REV. 66 — consolidação local das quatro frentes na branch `integration/local-fase4`, não publicada na `main` (§6-AE). Ambas preservadas integralmente nas respectivas seções.
 > **Estado anterior preservado:** REV. 65 (17/09/2026; numeração fixada na integração local `integration/local-fase4` — provisória na origem como REV. 62 / §6-AB) — **PRO-A — CADASTRO DE PROFISSIONAIS (`PRO-001`, `PRO-004`, `PRO-005`) IMPLEMENTADO E MEDIDO EM BRANCH LOCAL (`agent/pro-a-cadastro-profissionais`, a partir de `origin/main` = `218960c`) — SEM COMMIT, NÃO INTEGRADO** (§6-AD). Materializa `D-PRO1-01`..`D-PRO1-10` (`docs/18`, renumerado por `D-INTEG-01` — REV. 66); migration `20260917200000_profissional_situacao_coerente`; rotas `/profissionais` sob `profissionais.gerenciar`; no-op de situação passa a `200` sem evento; 11 mutation challenges detectados. Nenhuma permissão, ação de auditoria, chave de `contexto` ou dependência nova.
 > **Estado anterior preservado:** REV. 64 (17/09/2026) — **`PAC-A` — PACIENTES (CADASTRO ADMINISTRATIVO, LOCALIZAÇÃO, DUPLICIDADE E SITUAÇÃO) IMPLEMENTADA E MEDIDA LOCALMENTE — SEM COMMIT, NÃO INTEGRADA** (§6-AC). Materializa `docs/17` `D-PAC-01`..`D-PAC-10`; migration `20260917180000_paciente_situacao_invariantes`; catálogo de auditoria com 27 ações (`docs/09` §15). *(numeração fixada na integração local `integration/local-fase4`: registrada na origem como REV. 61 / §6-AA; a REV. 61 já pertence à `main` (#85), §6-AA a `CFG-004` e §6-AB a `CFG-005`)*
 > **Estado anterior preservado:** REV. 63 (17/09/2026) — **`CFG-005` — MOTIVOS DE CANCELAMENTO IMPLEMENTADOS E MEDIDOS NO AMBIENTE LOCAL — NÃO COMMITADOS E NÃO INTEGRADOS** (§6-AB). Materializa `D-CFG-46`..`D-CFG-57` (`docs/14` §3.13); migration `20260917180000_motivo_cancelamento_invariantes`; rotas `/motivos-cancelamento` sob `clinica.configurar`. Nenhuma decisão, permissão, ação de auditoria, chave de `contexto` ou dependência nova. *(numeração fixada na integração local `integration/local-fase4`: registrada na origem como REV. 61 / §6-AA; a REV. 61 já pertence à `main` (#85) e §6-AA a `CFG-004`)*
@@ -3746,7 +3746,78 @@ Os 4 mutation challenges obrigatórios estabelecidos em `docs/12` §10.5 foram t
 
 **Obrigatoriedade (configuração do repositório, 17/09/2026, por autorização de Bruno Menezes Noronha):** proteção da `main` com required status check `E-16 — tríade anti-drift + reconstrução from-scratch + suíte integral` (GitHub Actions, `strict: false`), `enforce_admins: true`, force-push e exclusão bloqueados; auto-merge desabilitado no repositório. A PR #61 foi a primeira integrada sob essa proteção. O nome do check é o `name` do job — renomeá-lo exige atualizar a proteção.
 
-**Limites registrados (não bloqueantes):** os smoke tests Playwright cobrem apenas o frontend compilado (sem API nem PostgreSQL); a prova ponta a ponta Web + API + PostgreSQL permanece em `verify:web-api-e2e` (§6-S). Com `push` em `agent/**` e `pull_request` para `main`, o job roda duas vezes por push em branch com PR aberta.
+**Limites registrados em 17/09/2026 (superados pela §6-U.1):** os smoke tests Playwright cobriam apenas o frontend compilado (sem API nem PostgreSQL); a prova ponta a ponta Web + API + PostgreSQL vivia somente em `verify:web-api-e2e` (§6-S). Com `push` em `agent/**` e `pull_request` para `main`, o job continua rodando duas vezes por push em branch com PR aberta.
+
+---
+
+### 6-U.1 Encerramento de `CI-E2E0` — autenticação real no navegador (17/09/2026, local, sem publicação)
+
+**Estado:** implementado e medido **na árvore local** (worktree sobre `e17024c`); **sem commit, push, PR, merge ou deploy**.
+
+**Diagnóstico que motivou a fatia.** O limite declarado acima era a lacuna: `pnpm --filter @techlab-fisio/web run test:e2e` executava `playwright test` contra `next start` isolado, **sem API e sem banco** — nenhum teste Playwright provava login, sessão ou logout. O fluxo autenticado existia apenas no script roteirizado `verify-web-api-e2e.mjs` (Cenários 1–7 por `fetch` de Node; Cenários 8–9 em Chromium, focados na tela de horário). Além disso, o `webServer` dependia da porta fixa `3100` e o `playwright.config.ts` não impedia o uso dos defaults conflitantes (API e `next start` em `3000`, proxy em `3001`).
+
+**Componentes.**
+
+| Arquivo | Papel |
+| --- | --- |
+| `apps/web/scripts/run-playwright-e2e.mjs` (novo) | Orquestrador oficial: PostgreSQL 18 descartável (prefixo `techlab-fisio-pwe2e-`) -> `prisma migrate deploy` -> Administrador e clínica **sintéticos** pelo CLI compilado -> API compilada em porta efêmera (`TLF_AMBIENTE=teste`, readiness `GET /health`) -> `playwright test`; limpeza no `finally`, com handlers de `SIGINT`/`SIGTERM` para o Ctrl+C; exit code do Playwright propagado e resíduo descartável reprovando |
+| `apps/web/scripts/lib/processos.mjs` (novo) | Porta livre, readiness HTTP, encerramento de árvore de processos (gracioso e forçado, ciente de grupo em POSIX) e execução do CLI de provisionamento — compartilhados com `verify-web-api-e2e.mjs`, que deixou de manter cópias locais |
+| `scripts/lib/instancia-descartavel.mjs` | `criarInstanciaLimpa` passa a destruir container e volume quando o bootstrap falha depois de criá-los (revisão da PR [#88](https://github.com/BrunoMNoronha/techlab-fisio/pull/88)) |
+| `apps/web/e2e/autenticacao.spec.ts` (novo, 3 testes) | Prova, sem mocks, em Chromium real: rota protegida sem sessão, credencial inválida e o ciclo login -> cookie -> sessão -> tela -> CSRF -> logout -> revogação |
+| `apps/web/playwright.config.ts` | Exige `TLF_E2E_PORTA_WEB` e `URL_API_INTERNA` (fail-closed, sem fallback); `webServer` em porta efêmera com readiness por `GET /api/health` **pelo proxy same-origin** |
+| `package.json` (raiz) e `apps/web/package.json` | `pnpm run test:e2e` como comando único, local e de CI |
+| `.github/workflows/ci.yml` | O passo de E2E passa a executar `pnpm run test:e2e`; instalação do Chromium e publicação de `playwright-report/` e `test-results/` em falha preservadas |
+
+**Topologia exercitada (inalterada em produção):** Chromium -> Next.js (`/api/*`, Route Handler de proxy) -> NestJS -> PostgreSQL. Nenhum controle de segurança foi relaxado: `X-TLF-Requisicao`, `Origin`/`Host`, cookie `HttpOnly` + `SameSite=Strict` (`tlf_sessao_dev` sob `TLF_AMBIENTE=teste`, `D-2.3D-07`) são os reais. A spec confere ainda que **todas** as requisições HTTP do navegador têm a origem do Next.js — a API interna nunca é contatada diretamente.
+
+**Critérios × prova (`autenticacao.spec.ts`).**
+
+| Critério | Prova |
+| --- | --- |
+| Rota protegida sem sessão | `/configuracoes/horario-funcionamento` exibe "Ir para o login", sem editor; `GET /api/auth/sessao` = 401 `SESSAO_INVALIDA`; nenhum cookie no contexto |
+| Credencial inválida | Login pelo formulário com identificador sintético inexistente -> 401, alerta "E-mail ou senha incorretos.", permanência em `/login`, nenhum cookie de sessão |
+| Login real | Formulário -> `POST /api/auth/login` 200 na origem do Next.js -> navegação para `/` |
+| Sessão autenticada | Cookie `tlf_sessao_dev` `HttpOnly`/`SameSite=Strict`/`Path=/`, invisível a `document.cookie`; `GET /api/auth/sessao` 200, `Cache-Control: no-store`, `usuarioId` e `sessaoId` UUID (`D-2.3D-20`) |
+| Estado autenticado refletido no frontend | A mesma rota protegida passa a exibir o editor (7 dias) e deixa de exibir o convite ao login |
+| CSRF | `POST /api/auth/logout` sem `X-TLF-Requisicao` -> 403 `REQUISICAO_NAO_AUTORIZADA`, **sem** revogar a sessão (consulta seguinte ainda 200) |
+| Logout e revogação no servidor | Logout com o cabeçalho -> 204, cookie removido, sessão 401; reinjetar o cookie antigo no navegador continua 401 |
+
+**Execuções locais (17/09/2026; Windows 11, Docker 29.7.2, Node 24.19.0, pnpm 12.3.4, Playwright 1.63.0 / Chromium).** `pnpm run test:e2e`: **13 passed** em três execuções independentes — (1) baseline, (2) repetição limpa, (3) após remover `apps/web/.next`, `apps/api/dist` e `packages/database/dist` e reconstruir com `pnpm run build` — e **39 passed** com `--repeat-each=3` (sem dependência de ordem nem estado residual). Durações de ponta a ponta: 52 s, 24 s, 26 s e 36 s (a suíte em si, 10–23 s). 0 containers e 0 volumes remanescentes em todas.
+
+**Provas contra falso positivo.**
+
+- **Mutação do proxy** (`headersEnvio["host"]` deixa de preservar o `Host` do navegador): `2 failed, 11 passed`, exit 1 propagado até o script da raiz, `trace.zip` e screenshot retidos em `test-results/`, limpeza do container executada; arquivo restaurado com SHA-256 conferido.
+- **Fail-closed da configuração:** `playwright test` direto, sem as variáveis do orquestrador, aborta com `TLF_E2E_PORTA_WEB ausente. Execute a suíte pelo comando oficial: pnpm run test:e2e` (exit 1) — nunca cai em `3000`/`3001`/`3100`.
+- **Readiness real:** com `URL_API_INTERNA` apontando para porta morta, o `webServer` expira (`Timed out waiting 120000ms`), exit 1, e a porta do Next.js é liberada — a suíte não roda contra uma pilha incompleta.
+
+**Bateria do projeto (17/09/2026, mesma árvore).**
+
+| Validação | Resultado |
+| --- | --- |
+| `pnpm install --frozen-lockfile` | exit 0 (lockfile inalterado) |
+| `pnpm run typecheck` | exit 0 (raiz + `packages/database`, `apps/api`, `apps/web`, inclusive os testes) |
+| `lint` | **inexistente** no projeto (ESLint ausente por decisão da fundação); `pnpm run lint:migrations` (Guarda 1): 16 migrations · 37 objetos protegidos, **OK** |
+| `pnpm run build` | exit 0 (`packages/database` → `apps/api` → `apps/web`) |
+| `pnpm run test:e2e` (Playwright) | **13 passed** × 3 execuções; **39 passed** com `--repeat-each=3` |
+| `pnpm --filter @techlab-fisio/web run test` | **78 verificações OK** (57 integração + 21 grade) |
+| `pnpm run verify:web-api-e2e` | **50 verificações OK**, 0 resíduos (após a extração dos helpers) |
+| `pnpm run verify:api-integration` | **24 suites · 882 testes (832 passed · 50 skipped)**, 0 resíduos |
+| `pnpm run test:api` | **48 suites · 1466 passed** |
+| `pnpm run verify:from-scratch` (E-15 + Guarda 2) | 16/16 migrations, catálogo OK, suíte integral **10 suites · 87 passed**, 0 resíduos |
+| `pnpm run smoke:api` | **OK** |
+| `pnpm run schema:verify` (Guarda 3) | **dump byte a byte idêntico ao golden (61735 bytes)** |
+
+**Ambiente da medição.** Este worktree fica sob `.claude/worktrees/...`; o segmento iniciado por ponto impede o Jest de casar os `testMatch`, então `pnpm run test`, `test:api`, `verify:api-integration` e `verify:from-scratch` foram reproduzidos numa **cópia da mesma árvore fora desse caminho** (clone local com o patch aplicado), precedente já usado em §6-AE.4. `pnpm run test:integration` isolado depende do container de desenvolvimento do `docker compose` com as credenciais do `.env` local — no host da medição esse container pertencia a outra árvore, e a suíte de persistência foi medida pela via oficial `verify:from-scratch`, que a executa em instância descartável própria.
+
+**Limites registrados (não bloqueantes).**
+
+- A suíte Playwright exige **Docker** e o build de produção: é prova de pilha real, não teste de unidade de frontend.
+- A cobertura E2E do produto permanece restrita a autenticação, tela de horário e páginas da fundação — os demais módulos não têm interface.
+- `verify:web-api-e2e` continua existindo e é complementar (persistência e auditoria da grade conferidas em SQL; `403` de Recepcionista pelo fluxo real de recuperação de senha).
+- `SIGINT`/`SIGTERM` pedem encerramento **gracioso** da árvore do Playwright (em POSIX o processo é líder de grupo e o sinal vai ao grupo, alcançando o `next start`; no Windows o console já entrega o Ctrl+C à árvore), com escalonamento forçado após 20 s; só então API e instância são destruídas. Interrupção **forçada** (kill sem sinal tratável) ainda pode deixar processos filhos vivos; o container é removido pela varredura de órfãos da execução seguinte.
+- Falha no bootstrap da instância descartável (container que morre no initdb, prontidão que nunca chega, porta não publicada) destrói container e volume **dentro de `criarInstanciaLimpa`**, antes de propagar o erro — o chamador ainda não teria os identificadores para limpar. Provado por injeção de falha (senha de superusuário vazia): erro propagado e 0 resíduos.
+- Execução single-browser (Chromium) e `workers: 1`.
+- **Ambiente:** neste worktree (`.claude/worktrees/...`) o Jest não casa os `testMatch` por causa do segmento com ponto no caminho; `pnpm run test` e `verify:api-integration` foram reproduzidos numa cópia da árvore fora desse caminho.
 
 ---
 
@@ -4980,6 +5051,7 @@ Sujeitas a autorização própria, nesta ordem provável:
 
 | REV. | Data | Conteúdo |
 | --- | --- | --- |
+| **68** | **17/09/2026** | **ENCERRAMENTO DE `CI-E2E0` — SUÍTE PLAYWRIGHT COM AUTENTICAÇÃO REAL SAME-ORIGIN, MEDIDA LOCALMENTE E SEM PUBLICAÇÃO** (§6-U.1). Orquestrador `run-playwright-e2e.mjs` (PostgreSQL descartável + Administrador/clínica sintéticos + API compilada + `next start` em portas efêmeras, readiness pelo proxy), `autenticacao.spec.ts` (3 testes), `pnpm run test:e2e` como comando único local e de CI, helpers de processo compartilhados com `verify-web-api-e2e.mjs`. Execuções: 13 passed x 3 (baseline, repetição e após build do zero) e 39 passed com `--repeat-each=3`; mutação do `Host` no proxy detectada (2 failed, exit 1); 0 resíduos. Nenhuma decisão, contrato, schema, migration, permissão, dependência ou código de runtime alterado. |
 | **67** | **17/09/2026** | **CORREÇÃO PÓS-REVISÃO DA PR #86** (§6-AE.6). `PATCH /profissionais/:profissionalId/situacao` passa a ler a linha sob `FOR UPDATE` antes de decidir o no-op, cumprindo `D-PRO1-10` para transições opostas concorrentes; teste de regressão; M12 detectada; test:api 48 suites · 1466 passed; integração da API 24 suites · 880 passed · 2 skipped. Nenhuma decisão, contrato, schema, migration ou permissão alterado. |
 | **66** | **17/09/2026** | **CONSOLIDAÇÃO LOCAL DAS QUATRO FRENTES NA BRANCH `integration/local-fase4`** (§6-AE). Ordem, conflitos e resoluções; bateria consolidada (test:api 48 suites · 1466 passed; integração da API 24 suites · 879 passed · 2 skipped; `verify:openapi-runtime` 64; 16 migrations; web 78; E2E 50; Playwright 10). Fechamento documental: `D-INTEG-01` (`docs/17` de profissionais → `docs/18`) e `D-INTEG-02` (status de `docs/14`, `docs/15`, `docs/17`); estados das §6-AA..§6-AD atualizados, com o contexto das origens preservado; contagem OpenAPI de §6-AD.4 (46) confirmada por reprodução. Nenhuma decisão ou comportamento de runtime alterado. |
 | **65** | **17/09/2026** | **PRO-A — CADASTRO DE PROFISSIONAIS IMPLEMENTADO E MEDIDO EM BRANCH LOCAL, SEM COMMIT** (§6-AD; numeração fixada na integração local, provisória na origem como REV. 62 / §6-AB). `D-PRO1-01`..`D-PRO1-10` materializadas; migration `20260917200000_profissional_situacao_coerente`; rotas `/profissionais`; test:api 43 suites · 1271 passed; integração da API 20 suites · 693 passed · 2 skipped; `packages/database` 87 passed; 11 mutation challenges detectados. |
@@ -5070,7 +5142,7 @@ Sujeitas a autorização própria, nesta ordem provável:
 | **P-2.3D-08** — Consulta da sessão autenticada atual e prova E2E same-origin (`D-2.3D-20`) | **CONCLUÍDA / HOMOLOGADA / INTEGRADA NA `main` em 15/09/2026** | PR [#47](https://github.com/BrunoMNoronha/techlab-fisio/pull/47), merge commit `89fa492603bdb6e90693b03544c7857ee7d7fb3d`; `D-2.3D-20`; §6-S; REV. 41 |
 | **P-2.3D-09** — Ativação e inativação administrativa de usuário (`AUT-005` / `D-2.3D-21`) | **CONCLUÍDA / HOMOLOGADA / INTEGRADA NA `main` em 17/09/2026** | PR [#52](https://github.com/BrunoMNoronha/techlab-fisio/pull/52), merge commit `817da427de84fe452230df233cb4ae15c8a43593`; `D-2.3D-21`; §6-T; REV. 46. Reforço de provas: PR [#55](https://github.com/BrunoMNoronha/techlab-fisio/pull/55), merge `bce22e8`; §6-T.3; REV. 47 |
 | **P-2.3D-10** — Listagem administrativa das sessões ativas de um usuário (`AUT-002` / `D-2.3D-22`) | **CONCLUÍDA / HOMOLOGADA / INTEGRADA NA `main` em 17/09/2026** | PR [#64](https://github.com/BrunoMNoronha/techlab-fisio/pull/64), merge commit `bc6a763f3525b16384022ad5b43b95a542be5b2f`; `D-2.3D-22`; §6-V; REV. 49 e 51 |
-| **CI-E2E0** — Smoke E2E Playwright (`FRONT-E2E0`) obrigatório na CI | **CONCLUÍDA / INTEGRADA NA `main` em 17/09/2026** | PR [#58](https://github.com/BrunoMNoronha/techlab-fisio/pull/58) (merge `4156689`), PR [#59](https://github.com/BrunoMNoronha/techlab-fisio/pull/59) (merge `63bb058`), PR [#61](https://github.com/BrunoMNoronha/techlab-fisio/pull/61) (merge `e7abe30`); required check na proteção da `main`; §6-U; REV. 48 |
+| **CI-E2E0** — E2E Playwright obrigatório na CI (smoke + autenticação real same-origin) | **CONCLUÍDA / INTEGRADA NA `main` em 17/09/2026** (fundação) + **ENCERRAMENTO medido localmente em 17/09/2026, sem publicação** (§6-U.1, REV. 68) | PR [#58](https://github.com/BrunoMNoronha/techlab-fisio/pull/58) (merge `4156689`), PR [#59](https://github.com/BrunoMNoronha/techlab-fisio/pull/59) (merge `63bb058`), PR [#61](https://github.com/BrunoMNoronha/techlab-fisio/pull/61) (merge `e7abe30`); required check na proteção da `main`; §6-U; REV. 48 |
 
 **Pendências vivas:** `P-BACK-01` EM ANDAMENTO; `R2.2-04` **ENCERRADO em 15/09/2026** (§7.2 — REV. 43, após `D-AUD-09-A`/`docs/09` §14.9; residual de revisão de código de `docs/07` §24.4 preservado); **`L-06` ABERTA / BLOQUEADA** (inalterada — nenhuma rota de leitura clínica autorizada, `prontuario.acessado` não criada); `P-2.3D-04` (ENCERRADA em 15/09/2026 mediante prova E2E real same-origin, PR #47, merge `89fa492`), `P-2.3D-05` e `P-2.3D-06` abertas/adiada (`P-2.3D-03` ENCERRADA — §6-Q, REV. 34); `R-2.3D-04`, `R-2.3D-05` e `R-2.3D-06` registrados sem encerramento autodeclarado. **Riscos residuais aceitos:** `R-2.3D-08` (BAIXO), `F-12` (BAIXO), `F3R-06` e `F3R-07` (OBSERVAÇÃO). `L-05` e `L-08` (política) DECIDIDAS em 05/09/2026 (`docs/09` §13); **`L-07` DECIDIDA (`PBACK-AUD-09`, `docs/09` §13.4.1), IMPLEMENTADA e INTEGRADA NA `main` em 05/09/2026 — PR #23, merge `e1459f6`** (§7.4, §7.4.8); **`L-06` ABERTA / BLOQUEADA** (§13.3), com retomada obrigatória antes de qualquer superfície de leitura clínica; materialização técnica de `L-08` PENDENTE; visualizador de auditoria (AUD-004) **INTEGRADO na `main` em 17/09/2026** (PR [#63](https://github.com/BrunoMNoronha/techlab-fisio/pull/63), merge `27012ff`, §7.6.7); `R-BL-09` ABERTO/monitorado; `V-06.c` APROVADA em 05/09/2026 (`apps/web` integrado na `main` pela PR #24, merge `80986e7` — `docs/08` REV. 22–25); `R-BL-03` residual e ABERTO; **AUT-005 NÃO MATERIALIZADA**; `P-2.3D-07` CONCLUÍDA e INTEGRADA NA `main` em 14/09/2026 (PR #46, merge `b6427e1`); `P-2.3D-08` CONCLUÍDA e INTEGRADA NA `main` em 15/09/2026 (PR #47, merge `89fa492`); `D-AUD-09` / `D-AUD-09-A` e o encerramento de `R2.2-04` INTEGRADOS NA `main` em 16/09/2026 (PR #49, merge `c2d57b8`).
 

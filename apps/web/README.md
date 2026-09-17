@@ -15,11 +15,11 @@ Todos a partir da raiz do monorepositório (após `pnpm install --frozen-lockfil
 | `pnpm --filter @techlab-fisio/web run build` | Build de produção (`next build`; inclui a verificação de tipos do Next) |
 | `pnpm --filter @techlab-fisio/web run start` | Serve o build de produção (`next start`) |
 | `pnpm --filter @techlab-fisio/web run test` | Executa a bateria de verificações de integração e segurança do frontend (`verify-web-integration.mjs` — 24 verificações; executada na CI) e as verificações da lógica da grade de funcionamento (`verify-grade-funcionamento.mjs` — 21 verificações) |
-| `pnpm --filter @techlab-fisio/web run test:e2e` | Executa a suíte de smoke E2E browser-based com Playwright contra o build de produção real no Chromium (`playwright test`) |
+| `pnpm run test:e2e` (= `pnpm --filter @techlab-fisio/web run test:e2e`) | Comando oficial da suíte Playwright (local e CI): `scripts/run-playwright-e2e.mjs` provisiona PostgreSQL 18 descartável, Administrador e clínica sintéticos e a API compilada, e executa `playwright test` contra o Next.js compilado com proxy same-origin real (13 testes em Chromium; requer Docker, `.env` sintético e `pnpm run build`). `playwright test` direto falha de propósito, sem as variáveis do orquestrador |
 | `pnpm --filter @techlab-fisio/web exec playwright install chromium` | Baixa o binário do Chromium necessário para execução local do Playwright |
 | `pnpm run verify:web-api-e2e` | (requer Chromium do Playwright instalado) Prova E2E real automatizada same-origin executando simultaneamente PostgreSQL 18 descartável, NestJS compilado, Next.js compilado com Route Handler proxy, `ProtecaoCsrfGuard` real e cookie real (`verify-web-api-e2e.mjs` — 24 verificações; executada na CI) |
 
-Os comandos raiz `pnpm run typecheck` e `pnpm run build` já incluem este workspace. O Playwright também roda na CI desde a fatia `CI-E2E0` (PR [#58](https://github.com/BrunoMNoronha/techlab-fisio/pull/58); trace em falha pela PR [#59](https://github.com/BrunoMNoronha/techlab-fisio/pull/59)) — detalhes em [`README.md` › CI](../../README.md#e2e-playwright-na-ci-ci-e2e0).
+Os comandos raiz `pnpm run typecheck` e `pnpm run build` já incluem este workspace. O Playwright roda na CI desde a fatia `CI-E2E0` (PR [#58](https://github.com/BrunoMNoronha/techlab-fisio/pull/58); trace em falha pela PR [#59](https://github.com/BrunoMNoronha/techlab-fisio/pull/59)); o encerramento de `CI-E2E0` (17/09/2026) passou a suíte para o orquestrador com API e banco reais e acrescentou `autenticacao.spec.ts` — detalhes em [`README.md` › CI](../../README.md#e2e-playwright-ci-e2e0).
 
 ## Arquitetura mínima
 
@@ -38,17 +38,20 @@ apps/web/
 │   ├── not-found.tsx              # página 404 própria em pt-BR
 │   └── page.tsx                   # página inicial com navegação para /login
 ├── e2e/
+│   ├── autenticacao.spec.ts       # Autenticação real same-origin no navegador (CI-E2E0, sem mocks)
 │   ├── horario-funcionamento.spec.ts # E2E da tela de horário (API simulada no navegador)
 │   └── smoke.spec.ts              # Smoke tests E2E browser-based (Playwright)
 ├── lib/
 │   ├── api-cliente.ts             # Client HTTP tipado com proteção contra Client-Side CSRF
 │   └── grade-funcionamento.ts     # Lógica pura da grade (espelho das regras D-CFG-13/18/59)
 ├── scripts/
+│   ├── lib/processos.mjs          # Portas efêmeras, readiness, encerramento e CLI de provisionamento
+│   ├── run-playwright-e2e.mjs     # Orquestrador oficial da suíte Playwright (pnpm run test:e2e)
 │   ├── verify-grade-funcionamento.mjs # Verificações da lógica pura da grade (21)
 │   ├── verify-web-api-e2e.mjs     # Prova E2E automatizada real same-origin (50 verificações)
 │   └── verify-web-integration.mjs # Bateria de 24 verificações de integração e segurança
 ├── next.config.ts                 # configuração do Next.js
-├── playwright.config.ts           # Configuração do Playwright (Chromium, porta 3100, webServer)
+├── playwright.config.ts           # Configuração do Playwright (Chromium, portas do orquestrador, webServer)
 ├── postcss.config.mjs             # plugin oficial @tailwindcss/postcss
 ├── package.json
 └── tsconfig.json                  # estende ../../tsconfig.base.json
@@ -82,7 +85,7 @@ Limites deliberados: **um** tema (claro; dark mode não é requisito vigente), s
 | `next.config.ts` vazio | Nenhum header, rewrite ou proxy foi desativado ou configurado; isso pertence à primeira fatia funcional. **Estado em 06/09/2026:** o objeto de configuração **segue vazio** — o roteamento `/api/*` é feito por Route Handler (`app/api/[...caminho]/route.ts`), não por `rewrites` |
 | Playwright **1.63.0** exato em `devDependencies` | Fixado no workspace com `saveExact: true` na fatia `FRONT-E2E0` para a fundação E2E browser-based; sem lifecycle scripts (`allowBuilds` preservado) |
 | Chromium como único browser da fundação | Decisão local reversível da fatia `FRONT-E2E0` para comprovar o harness E2E sobre o build real sem antecipar política multi-browser |
-| WebServer na porta dedicada `3100` | Configurado em `playwright.config.ts` para servir `next start` isolado de `3000` (Next dev), `3001` (NestJS) e portas efêmeras de outras suítes; configurável por `PORT`. `reuseExistingServer: false` — porta ocupada falha a execução em vez de testar em silêncio um servidor de outra árvore |
+| WebServer em porta efêmera do orquestrador | **Substituiu a porta fixa `3100` no encerramento de `CI-E2E0`.** `playwright.config.ts` exige `TLF_E2E_PORTA_WEB` e `URL_API_INTERNA` (sem fallback), evitando os defaults conflitantes (API e `next start` em `3000`, proxy em `3001`); readiness por `GET /api/health` pelo proxy. `reuseExistingServer: false` — porta ocupada falha a execução em vez de testar em silêncio um servidor de outra árvore |
 
 ## Horário de funcionamento (CFG-002 — tela local, 17/09/2026)
 
@@ -99,6 +102,6 @@ Limites deliberados: **um** tema (claro; dark mode não é requisito vigente), s
 - **Baterias automatizadas integradas à CI:**
   - `verify-web-integration.mjs` (24 verificações): executada na CI via step `Frontend — prova de integração da fundação web (sanitização de caminhos)`;
   - `verify-web-api-e2e.mjs` (50 verificações — 24 de sessão/CSRF e 26 da tela de horário em Chromium real; a CI instala o Chromium antes deste passo): executada na CI via script raiz `verify:web-api-e2e` e step `E2E — prova real same-origin Web + API + PostgreSQL (P-2.3D-08 / D-2.3D-20)`;
-  - `smoke.spec.ts` (3 testes Playwright, `CI-E2E0`): executada na CI via step `E2E (FRONT-E2E0) — smoke tests Playwright (/, /login, 404) em Chromium real`.
+  - suíte Playwright (`CI-E2E0`, 13 testes: `autenticacao.spec.ts` 3, `horario-funcionamento.spec.ts` 7, `smoke.spec.ts` 3): executada na CI por `pnpm run test:e2e` no step `E2E (CI-E2E0) — suíte Playwright: autenticação real same-origin + tela de horário + smoke`.
 - **`P-2.3D-04` ENCERRADA em 15/09/2026**: Encerrada em 15/09/2026 após a integração do PR #47 (merge commit `89fa492603bdb6e90693b03544c7857ee7d7fb3d`) que versionou `apps/web/scripts/verify-web-api-e2e.mjs` e o passo correspondente na CI, executando simultaneamente PostgreSQL real em container, NestJS real compilado, Next.js real compilado com Route Handler de proxy same-origin (`/api/*`), `ProtecaoCsrfGuard` real e cookie real de sessão, provando que a baseline de CSRF de `D-2.3D-07` (`SameSite=Strict`, cabeçalho obrigatório `X-TLF-Requisicao` nas mutações, Fetch Metadata, validação de `Origin`, ausência de CORS) protege a fronteira de ponta a ponta sem necessidade de synchronizer token adicional.
 - **Identidade visual definitiva, dark mode, PWA, i18n, portal do paciente, multitenancy:** fora do escopo do MVP (TLF-BASE-V2 §13).

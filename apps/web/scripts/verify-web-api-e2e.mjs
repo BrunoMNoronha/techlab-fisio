@@ -17,10 +17,9 @@
 //
 // Sem mocks. Limpeza garantida de processos e container (finally).
 
-import { spawn, spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
-import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
@@ -34,6 +33,12 @@ import {
   migrateDeploy,
   removerOrfaos,
 } from "../../../scripts/lib/instancia-descartavel.mjs";
+import {
+  aguardarHttpOk,
+  encerrarProcesso,
+  executarCliProvisionamento,
+  obterPortaLivre,
+} from "./lib/processos.mjs";
 
 const PREFIXO = "techlab-fisio-webe2e-";
 const ROTULO = "[web-api-e2e]";
@@ -68,46 +73,6 @@ function conferir(descricao, condicao, detalhe = "") {
 
 function falhar(mensagem) {
   throw new Error(`${ROTULO} ${mensagem}`);
-}
-
-async function obterPortaLivre() {
-  return new Promise((resolve, reject) => {
-    const srv = net.createServer();
-    srv.listen(0, "127.0.0.1", () => {
-      const port = srv.address().port;
-      srv.close(() => resolve(port));
-    });
-    srv.on("error", reject);
-  });
-}
-
-function encerrarProcesso(proc) {
-  if (!proc) return;
-  try {
-    if (process.platform === "win32") {
-      spawnSync("taskkill", ["/pid", String(proc.pid), "/T", "/F"], { stdio: "ignore" });
-    } else {
-      proc.kill("SIGKILL");
-    }
-  } catch {
-    // processo já encerrado
-  }
-}
-
-async function aguardarHttpOk(url, limiteMs = 30_000) {
-  const inicio = Date.now();
-  while (Date.now() - inicio < limiteMs) {
-    try {
-      const res = await fetch(url);
-      if (res.status === 200) {
-        return true;
-      }
-    } catch {
-      // espera nova tentativa
-    }
-    await new Promise((r) => setTimeout(r, 250));
-  }
-  return false;
 }
 
 // Cenário 8 — Tela de horário de funcionamento em Chromium real (CFG-002, D-CFG-66).
@@ -496,46 +461,32 @@ async function main() {
 
     // 2. Provisionar Administrador inicial pelo CLI real compilado
     console.log(`${ROTULO} provisionando Administrador inicial via CLI compilado...`);
-    const resultadoCli = spawnSync(
-      process.execPath,
-      [path.join(raizApi, "dist", "provisionamento", "cli.js"), "provisionar"],
+    executarCliProvisionamento(
+      raizApi,
+      "provisionar",
+      instancia.urlApp,
       {
-        cwd: raizApi,
-        env: {
-          ...process.env,
-          DATABASE_URL: instancia.urlApp,
-          TLF_BOOTSTRAP_ADMIN_EMAIL: ADMIN_EMAIL,
-          TLF_BOOTSTRAP_ADMIN_NOME: ADMIN_NOME,
-          TLF_BOOTSTRAP_ADMIN_JUSTIFICATIVA: ADMIN_JUSTIFICATIVA,
-          TLF_BOOTSTRAP_ADMIN_SENHA: ADMIN_SENHA,
-        },
-        encoding: "utf8",
+        TLF_BOOTSTRAP_ADMIN_EMAIL: ADMIN_EMAIL,
+        TLF_BOOTSTRAP_ADMIN_NOME: ADMIN_NOME,
+        TLF_BOOTSTRAP_ADMIN_JUSTIFICATIVA: ADMIN_JUSTIFICATIVA,
+        TLF_BOOTSTRAP_ADMIN_SENHA: ADMIN_SENHA,
       },
+      ROTULO,
     );
-    if (resultadoCli.status !== 0) {
-      falhar(`provisionamento via CLI falhou (exit ${resultadoCli.status}): ${resultadoCli.stderr || resultadoCli.stdout}`);
-    }
 
     // 2b. Provisionar a linha única da clínica (CFG-001B) — pré-requisito da tela de horário
     console.log(`${ROTULO} provisionando a clínica via CLI compilado...`);
-    const resultadoClinica = spawnSync(
-      process.execPath,
-      [path.join(raizApi, "dist", "provisionamento", "cli.js"), "bootstrap-clinica"],
+    executarCliProvisionamento(
+      raizApi,
+      "bootstrap-clinica",
+      instancia.urlApp,
       {
-        cwd: raizApi,
-        env: {
-          ...process.env,
-          DATABASE_URL: instancia.urlApp,
-          TLF_BOOTSTRAP_CLINICA_NOME_CADASTRAL: CLINICA_NOME,
-          TLF_BOOTSTRAP_CLINICA_FUSO_HORARIO: CLINICA_FUSO,
-          TLF_BOOTSTRAP_CLINICA_JUSTIFICATIVA: CLINICA_JUSTIFICATIVA,
-        },
-        encoding: "utf8",
+        TLF_BOOTSTRAP_CLINICA_NOME_CADASTRAL: CLINICA_NOME,
+        TLF_BOOTSTRAP_CLINICA_FUSO_HORARIO: CLINICA_FUSO,
+        TLF_BOOTSTRAP_CLINICA_JUSTIFICATIVA: CLINICA_JUSTIFICATIVA,
       },
+      ROTULO,
     );
-    if (resultadoClinica.status !== 0) {
-      falhar(`bootstrap-clinica via CLI falhou (exit ${resultadoClinica.status}): ${resultadoClinica.stderr || resultadoClinica.stdout}`);
-    }
 
     // 3. Alocar portas efêmeras para API e Web
     const portaApi = await obterPortaLivre();
@@ -754,7 +705,9 @@ async function main() {
     encerrarProcesso(processoWeb);
     encerrarProcesso(processoApi);
     if (instancia) {
-      await destruirInstancia(instancia.container, instancia.volume, PREFIXO, ROTULO);
+      // Resíduo descartável reprova a prova, como nos demais scripts de instância descartável.
+      const residuo = destruirInstancia(instancia.container, instancia.volume, PREFIXO, ROTULO);
+      if (residuo) process.exitCode = 1;
     }
   }
 }
