@@ -3,9 +3,9 @@
 > **Documento:** `docs/14-decisoes-configuracao-clinica.md`
 > **Projeto:** TechLab Fisio
 > **Frente:** Fase 3 — Configuração da Clínica (módulo M2, `CFG-001..CFG-006`)
-> **Status:** **DECIDIDO — `D-CFG-01`..`D-CFG-08` E ADENDOS `D-CFG-03-A` E `D-CFG-04-A` HOMOLOGADOS POR BRUNO MENEZES NORONHA EM 17/09/2026; `D-CFG-09`..`D-CFG-12` (PROVISIONAMENTO DA CLÍNICA) HOMOLOGADAS EM 17/09/2026; `D-CFG-13`..`D-CFG-21` (HORÁRIO DE FUNCIONAMENTO, CFG-002) HOMOLOGADAS EM 17/09/2026; `D-CFG-22`..`D-CFG-33` (CATÁLOGO DE SERVIÇOS, CFG-003) HOMOLOGADAS EM 17/09/2026** (TLF-BASE-V1 §15, item 1).
+> **Status:** **DECIDIDO — `D-CFG-01`..`D-CFG-08` E ADENDOS `D-CFG-03-A` E `D-CFG-04-A` HOMOLOGADOS POR BRUNO MENEZES NORONHA EM 17/09/2026; `D-CFG-09`..`D-CFG-12` (PROVISIONAMENTO DA CLÍNICA) HOMOLOGADAS EM 17/09/2026; `D-CFG-13`..`D-CFG-21` (HORÁRIO DE FUNCIONAMENTO, CFG-002) HOMOLOGADAS EM 17/09/2026; `D-CFG-22`..`D-CFG-33` (CATÁLOGO DE SERVIÇOS, CFG-003) HOMOLOGADAS EM 17/09/2026; `D-CFG-34`..`D-CFG-45` (FORMAS DE PAGAMENTO, CFG-004) HOMOLOGADAS EM 17/09/2026** (TLF-BASE-V1 §15, item 1).
 > **Data:** 17 de setembro de 2026
-> **Insumo decisório:** pacotes de análise somente leitura `CFG-PREP0` (`D-CFG-01`..`D-CFG-08`, sobre `origin/main` = `63bb058`), `CFG-PREP1` (`D-CFG-09`..`D-CFG-12`), `CFG-PREP2` (`D-CFG-13`..`D-CFG-21`) e `CFG-PREP3` (`D-CFG-22`..`D-CFG-33`); a base medida de cada um consta da respectiva seção.
+> **Insumo decisório:** pacotes de análise somente leitura `CFG-PREP0` (`D-CFG-01`..`D-CFG-08`, sobre `origin/main` = `63bb058`), `CFG-PREP1` (`D-CFG-09`..`D-CFG-12`), `CFG-PREP2` (`D-CFG-13`..`D-CFG-21`), `CFG-PREP3` (`D-CFG-22`..`D-CFG-33`) e `CFG-PREP4` (`D-CFG-34`..`D-CFG-45`); a base medida de cada um consta da respectiva seção.
 > **Natureza:** registro normativo das decisões. A materialização da fatia `CFG-001A` (autorizada por Bruno em 17/09/2026) é registrada factualmente em `docs/10` §6-W; nenhuma decisão foi alterada por ela.
 > **Por que um documento próprio:** precedente do projeto para decisões por frente (`docs/09`, `docs/11`, `docs/12`, `docs/13`). Um documento dedicado também evita edição concorrente de `docs/10` e `docs/12`, em uso por frentes paralelas.
 
@@ -288,9 +288,107 @@ Registro de fronteira; **nenhum** destes módulos é implementado ou decidido aq
 - **Preço:** `preco_referencia` é referência para **novas** cobranças, que copiam o valor na criação; alterações nunca reescrevem cobranças existentes.
 - **Pendências de fronteira:** novo pacote com serviço inativo e agendamento por pacote cujo serviço foi inativado (H2-07 × RN-013) ficam para as fatias de pacotes e agenda; a relação entre `clinica.duracao_padrao_atendimento_min` (`D-CFG-07`) e `servico.duracao_min` fica para a retomada de `D-CFG-07`.
 
+### 3.12 Formas de pagamento (`CFG-004`) — `D-CFG-34`..`D-CFG-45` *(homologadas em 17/09/2026; insumo: pacote `CFG-PREP4`)*
+
+Homologadas por Bruno Menezes Noronha em 17/09/2026, que aprovou integralmente as recomendações do pacote `CFG-PREP4` (somente leitura, medido sobre `origin/main` = `7fa114c`), **incluindo a alteração estrutural de banco de `D-CFG-35`** e a regra de edição de `D-CFG-40`. **Registro normativo; nenhum código, schema, migration ou teste alterado.** A aprovação autoriza a materialização documental; **não** autoriza ainda implementação de runtime, schema ou migration.
+
+**Fatos de partida (`CFG-PREP4`).** A tabela `forma_pagamento` já existe (`id uuid PK`; `clinica_id` FK NN `RESTRICT`; `descricao text NN`; `ativo boolean NN` sem default; `inativado_em timestamptz ∅`; `criado_em`), **sem** unicidade, **sem** CHECK, **sem** índice além da PK e **sem** `atualizado_em`. É referenciada **somente** por `pagamento.forma_pagamento_id` (FK NN `RESTRICT`, índice `pagamento_forma_pagamento_id_idx`); `pagamento` é append-only e **não copia** a descrição da forma (`docs/07`). FIN-004 exige forma **ativa no momento do registro**; RN-007 preserva formas inativas em dados históricos. `docs/04` §4 atribui "Gerenciar formas de pagamento" somente ao Administrador, sem permissão específica no catálogo. `configuracao.alterada` já abrange `forma_pagamento` (`docs/09` §13.6). Não existe runtime de CFG-004 nem de registro de pagamento.
+
+#### 3.12.1 `D-CFG-34` — Unicidade da descrição
+
+- Descrição **única por clínica**, abrangendo formas **ativas e inativas**, comparada **sem distinção de caixa e sem espaços nas bordas**: chave `(clinica_id, lower(btrim(descricao)))`.
+- A descrição de forma inativa **não é liberada para reuso**; o caminho é a reativação.
+- Violação → **`409 FORMA_PAGAMENTO_DUPLICADA`**, em criação e em edição. A rejeição concorrente pelo índice (`23505` **naquele índice**) tem o mesmo desfecho; `23505` em qualquer outra restrição não é traduzido para `409`. A detecção de duplicidade **não** compara caixa em JavaScript.
+
+#### 3.12.2 `D-CFG-35` — Invariantes físicas
+
+- **Autorizada a futura migration** com:
+  - índice único `(clinica_id, lower(btrim(descricao)))` (`D-CFG-34`);
+  - `CHECK` de coerência `ativo = (inativado_em IS NULL)`.
+- Nomes físicos, verificação de dados e fixtures, golden SQL, inventário protegido e o alinhamento de `docs/07` §10.1/§10.2 pertencem à fatia de implementação; `docs/07` **só é atualizado após a migration integrada**.
+
+#### 3.12.3 `D-CFG-36` — Contrato HTTP
+
+Rotas de nível superior, em módulo próprio:
+
+| Rota | Sucesso | Erros específicos |
+| --- | --- | --- |
+| `GET /formas-pagamento[?ativo=true\|false]` | `200` lista | `400` filtro inválido |
+| `GET /formas-pagamento/:formaPagamentoId` | `200` | `400` id malformado; `404 FORMA_PAGAMENTO_NAO_ENCONTRADA` |
+| `POST /formas-pagamento` | `201` | `400`; `404 CLINICA_NAO_CONFIGURADA`; `409 FORMA_PAGAMENTO_DUPLICADA` |
+| `PUT /formas-pagamento/:formaPagamentoId` | `200` | `400`; `404 FORMA_PAGAMENTO_NAO_ENCONTRADA`; `409 FORMA_PAGAMENTO_DUPLICADA`; `409 FORMA_PAGAMENTO_EM_USO` |
+| `PATCH /formas-pagamento/:formaPagamentoId/situacao` | `200` | `400`; `404 FORMA_PAGAMENTO_NAO_ENCONTRADA` |
+
+- Corpo de `POST` e `PUT` — **exatamente** `{ descricao }`; `PUT` é substituição total.
+- Resposta — **exatamente** `{ id, descricao, ativo, inativadoEm }`; `inativadoEm` em ISO-8601 ou `null`; `clinicaId` e `criadoEm` **não** são expostos. No `PUT` e no `PATCH`, o corpo é o estado vigente após a operação, inclusive no no-op.
+- `clinica_id` é resolvido no servidor a partir da linha única de `clinica`; nunca vem do cliente.
+- **Não existe rota de exclusão** (`DELETE`), em nenhuma condição (RN-007, `docs/07` §23).
+- Erros no envelope `{ erro: <código> }`; `401`, `403` e `500 FALHA_INTERNA` pelos contratos gerais. Códigos novos: somente `FORMA_PAGAMENTO_NAO_ENCONTRADA`, `FORMA_PAGAMENTO_DUPLICADA` e `FORMA_PAGAMENTO_EM_USO`.
+
+#### 3.12.4 `D-CFG-37` — Criação e situação
+
+- Criação sempre com `ativo = true` e `inativado_em = NULL`; o corpo não aceita `ativo`.
+- Situação alterada **somente** por `PATCH /formas-pagamento/:formaPagamentoId/situacao` com corpo exato `{ ativo: boolean }`.
+- Inativação: `ativo = false`, `inativado_em = now()`. Reativação: `ativo = true`, `inativado_em = NULL`.
+- Pedido cujo `ativo` já é o vigente → `200` com o estado corrente, **sem** mutação, **sem** alterar `inativado_em` e **sem** auditoria.
+- Inativar ou reativar é permitido **com ou sem** pagamentos referenciando a forma e **nunca** altera `pagamento`.
+
+#### 3.12.5 `D-CFG-38` — Validação da descrição
+
+- `descricao`: string; aplicar `trim`; **1–100** caracteres (code points) após `trim`; **sem caracteres de controle**; persistida já sem espaços de borda.
+- **Não** há campo de tipo/categoria (dinheiro, PIX, cartão etc.) nem integração com meios de pagamento (TLF-BASE-V1 §13).
+- **Sem coerção de tipos**; corpo estrito (chave extra ou ausente, `null`, array ou objeto não plano → `400 REQUISICAO_INVALIDA`); sem dependência nova.
+
+#### 3.12.6 `D-CFG-39` — Sem formas pré-cadastradas
+
+- Nenhuma forma de pagamento é criada por provisionamento, seed ou migration; o Administrador as cadastra pela API.
+- `bootstrap-clinica` (`D-CFG-10`..`D-CFG-12`) permanece inalterado.
+
+#### 3.12.7 `D-CFG-40` — Edição de forma já utilizada
+
+- `PUT` sobre forma **referenciada por qualquer `pagamento`** → **`409 FORMA_PAGAMENTO_EM_USO`**, sem mutação e sem auditoria. A correção é inativar a forma e criar outra.
+- `PUT` sobre forma **sem** pagamento é permitido, inclusive se inativa, e não altera a situação.
+- A comparação de no-op **precede** a verificação de uso: `PUT` idêntico ao vigente sobre forma em uso → `200` sem mutação e sem auditoria.
+- A verificação ocorre **sob o lock** de `D-CFG-41`, na mesma transação da mutação.
+- Fundamento: `pagamento` é evidência financeira append-only que referencia a forma sem copiar sua descrição; renomear forma usada reescreveria retroativamente recibos e relatórios (FIN-008). A diferença em relação a `D-CFG-31` (serviço) é deliberada: o preço do serviço é copiado para a cobrança; a descrição da forma não é copiada.
+
+#### 3.12.8 `D-CFG-41` — Concorrência
+
+- `PUT` e `PATCH` serializam por `SELECT ... FOR UPDATE` na linha de `forma_pagamento`; comparação de no-op e verificação de uso ocorrem **sob o lock**; a **última escrita válida prevalece**.
+- **Sem** coluna de versão, `If-Match` ou controle otimista; `409` existe **somente** por `D-CFG-34` e `D-CFG-40`.
+- Limitação aceita: atualização perdida entre administradores concorrentes não é detectada.
+
+#### 3.12.9 `D-CFG-42` — Listagem
+
+- **Sem paginação** e sem busca textual.
+- Retorna ativas e inativas; filtro opcional `?ativo=true|false` (qualquer outro valor → `400`).
+- Ordem canônica determinística: `ativo DESC`, `lower(descricao)`, `id`.
+- `GET` com `Cache-Control: no-store`.
+
+#### 3.12.10 `D-CFG-43` — Autorização
+
+- Todas as rotas exigem **`clinica.configurar`**; `ProtecaoCsrfGuard` **somente** em `POST`, `PUT` e `PATCH`.
+- Leitura por outros papéis (ex.: seleção de forma ativa pela Recepção ao registrar pagamento) **não** é concedida agora; será decidida na fatia de pagamentos. **Nenhuma permissão nova.**
+- `403` por falta de permissão **não** gera evento (lista fechada de `L-07`).
+
+#### 3.12.11 `D-CFG-44` — Auditoria
+
+- Criação, edição efetiva, inativação e reativação emitem, cada uma, **um** `configuracao.alterada` com `alvo_tipo = "forma_pagamento"`, `alvo_id = forma_pagamento.id`, ator da sessão, `resultado = SUCESSO`, `justificativa = null`, `contexto` **vazio**, na **mesma transação** da mutação (falha → rollback conjunto).
+- No-op, consulta, validação rejeitada, `409` e negação de autorização **não** emitem evento.
+- A descrição **nunca** é registrada. Aplicação direta de `docs/09` §13.6; nenhuma ação, chave de `contexto` ou `alvo_tipo` novo. Permanece a limitação declarada de §13.6 (estado anterior não preservado).
+
+#### 3.12.12 `D-CFG-45` — Contrato oferecido aos módulos futuros
+
+Registro de fronteira; **nenhum** destes módulos é implementado ou decidido aqui.
+
+- **Identidade:** `forma_pagamento.id` é o identificador estável referenciado por `pagamento`.
+- **Elegibilidade:** `ativo = true` é o predicado para **novo** pagamento (FIN-004), verificado no backend dentro de T-03; pagamentos existentes permanecem íntegros e relatáveis (FIN-008) após inativação (RN-007).
+- **Serialização com `D-CFG-40`:** T-03 deve bloquear a linha da forma (`SELECT ... FOR SHARE` ou mais forte) ao verificar sua situação, para que o registro de pagamento não corra com edição ou inativação concorrente.
+- **Pendências de fronteira:** leitura das formas ativas pela Recepção (`D-CFG-43`) e o detalhamento de T-03 ficam para a fatia de pagamentos.
+
 ## 4. Consequências normativas já definidas (sem ampliação)
 
-- **Auditoria** (`docs/09` §13.6): mutação efetiva de `clinica` (`CFG-001`, `CFG-006`) emite `configuracao.alterada` com ator da sessão, `alvo_tipo = "clinica"`, `alvo_id = clinica.id`, `resultado = SUCESSO`, `justificativa = null`, `contexto` vazio, na **mesma transação** da mutação; falha da auditoria implica rollback conjunto. Nenhum valor de campo é registrado. *Alcance por frente:* `CFG-002` usa o mesmo alvo `clinica` por leitura homologada (`D-CFG-17`); `CFG-003` usa `alvo_tipo = "servico"` e `alvo_id = servico.id` (`D-CFG-32`). Em todas, `contexto` vazio e nenhum valor de campo registrado.
+- **Auditoria** (`docs/09` §13.6): mutação efetiva de `clinica` (`CFG-001`, `CFG-006`) emite `configuracao.alterada` com ator da sessão, `alvo_tipo = "clinica"`, `alvo_id = clinica.id`, `resultado = SUCESSO`, `justificativa = null`, `contexto` vazio, na **mesma transação** da mutação; falha da auditoria implica rollback conjunto. Nenhum valor de campo é registrado. *Alcance por frente:* `CFG-002` usa o mesmo alvo `clinica` por leitura homologada (`D-CFG-17`); `CFG-003` usa `alvo_tipo = "servico"` e `alvo_id = servico.id` (`D-CFG-32`); `CFG-004` usa `alvo_tipo = "forma_pagamento"` e `alvo_id = forma_pagamento.id` (`D-CFG-44`). Em todas, `contexto` vazio e nenhum valor de campo registrado.
 - **Autorização** (`D-2.3D-09`): sem sessão → `401`; sem permissão → `403`; CSRF obrigatório somente na rota mutante.
 - **Não ampliação:** nenhuma permissão, ação de auditoria, chave de `contexto` ou dependência nova decorre deste registro.
 
@@ -307,7 +405,10 @@ Registro de fronteira; **nenhum** destes módulos é implementado ou decidido aq
 | `P-CFG-04` — implementação de `CFG-003` (`D-CFG-22`..`D-CFG-33`: migration de unicidade e CHECKs de `servico`, rotas `/servicos`, testes) | **DECIDIDO — IMPLEMENTAÇÃO NÃO AUTORIZADA** |
 | Alinhamento de `docs/07` §10.1/§10.2 às restrições de `D-CFG-23` | **PENDENTE** — após integração da migration |
 | Leitura do catálogo de serviços por outros papéis; pacote/agendamento com serviço inativo; duração sobrescrevível (`D-CFG-30`, `D-CFG-33`) | **PENDENTE DAS FATIAS DE AGENDA E PACOTES** |
-| CFG-004, CFG-005 | **NÃO INICIADOS** |
+| `P-CFG-05` — implementação de `CFG-004` (`D-CFG-34`..`D-CFG-45`: migration de unicidade e CHECK de `forma_pagamento`, rotas `/formas-pagamento`, testes) | **DECIDIDO — IMPLEMENTAÇÃO NÃO AUTORIZADA** |
+| Alinhamento de `docs/07` §10.1/§10.2 às restrições de `D-CFG-35` | **PENDENTE** — após integração da migration |
+| Leitura das formas de pagamento por outros papéis; bloqueio da forma em T-03 (`D-CFG-43`, `D-CFG-45`) | **PENDENTE DA FATIA DE PAGAMENTOS** |
+| CFG-005 | **NÃO INICIADO** |
 | Inclusão da clínica no subcomando `provisionar` (`D-CFG-12`) | **NÃO AUTORIZADA** — reavaliação futura possível |
 | Alinhamento de `docs/07` (afirmava restrição então inexistente) | **RESOLVIDO** — migration `20260917060000_clinica_linha_unica` (`ux_clinica_linha_unica`) integrada na `main` pela PR #65 |
 
@@ -315,6 +416,7 @@ Registro de fronteira; **nenhum** destes módulos é implementado ou decidido aq
 
 | REV. | Data | Descrição |
 | --- | --- | --- |
+| **10** | 17/09/2026 | Acréscimo de `D-CFG-34`..`D-CFG-45` (§3.12) — formas de pagamento (`CFG-004`) —, homologadas por Bruno Menezes Noronha a partir das recomendações do pacote `CFG-PREP4`: unicidade da descrição e CHECK de coerência (migration futura autorizada); rotas `/formas-pagamento` sem `DELETE`; descrição 1–100 sem campo de tipo; sem formas pré-cadastradas; `409 FORMA_PAGAMENTO_EM_USO` na edição de forma referenciada por pagamento; `FOR UPDATE`; `clinica.configurar`; auditoria com `alvo_tipo = "forma_pagamento"`; contrato de fronteira com T-03. Cabeçalho, §4 e §5 atualizados. Nenhuma decisão anterior alterada; nenhum código alterado; implementação não autorizada. |
 | **9** | 17/09/2026 | Correções editoriais: título e insumo decisório do cabeçalho abrangem `CFG-001`..`CFG-006` e os pacotes `CFG-PREP0`..`CFG-PREP3`; referência de exclusão física em §3.10.3 corrigida de `docs/07` §28 para §23; nota de alcance da auditoria em §4 (`D-CFG-17`, `D-CFG-32`); §5 sem linhas duplicadas de CFG-002/CFG-003 e `P-CFG-03` com a autorização de implementação dada por Bruno em 17/09/2026. Nenhuma decisão criada, alterada ou reaberta. |
 | **8** | 17/09/2026 | Acréscimo de `D-CFG-22`..`D-CFG-33` (§3.11) — catálogo de serviços (`CFG-003`) —, homologadas por Bruno Menezes Noronha a partir do pacote `CFG-PREP3` (`DS-01`..`DS-12`), incluindo a autorização expressa da futura migration de unicidade do nome e CHECKs de `servico`. §5 atualizada. Integrada após `CFG-002` (REV. 7, PR #72), cujas `D-CFG-13`..`D-CFG-21` e §3.10 são preservadas. Nenhuma decisão anterior alterada; nenhum código, schema ou migration alterado. |
 | **7** | 17/09/2026 | Acréscimo de `D-CFG-13`..`D-CFG-21` (§3.10) — horário de funcionamento (`CFG-002`) —, homologadas por Bruno Menezes Noronha a partir do pacote `CFG-PREP2` (opções recomendadas, inclusive 0 = domingo e limite de 4 janelas/dia). Inclui leitura homologada de `docs/09` §13.6 (alvo `clinica`). §5 atualizada. Nenhuma decisão anterior alterada; nenhum código alterado. |
