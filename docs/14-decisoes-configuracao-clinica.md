@@ -503,10 +503,10 @@ Registro de fronteira; a agenda **não** é implementada nem decidida aqui.
 | Exceções e feriados do horário de funcionamento (`D-CFG-19`) | **FUTURO DO MVP** |
 | Aplicação de RN-014 e reavaliação da troca de fuso (`D-CFG-20`, `D-CFG-08`) | **PENDENTE DA FATIA DE AGENDA** |
 | `P-CFG-04` — implementação de `CFG-003` (`D-CFG-22`..`D-CFG-33`: migration de unicidade e CHECKs de `servico`, rotas `/servicos`, testes) | **INTEGRADA NA `main`** — PR [#80](https://github.com/BrunoMNoronha/techlab-fisio/pull/80), merge commit `fd3c205f420b9cb201dad46fe946b3df7354b9ba` (`docs/10` §6-Z, §6-Z.7) |
-| Alinhamento de `docs/07` §10.1/§10.2 às restrições de `D-CFG-23` | **PENDENTE** — após integração da migration |
+| Alinhamento de `docs/07` §10.1/§10.2 às restrições de `D-CFG-23` | **RESOLVIDO** — `docs/07` REV. 2.3 (§1.3, §7.2, §10.1 `U-14`, §10.2, §28.1) |
 | Leitura do catálogo de serviços por outros papéis; pacote/agendamento com serviço inativo; duração sobrescrevível (`D-CFG-30`, `D-CFG-33`) | **PENDENTE DAS FATIAS DE AGENDA E PACOTES** |
 | CFG-002 | **INTEGRADO NA `main`** (exceto exceções/feriados e aplicação de RN-014, acima) |
-| CFG-003 | **INTEGRADO NA `main`** (exceto alinhamento de `docs/07` e pendências de fronteira, acima) |
+| CFG-003 | **INTEGRADO NA `main`** (exceto pendências de fronteira, acima) |
 | `P-CFG-05` — implementação de `CFG-004` (`D-CFG-34`..`D-CFG-45`: migration de unicidade e CHECK de `forma_pagamento`, rotas `/formas-pagamento`, testes) | **DECIDIDO — IMPLEMENTAÇÃO NÃO AUTORIZADA** |
 | Alinhamento de `docs/07` §10.1/§10.2 às restrições de `D-CFG-35` | **PENDENTE** — após integração da migration |
 | Leitura das formas de pagamento por outros papéis; bloqueio da forma em T-03 (`D-CFG-43`, `D-CFG-45`) | **PENDENTE DA FATIA DE PAGAMENTOS** |
@@ -522,6 +522,7 @@ Registro de fronteira; a agenda **não** é implementada nem decidida aqui.
 
 | REV. | Data | Descrição |
 | --- | --- | --- |
+| **17** | 17/09/2026 | Atualização factual de §5: alinhamento de `docs/07` às restrições de `D-CFG-23` resolvido pela REV. 2.3 daquele documento. Nenhuma decisão normativa criada, alterada ou reaberta. |
 | **16** | 17/09/2026 | Reconciliação factual pós-integração de §5: `P-CFG-04` / `CFG-003` integrada pela PR #80 (merge `fd3c205`). O registro da REV. 15 permanece como histórico. Nenhuma decisão normativa criada, alterada ou reaberta. |
 | **15** | 17/09/2026 | Atualização factual de §5: `P-CFG-04` (`CFG-003`) implementada e medida em branch própria (`docs/10` §6-Z), após autorização de implementação por Bruno Menezes Noronha. Nenhuma decisão criada, alterada ou reaberta. |
 | **14** | 17/09/2026 | Atualização factual de §5 (análise `CFG-PREP6`, somente leitura sobre `origin/main` = `41cb0ff`): linha própria de `CFG-006` como decidido e integrado (PRs #65 e #69) e registro das pendências de fronteira do fuso para as fatias de agenda, indicadores e frontend. Nenhuma decisão criada, alterada ou reaberta; nenhum código alterado. |
