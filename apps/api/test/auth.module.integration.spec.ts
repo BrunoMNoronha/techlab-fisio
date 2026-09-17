@@ -283,6 +283,7 @@ describe("AuthModule — fronteira da F1+F2+F3 preservada", () => {
       "/pacientes/{pacienteId}/situacao",
       "/profissionais",
       "/profissionais/{profissionalId}",
+      "/profissionais/{profissionalId}/disponibilidade",
       "/profissionais/{profissionalId}/servicos",
       "/profissionais/{profissionalId}/situacao",
       "/servicos",

@@ -3,7 +3,7 @@
 > **Documento:** `docs/16-pacote-decisao-disponibilidade-profissional.md`
 > **Projeto:** TechLab Fisio
 > **Frente:** Profissionais (módulo M3) — disponibilidade e horários (`PRO-003`)
-> **Status:** **HOMOLOGADO — `D-PRO3-01`..`D-PRO3-10` APROVADAS INTEGRALMENTE CONFORME AS RECOMENDAÇÕES POR BRUNO MENEZES NORONHA EM 17/09/2026** (TLF-BASE-V1 §15, item 1), inclusive as escolhas `P-PRO3-01`..`P-PRO3-06` e a **alteração estrutural de banco** de `D-PRO3-06` (CHECK de vigência, `vigencia_inicio NOT NULL` e índice). As marcas **[DERIVADA]**/**[ESCOLHA]** permanecem como registro de origem. A homologação autoriza a materialização documental; **não** autoriza ainda implementação de runtime, schema ou migration.
+> **Status:** **HOMOLOGADO — `D-PRO3-01`..`D-PRO3-10` APROVADAS INTEGRALMENTE CONFORME AS RECOMENDAÇÕES POR BRUNO MENEZES NORONHA EM 17/09/2026** (TLF-BASE-V1 §15, item 1), inclusive as escolhas `P-PRO3-01`..`P-PRO3-06` e a **alteração estrutural de banco** de `D-PRO3-06` (CHECK de vigência, `vigencia_inicio NOT NULL` e índice). As marcas **[DERIVADA]**/**[ESCOLHA]** permanecem como registro de origem. **Na homologação (REV. 2), a implementação de runtime, schema e migration ainda NÃO estava autorizada — esse registro histórico é preservado.** A implementação foi autorizada expressamente por Bruno Menezes Noronha em ato posterior e **EXECUTADA na REV. 5** (§5.3), em branch local não publicada.
 > **Data:** 17 de setembro de 2026
 > **Base medida:** workspace local sobre `bd772a3`, com `docs/14` (REV. 23) e `docs/15` (REV. 2, homologado) locais.
 > **Natureza:** registro normativo das decisões de PRO-003, originado do pacote de análise `PRO-PREP3`. **Nenhum código, schema, migration ou teste alterado.** Nenhuma implementação autorizada.
@@ -177,12 +177,32 @@ Para o passo 9 de `D-AGD-04` (criação e toda remarcação), com a conversão d
 
 | Item | Estado |
 | --- | --- |
-| Implementação de PRO-003 (rotas, regra de versões, migration de `D-PRO3-06`, consumo pela agenda) | **DECIDIDO — IMPLEMENTAÇÃO NÃO AUTORIZADA** |
+| Implementação de PRO-003 (rotas, regra de versões, migration de `D-PRO3-06`) | **IMPLEMENTADA E MEDIDA** em branch local `agent/pro-003-disponibilidade-profissional`, a partir de `origin/main` = `92bcf6e` — **NÃO PUBLICADA** (§5.3; `docs/10` §6-AF) |
+| Consumo da regra pela agenda (`D-PRO3-04`) | **REGRA MATERIALIZADA E TESTADA, SEM CONSUMIDOR** — `VerificadorDisponibilidadeProfissional` existe e está coberto, mas AGD-A / T-01 ainda não existe para chamá-lo (§5.3) |
 | Pacote mínimo de **PRO-001** (cadastro de profissional) e **PRO-004** (serviços realizados) | **HOMOLOGADO** — `docs/18` (`D-PRO1-01`..`D-PRO1-10`); fatia PRO-A implementada (`docs/10` §6-AD), integrada na branch local `integration/local-fase4`, não publicada na `main` — dependência de implementação desta frente e de AGD-A |
 | Pacote mínimo de **PAC** (paciente administrativo e situação) | **HOMOLOGADO** — `docs/17` REV. 2 |
 | Exposição da disponibilidade na interface da agenda; acesso do Fisioterapeuta à própria disponibilidade | **FORA DESTE PACOTE** (`D-PRO3-08`) |
 | Aviso de agendamentos afetados por nova versão | **MELHORIA FUTURA** (`D-PRO3-05`) |
 | Autoria das alterações de disponibilidade | **LIMITAÇÃO ACEITA** (`D-PRO3-09`) — reavaliável |
+
+### 5.3 Registro de materialização (REV. 5 — 17/09/2026)
+
+Registro **exclusivamente factual**, acrescentado em revisão posterior à homologação. **Nenhuma decisão `D-PRO3-01`..`D-PRO3-10` foi criada, alterada, reaberta ou reinterpretada**; §4 permanece como homologado em 17/09/2026.
+
+| Decisão | Como foi materializada |
+| --- | --- |
+| `D-PRO3-01` | Versões como agrupamento de linhas por (`vigencia_inicio`, `vigencia_fim`); **sem** tabela de versão e **sem** linha de "versão vazia". Invariantes garantidas no backend sob lock. Janelas validadas pela função pura já homologada de CFG-002, sem duplicar o algoritmo |
+| `D-PRO3-02` | `GET`/`PUT /profissionais/:profissionalId/disponibilidade`; **sem** `POST`, `PATCH` ou `DELETE`; corpo e resposta exatos; versões em `vigenciaInicio` decrescente e janelas por dia, início e fim; sem paginação; `no-store` no `GET`; CSRF só no `PUT` |
+| `D-PRO3-03` | Regras 1–6 implementadas na função pura `estadoResultante` mais as três escritas físicas (remoção das versões com `vigencia_inicio >= D`, encerramento da anterior em `D-1`, inserção da nova quando a grade não é vazia); no-op por comparação de estados |
+| `D-PRO3-04` | Função pura `avaliarDisponibilidadeProfissional` + adaptador transacional `VerificadorDisponibilidadeProfissional`, sem lock, delegando a contenção à função de CFG-002. **Não integrada a fluxo algum** — a agenda não existe |
+| `D-PRO3-05` | O `PUT` não consulta, cancela, remarca, invalida nem altera agendamento; provado por `xmin` do agendamento, histórico vazio e ausência de evento |
+| `D-PRO3-06` | Migration `20260917210000_disponibilidade_profissional_vigencia`, comprovada em reconstrução limpa e no golden; efeito de `NOT NULL`, do CHECK e a presença do índice provados contra o banco real |
+| `D-PRO3-07` | Transação única com `SELECT ... FOR UPDATE` na linha do profissional; `hoje`, leitura, validação, no-op e escritas sob o lock; sem `If-Match`, coluna de versão ou ETag |
+| `D-PRO3-08` | Ambas as rotas sob `profissionais.gerenciar`; nenhuma permissão nova; Fisioterapeuta sem acesso, inclusive ao próprio profissional; a regra da agenda não exige a permissão do ator |
+| `D-PRO3-09` | **Nenhum** evento de auditoria criado ou reutilizado; nenhuma coluna de autoria. A limitação homologada permanece declarada |
+| `D-PRO3-10` | `{ versoes: [] }`, `PROFISSIONAL_NAO_ENCONTRADO`, `CLINICA_NAO_CONFIGURADA`, `VIGENCIA_RETROATIVA`, `REQUISICAO_INVALIDA`, `401`, `403`, `FALHA_INTERNA`; nenhum código novo além dos já previstos |
+
+A matriz `TD-01`..`TD-13` de §6 foi coberta integralmente; o detalhamento das provas, das baterias medidas, dos mutation challenges e das limitações está em `docs/10` §6-AF. **Limite declarado:** `TD-12` é provado de forma proporcional ao estado real, porque AGD-A ainda não existe (`docs/10` §6-AF.5).
 
 ## 6. Matriz de testes de aceite
 
@@ -206,6 +226,7 @@ Para o passo 9 de `D-AGD-04` (criação e toda remarcação), com a conversão d
 
 | REV. | Data | Descrição |
 | --- | --- | --- |
+| **5** | 17/09/2026 | **Registro factual de MATERIALIZAÇÃO** (§5.3) após autorização expressa de implementação por Bruno Menezes Noronha: `D-PRO3-01`..`D-PRO3-10` implementadas e medidas em branch local não publicada; §5.2 atualizada; cabeçalho passa a distinguir o que valia na homologação (REV. 2) do que foi autorizado depois. **Nenhuma decisão `D-PRO3-*` criada, alterada ou reaberta**; §4 e §6 preservados na íntegra. |
 | **4** | 17/09/2026 | Atualização factual de §5.2 na integração local das quatro frentes: pacote mínimo de PRO-001/PRO-004 homologado em `docs/18` e fatia PRO-A implementada (antes registrado como "A INICIAR"). Nenhuma decisão `D-PRO3-*` criada, alterada ou reaberta; PRO-003 segue sem autorização de implementação. |
 | **3** | 17/09/2026 | Atualização factual de §5.2: pacote mínimo de pacientes homologado (`docs/17` REV. 2). Nenhuma decisão alterada. |
 | **2** | 17/09/2026 | **Homologação** por Bruno Menezes Noronha: `D-PRO3-01`..`D-PRO3-10` aprovadas integralmente conforme as recomendações, inclusive `P-PRO3-01`..`P-PRO3-06` e a migration futura de `D-PRO3-06`. Status, §4 e §5 atualizados (§5.1 registro; §5.2 pendências). Nenhum conteúdo decisório alterado; nenhum código alterado; implementação não autorizada. |

@@ -170,6 +170,7 @@ try {
         "/pacientes/{pacienteId}/situacao",
         "/profissionais",
         "/profissionais/{profissionalId}",
+        "/profissionais/{profissionalId}/disponibilidade",
         "/profissionais/{profissionalId}/servicos",
         "/profissionais/{profissionalId}/situacao",
         "/servicos",
@@ -395,6 +396,29 @@ try {
     ["/profissionais", "/profissionais/{profissionalId}", "/profissionais/{profissionalId}/situacao", "/profissionais/{profissionalId}/servicos"].every(
       (caminho) => documento.paths[caminho]?.delete === undefined,
     ),
+  );
+
+  // PRO-003 — disponibilidade versionada (docs/16 §4.2, D-PRO3-02): SOMENTE
+  // GET e PUT; nenhum POST, PATCH ou DELETE.
+  const DISPONIBILIDADE = "/profissionais/{profissionalId}/disponibilidade";
+  for (const [metodo, esperado] of [
+    ["get", "200,400,401,403,404,500"],
+    ["put", "200,400,401,403,404,413,422,500"],
+  ]) {
+    const status = Object.keys(documento.paths[DISPONIBILIDADE]?.[metodo]?.responses ?? {})
+      .sort()
+      .join(",");
+    conferir(
+      `${metodo.toUpperCase()} ${DISPONIBILIDADE} documenta ${esperado}`,
+      status === esperado,
+      `status=${status}`,
+    );
+  }
+  const metodosDisponibilidade = Object.keys(documento.paths[DISPONIBILIDADE] ?? {}).sort().join(",");
+  conferir(
+    "a disponibilidade expõe somente get,put",
+    metodosDisponibilidade === "get,put",
+    `metodos=${metodosDisponibilidade}`,
   );
 
   const statusLogin = Object.keys(documento.paths["/auth/login"]?.post?.responses ?? {})

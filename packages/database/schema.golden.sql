@@ -331,11 +331,12 @@ CREATE TABLE public.disponibilidade_profissional (
     dia_semana smallint NOT NULL,
     hora_inicio time(6) without time zone NOT NULL,
     hora_fim time(6) without time zone NOT NULL,
-    vigencia_inicio date,
+    vigencia_inicio date NOT NULL,
     vigencia_fim date,
     criado_em timestamp(6) with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT ck_disponibilidade_profissional_dia_semana CHECK (((dia_semana >= 0) AND (dia_semana <= 6))),
-    CONSTRAINT ck_disponibilidade_profissional_intervalo CHECK ((hora_fim > hora_inicio))
+    CONSTRAINT ck_disponibilidade_profissional_intervalo CHECK ((hora_fim > hora_inicio)),
+    CONSTRAINT ck_disponibilidade_profissional_vigencia CHECK (((vigencia_fim IS NULL) OR (vigencia_fim >= vigencia_inicio)))
 );
 
 
@@ -1162,6 +1163,13 @@ CREATE INDEX ix_agendamento_pacote ON public.agendamento USING btree (pacote_id)
 --
 
 CREATE INDEX ix_cobranca_data_referencia_ativa ON public.cobranca USING btree (data_referencia) WHERE (cancelada_em IS NULL);
+
+
+--
+-- Name: ix_disponibilidade_profissional_vigencia; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_disponibilidade_profissional_vigencia ON public.disponibilidade_profissional USING btree (profissional_id, vigencia_inicio);
 
 
 --

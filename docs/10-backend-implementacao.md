@@ -4524,6 +4524,90 @@ Progressão por etapa (`test:api` · integração da API · `verify:openapi-runt
 - Mutation challenge M12 (leitura sem `FOR UPDATE`): **DETECTADA** por 2 testes; arquivo restaurado com SHA-256 conferido.
 - `pnpm run typecheck`, `pnpm run build`: **exit 0**. `pnpm run lint:migrations`: **OK**. `pnpm run test:api`: **48 suites · 1466 passed**. `verify:openapi-runtime`: **64 verificações OK**. `pnpm run verify:api-integration`: **24 suites · 880 passed · 2 skipped** (antes 879), 0 resíduos. `pnpm run smoke:api`: **OK**. Sem alteração de schema, migration, contrato ou web: `schema:verify`, `verify:from-scratch` e as provas web não são afetados (medidos verdes em §6-AE.4 e após o commit `c90271a`).
 
+## 6-AF. `PRO-003` — Disponibilidade e horários do profissional
+
+**Estado atual: IMPLEMENTADA E MEDIDA EM BRANCH LOCAL (`agent/pro-003-disponibilidade-profissional`, worktree `techlab-fisio-pro-003`, a partir de `origin/main` = `92bcf6e`) — NÃO PUBLICADA.** Sem push, PR, merge ou deploy. Decisões e autorização: `docs/16` (`D-PRO3-01`..`D-PRO3-10`, pacote `PRO-PREP3`, homologado integralmente por Bruno Menezes Noronha em 17/09/2026, inclusive a alteração estrutural de `D-PRO3-06`), com autorização expressa de materialização nesta execução. Nenhuma decisão criada, alterada ou reaberta; **nenhuma permissão nova, nenhuma ação de auditoria nova, nenhuma chave de `contexto`, nenhuma dependência nova**.
+
+Dependência confirmada antes de implementar: `PRO-A` está na `main` desde a PR [#86](https://github.com/BrunoMNoronha/techlab-fisio/pull/86) — profissional com UUID, situação ativa/inativa, módulo e rotas de `/profissionais`, permissão `profissionais.gerenciar` e leitura compartilhada `lerLinhaProfissional` já existiam. `FP-08` de `docs/16` ("não há rota de profissionais") estava **superado** e foi remedido no estado real antes de qualquer edição.
+
+### 6-AF.1 Componentes
+
+- **Persistência:** migration `20260917210000_disponibilidade_profissional_vigencia` (`D-PRO3-06`) — `vigencia_inicio SET NOT NULL`, `ck_disponibilidade_profissional_vigencia` (`vigencia_fim IS NULL OR vigencia_fim >= vigencia_inicio`) e `ix_disponibilidade_profissional_vigencia` `(profissional_id, vigencia_inicio)`. **Nada além disso:** sem exclusion constraint, unicidade artificial, tabela de versão, trigger, função, coluna de versão otimista ou de autoria. Golden regerado por reconstrução limpa (`schema:golden:update`); diff restrito aos três objetos. `schema.prisma`: `vigenciaInicio` deixa de ser anulável, `@@index([profissionalId, vigenciaInicio])` e comentário do CHECK (não representável na Prisma Schema Language). `protected-objects.json` e o inventário fixo de `verify:from-scratch` **inalterados** — mesmo precedente de §6-Z.1, §6-AC.1 e §6-AD.1: a proteção é o golden (Guarda 3) mais o efeito provado na Guarda 2.
+- **`apps/api/src/profissional/`:**
+  - `DisponibilidadeController` (novo): `GET`/`PUT /profissionais/:profissionalId/disponibilidade`, ambas sob `@RequerPermissao("profissionais.gerenciar")`; CSRF só no `PUT`, declarada abaixo da permissão; `GET` com `Cache-Control: no-store`; **sem `POST`, `PATCH` ou `DELETE`**; erros normalizados por `FiltroErroProfissionais`.
+  - `DisponibilidadeService` (novo): `consultar` e `substituir`. O `PUT` roda em transação única com `SELECT ... FOR UPDATE` na linha do profissional e, **sob o lock**, lê o fuso, calcula `hoje`, valida a retroatividade, lê as versões, calcula o estado resultante, decide o no-op e escreve. `estadoResultante` é função **pura** — espelho das regras 2–5 de `D-PRO3-03` — e é ela que torna o no-op (regra 6) uma comparação de estados, sem campo artificial e sem consultar a agenda. Sem auditoria (`D-PRO3-09`).
+  - `disponibilidade.dto.ts` (novo): corpo e resposta exatos, `ERRO_DISPONIBILIDADE.VIGENCIA_RETROATIVA`, data civil gregoriana real (`ehDataCivilValida`) e aritmética de calendário sem fuso (`deslocarDataCivil`). A validação das **janelas reutiliza** `validarCorpoGradeFuncionamento` (CFG-002) — mesma regra homologada de `D-PRO3-01`, invariante 3, sem duplicar o algoritmo.
+  - `erro-profissionais.filter.ts`: passa a reconhecer `VIGENCIA_RETROATIVA` e `CLINICA_NAO_CONFIGURADA`.
+  - `profissional.module.ts`: registra `DisponibilidadeController` e `DisponibilidadeService`.
+- **`apps/api/src/agenda/` — regra reutilizável (`D-PRO3-04`):**
+  - `disponibilidade-profissional.regra.ts` (novo): função **pura** `avaliarDisponibilidadeProfissional` + `versaoAplicavel`. A contenção na janela **delega** a `avaliarHorarioFuncionamento` (CFG-002), como `docs/16` §4.4 determina; sem versão aplicável o resultado é *não disponível*, fail-closed.
+  - `verificador-disponibilidade-profissional.ts` (novo): adaptador transacional, para ser chamado no passo 9 de `D-AGD-04` **sem lock** e sem exigir `profissionais.gerenciar` do ator. `ERRO_AGENDA` ganha `FORA_DA_DISPONIBILIDADE`. Como o `VerificadorHorarioFuncionamento` de CFG-002, **não** é registrado em módulo algum enquanto a fatia de agenda não existir.
+- **Registro:** listas fechadas de rotas em `openapi.spec.ts`, `auth.module.integration.spec.ts` e `verify-openapi-runtime.mjs`; contratos das duas operações e prova de que a disponibilidade expõe **somente** `get,put`.
+- **Teste existente ajustado:** `packages/database/test/guard-anti-drift.spec.ts` — as duas fixtures de `disponibilidade_profissional` passam a informar `vigenciaInicio` (exigida pelo `NOT NULL`); acrescentados o caso de efeito do CHECK de vigência e um bloco de invariantes físicas de PRO-003.
+
+### 6-AF.2 Matriz TD × prova
+
+| TD | Prova | Status |
+| --- | --- | --- |
+| TD-01 `PUT` hoje, sem versões -> 200, uma versão aberta, sem evento | integração | **OK** |
+| TD-02 versão futura encerra a anterior em `D-1` | integração | **OK** |
+| TD-03 versão futura programada é substituída (inclusive `D` igual ao início dela) | integração | **OK** |
+| TD-04 `D` = ontem no fuso da clínica -> 422, zero mutações; caso com data UTC divergente (`Pacific/Kiritimati`) | integração | **OK** |
+| TD-05 `janelas: []` encerra sem criar versão; sem anterior -> estado vazio | integração | **OK** |
+| TD-06 sobreposição, adjacência, 5ª janela, `24:00`, segundos, meia-noite, `2026-02-30`, chave extra e demais corpos inválidos -> 400 sem mutação | `disponibilidade-dto.spec.ts` + integração | **OK** |
+| TD-07 `PUT` idêntico -> 200 **sem escrita**, provado por `xmin` de cada linha | integração | **OK** |
+| TD-08 inexistente -> 404; inativo -> GET/PUT permitidos | integração | **OK** |
+| TD-09 sem sessão -> 401; Recepcionista e Fisioterapeuta -> 403 sem evento; `PUT` sem CSRF -> 403; Administrador -> 200; Fisioterapeuta vinculado ao próprio profissional segue sem acesso | integração | **OK** |
+| TD-10 dois `PUT` concorrentes serializados; invariantes de não sobreposição e versão aberta única verificadas no estado final | integração | **OK** |
+| TD-11 regra da agenda: dentro, bordas, versão encerrada, sem versão, lacuna, fora das janelas, dia local != dia UTC, dias civis distintos, fuso com horário de verão | `agenda-disponibilidade-profissional.regra.spec.ts` + integração | **OK** |
+| TD-12 agendamento existente intacto após `PUT` que o deixaria fora da grade (`xmin`, histórico e auditoria inalterados) | integração — **limite declarado em §6-AF.5** | **OK (proporcional)** |
+| TD-13 banco rejeita `vigencia_inicio NULL` e `vigencia_fim < vigencia_inicio`; índice conferido no catálogo | `guard-anti-drift.spec.ts` + integração (SQL direto) | **OK** |
+
+Cobertura adicional medida além da matriz: `GET` sem versões; múltiplas versões em ordem decrescente; janelas em ordem canônica; resposta sem chave extra; UUID malformado; clínica ausente no `PUT`; `GET` **não** exige clínica; corpo não objeto, `null`, tipos incorretos, propriedade ausente/extra, `diaSemana` fracionário, janela duplicada, dias diferentes com horários iguais, `00:00`, `23:59`, `2028-02-29` válido e `2027-02-29` inválido; `PUT` sobre profissional inativo; rollback integral com falha injetada **depois** do `DELETE` e do `UPDATE`; isolamento entre profissionais; disponibilidade excedendo a grade da clínica sem correção (`D-CFG-62`).
+
+### 6-AF.3 Mutation challenges (aplicados, observados e revertidos; SHA-256 conferido)
+
+| # | Mutação | Resultado |
+| --- | --- | --- |
+| A | condição `D < hoje` neutralizada | **DETECTADA** (2 testes: TD-04 e TD-04b) |
+| B | adjacência permitida (`<=` -> `<` em `horario-funcionamento.dto.ts`) | **DETECTADA** (1 unitário + 1 de integração) |
+| C | `FOR UPDATE` removido do `PUT` (`lerLinhaProfissional(..., false)`) | **DETECTADA** (3 testes de TD-10) |
+| D | busca da versão aplicável ignora `vigencia_fim` | **DETECTADA** (1 unitário; **inicialmente NÃO detectada** pela suíte de integração — lacuna real, fechada com dois casos novos de TD-11, que passaram a detectá-la) |
+
+Os três arquivos mutados voltaram ao SHA-256 exato de antes (`disponibilidade.service.ts` `ecfc1562…`, `disponibilidade-profissional.regra.ts` `edc36fba…`, `horario-funcionamento.dto.ts` `7e65a8d5…`); `horario-funcionamento.dto.ts` permanece idêntico ao `HEAD`.
+
+### 6-AF.4 Baterias medidas (17/09/2026, host Windows, worktree `techlab-fisio-pro-003` sobre `origin/main` = `92bcf6e`)
+
+| Verificação | Exit | Resultado |
+| --- | ---: | --- |
+| `pnpm run typecheck` | 0 | verde (raiz, `packages/database`, `apps/api`, `apps/web`) |
+| `prisma validate` | 0 | schema válido |
+| `pnpm run lint:migrations` | 0 | **17 migrations · 37 objetos protegidos** |
+| `pnpm run build` | 0 | verde |
+| `pnpm run test:api` | 0 | **51 suites · 1556 passed** (antes: 48 · 1466) |
+| `pnpm run verify:api-integration` | 0 | **26 suites · 952 passed · 2 skipped · 0 resíduos** (antes: 24 · 880 · 2 skipped) |
+| `pnpm run schema:verify` | 0 | dump **byte a byte idêntico** ao golden (62110 bytes); `migrate diff` exit 0 — **sem drift** |
+| `pnpm run verify:from-scratch` | 1 | **17/17 migrations aplicadas e catálogo OK**; exit 1 **apenas** na guarda de árvore limpa, inevitável antes do commit — reexecutada verde após o commit local (exit 0) |
+| suíte de `packages/database` (instância descartável própria) | 0 | **10 suites · 92 passed** (antes: 87) |
+| `verify:openapi-runtime` | 0 | **67 verificações OK** (antes: 64) |
+| `pnpm run smoke:api` | 0 | verde |
+| `@techlab-fisio/web test` | 0 | **78 verificações OK** (57 + grade 21) |
+| `pnpm run verify:web-api-e2e` | 0 | **50 verificações OK** |
+| Playwright `pnpm run test:e2e` | 0 | **13 passed** |
+
+Todas as execuções destruíram suas instâncias descartáveis: **0 containers e 0 volumes remanescentes**. **CI remota não executada.**
+
+### 6-AF.5 Limitações declaradas
+
+- **Autoria não registrada** (`D-PRO3-09`, limitação homologada): o modelo por versões preserva **o que** vigorou e **quando**, mas não **quem** alterou. Não é dívida impeditiva — é o desenho decidido. As alternativas (ação `profissional.disponibilidade.alterada` ou coluna `criado_por_usuario_id`) permanecem registradas em `docs/16` §4.9, não implementadas.
+- **Versão iniciada hoje e substituída hoje não deixa rastro** da definição anterior (`D-PRO3-03`, limitação aceita).
+- **Atualização perdida** entre administradores concorrentes não é detectada: última escrita válida prevalece, sem `If-Match` nem versão numérica (`D-PRO3-07`, mesma limitação de `D-CFG-05`).
+- **TD-12 é proporcional ao estado real:** a fatia de agenda (AGD-A / T-01) **não existe** — não há rota de criação ou remarcação. A prova cria o agendamento diretamente na persistência e demonstra que ele fica intacto (`xmin`, estado, `inicio`/`fim`), sem histórico e sem evento. A revalidação da remarcação contra a versão da **nova** data (RN-016) só poderá ser provada de ponta a ponta quando AGD-A existir.
+- **`D-PRO3-04` foi materializada como regra reutilizável, não como agenda:** `VerificadorDisponibilidadeProfissional` está pronto e coberto por testes unitários e de integração, mas **não é chamado por nenhum fluxo** — não há agenda para chamá-lo, e ele não é registrado em módulo. Bloqueio de agenda, férias, exceções por data, UI, sugestão de horários e endpoint de horários livres **não** foram implementados.
+- **`docs/07` §10.1/§10.2** segue sem listar as restrições das frentes ainda não integradas na `main` (`ux_forma_pagamento_clinica_descricao`, `ck_forma_pagamento_situacao`, `ux_motivo_cancelamento_clinica_descricao`, `ck_motivo_cancelamento_situacao`, `ck_paciente_situacao`, `ix_paciente_data_nascimento`, `ck_profissional_situacao`). As de PRO-003 **foram** alinhadas nesta fatia (`docs/07` REV. 2.4), porque a migration está implementada e comprovada, como `D-PRO3-06` exige.
+- **Corpo JSON `null`** no `PUT` responde `400` com o corpo padrão da plataforma, não com `{ erro }`: o body parser rejeita antes do roteamento, limite já vigente em toda a API. O status e a ausência de escrita são os corretos.
+- **Conflito de integração previsível** com a branch local de fechamento de `CFG-004`/`CFG-005`: esta fatia partiu de `origin/main` = `92bcf6e` e **não** incorpora aquele trabalho. A integração posterior pode exigir reconciliação documental em `docs/07`, `docs/10` e `docs/14` (numeração de revisões e listas de restrições).
+
 ## 7. Auditoria — `P-BACK-01`
 
 ### 7.1 Estado
@@ -5046,11 +5130,13 @@ Sujeitas a autorização própria, nesta ordem provável:
 24. **`PAC-A` — pacientes (cadastro administrativo, localização, duplicidade, situação)** — **IMPLEMENTADA E MEDIDA — CONSOLIDADA NA BRANCH LOCAL `integration/local-fase4`, NÃO PUBLICADA NA `main`** (§6-AC, §6-AE; decisões `docs/17`).
 25. **`CFG-004` — formas de pagamento** — **IMPLEMENTADA E MEDIDA — CONSOLIDADA NA BRANCH LOCAL `integration/local-fase4`, NÃO PUBLICADA NA `main`** (§6-AA, §6-AE). Após integrar na `main`, alinhar `docs/07` §10.1/§10.2.
 26. **`PRO-A` — cadastro de profissionais** — **IMPLEMENTADA E MEDIDA — CONSOLIDADA NA BRANCH LOCAL `integration/local-fase4`, NÃO PUBLICADA NA `main`** (§6-AD, §6-AE; decisões `docs/18`).
+27. **`PRO-003` — disponibilidade e horários do profissional** — **IMPLEMENTADA E MEDIDA EM BRANCH LOCAL `agent/pro-003-disponibilidade-profissional`, NÃO PUBLICADA** (§6-AF; decisões `docs/16`). Pendente: revisão, publicação e integração na `main`. A regra de `D-PRO3-04` está pronta e testada, mas **sem consumidor** até AGD-A existir; bloqueio de agenda, férias e exceções por data seguem fora de escopo.
 
 ## 11. Histórico de revisões
 
 | REV. | Data | Conteúdo |
 | --- | --- | --- |
+| **69** | **17/09/2026** | **`PRO-003` — DISPONIBILIDADE VERSIONADA DO PROFISSIONAL IMPLEMENTADA E MEDIDA EM BRANCH LOCAL, NÃO PUBLICADA** (§6-AF). `D-PRO3-01`..`D-PRO3-10` materializadas; migration `20260917210000_disponibilidade_profissional_vigencia` (`vigencia_inicio NOT NULL`, CHECK de vigência, índice `(profissional_id, vigencia_inicio)`); `GET`/`PUT /profissionais/:profissionalId/disponibilidade` sob `profissionais.gerenciar`, sem `POST`/`PATCH`/`DELETE`; regra reutilizável da agenda (`D-PRO3-04`) sem consumidor; test:api 51 suites · 1556 passed; integração da API 26 suites · 952 passed · 2 skipped; `packages/database` 92 passed; `verify:openapi-runtime` 67; golden e `docs/07` §7.3/§10.2/§10-A alinhados (REV. 2.4); 4 mutation challenges detectados. **Sem evento de auditoria e sem permissão nova** (`D-PRO3-09`, `D-PRO3-08`). Nenhuma decisão criada, alterada ou reaberta. |
 | **68** | **17/09/2026** | **ENCERRAMENTO DE `CI-E2E0` — SUÍTE PLAYWRIGHT COM AUTENTICAÇÃO REAL SAME-ORIGIN, MEDIDA LOCALMENTE E SEM PUBLICAÇÃO** (§6-U.1). Orquestrador `run-playwright-e2e.mjs` (PostgreSQL descartável + Administrador/clínica sintéticos + API compilada + `next start` em portas efêmeras, readiness pelo proxy), `autenticacao.spec.ts` (3 testes), `pnpm run test:e2e` como comando único local e de CI, helpers de processo compartilhados com `verify-web-api-e2e.mjs`. Execuções: 13 passed x 3 (baseline, repetição e após build do zero) e 39 passed com `--repeat-each=3`; mutação do `Host` no proxy detectada (2 failed, exit 1); 0 resíduos. Nenhuma decisão, contrato, schema, migration, permissão, dependência ou código de runtime alterado. |
 | **67** | **17/09/2026** | **CORREÇÃO PÓS-REVISÃO DA PR #86** (§6-AE.6). `PATCH /profissionais/:profissionalId/situacao` passa a ler a linha sob `FOR UPDATE` antes de decidir o no-op, cumprindo `D-PRO1-10` para transições opostas concorrentes; teste de regressão; M12 detectada; test:api 48 suites · 1466 passed; integração da API 24 suites · 880 passed · 2 skipped. Nenhuma decisão, contrato, schema, migration ou permissão alterado. |
 | **66** | **17/09/2026** | **CONSOLIDAÇÃO LOCAL DAS QUATRO FRENTES NA BRANCH `integration/local-fase4`** (§6-AE). Ordem, conflitos e resoluções; bateria consolidada (test:api 48 suites · 1466 passed; integração da API 24 suites · 879 passed · 2 skipped; `verify:openapi-runtime` 64; 16 migrations; web 78; E2E 50; Playwright 10). Fechamento documental: `D-INTEG-01` (`docs/17` de profissionais → `docs/18`) e `D-INTEG-02` (status de `docs/14`, `docs/15`, `docs/17`); estados das §6-AA..§6-AD atualizados, com o contexto das origens preservado; contagem OpenAPI de §6-AD.4 (46) confirmada por reprodução. Nenhuma decisão ou comportamento de runtime alterado. |

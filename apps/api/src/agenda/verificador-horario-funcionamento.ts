@@ -26,6 +26,8 @@ import {
 export const ERRO_AGENDA = Object.freeze({
   /** `422` — D-CFG-61. Não expõe a grade nem valores. */
   FORA_DO_HORARIO_FUNCIONAMENTO: "FORA_DO_HORARIO_FUNCIONAMENTO",
+  /** `422` — `docs/15` D-AGD-04 (passo 9), `docs/16` D-PRO3-04. Não expõe a grade do profissional. */
+  FORA_DA_DISPONIBILIDADE: "FORA_DA_DISPONIBILIDADE",
 } as const);
 
 /** Status HTTP a ser usado pela futura fronteira da agenda (D-CFG-61). */
