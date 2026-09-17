@@ -146,6 +146,12 @@ try {
     "rotas da F3, F6, P-2.3D-07, P-2.3D-08, AUT-005, P-2.3D-10, CFG-001A, CFG-002, AUD-004, CFG-003, CFG-004, CFG-005, PAC-A e PRO-A presentes e nenhuma outra vazou",
     JSON.stringify(caminhos) ===
       JSON.stringify([
+        "/agenda/opcoes",
+        "/agendamentos",
+        "/agendamentos/{agendamentoId}",
+        "/agendamentos/{agendamentoId}/cancelamento",
+        "/agendamentos/{agendamentoId}/confirmacao",
+        "/agendamentos/{agendamentoId}/remarcacao",
         "/auditoria/eventos",
         "/auth/login",
         "/auth/logout",
@@ -419,6 +425,60 @@ try {
     "a disponibilidade expõe somente get,put",
     metodosDisponibilidade === "get,put",
     `metodos=${metodosDisponibilidade}`,
+  );
+
+  // AGD-A — agenda (docs/15 D-AGD-05, D-AGD-13, D-AGD-14). Sem DELETE, sem PUT
+  // e sem PATCH: agendamento nunca é removido (RN-017) e toda transição é POST
+  // em sub-recurso próprio.
+  for (const [caminho, metodo, esperado] of [
+    ["/agendamentos", "get", "200,400,401,403,500"],
+    ["/agendamentos", "post", "201,400,401,403,404,409,413,422,500"],
+    ["/agendamentos/{agendamentoId}", "get", "200,400,401,403,404,500"],
+    ["/agendamentos/{agendamentoId}/confirmacao", "post", "200,400,401,403,404,409,413,500"],
+    ["/agendamentos/{agendamentoId}/remarcacao", "post", "200,400,401,403,404,409,413,422,500"],
+    ["/agendamentos/{agendamentoId}/cancelamento", "post", "200,400,401,403,404,409,413,422,500"],
+    ["/agenda/opcoes", "get", "200,401,403,404,500"],
+  ]) {
+    const status = Object.keys(documento.paths[caminho]?.[metodo]?.responses ?? {})
+      .sort()
+      .join(",");
+    conferir(`${metodo.toUpperCase()} ${caminho} documenta ${esperado}`, status === esperado, `status=${status}`);
+  }
+  conferir(
+    "nenhum DELETE, PUT ou PATCH nas rotas da agenda",
+    [
+      "/agenda/opcoes",
+      "/agendamentos",
+      "/agendamentos/{agendamentoId}",
+      "/agendamentos/{agendamentoId}/confirmacao",
+      "/agendamentos/{agendamentoId}/remarcacao",
+      "/agendamentos/{agendamentoId}/cancelamento",
+    ].every(
+      (caminho) =>
+        documento.paths[caminho]?.delete === undefined &&
+        documento.paths[caminho]?.put === undefined &&
+        documento.paths[caminho]?.patch === undefined,
+    ),
+  );
+  const corpoCriacao = Object.keys(
+    documento.components?.schemas?.CriarAgendamentoRequisicaoDto?.properties ?? {},
+  )
+    .sort()
+    .join(",");
+  conferir(
+    "o corpo da criação não aceita modalidade nem pacoteId (AGD-A cria só AVULSO)",
+    corpoCriacao === "fim,inicio,pacienteId,profissionalId,servicoId",
+    `propriedades=${corpoCriacao}`,
+  );
+  const opcaoServico = Object.keys(
+    documento.components?.schemas?.ServicoOpcaoDto?.properties ?? {},
+  )
+    .sort()
+    .join(",");
+  conferir(
+    "GET /agenda/opcoes não expõe preço de referência",
+    opcaoServico === "duracaoMin,id,nome",
+    `propriedades=${opcaoServico}`,
   );
 
   const statusLogin = Object.keys(documento.paths["/auth/login"]?.post?.responses ?? {})

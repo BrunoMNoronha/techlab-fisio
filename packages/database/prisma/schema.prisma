@@ -664,6 +664,12 @@ model ObservacaoAdministrativa {
 /// CHECKs `fim > inicio` e `(modalidade='PACOTE') = (pacote_id IS NOT NULL)`
 /// pertencem a `E-09`; as exclusion constraints IDX-A1/IDX-A2 a `E-10`;
 /// o índice PARCIAL IDX-A4 `(pacote_id) WHERE NOT NULL` a `E-10`.
+/// AGD-A (`docs/15` D-AGD-07), migration
+/// `20260917230000_agendamento_cancelamento_coerente`:
+/// `ck_agendamento_cancelamento_coerente`
+/// (`(estado = 'CANCELADO') = (motivo_cancelamento_id IS NOT NULL AND
+/// cancelado_em IS NOT NULL AND cancelado_por_usuario_id IS NOT NULL)`) — CHECK
+/// não representável na Prisma Schema Language, por isso vive só na migration.
 model Agendamento {
   id                    String                @id @default(uuid(7)) @db.Uuid
   pacienteId            String                @map("paciente_id") @db.Uuid

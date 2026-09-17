@@ -259,6 +259,12 @@ describe("AuthModule — fronteira da F1+F2+F3 preservada", () => {
     // PRO-A (`docs/18` §4): `/profissionais` vive no `ProfissionalModule`.
     const caminhos = Object.keys(documentoDaAplicacao.paths).sort();
     expect(caminhos).toEqual([
+      "/agenda/opcoes",
+      "/agendamentos",
+      "/agendamentos/{agendamentoId}",
+      "/agendamentos/{agendamentoId}/cancelamento",
+      "/agendamentos/{agendamentoId}/confirmacao",
+      "/agendamentos/{agendamentoId}/remarcacao",
       "/auditoria/eventos",
       "/auth/login",
       "/auth/logout",

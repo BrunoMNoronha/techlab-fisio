@@ -124,6 +124,12 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
     // PRO-A (`docs/18`, D-PRO1-02/05/06) acrescentou /profissionais, o recurso individual, a situação e os serviços.
     const caminhos = Object.keys(documento.paths);
     expect(caminhos.sort()).toEqual([
+      "/agenda/opcoes",
+      "/agendamentos",
+      "/agendamentos/{agendamentoId}",
+      "/agendamentos/{agendamentoId}/cancelamento",
+      "/agendamentos/{agendamentoId}/confirmacao",
+      "/agendamentos/{agendamentoId}/remarcacao",
       "/auditoria/eventos",
       "/auth/login",
       "/auth/logout",
@@ -157,11 +163,20 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
     ]);
     // PAC-A (`docs/17` D-PAC-02) autorizou /pacientes: o termo saiu desta lista por
     // DECISÃO, e a igualdade exata acima continua barrando qualquer outra rota.
+    // AGD-A (`docs/15` D-AGD-05, D-AGD-13) autorizou /agendamentos e
+    // /agenda/opcoes: "agenda" saiu desta lista pela mesma razão, e os termos de
+    // AGD-B/AGD-C/AGD-D/AGD-E entraram no lugar — a fatia seguinte não pode
+    // vazar por descuido.
     for (const proibido of [
       "papeis",
       "permissoes",
-      "agenda",
       "refresh",
+      "checkin",
+      "falta",
+      "bloqueio",
+      "pacotes",
+      "atendimento",
+      "reserva",
     ]) {
       expect(caminhos.some((c) => c.includes(proibido))).toBe(false);
     }
@@ -231,6 +246,10 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
       { caminho: "/profissionais/{profissionalId}", metodo: "put" },
       { caminho: "/profissionais/{profissionalId}/situacao", metodo: "patch" },
       { caminho: "/profissionais/{profissionalId}/servicos", metodo: "put" },
+      { caminho: "/agendamentos", metodo: "post" },
+      { caminho: "/agendamentos/{agendamentoId}/confirmacao", metodo: "post" },
+      { caminho: "/agendamentos/{agendamentoId}/remarcacao", metodo: "post" },
+      { caminho: "/agendamentos/{agendamentoId}/cancelamento", metodo: "post" },
     ];
     for (const { caminho, metodo } of mutacoes) {
       const parametros = operacao(caminho, metodo)["parameters"] as Array<
@@ -1058,5 +1077,97 @@ describe("PAC-A — contratos de /pacientes (docs/17)", () => {
     }
     const parametros = (operacao("/pacientes/busca", "post")["parameters"] ?? []) as Array<{ in?: string }>;
     expect(parametros.some((p) => p.in === "query")).toBe(false);
+  });
+});
+
+describe("AGD-A — contratos da agenda (docs/15)", () => {
+  const esperados: Array<[string, "get" | "post", string[]]> = [
+    ["/agendamentos", "get", ["200", "400", "401", "403", "500"]],
+    ["/agendamentos", "post", ["201", "400", "401", "403", "404", "409", "413", "422", "500"]],
+    ["/agendamentos/{agendamentoId}", "get", ["200", "400", "401", "403", "404", "500"]],
+    ["/agendamentos/{agendamentoId}/confirmacao", "post", ["200", "400", "401", "403", "404", "409", "413", "500"]],
+    ["/agendamentos/{agendamentoId}/remarcacao", "post", ["200", "400", "401", "403", "404", "409", "413", "422", "500"]],
+    ["/agendamentos/{agendamentoId}/cancelamento", "post", ["200", "400", "401", "403", "404", "409", "413", "422", "500"]],
+    ["/agenda/opcoes", "get", ["200", "401", "403", "404", "500"]],
+  ];
+
+  it.each(esperados)("%s %s documenta exatamente os status do contrato", (caminho, metodo, status) => {
+    expect(Object.keys(respostas(caminho, metodo)).sort()).toEqual(status);
+    expect(operacao(caminho, metodo)["security"]).toBeDefined();
+  });
+
+  it("nenhuma rota da agenda expõe DELETE — agendamento nunca é removido (RN-017)", () => {
+    const caminhos = documento.paths as Record<string, Record<string, unknown>>;
+    for (const caminho of [
+      "/agenda/opcoes",
+      "/agendamentos",
+      "/agendamentos/{agendamentoId}",
+      "/agendamentos/{agendamentoId}/confirmacao",
+      "/agendamentos/{agendamentoId}/remarcacao",
+      "/agendamentos/{agendamentoId}/cancelamento",
+    ]) {
+      expect(caminhos[caminho]?.["delete"]).toBeUndefined();
+      expect(caminhos[caminho]?.["put"]).toBeUndefined();
+      expect(caminhos[caminho]?.["patch"]).toBeUndefined();
+    }
+  });
+
+  it("as consultas seguras da agenda NÃO declaram o header CSRF", () => {
+    for (const caminho of ["/agendamentos", "/agendamentos/{agendamentoId}", "/agenda/opcoes"]) {
+      const parametros = (operacao(caminho, "get")["parameters"] ?? []) as Array<Record<string, unknown>>;
+      expect(
+        parametros.find((p) => p["in"] === "header" && p["name"] === "x-tlf-requisicao"),
+      ).toBeUndefined();
+    }
+  });
+
+  it("GET /agendamentos declara de e ate obrigatórios e profissionalId opcional (D-AGD-14)", () => {
+    const parametros = (operacao("/agendamentos", "get")["parameters"] ?? []) as Array<
+      Record<string, unknown>
+    >;
+    const query = parametros.filter((p) => p["in"] === "query");
+    expect(query.map((p) => p["name"]).sort()).toEqual(["ate", "de", "profissionalId"]);
+    expect(query.find((p) => p["name"] === "de")?.["required"]).toBe(true);
+    expect(query.find((p) => p["name"] === "ate")?.["required"]).toBe(true);
+    expect(query.find((p) => p["name"] === "profissionalId")?.["required"]).toBe(false);
+  });
+
+  it("o corpo da criação NÃO aceita modalidade nem pacoteId — AGD-A só cria AVULSO (D-AGD-05)", () => {
+    const schema = (documento.components?.schemas ?? {})[
+      "CriarAgendamentoRequisicaoDto"
+    ] as { properties?: Record<string, unknown> } | undefined;
+    expect(schema).toBeDefined();
+    expect(Object.keys(schema?.properties ?? {}).sort()).toEqual([
+      "fim",
+      "inicio",
+      "pacienteId",
+      "profissionalId",
+      "servicoId",
+    ]);
+  });
+
+  it("a resposta do agendamento não expõe dado clínico nem campo de auditoria (D-AGD-05)", () => {
+    const schema = (documento.components?.schemas ?? {})["AgendamentoRespostaDto"] as
+      | { properties?: Record<string, unknown> }
+      | undefined;
+    expect(Object.keys(schema?.properties ?? {}).sort()).toEqual([
+      "canceladoEm",
+      "estado",
+      "fim",
+      "id",
+      "inicio",
+      "modalidade",
+      "motivoCancelamentoId",
+      "paciente",
+      "profissional",
+      "servico",
+    ]);
+  });
+
+  it("GET /agenda/opcoes não declara preço de referência (D-AGD-13)", () => {
+    const schema = (documento.components?.schemas ?? {})["ServicoOpcaoDto"] as
+      | { properties?: Record<string, unknown> }
+      | undefined;
+    expect(Object.keys(schema?.properties ?? {}).sort()).toEqual(["duracaoMin", "id", "nome"]);
   });
 });

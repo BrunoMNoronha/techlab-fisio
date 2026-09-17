@@ -780,6 +780,121 @@ describe("PRO-003 — invariantes físicas da disponibilidade versionada (D-PRO3
 });
 
 // ---------------------------------------------------------------------------
+// B. EFEITO — invariante física de AGD-A (D-AGD-07)
+// ---------------------------------------------------------------------------
+
+describe("AGD-A — coerência física do cancelamento de agendamento (D-AGD-07)", () => {
+  const CONSTRAINT = "ck_agendamento_cancelamento_coerente";
+
+  /** Agendamento CANCELADO com os campos que o chamador quiser omitir. */
+  function cancelar(
+    base: BaseSintetica,
+    campos: { motivo: boolean; instante: boolean; ator: boolean },
+    motivoId: string,
+  ): Promise<unknown> {
+    return db.$executeRawUnsafe(
+      `INSERT INTO agendamento
+         (id, paciente_id, profissional_id, servico_id, inicio, fim, estado, modalidade,
+          motivo_cancelamento_id, cancelado_em, cancelado_por_usuario_id, criado_por_usuario_id,
+          atualizado_em)
+       VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid,
+               '2027-05-01T10:00:00Z'::timestamptz, '2027-05-01T11:00:00Z'::timestamptz,
+               'CANCELADO', 'AVULSO',
+               $5, $6, $7, $8::uuid, now())`,
+      randomUUID(),
+      base.paciente1Id,
+      base.profissionalId,
+      base.servicoId,
+      campos.motivo ? motivoId : null,
+      campos.instante ? new Date("2027-04-30T10:00:00Z") : null,
+      campos.ator ? base.usuarioId : null,
+      base.usuarioId,
+    );
+  }
+
+  async function criarMotivo(base: BaseSintetica): Promise<string> {
+    const motivo = await db.motivoCancelamento.create({
+      data: { clinicaId: base.clinicaId, descricao: `Motivo ${randomUUID().slice(0, 8)}`, ativo: true },
+      select: { id: true },
+    });
+    return motivo.id;
+  }
+
+  it("ACEITA CANCELADO com motivo, instante e ator preenchidos juntos", async () => {
+    const base = await criarBaseSintetica(db);
+    await expect(
+      cancelar(base, { motivo: true, instante: true, ator: true }, await criarMotivo(base)),
+    ).resolves.toBeDefined();
+  });
+
+  it.each([
+    ["sem motivo", { motivo: false, instante: true, ator: true }],
+    ["sem instante", { motivo: true, instante: false, ator: true }],
+    ["sem ator", { motivo: true, instante: true, ator: false }],
+    ["sem nenhum dos três", { motivo: false, instante: false, ator: false }],
+  ])("REJEITA CANCELADO %s (23514)", async (_rotulo, campos) => {
+    const base = await criarBaseSintetica(db);
+    // O motivo precisa ser um UUID REAL mesmo nos casos em que só os outros
+    // campos faltam: um id inválido falharia por sintaxe (22P02) e a prova
+    // deixaria de ser da CHECK.
+    const motivoId = await criarMotivo(base);
+    const erro = await capturarErro(() =>
+      cancelar(base, campos as { motivo: boolean; instante: boolean; ator: boolean }, motivoId),
+    );
+    const violacao = identificarViolacao(erro);
+    expect(violacao?.sqlstate).toBe("23514");
+    expect(violacao?.constraint).toBe(CONSTRAINT);
+  });
+
+  it("REJEITA o TRIO de cancelamento em agendamento NÃO cancelado — a equivalência vale nos dois sentidos", async () => {
+    const base = await criarBaseSintetica(db);
+    const agendamento = await criarAgendamento(db, base, {
+      pacienteId: base.paciente1Id,
+      inicio: "2027-05-02T10:00:00Z",
+      fim: "2027-05-02T11:00:00Z",
+    });
+    const motivoId = await criarMotivo(base);
+    const erro = await capturarErro(() =>
+      db.$executeRawUnsafe(
+        `UPDATE agendamento
+            SET motivo_cancelamento_id = $2::uuid,
+                cancelado_em = now(),
+                cancelado_por_usuario_id = $3::uuid
+          WHERE id = $1::uuid`,
+        agendamento.id,
+        motivoId,
+        base.usuarioId,
+      ),
+    );
+    const violacao = identificarViolacao(erro);
+    expect(violacao?.sqlstate).toBe("23514");
+    expect(violacao?.constraint).toBe(CONSTRAINT);
+  });
+
+  // LIMITE DECLARADO da expressão homologada em D-AGD-07: a CHECK compara a
+  // CONJUNÇÃO dos três campos com `estado = 'CANCELADO'`. Um resíduo PARCIAL em
+  // agendamento não cancelado — só `cancelado_em`, por exemplo — mantém a
+  // conjunção falsa e, portanto, NÃO é rejeitado pelo banco. Nenhum caminho da
+  // aplicação produz esse estado (o cancelamento grava os quatro campos numa
+  // única instrução), e a decisão homologada é literalmente esta expressão; o
+  // teste registra o limite em vez de fingir que ele não existe.
+  it("TOLERA resíduo PARCIAL em agendamento não cancelado — limite declarado da expressão homologada", async () => {
+    const base = await criarBaseSintetica(db);
+    const agendamento = await criarAgendamento(db, base, {
+      pacienteId: base.paciente1Id,
+      inicio: "2027-05-03T10:00:00Z",
+      fim: "2027-05-03T11:00:00Z",
+    });
+    await expect(
+      db.$executeRawUnsafe(
+        `UPDATE agendamento SET cancelado_em = now() WHERE id = $1::uuid`,
+        agendamento.id,
+      ),
+    ).resolves.toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // B. EFEITO — índices parciais
 // ---------------------------------------------------------------------------
 
