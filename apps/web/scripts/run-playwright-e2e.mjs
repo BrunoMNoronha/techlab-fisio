@@ -39,6 +39,7 @@ import {
 } from "../../../scripts/lib/instancia-descartavel.mjs";
 import {
   aguardarHttpOk,
+  encerrarArvoreGraciosamente,
   encerrarProcesso,
   executarCliProvisionamento,
   obterPortaLivre,
@@ -86,12 +87,14 @@ async function main() {
   let interrompido = false;
   let codigoSaida = 1;
 
-  // Ctrl+C/SIGTERM: repassa ao Playwright (que encerra o próprio webServer) e
-  // deixa o `finally` destruir API e banco — sem isso o Node sairia na hora.
+  // Ctrl+C/SIGTERM: pede encerramento GRACIOSO da árvore do Playwright — ele
+  // precisa rodar o próprio teardown e derrubar o `webServer` (`next start`),
+  // que em POSIX é neto deste processo. Só depois o `finally` destrói API e
+  // banco; sem o handler, o Node sairia na hora e deixaria tudo de pé.
   const aoInterromper = (sinal) => {
     interrompido = true;
     console.error(`${ROTULO} ${sinal} recebido — encerrando e limpando...`);
-    if (processoPlaywright) encerrarProcesso(processoPlaywright);
+    if (processoPlaywright) void encerrarArvoreGraciosamente(processoPlaywright);
   };
   process.on("SIGINT", aoInterromper);
   process.on("SIGTERM", aoInterromper);
@@ -154,6 +157,10 @@ async function main() {
     console.log(`${ROTULO} executando playwright test (Next.js na porta ${portaWeb})...`);
     processoPlaywright = spawn(process.execPath, [playwrightCli, "test", ...process.argv.slice(2)], {
       cwd: raizWeb,
+      // POSIX: líder do próprio grupo, para que a interrupção alcance também o
+      // `webServer` que o Playwright cria (`kill(-pid)`). No Windows o console
+      // já entrega o Ctrl+C à árvore, e `detached` abriria outra janela.
+      detached: process.platform !== "win32",
       env: {
         ...process.env,
         TLF_E2E_PORTA_WEB: String(portaWeb),

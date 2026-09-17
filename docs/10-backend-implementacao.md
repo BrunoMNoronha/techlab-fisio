@@ -3761,7 +3761,8 @@ Os 4 mutation challenges obrigatórios estabelecidos em `docs/12` §10.5 foram t
 | Arquivo | Papel |
 | --- | --- |
 | `apps/web/scripts/run-playwright-e2e.mjs` (novo) | Orquestrador oficial: PostgreSQL 18 descartável (prefixo `techlab-fisio-pwe2e-`) -> `prisma migrate deploy` -> Administrador e clínica **sintéticos** pelo CLI compilado -> API compilada em porta efêmera (`TLF_AMBIENTE=teste`, readiness `GET /health`) -> `playwright test`; limpeza no `finally`, com handlers de `SIGINT`/`SIGTERM` para o Ctrl+C; exit code do Playwright propagado e resíduo descartável reprovando |
-| `apps/web/scripts/lib/processos.mjs` (novo) | Porta livre, readiness HTTP, encerramento de árvore de processos e execução do CLI de provisionamento — compartilhados com `verify-web-api-e2e.mjs`, que deixou de manter cópias locais |
+| `apps/web/scripts/lib/processos.mjs` (novo) | Porta livre, readiness HTTP, encerramento de árvore de processos (gracioso e forçado, ciente de grupo em POSIX) e execução do CLI de provisionamento — compartilhados com `verify-web-api-e2e.mjs`, que deixou de manter cópias locais |
+| `scripts/lib/instancia-descartavel.mjs` | `criarInstanciaLimpa` passa a destruir container e volume quando o bootstrap falha depois de criá-los (revisão da PR [#88](https://github.com/BrunoMNoronha/techlab-fisio/pull/88)) |
 | `apps/web/e2e/autenticacao.spec.ts` (novo, 3 testes) | Prova, sem mocks, em Chromium real: rota protegida sem sessão, credencial inválida e o ciclo login -> cookie -> sessão -> tela -> CSRF -> logout -> revogação |
 | `apps/web/playwright.config.ts` | Exige `TLF_E2E_PORTA_WEB` e `URL_API_INTERNA` (fail-closed, sem fallback); `webServer` em porta efêmera com readiness por `GET /api/health` **pelo proxy same-origin** |
 | `package.json` (raiz) e `apps/web/package.json` | `pnpm run test:e2e` como comando único, local e de CI |
@@ -3813,7 +3814,8 @@ Os 4 mutation challenges obrigatórios estabelecidos em `docs/12` §10.5 foram t
 - A suíte Playwright exige **Docker** e o build de produção: é prova de pilha real, não teste de unidade de frontend.
 - A cobertura E2E do produto permanece restrita a autenticação, tela de horário e páginas da fundação — os demais módulos não têm interface.
 - `verify:web-api-e2e` continua existindo e é complementar (persistência e auditoria da grade conferidas em SQL; `403` de Recepcionista pelo fluxo real de recuperação de senha).
-- Interrupção **forçada** do orquestrador (kill do processo, sem `SIGINT`) pode deixar a API filha viva; o container é removido pela varredura de órfãos da execução seguinte.
+- `SIGINT`/`SIGTERM` pedem encerramento **gracioso** da árvore do Playwright (em POSIX o processo é líder de grupo e o sinal vai ao grupo, alcançando o `next start`; no Windows o console já entrega o Ctrl+C à árvore), com escalonamento forçado após 20 s; só então API e instância são destruídas. Interrupção **forçada** (kill sem sinal tratável) ainda pode deixar processos filhos vivos; o container é removido pela varredura de órfãos da execução seguinte.
+- Falha no bootstrap da instância descartável (container que morre no initdb, prontidão que nunca chega, porta não publicada) destrói container e volume **dentro de `criarInstanciaLimpa`**, antes de propagar o erro — o chamador ainda não teria os identificadores para limpar. Provado por injeção de falha (senha de superusuário vazia): erro propagado e 0 resíduos.
 - Execução single-browser (Chromium) e `workers: 1`.
 - **Ambiente:** neste worktree (`.claude/worktrees/...`) o Jest não casa os `testMatch` por causa do segmento com ponto no caminho; `pnpm run test` e `verify:api-integration` foram reproduzidos numa cópia da árvore fora desse caminho.
 

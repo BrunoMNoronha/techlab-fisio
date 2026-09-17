@@ -19,18 +19,76 @@ export async function obterPortaLivre() {
   });
 }
 
-/** Encerra o processo e toda a sua árvore (Windows: taskkill /T). */
+function encerrado(proc) {
+  return !proc || proc.exitCode !== null || proc.signalCode !== null;
+}
+
+/**
+ * Encerra o processo e toda a sua árvore, à força.
+ *
+ * Windows: `taskkill /T` alcança os descendentes. POSIX: `ChildProcess.kill()`
+ * sinaliza SOMENTE o filho direto, então processos criados com `detached: true`
+ * (líderes de grupo) são encerrados pelo GRUPO (`kill(-pid)`) — sem isso, um
+ * `next start` neto sobreviveria ao encerramento do pai.
+ */
 export function encerrarProcesso(proc) {
-  if (!proc) return;
-  try {
-    if (process.platform === "win32") {
+  if (encerrado(proc)) return;
+  if (process.platform === "win32") {
+    try {
       spawnSync("taskkill", ["/pid", String(proc.pid), "/T", "/F"], { stdio: "ignore" });
-    } else {
-      proc.kill("SIGKILL");
+    } catch {
+      // processo já encerrado
     }
-  } catch {
-    // processo já encerrado
+    return;
   }
+  try {
+    process.kill(-proc.pid, "SIGKILL"); // grupo (processos detached)
+  } catch {
+    try {
+      proc.kill("SIGKILL"); // não é líder de grupo: só o filho direto
+    } catch {
+      // processo já encerrado
+    }
+  }
+}
+
+/**
+ * Pede encerramento GRACIOSO da árvore e resolve quando ela termina — ou força
+ * o encerramento ao fim de `prazoMs`.
+ *
+ * Existe para o `playwright test`: ele precisa executar o próprio teardown
+ * (derrubar o `webServer`, fechar o navegador, gravar relatório). Um `SIGKILL`
+ * direto no Playwright deixaria o `next start` órfão em POSIX.
+ */
+export async function encerrarArvoreGraciosamente(proc, prazoMs = 20_000) {
+  if (encerrado(proc)) return;
+  const fim = new Promise((resolve) => proc.once("exit", resolve));
+  if (process.platform === "win32") {
+    // O console já entrega o Ctrl+C a todo o grupo; um SIGTERM emulado pelo Node
+    // seria terminação abrupta. Aguarda o teardown e força só se ele não vier.
+    proc.kill("SIGINT");
+  } else {
+    try {
+      process.kill(-proc.pid, "SIGINT"); // grupo inteiro: Playwright + webServer
+    } catch {
+      try {
+        proc.kill("SIGINT");
+      } catch {
+        return;
+      }
+    }
+  }
+  let prazo;
+  await Promise.race([
+    fim,
+    new Promise((resolve) => {
+      prazo = setTimeout(() => {
+        encerrarProcesso(proc);
+        resolve();
+      }, prazoMs);
+    }),
+  ]);
+  clearTimeout(prazo);
 }
 
 /** Espera até `url` responder 200 ou o limite expirar. */
