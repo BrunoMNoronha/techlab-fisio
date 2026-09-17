@@ -2,7 +2,8 @@
 
 > **Arquivo:** `docs/10-backend-implementacao.md`
 > **Natureza:** documento **MUTÁVEL** — registro vivo de implementação da frente de backend (`apps/api`)
-> **Revisão vigente:** REV. 55 (17/09/2026) — **REGISTRO PÓS-INTEGRAÇÃO DE `CFG-001A` (PR [#65](https://github.com/BrunoMNoronha/techlab-fisio/pull/65), COMMIT `6ee19f2`) E `CFG-001B` (PR [#69](https://github.com/BrunoMNoronha/techlab-fisio/pull/69), MERGE `02cc93d`) NA `main`** (§6-X.5). Reconciliação **exclusivamente factual** (`CFG-POST1`), no precedente `MEDIR → REGISTRAR`; nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código, teste, schema, migration, contrato, dependência ou CI alterada. Os estados "NÃO INTEGRADA/O" de §6-W e §6-X ficam como registro histórico das rodadas de implementação.
+> **Revisão vigente:** REV. 56 (17/09/2026) — **`CFG-002` — HORÁRIO DE FUNCIONAMENTO DA CLÍNICA IMPLEMENTADO E MEDIDO EM BRANCH PRÓPRIA (`agent/cfg-002-horario-funcionamento`) — NÃO INTEGRADO NA `main`** (§6-Y). Materializa `D-CFG-13`..`D-CFG-21` (`docs/14` §3.10); nenhuma decisão criada, alterada ou reaberta; nenhuma migration, permissão, ação de auditoria, chave de `contexto` ou dependência nova.
+> **Estado anterior preservado:** REV. 55 (17/09/2026) — **REGISTRO PÓS-INTEGRAÇÃO DE `CFG-001A` (PR [#65](https://github.com/BrunoMNoronha/techlab-fisio/pull/65), COMMIT `6ee19f2`) E `CFG-001B` (PR [#69](https://github.com/BrunoMNoronha/techlab-fisio/pull/69), MERGE `02cc93d`) NA `main`** (§6-X.5). Reconciliação **exclusivamente factual** (`CFG-POST1`), no precedente `MEDIR → REGISTRAR`; nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código, teste, schema, migration, contrato, dependência ou CI alterada. Os estados "NÃO INTEGRADA/O" de §6-W e §6-X ficam como registro histórico das rodadas de implementação.
 > **Estado anterior preservado:** REV. 54 (17/09/2026) — **`CFG-001B` — PROVISIONAMENTO DA LINHA ÚNICA DE `clinica` (SUBCOMANDO `bootstrap-clinica`) IMPLEMENTADO E MEDIDO EM BRANCH PRÓPRIA (`agent/cfg-001b-provisionamento-clinica`) — NÃO INTEGRADO NA `main`** (§6-X). Materializa `D-CFG-01` e `D-CFG-09`..`D-CFG-12` (`docs/14`); nenhuma decisão criada, alterada ou reaberta; nenhuma migration, rota, permissão, ação de auditoria, chave de `contexto` ou dependência nova.
 > **Estado anterior preservado:** REV. 53 (17/09/2026) — **REGISTRO PÓS-INTEGRAÇÃO DE `PBACK-AUD-08` / AUD-004 NA `main` (PR [#63](https://github.com/BrunoMNoronha/techlab-fisio/pull/63), MERGE `27012ff`)** (§7.6.7). Registro **exclusivamente factual**, no precedente `MEDIR → REGISTRAR`; nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código, teste, schema, migration, contrato, dependência ou CI alterada. Merge commit **`27012ff82f58aa4bca9d6f5f2b264662359b839d`** (merge commit, sem squash/rebase), 17/09/2026 06:55:47Z, CI verde no HEAD da PR (runs `35191204044` e `35191207118`). **`P-BACK-01` permanece EM ANDAMENTO**; `L-06` ABERTA / BLOQUEADA.
 > **Estado anterior preservado:** REV. 52 (17/09/2026) — **`PBACK-AUD-08` / AUD-004 — CONSULTA DA TRILHA DE AUDITORIA IMPLEMENTADA EM BRANCH / NÃO INTEGRADA** (§7.6). Branch `agent/p-back-01-aud-004-consulta-trilha-r2` a partir de `origin/main` = `4225b63`. Rota `GET /auditoria/eventos` sob `@RequerPermissao("auditoria.ler")`, materializando a política fechada de `docs/09` §13.9 sem reinterpretá-la. Nenhuma decisão normativa criada, alterada ou reaberta; nenhuma permissão nova; catálogo de ações (25) e whitelist inalterados; `auditoria.consultada` **não** criada; zero drift de persistência; zero dependências. Revisão independente aprovada com ressalvas; por decisão de Bruno Menezes Noronha (17/09/2026) `justificativa` é **omitida** da resposta e o contrato local (path, limite 20/50, cursor keyset — §7.6.2) é **aceito**. **`P-BACK-01` permanece EM ANDAMENTO**; `L-06` ABERTA / BLOQUEADA; AUT-005 não tocada.
@@ -3892,6 +3893,64 @@ Registro **exclusivamente factual** (`CFG-POST1`), no precedente `MEDIR → REGI
 - **Validações:** nenhuma CI foi executada sobre os commits de integração `6ee19f2` e `02cc93d` (`gh run list --commit` vazio para ambos); as baterias de §6-W.4 e §6-X e as runs acima referem-se aos HEADs das PRs. A equivalência com a `main` decorre da identidade de árvore medida, não de execução sobre o merge.
 - **Estados vivos:** `CFG-001A` e `CFG-001B` **INTEGRADAS**. A limitação de §6-W.5 "provisionamento sem fatia atribuída" foi **superada** pela integração de `CFG-001B`. Seguem vigentes as demais limitações de §6-W.5 e §6-X.4; logotipo e duração padrão (`D-CFG-07`) **FUTURO DO MVP**; `CFG-002`..`CFG-005` **NÃO INICIADOS**; inclusão da clínica em `provisionar` **não autorizada** (`D-CFG-12`).
 
+## 6-Y. `CFG-002` — Horário de funcionamento da clínica
+
+**Estado: IMPLEMENTADO E MEDIDO EM BRANCH PRÓPRIA (`agent/cfg-002-horario-funcionamento`, a partir de `main` = `788915b`) — NÃO INTEGRADO.** Decisões: `docs/14` §3.10 (`D-CFG-13`..`D-CFG-21`). Auditoria: `docs/09` §13.6 com a leitura homologada de `D-CFG-17`.
+
+### 6-Y.1 Componentes
+
+- **Persistência:** tabela `horario_funcionamento` e CHECKs protegidos **preexistentes**; **nenhuma migration**, golden, `schema.prisma` ou `protected-objects.json` alterado.
+- **`apps/api/src/clinica/horario-funcionamento.dto.ts`:** validação pura e fail-closed — corpo estrito `{ janelas }`, janela estrita `{ diaSemana, horaInicio, horaFim }`; `diaSemana` inteiro 0..6 sem coerção; `HH:MM` 00:00..23:59; `horaFim > horaInicio`; no máximo 4 janelas/dia (28 no total); sem sobreposição e sem adjacência no mesmo dia; devolve a grade em ordem canônica (dia, início).
+- **`horario-funcionamento.service.ts`:** transação única — `SELECT id FROM clinica FOR UPDATE` → leitura da grade sob o lock → grade idêntica = no-op (sem escrita, sem evento) → `DELETE` das linhas da clínica + `INSERT` das novas → `AuditWriter.registrar` com `configuracao.alterada`, `alvo_tipo = clinica`, `alvo_id = clinica.id`, `contexto` vazio.
+- **`horario-funcionamento.controller.ts`:** `GET /horario-funcionamento` (sem CSRF, `Cache-Control: no-store`) e `PUT /horario-funcionamento` (`ProtecaoCsrfGuard` antes da sessão), ambos sob `@RequerPermissao("clinica.configurar")`; reutiliza `FiltroErroClinica`, `ErroClinicaDto` e `CLINICA_NAO_CONFIGURADA`.
+- **Registro:** `ClinicaModule` passa a declarar o controller e o serviço. Listas fechadas de rotas em `openapi.spec.ts`, `auth.module.integration.spec.ts` e `verify-openapi-runtime.mjs` incluem `/horario-funcionamento`.
+- **Escolhas técnicas locais (reversíveis, sem decisão de produto):** forma `{ janelas: [...] }` do corpo e da resposta; resposta ordenada por dia e início; identificadores das linhas gerados por `randomUUID()` (v4) no INSERT bruto.
+
+### 6-Y.2 Critérios × prova
+
+| Critério | Prova | Status |
+| --- | --- | --- |
+| 401 sem sessão; 403 sem `clinica.configurar`; 403 CSRF no `PUT`, avaliada antes da sessão (`D-CFG-21`) | integração | **OK** |
+| Grade vazia → `200 { janelas: [] }`; sem clínica → `404 CLINICA_NAO_CONFIGURADA` (`D-CFG-21`) | integração | **OK** |
+| `GET` ordenado, `HH:MM`, `no-store`, sem auditoria | integração | **OK** |
+| Substituição persiste, remove as linhas anteriores e emite 1 evento alvo `clinica` sem valores (`D-CFG-15`, `D-CFG-17`) | integração | **OK** |
+| Grade idêntica em qualquer ordem → sem escrita e sem evento | integração | **OK** |
+| Sobreposição, adjacência, meia-noite, segundos, dia fora de 0..6, coerção, 5 janelas/dia, chaves extras → `400` sem mutação (`D-CFG-13`, `D-CFG-14`, `D-CFG-18`) | unitário (31) + integração | **OK** |
+| Falha da auditoria → `500 FALHA_INTERNA` e grade anterior intacta | integração (sabotagem do `AuditWriter`) | **OK** |
+| Leitura sob lock (bloqueio real observado em `pg_stat_activity`); PUTs concorrentes serializados, sem mistura de grades | integração | **OK** |
+| OpenAPI: `GET` 200/401/403/404/500, `PUT` 200/400/401/403/404/413/500, CSRF só no `PUT` | `openapi.spec.ts` + `verify:openapi-runtime` | **OK** |
+
+### 6-Y.3 Mutation challenges (aplicados, observados e revertidos; SHA-256 conferido)
+
+| # | Mutação | Resultado |
+| --- | --- | --- |
+| M1 | aceitar adjacência (`<=` → `<`) | **DETECTADA** (unitário) |
+| M2 | limite de 5 janelas/dia | **DETECTADA** (unitário) |
+| M3 | aceitar `horaFim = horaInicio` | **DETECTADA** (unitário) |
+| M4 | remover `typeof` e `Number.isInteger` de `diaSemana` | **DETECTADA** (unitário, 2 testes). Remover só o `typeof` é mutante equivalente (`Number.isInteger` já rejeita não números) |
+| M5 | remover `FOR UPDATE` | **DETECTADA** (integração, 2 testes) |
+| M6 | remover a auditoria | **DETECTADA** (integração, 16 testes) |
+| M7 | tratar grade idêntica como alteração | **DETECTADA** (integração, 2 testes) |
+
+As mutações de integração rodaram só a suíte `horario-funcionamento` (24 testes) em instância descartável, com uma cópia temporária do script de integração, removida depois.
+
+### 6-Y.4 Baterias medidas (17/09/2026, host Windows, árvore da branch)
+
+- `pnpm run typecheck`: **verde**.
+- `pnpm run test:api`: **39 suites · 1079 passed · 3 skipped** (os 3 são os testes de `dist/` de `provisionamento.fronteira.spec.ts`, pulados porque `dist/` ainda não existia naquela execução).
+- `pnpm run verify:api-integration` (PostgreSQL 18 descartável, `tlf_app`): **exit 0 — 18 suites · 568 passed · 2 skipped** (inclui `horario-funcionamento.integration.spec.ts`, **24 testes**).
+- `verify:openapi-runtime` sobre `dist/`: **32 verificações OK**.
+- `lint:migrations` (Guarda 1): **OK**, 11 migrations, nenhuma remoção de objeto protegido.
+- A CI da PR é a prova canônica.
+
+### 6-Y.5 Limitações declaradas
+
+- **Atualização perdida** entre administradores concorrentes não é detectada (última grade válida prevalece, como em `D-CFG-05`).
+- **Estado anterior** da grade não é preservado na trilha (`docs/09` §13.6) e as linhas substituídas são removidas fisicamente (`D-CFG-15`).
+- Linhas gravadas fora da API com segundos seriam lidas truncadas em `HH:MM`; a API nunca as produz.
+- **Erros do body parser** (JSON malformado, `413`) seguem com o corpo padrão da plataforma, como em §6-W.5.
+- **Fora da fatia:** exceções/feriados (`D-CFG-19`); aplicação de RN-014 pela agenda e reavaliação da troca de fuso (`D-CFG-20`); CFG-003..CFG-005.
+
 ## 7. Auditoria — `P-BACK-01`
 
 ### 7.1 Estado
@@ -4413,6 +4472,7 @@ Sujeitas a autorização própria, nesta ordem provável:
 
 | REV. | Data | Conteúdo |
 | --- | --- | --- |
+| **56** | **17/09/2026** | **`CFG-002` — HORÁRIO DE FUNCIONAMENTO IMPLEMENTADO E MEDIDO EM BRANCH PRÓPRIA — NÃO INTEGRADO** (§6-Y). `GET`/`PUT /horario-funcionamento` sob `clinica.configurar`; substituição integral sob lock da clínica; `configuracao.alterada` alvo `clinica`; no-op sem escrita; 7 mutation challenges detectados; baterias verdes. Nenhuma migration, permissão, ação de auditoria, chave de `contexto` ou dependência nova. |
 | **55** | **17/09/2026** | **REGISTRO PÓS-INTEGRAÇÃO DE `CFG-001A` (PR [#65](https://github.com/BrunoMNoronha/techlab-fisio/pull/65), COMMIT `6ee19f2`) E `CFG-001B` (PR [#69](https://github.com/BrunoMNoronha/techlab-fisio/pull/69), MERGE `02cc93d`) NA `main`** (§6-X.5). Reconciliação **exclusivamente factual** (`CFG-POST1`); nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código, teste, schema, migration, contrato, dependência ou CI alterada. CI verde medida sobre os HEADs das PRs (`a8269a5`, `abb3a8a`), não sobre os commits de integração; árvores idênticas. Item 20 de §10 e cabeçalho atualizados; `docs/14` REV. 6. |
 | **54** | **17/09/2026** | **`CFG-001B` — PROVISIONAMENTO DA LINHA ÚNICA DE `clinica` IMPLEMENTADO E MEDIDO EM BRANCH PRÓPRIA — NÃO INTEGRADO** (§6-X). Subcomando `bootstrap-clinica`; `configuracao.alterada` com ator NULL e justificativa; reexecução idempotente; concorrência resolvida pela unicidade física; 4 mutation challenges detectados. Nenhuma migration, rota, permissão, ação de auditoria, chave de `contexto` ou dependência nova. |
 | **53** | **17/09/2026** | **REGISTRO PÓS-INTEGRAÇÃO DE `PBACK-AUD-08` / AUD-004 NA `main` (PR [#63](https://github.com/BrunoMNoronha/techlab-fisio/pull/63), MERGE `27012ff`)** (§7.6.7). Registro **exclusivamente factual**; nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código, teste, schema, migration, contrato, dependência ou CI alterada. Merge commit **`27012ff82f58aa4bca9d6f5f2b264662359b839d`** (merge commit, sem squash/rebase), 17/09/2026 06:55:47Z, árvore idêntica ao HEAD validado `6111662`; CI verde (runs `35191204044` e `35191207118`); integração completa local 16 suítes · 522 passed · 2 skipped. Nova §7.6.7, item 19 de §10, estados vivos e cabeçalho atualizados. `P-BACK-01` EM ANDAMENTO; `L-06` ABERTA / BLOQUEADA. |
