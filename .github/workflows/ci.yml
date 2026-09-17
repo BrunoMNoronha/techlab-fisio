@@ -160,3 +160,34 @@ jobs:
       # cookie real + GET /auth/sessao (D-2.3D-20) + encerramento limpo.
       - name: "E2E — prova real same-origin Web + API + PostgreSQL (P-2.3D-08 / D-2.3D-20)"
         run: pnpm run verify:web-api-e2e
+
+      # ------------------------------------------------------------------
+      # FRONT-E2E0 — Smoke tests Playwright (CI-E2E0, 2026-09-17).
+      #
+      # Pré-requisito: o artefato `.next/` foi produzido pelo passo "Build dos
+      # workspaces" acima; o webServer do playwright.config.ts executa
+      # `next start` desse build na porta 3100 (`reuseExistingServer: false` em
+      # qualquer ambiente, desde o PR #54: porta ocupada falha, nunca reutiliza
+      # outro servidor). Instalamos SOMENTE o Chromium (browser único da suíte
+      # atual) com suas dependências de sistema para manter o runner enxuto.
+      #
+      # Achado F-E2E0-01 (revisão independente FRONT-E2E0): `trace: "on-first-retry"`
+      # está inerte com `retries: 0`. Classificação: não bloqueante — não corrigido
+      # aqui para preservar isolamento de fatias; correção deve ser fatia própria.
+      # ------------------------------------------------------------------
+
+      - name: "E2E (FRONT-E2E0) — instalar Chromium com dependências de sistema"
+        run: pnpm --filter @techlab-fisio/web exec playwright install --with-deps chromium
+
+      - name: "E2E (FRONT-E2E0) — smoke tests Playwright (/, /login, 404) em Chromium real"
+        run: pnpm --filter @techlab-fisio/web run test:e2e
+
+      - name: "E2E (FRONT-E2E0) — publicar relatório e artefatos Playwright em falha"
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-ci-e2e0
+          path: |
+            apps/web/playwright-report/
+            apps/web/test-results/
+          retention-days: 7
