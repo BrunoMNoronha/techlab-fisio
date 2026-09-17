@@ -148,6 +148,7 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
       "/pacientes/{pacienteId}/situacao",
       "/profissionais",
       "/profissionais/{profissionalId}",
+      "/profissionais/{profissionalId}/disponibilidade",
       "/profissionais/{profissionalId}/servicos",
       "/profissionais/{profissionalId}/situacao",
       "/servicos",
@@ -426,6 +427,50 @@ describe("PRO-A — contratos de /profissionais (docs/18 §4)", () => {
     for (const caminho of ["/profissionais", "/profissionais/{profissionalId}", "/profissionais/{profissionalId}/situacao", "/profissionais/{profissionalId}/servicos"]) {
       expect((documento.paths[caminho] as Record<string, unknown>)["delete"]).toBeUndefined();
     }
+  });
+});
+
+describe("PRO-003 — contratos da disponibilidade (docs/16 §4.2, D-PRO3-02)", () => {
+  const DISP = "/profissionais/{profissionalId}/disponibilidade";
+
+  it.each([
+    ["get", ["200", "400", "401", "403", "404", "500"]],
+    ["put", ["200", "400", "401", "403", "404", "413", "422", "500"]],
+  ] as Array<["get" | "put", string[]]>)("%s documenta exatamente os status do contrato", (metodo, status) => {
+    expect(Object.keys(respostas(DISP, metodo)).sort()).toEqual(status);
+    expect(operacao(DISP, metodo)["security"]).toBeDefined();
+  });
+
+  it("o GET da disponibilidade NÃO declara o header CSRF e o PUT o exige", () => {
+    const doGet = (operacao(DISP, "get")["parameters"] ?? []) as Array<Record<string, unknown>>;
+    expect(doGet.find((p) => p["in"] === "header" && p["name"] === "x-tlf-requisicao")).toBeUndefined();
+    const doPut = (operacao(DISP, "put")["parameters"] ?? []) as Array<Record<string, unknown>>;
+    const header = doPut.find((p) => p["in"] === "header" && p["name"] === "x-tlf-requisicao");
+    expect(header).toBeDefined();
+    expect(header?.["required"]).toBe(true);
+  });
+
+  it("a disponibilidade expõe SOMENTE get e put — sem POST, PATCH nem DELETE (D-PRO3-02)", () => {
+    const operacoes = documento.paths[DISP] as Record<string, unknown>;
+    expect(Object.keys(operacoes).sort()).toEqual(["get", "put"]);
+  });
+
+  it("o PUT declara o corpo { vigenciaInicio, janelas } e a resposta { versoes }", () => {
+    const corpo = operacao(DISP, "put")["requestBody"] as Record<string, any>;
+    const ref = corpo.content["application/json"].schema.$ref as string;
+    expect(ref).toBe("#/components/schemas/DisponibilidadeRequisicaoDto");
+    const requisicao = (documento.components?.schemas ?? {})["DisponibilidadeRequisicaoDto"] as Record<string, any>;
+    expect(Object.keys(requisicao.properties).sort()).toEqual(["janelas", "vigenciaInicio"]);
+    const resposta = (documento.components?.schemas ?? {})["DisponibilidadeRespostaDto"] as Record<string, any>;
+    expect(Object.keys(resposta.properties)).toEqual(["versoes"]);
+    const versao = (documento.components?.schemas ?? {})["VersaoDisponibilidadeDto"] as Record<string, any>;
+    expect(Object.keys(versao.properties).sort()).toEqual(["janelas", "vigenciaFim", "vigenciaInicio"]);
+    expect(versao.properties["vigenciaFim"].nullable).toBe(true);
+  });
+
+  it("o corpo de erro da disponibilidade enumera VIGENCIA_RETROATIVA e CLINICA_NAO_CONFIGURADA", () => {
+    const erro = (documento.components?.schemas ?? {})["ErroDisponibilidadeDto"] as Record<string, any>;
+    expect(erro.properties["erro"].enum).toEqual(expect.arrayContaining(["VIGENCIA_RETROATIVA", "CLINICA_NAO_CONFIGURADA"]));
   });
 });
 
