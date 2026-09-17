@@ -301,12 +301,13 @@ Registro de fronteira; **nenhum** destes módulos é implementado ou decidido aq
 | `P-CFG-01` — implementação da fatia `CFG-001A` (migration de linha única, GET/PUT `/clinica`, testes) | **INTEGRADA NA `main`** — PR [#65](https://github.com/BrunoMNoronha/techlab-fisio/pull/65), commit de integração `6ee19f27afc5d7c55667ef910536baa924ecc990` (`docs/10` §6-W, §6-X.5) |
 | `P-CFG-02` — provisionamento da linha de `clinica` (`CFG-001B`; `D-CFG-01`, `D-CFG-09`..`D-CFG-12`) | **INTEGRADO NA `main`** — PR [#69](https://github.com/BrunoMNoronha/techlab-fisio/pull/69), merge commit `02cc93d5770003775d3417b1d2ee08a874675d30` (`docs/10` §6-X, §6-X.5) |
 | Logotipo e duração padrão (`D-CFG-07`) | **FUTURO DO MVP** — não implementados |
-| `P-CFG-03` — implementação de `CFG-002` (`D-CFG-13`..`D-CFG-21`) | **DECIDIDO — IMPLEMENTAÇÃO AUTORIZADA POR BRUNO MENEZES NORONHA EM 17/09/2026, NÃO INTEGRADA** |
+| `P-CFG-03` — implementação de `CFG-002` (`D-CFG-13`..`D-CFG-21`) | **IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA (`agent/cfg-002-horario-funcionamento`) — NÃO INTEGRADA** (`docs/10` §6-Y); implementação autorizada por Bruno em 17/09/2026 |
 | Exceções e feriados do horário de funcionamento (`D-CFG-19`) | **FUTURO DO MVP** |
 | Aplicação de RN-014 e reavaliação da troca de fuso (`D-CFG-20`, `D-CFG-08`) | **PENDENTE DA FATIA DE AGENDA** |
 | `P-CFG-04` — implementação de `CFG-003` (`D-CFG-22`..`D-CFG-33`: migration de unicidade e CHECKs de `servico`, rotas `/servicos`, testes) | **DECIDIDO — IMPLEMENTAÇÃO NÃO AUTORIZADA** |
 | Alinhamento de `docs/07` §10.1/§10.2 às restrições de `D-CFG-23` | **PENDENTE** — após integração da migration |
 | Leitura do catálogo de serviços por outros papéis; pacote/agendamento com serviço inativo; duração sobrescrevível (`D-CFG-30`, `D-CFG-33`) | **PENDENTE DAS FATIAS DE AGENDA E PACOTES** |
+| CFG-002 | **IMPLEMENTADO EM BRANCH — NÃO INTEGRADO** |
 | CFG-004, CFG-005 | **NÃO INICIADOS** |
 | Inclusão da clínica no subcomando `provisionar` (`D-CFG-12`) | **NÃO AUTORIZADA** — reavaliação futura possível |
 | Alinhamento de `docs/07` (afirmava restrição então inexistente) | **RESOLVIDO** — migration `20260917060000_clinica_linha_unica` (`ux_clinica_linha_unica`) integrada na `main` pela PR #65 |
@@ -315,6 +316,7 @@ Registro de fronteira; **nenhum** destes módulos é implementado ou decidido aq
 
 | REV. | Data | Descrição |
 | --- | --- | --- |
+| **10** | 17/09/2026 | Atualização factual de §5: `P-CFG-03` implementada e medida em branch própria (`docs/10` §6-Y); nenhuma decisão criada, alterada ou reaberta. |
 | **9** | 17/09/2026 | Correções editoriais: título e insumo decisório do cabeçalho abrangem `CFG-001`..`CFG-006` e os pacotes `CFG-PREP0`..`CFG-PREP3`; referência de exclusão física em §3.10.3 corrigida de `docs/07` §28 para §23; nota de alcance da auditoria em §4 (`D-CFG-17`, `D-CFG-32`); §5 sem linhas duplicadas de CFG-002/CFG-003 e `P-CFG-03` com a autorização de implementação dada por Bruno em 17/09/2026. Nenhuma decisão criada, alterada ou reaberta. |
 | **8** | 17/09/2026 | Acréscimo de `D-CFG-22`..`D-CFG-33` (§3.11) — catálogo de serviços (`CFG-003`) —, homologadas por Bruno Menezes Noronha a partir do pacote `CFG-PREP3` (`DS-01`..`DS-12`), incluindo a autorização expressa da futura migration de unicidade do nome e CHECKs de `servico`. §5 atualizada. Integrada após `CFG-002` (REV. 7, PR #72), cujas `D-CFG-13`..`D-CFG-21` e §3.10 são preservadas. Nenhuma decisão anterior alterada; nenhum código, schema ou migration alterado. |
 | **7** | 17/09/2026 | Acréscimo de `D-CFG-13`..`D-CFG-21` (§3.10) — horário de funcionamento (`CFG-002`) —, homologadas por Bruno Menezes Noronha a partir do pacote `CFG-PREP2` (opções recomendadas, inclusive 0 = domingo e limite de 4 janelas/dia). Inclui leitura homologada de `docs/09` §13.6 (alvo `clinica`). §5 atualizada. Nenhuma decisão anterior alterada; nenhum código alterado. |
