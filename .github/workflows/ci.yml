@@ -28,6 +28,10 @@ name: ci
 on:
   push:
     branches: ["agent/**"]
+  # CI-E2E0: PRs para a main também executam o job (pré-requisito para
+  # marcá-lo como required check na proteção da main).
+  pull_request:
+    branches: ["main"]
   workflow_dispatch:
 
 jobs:

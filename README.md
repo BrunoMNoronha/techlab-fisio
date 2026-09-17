@@ -122,13 +122,35 @@ pnpm --filter @techlab-fisio/web run dev
 pnpm --filter @techlab-fisio/web run build
 ```
 
-O script de verificação (`scripts/verify-web-integration.mjs`) executa 24 verificações sintéticas locais (sanitização de caminho, simulação de repasse de headers de proxy com `node:http`, reprodução local simplificada de guard CSRF e inspeção estática de arquivos). **Atenção de escopo:** esse script roda isoladamente no workspace web e **não** é disparado pelo `pnpm test` da raiz nem pelo CI (`ci.yml`), não substituindo homologação ponta a ponta integrada em runtime.
+O script de verificação (`scripts/verify-web-integration.mjs`) executa 24 verificações sintéticas locais (sanitização de caminho, simulação de repasse de headers de proxy com `node:http`, reprodução local simplificada de guard CSRF e inspeção estática de arquivos). **Atenção de escopo:** esse script roda isoladamente no workspace web e **não** é disparado pelo `pnpm test` da raiz; na CI (`ci.yml`) roda em passo próprio (`pnpm --filter @techlab-fisio/web run test`) e não substitui as provas ponta a ponta descritas na seção [CI](#ci).
 
 `pnpm run typecheck` e `pnpm run build` na raiz já incluem o workspace (`V-06.c` — teto do TypeScript 6.0 × Next.js 16 — foi aprovada nessa combinação; registro em `docs/08` §12.1).
 
 ## CI
 
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml) executa, na ordem barato→caro: `pnpm install --frozen-lockfile` → `pnpm exec prisma generate`/`validate` → typecheck → Guarda 1 → `verify:from-scratch` (que É a preparação da suíte integral, incluindo a Guarda 2 `guard-anti-drift.spec.ts`) → Guarda 3 + alarme → build dos três workspaces (`packages/database` → `apps/api` → `apps/web`) → provas de runtime e suítes do backend.
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) executa, na ordem barato→caro: `pnpm install --frozen-lockfile` → `pnpm exec prisma generate`/`validate` → typecheck → Guarda 1 → `verify:from-scratch` (que É a preparação da suíte integral, incluindo a Guarda 2 `guard-anti-drift.spec.ts`) → Guarda 3 + alarme → build dos três workspaces (`packages/database` → `apps/api` → `apps/web`) → provas de runtime e suítes do backend → verificações do frontend (`verify-web-integration.mjs`) → prova E2E real same-origin Web + API + PostgreSQL (`pnpm run verify:web-api-e2e`) → smoke E2E Playwright (`CI-E2E0`).
+
+### E2E Playwright na CI (`CI-E2E0`)
+
+A suíte `FRONT-E2E0` ([`apps/web/e2e/smoke.spec.ts`](apps/web/e2e/smoke.spec.ts) — 3 testes: `/`, `/login`, 404) é obrigatória no job `integracao` (disparado por `push` em `agent/**`, `pull_request` para `main` e manualmente), depois do build:
+
+1. `pnpm --filter @techlab-fisio/web exec playwright install --with-deps chromium` (Chromium é o único browser da suíte);
+2. `pnpm --filter @techlab-fisio/web run test:e2e` — o `webServer` do [`playwright.config.ts`](apps/web/playwright.config.ts) executa `next start` do build de produção em `127.0.0.1:3100` (readiness pela própria URL, timeout 120 s, `reuseExistingServer: false`), `retries: 0`, `forbidOnly` sob `CI`. Qualquer teste falho encerra o `playwright test` com exit code ≠ 0 e reprova o job;
+3. somente em falha, `playwright-report/` e `test-results/` (traces `retain-on-failure` e screenshots) são publicados como artefato `playwright-report-ci-e2e0` (7 dias).
+
+**Escopo real:** os smoke tests exercitam o frontend compilado (páginas estáticas e 404) e **não** chamam a API nem o banco — a prova ponta a ponta Web + API + PostgreSQL continua sendo `verify:web-api-e2e`. Reprodução local (porta 3100 livre; outra via `PORT`):
+
+```bash
+pnpm run build
+```
+
+```bash
+pnpm --filter @techlab-fisio/web exec playwright install chromium
+```
+
+```bash
+pnpm --filter @techlab-fisio/web run test:e2e
+```
 
 ## Desligar o ambiente
 
