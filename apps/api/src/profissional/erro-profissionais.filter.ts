@@ -29,11 +29,18 @@ import { randomUUID } from "node:crypto";
 
 import { ERRO } from "../auth/auth.dto.js";
 import { ERRO_AUTORIZACAO } from "../authz/erro-autorizacao.js";
+import { ERRO_CLINICA } from "../clinica/clinica.dto.js";
+import { ERRO_DISPONIBILIDADE } from "./disponibilidade.dto.js";
 import { ERRO_PROFISSIONAL } from "./profissionais.dto.js";
 
+// PRO-003 (`docs/16` D-PRO3-10) acrescentou dois desfechos às rotas de
+// `/profissionais`: `422 VIGENCIA_RETROATIVA` e, no `PUT` de disponibilidade,
+// `404 CLINICA_NAO_CONFIGURADA` (a linha de clínica é necessária para `hoje`).
 const CODIGOS_CONHECIDOS: ReadonlySet<string> = new Set([
   ...Object.values(ERRO),
   ...Object.values(ERRO_AUTORIZACAO),
+  ...Object.values(ERRO_CLINICA),
+  ...Object.values(ERRO_DISPONIBILIDADE),
   ...Object.values(ERRO_PROFISSIONAL),
 ]);
 

@@ -586,6 +586,8 @@ const casosCheck: CasoCheck[] = [
         },
       }),
   },
+  // PRO-003 / D-PRO3-06: `vigenciaInicio` passou a NOT NULL — as fixtures
+  // abaixo a informam explicitamente; sem ela o cliente nem compila.
   {
     titulo: "ck_disponibilidade_profissional_intervalo rejeita hora_fim <= hora_inicio",
     esperadas: ["ck_disponibilidade_profissional_intervalo"],
@@ -596,6 +598,7 @@ const casosCheck: CasoCheck[] = [
           diaSemana: 2,
           horaInicio: new Date("1970-01-01T14:00:00Z"),
           horaFim: new Date("1970-01-01T14:00:00Z"),
+          vigenciaInicio: new Date("2026-10-01T00:00:00Z"),
         },
       }),
   },
@@ -609,6 +612,22 @@ const casosCheck: CasoCheck[] = [
           diaSemana: 7,
           horaInicio: new Date("1970-01-01T08:00:00Z"),
           horaFim: new Date("1970-01-01T12:00:00Z"),
+          vigenciaInicio: new Date("2026-10-01T00:00:00Z"),
+        },
+      }),
+  },
+  {
+    titulo: "ck_disponibilidade_profissional_vigencia rejeita vigencia_fim < vigencia_inicio",
+    esperadas: ["ck_disponibilidade_profissional_vigencia"],
+    executar: (base) =>
+      db.disponibilidadeProfissional.create({
+        data: {
+          profissionalId: base.profissionalId,
+          diaSemana: 1,
+          horaInicio: new Date("1970-01-01T08:00:00Z"),
+          horaFim: new Date("1970-01-01T12:00:00Z"),
+          vigenciaInicio: new Date("2026-10-10T00:00:00Z"),
+          vigenciaFim: new Date("2026-10-09T00:00:00Z"),
         },
       }),
   },
@@ -672,8 +691,12 @@ const casosCheck: CasoCheck[] = [
 describe("GUARDA 2 — efeito das CHECK constraints (violação rejeitada com 23514)", () => {
   // ck_paciente_cpf_formato: efeito REUTILIZADO — já provado permanentemente
   // em constraint-errors.spec.ts (V-03, caso B) e patient-invariants.spec.ts
-  // (T-CPF-03). Este bloco cobre as 25 demais; a existência das 26 está no
-  // bloco de catálogo acima.
+  // (T-CPF-03). Este bloco cobre as 25 demais do inventário; a existência das
+  // 26 está no bloco de catálogo acima. Acrescenta ainda
+  // `ck_disponibilidade_profissional_vigencia` (PRO-003, D-PRO3-06), que segue
+  // o precedente das CHECKs das fatias recentes: protegida pelo golden
+  // (Guarda 3) e por este efeito, sem ampliar o inventário fixo das Guardas
+  // 1/2 (mesmo racional de `ck_paciente_situacao` e `ck_profissional_situacao`).
   for (const caso of casosCheck) {
     it(caso.titulo, async () => {
       const base = await criarBaseSintetica(db);
@@ -684,6 +707,76 @@ describe("GUARDA 2 — efeito das CHECK constraints (violação rejeitada com 23
       expect(caso.esperadas).toContain(violacao?.constraint ?? "<sem nome>");
     });
   }
+});
+
+// ---------------------------------------------------------------------------
+// B. EFEITO — invariantes físicas de PRO-003 (D-PRO3-06, TD-13)
+// ---------------------------------------------------------------------------
+
+describe("PRO-003 — invariantes físicas da disponibilidade versionada (D-PRO3-06)", () => {
+  it("o banco REJEITA vigencia_inicio NULL (23502), como tlf_app e por SQL direto", async () => {
+    const base = await criarBaseSintetica(db);
+    const erro = await capturarErro(() =>
+      db.$executeRawUnsafe(
+        `INSERT INTO disponibilidade_profissional
+           (id, profissional_id, dia_semana, hora_inicio, hora_fim, vigencia_inicio, vigencia_fim)
+         VALUES ($1::uuid, $2::uuid, 1, '08:00'::time, '12:00'::time, NULL, NULL)`,
+        randomUUID(),
+        base.profissionalId,
+      ),
+    );
+    // 23502 = not_null_violation. A prova é do BANCO: o INSERT é SQL cru,
+    // sem passar pela tipagem do cliente.
+    expect(extrairSqlstate(erro)).toBe("23502");
+  });
+
+  it("o banco REJEITA vigencia_fim < vigencia_inicio (23514) por SQL direto", async () => {
+    const base = await criarBaseSintetica(db);
+    const erro = await capturarErro(() =>
+      db.$executeRawUnsafe(
+        `INSERT INTO disponibilidade_profissional
+           (id, profissional_id, dia_semana, hora_inicio, hora_fim, vigencia_inicio, vigencia_fim)
+         VALUES ($1::uuid, $2::uuid, 1, '08:00'::time, '12:00'::time, '2026-10-10'::date, '2026-10-09'::date)`,
+        randomUUID(),
+        base.profissionalId,
+      ),
+    );
+    const violacao = identificarViolacao(erro);
+    expect(violacao?.sqlstate).toBe("23514");
+    expect(violacao?.constraint).toBe("ck_disponibilidade_profissional_vigencia");
+  });
+
+  it("vigencia_fim = vigencia_inicio é ACEITA (versão de um único dia)", async () => {
+    const base = await criarBaseSintetica(db);
+    await expect(
+      db.disponibilidadeProfissional.create({
+        data: {
+          profissionalId: base.profissionalId,
+          diaSemana: 1,
+          horaInicio: new Date("1970-01-01T08:00:00Z"),
+          horaFim: new Date("1970-01-01T12:00:00Z"),
+          vigenciaInicio: new Date("2026-10-10T00:00:00Z"),
+          vigenciaFim: new Date("2026-10-10T00:00:00Z"),
+        },
+      }),
+    ).resolves.toBeDefined();
+  });
+
+  it("existe o índice ix_disponibilidade_profissional_vigencia em (profissional_id, vigencia_inicio), não único e não parcial", async () => {
+    const linhas = await db.$queryRaw<
+      Array<{ definicao: string; indisunique: boolean; parcial: boolean }>
+    >`
+      SELECT pg_get_indexdef(i.indexrelid) AS definicao,
+             i.indisunique,
+             (i.indpred IS NOT NULL) AS parcial
+        FROM pg_index i
+       WHERE i.indexrelid::regclass::text = 'ix_disponibilidade_profissional_vigencia'
+    `;
+    expect(linhas).toHaveLength(1);
+    expect(linhas[0]?.indisunique).toBe(false);
+    expect(linhas[0]?.parcial).toBe(false);
+    expect(linhas[0]?.definicao).toContain("(profissional_id, vigencia_inicio)");
+  });
 });
 
 // ---------------------------------------------------------------------------

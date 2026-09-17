@@ -522,19 +522,32 @@ model ProfissionalServico {
 }
 
 /// PRO-003. Mudanças criam NOVAS vigências; não reescrevem atendimentos
-/// passados (`docs/07` §7.3).
+/// passados (`docs/07` §7.3). Uma VERSÃO é o conjunto de linhas do mesmo
+/// profissional com o mesmo par (`vigencia_inicio`, `vigencia_fim`); não há
+/// tabela de versão (`docs/16` D-PRO3-01). `vigencia_fim = NULL` = versão
+/// ABERTA.
+/// PRO-003 (`docs/16` D-PRO3-06), migration
+/// `20260917210000_disponibilidade_profissional_vigencia`:
+/// `vigencia_inicio` passou a `NOT NULL`;
+/// `ck_disponibilidade_profissional_vigencia`
+/// (`vigencia_fim IS NULL OR vigencia_fim >= vigencia_inicio`) — não
+/// representável na Prisma Schema Language — e
+/// `ix_disponibilidade_profissional_vigencia` (declarado abaixo).
+/// A NÃO SOBREPOSIÇÃO entre versões e entre janelas NÃO é física: é garantida
+/// no backend sob `SELECT ... FOR UPDATE` do profissional (D-PRO3-07).
 model DisponibilidadeProfissional {
   id             String    @id @default(uuid(7)) @db.Uuid
   profissionalId String    @map("profissional_id") @db.Uuid
   diaSemana      Int       @map("dia_semana") @db.SmallInt
   horaInicio     DateTime  @map("hora_inicio") @db.Time(6)
   horaFim        DateTime  @map("hora_fim") @db.Time(6)
-  vigenciaInicio DateTime? @map("vigencia_inicio") @db.Date
+  vigenciaInicio DateTime  @map("vigencia_inicio") @db.Date
   vigenciaFim    DateTime? @map("vigencia_fim") @db.Date
   criadoEm       DateTime  @default(now()) @map("criado_em") @db.Timestamptz(6)
 
   profissional Profissional @relation(fields: [profissionalId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 
+  @@index([profissionalId, vigenciaInicio], map: "ix_disponibilidade_profissional_vigencia")
   @@map("disponibilidade_profissional")
 }
 
