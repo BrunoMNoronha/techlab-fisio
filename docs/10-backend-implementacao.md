@@ -2,7 +2,8 @@
 
 > **Arquivo:** `docs/10-backend-implementacao.md`
 > **Natureza:** documento **MUTÁVEL** — registro vivo de implementação da frente de backend (`apps/api`)
-> **Revisão vigente:** REV. 48 (17/09/2026) — **REGISTRO PÓS-INTEGRAÇÃO DE `CI-E2E0` NA `main` — SMOKE E2E PLAYWRIGHT OBRIGATÓRIO NA CI (PR [#58](https://github.com/BrunoMNoronha/techlab-fisio/pull/58), [#59](https://github.com/BrunoMNoronha/techlab-fisio/pull/59) E [#61](https://github.com/BrunoMNoronha/techlab-fisio/pull/61); MERGES `4156689`, `63bb058` E `e7abe30`)** (§6-U). Registro **exclusivamente factual**, no precedente `MEDIR → REGISTRAR`; nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código de produção, schema, migration, contrato ou dependência alterada por este registro. Fatos: PR [#58](https://github.com/BrunoMNoronha/techlab-fisio/pull/58) (merge **`4156689f78fae9f27241d7ed85e417b9486ede98`**, 17/09/2026 04:26:50Z, CI verde na run `35181522998`), PR [#59](https://github.com/BrunoMNoronha/techlab-fisio/pull/59) (merge **`63bb058c2134aac9c57f8fca8245588c915826e5`**, 04:41:17Z, run `35182242657`) e PR [#61](https://github.com/BrunoMNoronha/techlab-fisio/pull/61) (merge **`e7abe300e49b0fb1427fc19ef7843774b67212d5`**, 05:06:36Z, runs `35184127602` push e `35184130714` pull_request), todos por merge commit, sem squash/rebase. Proteção da `main` com o job de CI como required check, inclusive para administradores.
+> **Revisão vigente:** REV. 49 (17/09/2026) — **`CFG-001A` — CONSULTA E ATUALIZAÇÃO DOS DADOS DA CLÍNICA ÚNICA (CFG-001 SEM LOGOTIPO + CFG-006) IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA (`agent/cfg-001a-dados-clinica`) — NÃO INTEGRADA NA `main`** (§6-V). Materialização de `D-CFG-01`..`D-CFG-08` (`docs/14`, homologadas por Bruno Menezes Noronha em 17/09/2026); nenhuma decisão criada, alterada ou reaberta. Migration nova `20260917060000_clinica_linha_unica` (`ux_clinica_linha_unica`) e golden atualizado; rotas `GET /clinica` e `PUT /clinica`; nenhuma permissão, ação de auditoria, chave de `contexto` ou dependência nova.
+> **Estado anterior preservado:** REV. 48 (17/09/2026) — **REGISTRO PÓS-INTEGRAÇÃO DE `CI-E2E0` NA `main` — SMOKE E2E PLAYWRIGHT OBRIGATÓRIO NA CI (PR [#58](https://github.com/BrunoMNoronha/techlab-fisio/pull/58), [#59](https://github.com/BrunoMNoronha/techlab-fisio/pull/59) E [#61](https://github.com/BrunoMNoronha/techlab-fisio/pull/61); MERGES `4156689`, `63bb058` E `e7abe30`)** (§6-U). Registro **exclusivamente factual**, no precedente `MEDIR → REGISTRAR`; nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código de produção, schema, migration, contrato ou dependência alterada por este registro. Fatos: PR [#58](https://github.com/BrunoMNoronha/techlab-fisio/pull/58) (merge **`4156689f78fae9f27241d7ed85e417b9486ede98`**, 17/09/2026 04:26:50Z, CI verde na run `35181522998`), PR [#59](https://github.com/BrunoMNoronha/techlab-fisio/pull/59) (merge **`63bb058c2134aac9c57f8fca8245588c915826e5`**, 04:41:17Z, run `35182242657`) e PR [#61](https://github.com/BrunoMNoronha/techlab-fisio/pull/61) (merge **`e7abe300e49b0fb1427fc19ef7843774b67212d5`**, 05:06:36Z, runs `35184127602` push e `35184130714` pull_request), todos por merge commit, sem squash/rebase. Proteção da `main` com o job de CI como required check, inclusive para administradores.
 > **Estado anterior preservado:** REV. 47 (17/09/2026) — **REGISTRO PÓS-INTEGRAÇÃO DO REFORÇO DE PROVAS DE `P-2.3D-09` / AUT-005 / `D-2.3D-21` NA `main` (PR [#55](https://github.com/BrunoMNoronha/techlab-fisio/pull/55), MERGE `bce22e8`)** (§6-T.3). Registro **exclusivamente factual**, no precedente `MEDIR → REGISTRAR`; nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código de produção, schema, migration, contrato, dependência ou CI alterada. Fatos: PR [#55](https://github.com/BrunoMNoronha/techlab-fisio/pull/55), commit `4d95c386d15d08060c319300a09a1f4eef5f3590` (somente `apps/api/test/integration/usuarios-situacao.integration.spec.ts`), merge commit **`bce22e8265317be16bf78fcb1861aafdc4b05b0c`** (merge commit, sem squash/rebase), 17/09/2026 03:54:24Z, CI verde na run `35179564801`. `docs/12` sincronizado na REV. 17 (§10.6.1).
 > **Estado anterior preservado:** REV. 46 (17/09/2026) — **REGISTRO PÓS-INTEGRAÇÃO DE `P-2.3D-09` / AUT-005 / `D-2.3D-21` NA `main` (PR [#52](https://github.com/BrunoMNoronha/techlab-fisio/pull/52), MERGE `817da42`)** (§6-T). Registro **exclusivamente factual**, no precedente `MEDIR → REGISTRAR`; nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código, teste, schema, migration, contrato, dependência ou CI alterada. Fatos: commits da fatia `7d16ded` (implementação e testes) e `dbef1fb9c4483bd2d9c261a77fb11270b7ffef70` (documentação), merge commit **`817da427de84fe452230df233cb4ae15c8a43593`** (merge commit, sem squash/rebase), 17/09/2026 03:08:37Z, CI verde na run `35176158028`. `docs/12` sincronizado na REV. 16.
 > **Estado anterior preservado:** REV. 45 (16/09/2026) — **AUT-005 / `D-2.3D-21` — ATIVAÇÃO E INATIVAÇÃO ADMINISTRATIVA DE USUÁRIO IMPLEMENTADA EM BRANCH PRÓPRIA (`agent/aut-005-situacao-usuario`) — NÃO INTEGRADA NA `main`** (§6-T). Decisão normativa `D-2.3D-21` homologada por Bruno Menezes Noronha em 16/09/2026 e registrada em `docs/12` §5.21 (REV. 15); critérios `A-01`..`A-16` (`docs/12` §10.6) atendidos. Nenhuma outra decisão criada, alterada ou reaberta; zero drift de persistência; zero dependências adicionadas.
@@ -3731,6 +3732,66 @@ Os 4 mutation challenges obrigatórios estabelecidos em `docs/12` §10.5 foram t
 
 ---
 
+## 6-V. `CFG-001A` — Dados da clínica única (CFG-001 sem logotipo + CFG-006)
+
+**Estado: IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA (`agent/cfg-001a-dados-clinica`, a partir de `main` = `21e2fa0`) — NÃO INTEGRADA.** Decisões normativas: `docs/14` (`D-CFG-01`..`D-CFG-08` e adendos `D-CFG-03-A` — representação da resposta — e `D-CFG-04-A` — predicado exato do e-mail, que formalizam o comportamento já implementado). Auditoria: `docs/09` §13.6.
+
+### 6-V.1 Componentes
+
+- **Persistência:** migration `20260917060000_clinica_linha_unica` — `CREATE UNIQUE INDEX "ux_clinica_linha_unica" ON "clinica" ((true))` (`D-CFG-02`; `docs/07` §7.2; `docs/08` §8 Categoria C). `schema.golden.sql` regerado por reconstrução limpa (`schema:golden:update`); `schema.prisma` e `protected-objects.json` **inalterados** — a proteção do índice é o golden (Guarda 3) e o teste `CA-14`; o inventário da Guarda 1/2 não foi ampliado.
+- **`apps/api/src/clinica/`:** `ClinicaModule` (importa `AuthzModule` e `AuditModule`); `ClinicaController` (`GET /clinica` e `PUT /clinica`, ambos sob `@RequerPermissao("clinica.configurar")`; `ProtecaoCsrfGuard` só no `PUT`, avaliada antes da sessão; `GET` com `Cache-Control: no-store`); `ClinicaService` (transação única: `SELECT ... FOR UPDATE` → comparação campo a campo → `UPDATE` explícito das 6 colunas → `AuditWriter.registrar` com `configuracao.alterada`, `alvo_tipo = clinica`, `alvo_id = clinica.id`, `contexto` vazio); `clinica.dto.ts` (validação pura, corpo estrito, normalização e limites de `D-CFG-04`, fuso por `Intl.supportedValuesOf("timeZone")` ∪ `{UTC}`, sem dependência nova); `FiltroErroClinica` (filtro **de controller**: contrato `{ erro }` fechado e `500 FALHA_INTERNA` sem vazamento).
+- **Registro:** `AppModule` importa `ClinicaModule`. As listas fechadas de rotas em `openapi.spec.ts`, `auth.module.integration.spec.ts` e `verify-openapi-runtime.mjs` passam a incluir `/clinica`.
+
+### 6-V.2 Critérios de aceite × prova
+
+| CA | Prova | Status |
+| --- | --- | --- |
+| CA-01 GET 200 com 7 campos, `no-store` | integração | **OK** |
+| CA-02 PUT válido persistido | integração | **OK** |
+| CA-03 sem sessão → 401 | integração | **OK** |
+| CA-04 sem permissão → 403 `ACESSO_NEGADO`, sem evento | integração | **OK** |
+| CA-05 sem CSRF → 403 `REQUISICAO_NAO_AUTORIZADA` | integração | **OK** |
+| CA-06 chave extra/ausente/tipo → 400 | unitário + integração | **OK** |
+| CA-07 fuso inválido/caixa errada → 400 | unitário + integração | **OK** |
+| CA-08 `nomeCadastral` vazio → 400 | unitário + integração | **OK** |
+| CA-09 1 evento `configuracao.alterada` com ator/alvo corretos | integração | **OK** |
+| CA-10 nenhum valor de campo no evento | integração | **OK** |
+| CA-11 falha da auditoria → 500 e rollback conjunto | integração (sabotagem do `AuditWriter`) | **OK** |
+| CA-12 no-op → 200 sem `UPDATE` (xmin inalterado) e sem evento | integração | **OK** |
+| CA-13 sem linha → 404 `CLINICA_NAO_CONFIGURADA` | integração | **OK** |
+| CA-14 segunda linha → `23505` `ux_clinica_linha_unica` | integração | **OK** |
+| CA-15 lock real e leitura sob lock; PUTs concorrentes serializados | integração | **OK** |
+| CA-16 OpenAPI: rotas e status declarados; GET sem header CSRF | `openapi.spec.ts` + `verify:openapi-runtime` | **OK** |
+| CA-17 regressão integral, zero permissão/ação/chave/dependência nova | baterias abaixo | **OK** |
+
+### 6-V.3 Mutation challenges (aplicados, observados e revertidos)
+
+| # | Mutação | Resultado |
+| --- | --- | --- |
+| M1 | remover `FOR UPDATE` | **DETECTADA** (CA-15 leitura sob lock) — a primeira versão da prova **não** detectava (o `UPDATE` também espera o lock); a prova foi reforçada para distinguir leitura obsoleta |
+| M2 | remover a chamada ao `AuditWriter` | **DETECTADA** (CA-09, CA-11, CA-15) |
+| M3 | aceitar chave extra | **DETECTADA** (CA-06) |
+| M4 | pular validação de fuso | **DETECTADA** (CA-07) |
+| M5 | auditar o no-op | **DETECTADA** (CA-12, CA-15) |
+
+### 6-V.4 Baterias medidas (17/09/2026, host Windows)
+
+- `pnpm run typecheck` (monorepo): **verde**.
+- `pnpm run test:api`: **36 suites · 916 passed**.
+- Integração de `apps/api` em PostgreSQL 18 descartável (`tlf_app`): **14 suites · 474 passed · 2 skipped** (inclui `clinica-configuracao.integration.spec.ts`, **31 testes**).
+- Integração de `packages/database` em PostgreSQL 18 descartável: **10 suites · 87 passed**.
+- `lint:migrations` (Guarda 1): **OK**, 11 migrations. `schema:verify` (Guarda 3 + `migrate diff`): **OK**, dump idêntico ao golden e exit 0.
+- `verify:openapi-runtime` sobre `dist/`: **26 verificações OK**.
+- **Nota operacional:** `verify:api-integration` foi derrubado duas vezes pela limpeza de órfãos de uma execução paralela de outra frente (mesmo prefixo `techlab-fisio-apiit-`). As medições acima usaram o **mesmo** mecanismo (`scripts/lib/instancia-descartavel.mjs`) com prefixo próprio, fora do repositório. A CI da PR é a prova canônica.
+
+### 6-V.5 Limitações declaradas
+
+- **Atualização perdida** entre administradores concorrentes não é detectada (`D-CFG-05`, aceita).
+- **Estado anterior** da configuração não é preservado na trilha (`docs/09` §13.6, aceita).
+- **Erros do body parser** (JSON malformado, `413`) nascem antes do roteamento: o status é o correto, mas o corpo é o padrão da plataforma — o filtro global `FiltroErroAutenticacao` (`apps/api/src/auth/**`) não foi alterado por esta fatia. Mesmo estado vigente em `PATCH /auth/usuarios/:usuarioId/situacao`.
+- **Provisionamento** da linha de `clinica` (`D-CFG-01`) permanece **sem fatia atribuída**: sem ele, a API responde `404 CLINICA_NAO_CONFIGURADA`.
+- Logotipo e duração padrão fora (`D-CFG-07`); CFG-002..CFG-005 não iniciados.
+
 ## 7. Auditoria — `P-BACK-01`
 
 ### 7.1 Estado
@@ -4145,6 +4206,7 @@ Sujeitas a autorização própria, nesta ordem provável:
 
 | REV. | Data | Conteúdo |
 | --- | --- | --- |
+| **49** | **17/09/2026** | **`CFG-001A` — DADOS DA CLÍNICA ÚNICA (CFG-001 SEM LOGOTIPO + CFG-006) IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA — NÃO INTEGRADA** (§6-V). Materializa `D-CFG-01`..`D-CFG-08` (`docs/14`) sem criar, alterar ou reabrir decisão. Migration `20260917060000_clinica_linha_unica` + golden; `GET/PUT /clinica` sob `clinica.configurar`; `configuracao.alterada` atômica com `contexto` vazio; 5 mutation challenges detectados; baterias verdes (§6-V.4). Nenhuma permissão, ação de auditoria, chave de `contexto` ou dependência nova. |
 | **48** | **17/09/2026** | **REGISTRO PÓS-INTEGRAÇÃO DE `CI-E2E0` NA `main` — SMOKE E2E PLAYWRIGHT OBRIGATÓRIO NA CI (PR [#58](https://github.com/BrunoMNoronha/techlab-fisio/pull/58), [#59](https://github.com/BrunoMNoronha/techlab-fisio/pull/59) E [#61](https://github.com/BrunoMNoronha/techlab-fisio/pull/61); MERGES `4156689`, `63bb058` E `e7abe30`)** (§6-U). Registro **exclusivamente factual**, no precedente `MEDIR → REGISTRAR`; nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código de produção, schema, migration, contrato ou dependência alterada por este registro. Fatos: PR [#58](https://github.com/BrunoMNoronha/techlab-fisio/pull/58) (merge **`4156689f78fae9f27241d7ed85e417b9486ede98`**, 17/09/2026 04:26:50Z, CI verde na run `35181522998`), PR [#59](https://github.com/BrunoMNoronha/techlab-fisio/pull/59) (merge **`63bb058c2134aac9c57f8fca8245588c915826e5`**, 04:41:17Z, run `35182242657`) e PR [#61](https://github.com/BrunoMNoronha/techlab-fisio/pull/61) (merge **`e7abe300e49b0fb1427fc19ef7843774b67212d5`**, 05:06:36Z, runs `35184127602` push e `35184130714` pull_request), todos por merge commit, sem squash/rebase. Proteção da `main` com o job de CI como required check, inclusive para administradores. |
 | **47** | **17/09/2026** | **REGISTRO PÓS-INTEGRAÇÃO DO REFORÇO DE PROVAS DE `P-2.3D-09` / AUT-005 / `D-2.3D-21` NA `main` (PR [#55](https://github.com/BrunoMNoronha/techlab-fisio/pull/55), MERGE `bce22e8`)** (§6-T.3). Registro **exclusivamente factual**; nenhuma decisão normativa criada, alterada ou reaberta. Fatos: PR [#55](https://github.com/BrunoMNoronha/techlab-fisio/pull/55), commit `4d95c386d15d08060c319300a09a1f4eef5f3590` (somente `apps/api/test/integration/usuarios-situacao.integration.spec.ts`), merge commit **`bce22e8265317be16bf78fcb1861aafdc4b05b0c`** (merge commit, sem squash/rebase), 17/09/2026 03:54:24Z, CI verde na run `35179564801`. Provas acrescentadas (falha na revogação; C2, C5, C6, C7; C3 e C6 determinísticos) e mutation challenges M1..M7 (M7a/M7b) detectados. Estado da `main` atualizado para `cb11f72` (inclui PRs #53, #54 e #55). `docs/12` REV. 17. |
 | **46** | **17/09/2026** | **REGISTRO PÓS-INTEGRAÇÃO DE `P-2.3D-09` / AUT-005 / `D-2.3D-21` NA `main` (PR [#52](https://github.com/BrunoMNoronha/techlab-fisio/pull/52), MERGE `817da42`)** (§6-T). Registro **exclusivamente factual**; nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código, teste, schema, migration, contrato, dependência ou CI alterada. commits da fatia `7d16ded` (implementação e testes) e `dbef1fb9c4483bd2d9c261a77fb11270b7ffef70` (documentação), merge commit **`817da427de84fe452230df233cb4ae15c8a43593`** (merge commit, sem squash/rebase), 17/09/2026 03:08:37Z, CI verde na run `35176158028`. §6-T, tabela de fatias e cabeçalho atualizados; `docs/12` REV. 16. |
