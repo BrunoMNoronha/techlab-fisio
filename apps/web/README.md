@@ -19,7 +19,7 @@ Todos a partir da raiz do monorepositório (após `pnpm install --frozen-lockfil
 | `pnpm --filter @techlab-fisio/web exec playwright install chromium` | Baixa o binário do Chromium necessário para execução local do Playwright |
 | `pnpm run verify:web-api-e2e` | Prova E2E real automatizada same-origin executando simultaneamente PostgreSQL 18 descartável, NestJS compilado, Next.js compilado com Route Handler proxy, `ProtecaoCsrfGuard` real e cookie real (`verify-web-api-e2e.mjs` — 24 verificações; executada na CI) |
 
-Os comandos raiz `pnpm run typecheck` e `pnpm run build` já incluem este workspace. A execução do Playwright nesta fatia inicial é local (a integração com a CI é recomendação para fatia dedicada).
+Os comandos raiz `pnpm run typecheck` e `pnpm run build` já incluem este workspace. O Playwright também roda na CI desde a fatia `CI-E2E0` (PR [#58](https://github.com/BrunoMNoronha/techlab-fisio/pull/58); trace em falha pela PR [#59](https://github.com/BrunoMNoronha/techlab-fisio/pull/59)) — detalhes em [`README.md` › CI](../../README.md#e2e-playwright-na-ci-ci-e2e0).
 
 ## Arquitetura mínima
 
@@ -83,7 +83,8 @@ Limites deliberados: **um** tema (claro; dark mode não é requisito vigente), s
 - **Integração inicial concluída (Fatia 1):** proxy same-origin implementado em `app/api/[...caminho]/route.ts`, client HTTP tipado com mitigação de Client-Side CSRF em `lib/api-cliente.ts`, tela de login e formulário acessível em `app/login/`.
 - **CSRF e Same-Origin:** a topologia é **same-origin** — o proxy preserva `Host` público, `Origin`, `Sec-Fetch-*` e `X-TLF-Requisicao`, CORS permanece desabilitado e a baseline de `D-2.3D-07` é preservada **sem enfraquecimento** (nenhum synchronizer token, nenhuma exceção no guard).
 - **Baterias automatizadas integradas à CI:**
-  - `verify-web-integration.mjs` (24 verificações): executada na CI via step `Frontend — verificações de integração e segurança web`;
-  - `verify-web-api-e2e.mjs` (24 verificações): executada na CI via script raiz `verify:web-api-e2e` e step `E2E — prova de integração real frontend/backend same-origin (verify-web-api-e2e)`.
+  - `verify-web-integration.mjs` (24 verificações): executada na CI via step `Frontend — prova de integração da fundação web (sanitização de caminhos)`;
+  - `verify-web-api-e2e.mjs` (24 verificações): executada na CI via script raiz `verify:web-api-e2e` e step `E2E — prova real same-origin Web + API + PostgreSQL (P-2.3D-08 / D-2.3D-20)`;
+  - `smoke.spec.ts` (3 testes Playwright, `CI-E2E0`): executada na CI via step `E2E (FRONT-E2E0) — smoke tests Playwright (/, /login, 404) em Chromium real`.
 - **`P-2.3D-04` ENCERRADA em 15/09/2026**: Encerrada em 15/09/2026 após a integração do PR #47 (merge commit `89fa492603bdb6e90693b03544c7857ee7d7fb3d`) que versionou `apps/web/scripts/verify-web-api-e2e.mjs` e o passo correspondente na CI, executando simultaneamente PostgreSQL real em container, NestJS real compilado, Next.js real compilado com Route Handler de proxy same-origin (`/api/*`), `ProtecaoCsrfGuard` real e cookie real de sessão, provando que a baseline de CSRF de `D-2.3D-07` (`SameSite=Strict`, cabeçalho obrigatório `X-TLF-Requisicao` nas mutações, Fetch Metadata, validação de `Origin`, ausência de CORS) protege a fronteira de ponta a ponta sem necessidade de synchronizer token adicional.
 - **Identidade visual definitiva, dark mode, PWA, i18n, portal do paciente, multitenancy:** fora do escopo do MVP (TLF-BASE-V2 §13).
