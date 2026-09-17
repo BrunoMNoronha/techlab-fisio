@@ -15,9 +15,11 @@ Todos a partir da raiz do monorepositório (após `pnpm install --frozen-lockfil
 | `pnpm --filter @techlab-fisio/web run build` | Build de produção (`next build`; inclui a verificação de tipos do Next) |
 | `pnpm --filter @techlab-fisio/web run start` | Serve o build de produção (`next start`) |
 | `pnpm --filter @techlab-fisio/web run test` | Executa a bateria de verificações de integração e segurança do frontend (`verify-web-integration.mjs` — 24 verificações; executada na CI) |
+| `pnpm --filter @techlab-fisio/web run test:e2e` | Executa a suíte de smoke E2E browser-based com Playwright contra o build de produção real no Chromium (`playwright test`) |
+| `pnpm --filter @techlab-fisio/web exec playwright install chromium` | Baixa o binário do Chromium necessário para execução local do Playwright |
 | `pnpm run verify:web-api-e2e` | Prova E2E real automatizada same-origin executando simultaneamente PostgreSQL 18 descartável, NestJS compilado, Next.js compilado com Route Handler proxy, `ProtecaoCsrfGuard` real e cookie real (`verify-web-api-e2e.mjs` — 24 verificações; executada na CI) |
 
-Os comandos raiz `pnpm run typecheck` e `pnpm run build` já incluem este workspace.
+Os comandos raiz `pnpm run typecheck` e `pnpm run build` já incluem este workspace. A execução do Playwright nesta fatia inicial é local (a integração com a CI é recomendação para fatia dedicada).
 
 ## Arquitetura mínima
 
@@ -32,12 +34,15 @@ apps/web/
 │   ├── layout.tsx                 # layout raiz: <html lang="pt-BR">, metadados mínimos
 │   ├── not-found.tsx              # página 404 própria em pt-BR
 │   └── page.tsx                   # página inicial com navegação para /login
+├── e2e/
+│   └── smoke.spec.ts              # Smoke tests E2E browser-based (Playwright)
 ├── lib/
 │   └── api-cliente.ts             # Client HTTP tipado com proteção contra Client-Side CSRF
 ├── scripts/
 │   ├── verify-web-api-e2e.mjs     # Prova E2E automatizada real same-origin (24 verificações)
 │   └── verify-web-integration.mjs # Bateria de 24 verificações de integração e segurança
 ├── next.config.ts                 # configuração do Next.js
+├── playwright.config.ts           # Configuração do Playwright (Chromium, porta 3100, webServer)
 ├── postcss.config.mjs             # plugin oficial @tailwindcss/postcss
 ├── package.json
 └── tsconfig.json                  # estende ../../tsconfig.base.json
@@ -69,6 +74,9 @@ Limites deliberados: **um** tema (claro; dark mode não é requisito vigente), s
 | Tailwind CSS **4.3.3** exato (com `@tailwindcss/postcss` 4.3.3) | `docs/08` §6 delegava a versão ao scaffold do frontend, "junto com a versão que o `create-next-app` do Next 16 instalar" — o template `app-tw` declara `^4`, que resolve para 4.3.3 na data da sprint; `saveExact: true` (`pnpm-workspace.yaml`) fixa o valor |
 | Sem ESLint, sem testes, sem Storybook, sem state manager, sem client HTTP | Fundação sem lógica; introduzir infraestrutura sem consumidor seria complexidade prematura (TLF-BASE-V2 §4.5). **Superado em 06/09/2026 pela Fatia 1** quanto a *testes* e *client HTTP*: `scripts/verify-web-integration.mjs` e `lib/api-cliente.ts` passaram a existir porque houve consumidor. ESLint, Storybook e state manager continuam ausentes |
 | `next.config.ts` vazio | Nenhum header, rewrite ou proxy foi desativado ou configurado; isso pertence à primeira fatia funcional. **Estado em 06/09/2026:** o objeto de configuração **segue vazio** — o roteamento `/api/*` é feito por Route Handler (`app/api/[...caminho]/route.ts`), não por `rewrites` |
+| Playwright **1.63.0** exato em `devDependencies` | Fixado no workspace com `saveExact: true` na fatia `FRONT-E2E0` para a fundação E2E browser-based; sem lifecycle scripts (`allowBuilds` preservado) |
+| Chromium como único browser da fundação | Decisão local reversível da fatia `FRONT-E2E0` para comprovar o harness E2E sobre o build real sem antecipar política multi-browser |
+| WebServer na porta dedicada `3100` | Configurado em `playwright.config.ts` para servir `next start` isolado de `3000` (Next dev), `3001` (NestJS) e portas efêmeras de outras suítes |
 
 ## Estado da integração com `apps/api` (Fatia 1 / P-2.3D-04 / P-2.3D-08)
 
