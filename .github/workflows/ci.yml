@@ -171,25 +171,30 @@ jobs:
         run: pnpm run verify:web-api-e2e
 
       # ------------------------------------------------------------------
-      # FRONT-E2E0 — Smoke tests Playwright (CI-E2E0, 2026-09-17).
+      # CI-E2E0 — suíte Playwright completa em Chromium real.
       #
-      # Pré-requisito: o artefato `.next/` foi produzido pelo passo "Build dos
-      # workspaces" acima; o webServer do playwright.config.ts executa
-      # `next start` desse build na porta 3100 (`reuseExistingServer: false` em
-      # qualquer ambiente, desde o PR #54: porta ocupada falha, nunca reutiliza
-      # outro servidor). Instalamos SOMENTE o Chromium (browser único da suíte
-      # atual) com suas dependências de sistema para manter o runner enxuto.
+      # Comando oficial IDÊNTICO ao local: `pnpm run test:e2e` executa
+      # `apps/web/scripts/run-playwright-e2e.mjs`, que provisiona PostgreSQL 18
+      # descartável → migrate deploy → Administrador e clínica sintéticos (CLI
+      # compilado) → API compilada em porta efêmera (readiness `/health`) →
+      # `playwright test`, cujo `webServer` sobe o `next start` do build acima
+      # em outra porta efêmera e só libera os testes quando `GET /api/health`
+      # responde 200 PELO proxy same-origin. `reuseExistingServer: false`,
+      # `retries: 0`, `forbidOnly` sob `CI`; exit code do Playwright propagado;
+      # resíduo descartável também reprova. Specs: autenticação real (login,
+      # sessão, CSRF, logout, revogação), tela de horário (API simulada no
+      # navegador) e smoke `/`, `/login`, 404. O Chromium já foi instalado com
+      # dependências de sistema no passo FRONT-E2E0 acima.
       #
-      # Achado F-E2E0-01 (revisão independente FRONT-E2E0): `trace: "on-first-retry"`
-      # era inerte com `retries: 0`. Corrigido em fatia própria: `trace:
-      # "retain-on-failure"` — o trace.zip de testes que falham vai em test-results/,
-      # publicado pelo passo de artefatos abaixo.
+      # Achado F-E2E0-01 (revisão independente FRONT-E2E0): `trace:
+      # "retain-on-failure"` — o trace.zip de testes que falham vai em
+      # test-results/, publicado pelo passo de artefatos abaixo.
       # ------------------------------------------------------------------
 
-      - name: "E2E (FRONT-E2E0) — smoke tests Playwright (/, /login, 404) em Chromium real"
-        run: pnpm --filter @techlab-fisio/web run test:e2e
+      - name: "E2E (CI-E2E0) — suíte Playwright: autenticação real same-origin + tela de horário + smoke"
+        run: pnpm run test:e2e
 
-      - name: "E2E (FRONT-E2E0) — publicar relatório e artefatos Playwright em falha"
+      - name: "E2E (CI-E2E0) — publicar relatório e artefatos Playwright em falha"
         if: failure()
         uses: actions/upload-artifact@v6
         with:
