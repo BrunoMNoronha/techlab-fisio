@@ -143,7 +143,7 @@ try {
 
   const caminhos = Object.keys(documento.paths ?? {}).sort();
   conferir(
-    "rotas da F3, F6, P-2.3D-07, P-2.3D-08, AUT-005 e AUD-004 presentes e nenhuma outra vazou",
+    "rotas da F3, F6, P-2.3D-07, P-2.3D-08, AUT-005, P-2.3D-10 e AUD-004 presentes e nenhuma outra vazou",
     JSON.stringify(caminhos) ===
       JSON.stringify([
         "/auditoria/eventos",
@@ -153,6 +153,7 @@ try {
         "/auth/recuperacao-senha/concluir",
         "/auth/sessao",
         "/auth/sessoes/{sessaoId}",
+        "/auth/usuarios/{usuarioId}/sessoes",
         "/auth/usuarios/{usuarioId}/situacao",
         "/health",
       ]),
@@ -203,6 +204,18 @@ try {
     "DELETE /auth/sessoes/{sessaoId} documenta 204,400,401,403,413,500",
     statusRevogacao === "204,400,401,403,413,500",
     `status=${statusRevogacao}`,
+  );
+
+  // P-2.3D-10 — listagem administrativa das sessões ativas (D-2.3D-22).
+  const statusListagem = Object.keys(
+    documento.paths["/auth/usuarios/{usuarioId}/sessoes"]?.get?.responses ?? {},
+  )
+    .sort()
+    .join(",");
+  conferir(
+    "GET /auth/usuarios/{usuarioId}/sessoes documenta 200,400,401,403,500",
+    statusListagem === "200,400,401,403,500",
+    `status=${statusListagem}`,
   );
 
   // AUD-004 — consulta da trilha de auditoria (PBACK-AUD-08).
@@ -279,6 +292,13 @@ try {
     JSON.stringify(propriedades("ConsultarSessaoRespostaDto").sort()) ===
       JSON.stringify(["sessaoId", "usuarioId"]),
     propriedades("ConsultarSessaoRespostaDto").join(", "),
+  );
+  conferir(
+    "SessaoAtivaUsuarioDto expõe SÓ sessaoId, criadaEm, ultimaAtividadeEm e expiraEm (D-2.3D-22)",
+    JSON.stringify(propriedades("SessaoAtivaUsuarioDto").sort()) ===
+      JSON.stringify(["criadaEm", "expiraEm", "sessaoId", "ultimaAtividadeEm"]) &&
+      JSON.stringify(propriedades("ListarSessoesUsuarioRespostaDto")) === JSON.stringify(["sessoes"]),
+    propriedades("SessaoAtivaUsuarioDto").join(", "),
   );
   const PROIBIDAS = new Set([
     "token",

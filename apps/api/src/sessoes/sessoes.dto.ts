@@ -46,3 +46,37 @@ export class ErroSessaoAdministrativaDto {
   })
   readonly erro!: string;
 }
+
+/**
+ * Item da listagem administrativa de sessões ativas (D-2.3D-22).
+ *
+ * Projeção FECHADA: somente identificador e instantes. Nunca token, hash de
+ * token, cookie, estado interno, IP, user agent ou autoria.
+ */
+export class SessaoAtivaUsuarioDto {
+  @ApiProperty({ description: "Identificador da sessão ativa.", format: "uuid" })
+  readonly sessaoId!: string;
+
+  @ApiProperty({ description: "Instante de criação da sessão (UTC).", format: "date-time" })
+  readonly criadaEm!: string;
+
+  @ApiProperty({ description: "Instante da última atividade registrada (UTC).", format: "date-time" })
+  readonly ultimaAtividadeEm!: string;
+
+  @ApiProperty({ description: "Instante de expiração absoluta da sessão (UTC).", format: "date-time" })
+  readonly expiraEm!: string;
+}
+
+/**
+ * Resposta de GET /auth/usuarios/:usuarioId/sessoes (D-2.3D-22).
+ *
+ * Usuário inexistente, sem sessões ou somente com sessões encerradas/vencidas
+ * produz `{ "sessoes": [] }` — o mesmo envelope, sem oráculo de contas.
+ */
+export class ListarSessoesUsuarioRespostaDto {
+  @ApiProperty({
+    description: "Sessões ATIVAS e temporalmente válidas do usuário, da mais antiga para a mais recente.",
+    type: [SessaoAtivaUsuarioDto],
+  })
+  readonly sessoes!: SessaoAtivaUsuarioDto[];
+}
