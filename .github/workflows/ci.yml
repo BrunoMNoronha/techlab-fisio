@@ -39,15 +39,15 @@ jobs:
     name: E-16 — tríade anti-drift + reconstrução from-scratch + suíte integral
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Fonte única da versão do pnpm: o campo `packageManager` do
       # package.json da raiz, lido pelo próprio action-setup. Declarar
       # `version` aqui criaria uma segunda fonte de verdade, sujeita a
       # divergir silenciosamente numa atualização futura.
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           # Fonte única da versão de Node (docs/08 §4.4): linha 24.x.
           node-version-file: .nvmrc
@@ -189,7 +189,7 @@ jobs:
 
       - name: "E2E (FRONT-E2E0) — publicar relatório e artefatos Playwright em falha"
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: playwright-report-ci-e2e0
           path: |
