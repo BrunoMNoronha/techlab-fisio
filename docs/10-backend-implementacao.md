@@ -2,7 +2,8 @@
 
 > **Arquivo:** `docs/10-backend-implementacao.md`
 > **Natureza:** documento **MUTÁVEL** — registro vivo de implementação da frente de backend (`apps/api`)
-> **Revisão vigente:** REV. 55 (17/09/2026) — **REGISTRO PÓS-INTEGRAÇÃO DE `CFG-001A` (PR [#65](https://github.com/BrunoMNoronha/techlab-fisio/pull/65), COMMIT `6ee19f2`) E `CFG-001B` (PR [#69](https://github.com/BrunoMNoronha/techlab-fisio/pull/69), MERGE `02cc93d`) NA `main`** (§6-X.5). Reconciliação **exclusivamente factual** (`CFG-POST1`), no precedente `MEDIR → REGISTRAR`; nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código, teste, schema, migration, contrato, dependência ou CI alterada. Os estados "NÃO INTEGRADA/O" de §6-W e §6-X ficam como registro histórico das rodadas de implementação.
+> **Revisão vigente:** REV. 56 (17/09/2026) — **`CFG-003` — CATÁLOGO DE SERVIÇOS IMPLEMENTADO E MEDIDO EM BRANCH PRÓPRIA (`agent/cfg-003-catalogo-servicos`) — NÃO INTEGRADO NA `main`** (§6-Y). Materializa `D-CFG-22`..`D-CFG-33` (`docs/14` §3.11); migration `20260917120000_servico_catalogo_invariantes` (índice único de nome e três CHECKs) e golden atualizado; rotas `/servicos` sob `clinica.configurar`; 10 mutation challenges detectados. Nenhuma decisão criada, alterada ou reaberta; nenhuma permissão, ação de auditoria, chave de `contexto` ou dependência nova.
+> **Estado anterior preservado:** REV. 55 (17/09/2026) — **REGISTRO PÓS-INTEGRAÇÃO DE `CFG-001A` (PR [#65](https://github.com/BrunoMNoronha/techlab-fisio/pull/65), COMMIT `6ee19f2`) E `CFG-001B` (PR [#69](https://github.com/BrunoMNoronha/techlab-fisio/pull/69), MERGE `02cc93d`) NA `main`** (§6-X.5). Reconciliação **exclusivamente factual** (`CFG-POST1`), no precedente `MEDIR → REGISTRAR`; nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código, teste, schema, migration, contrato, dependência ou CI alterada. Os estados "NÃO INTEGRADA/O" de §6-W e §6-X ficam como registro histórico das rodadas de implementação.
 > **Estado anterior preservado:** REV. 54 (17/09/2026) — **`CFG-001B` — PROVISIONAMENTO DA LINHA ÚNICA DE `clinica` (SUBCOMANDO `bootstrap-clinica`) IMPLEMENTADO E MEDIDO EM BRANCH PRÓPRIA (`agent/cfg-001b-provisionamento-clinica`) — NÃO INTEGRADO NA `main`** (§6-X). Materializa `D-CFG-01` e `D-CFG-09`..`D-CFG-12` (`docs/14`); nenhuma decisão criada, alterada ou reaberta; nenhuma migration, rota, permissão, ação de auditoria, chave de `contexto` ou dependência nova.
 > **Estado anterior preservado:** REV. 53 (17/09/2026) — **REGISTRO PÓS-INTEGRAÇÃO DE `PBACK-AUD-08` / AUD-004 NA `main` (PR [#63](https://github.com/BrunoMNoronha/techlab-fisio/pull/63), MERGE `27012ff`)** (§7.6.7). Registro **exclusivamente factual**, no precedente `MEDIR → REGISTRAR`; nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código, teste, schema, migration, contrato, dependência ou CI alterada. Merge commit **`27012ff82f58aa4bca9d6f5f2b264662359b839d`** (merge commit, sem squash/rebase), 17/09/2026 06:55:47Z, CI verde no HEAD da PR (runs `35191204044` e `35191207118`). **`P-BACK-01` permanece EM ANDAMENTO**; `L-06` ABERTA / BLOQUEADA.
 > **Estado anterior preservado:** REV. 52 (17/09/2026) — **`PBACK-AUD-08` / AUD-004 — CONSULTA DA TRILHA DE AUDITORIA IMPLEMENTADA EM BRANCH / NÃO INTEGRADA** (§7.6). Branch `agent/p-back-01-aud-004-consulta-trilha-r2` a partir de `origin/main` = `4225b63`. Rota `GET /auditoria/eventos` sob `@RequerPermissao("auditoria.ler")`, materializando a política fechada de `docs/09` §13.9 sem reinterpretá-la. Nenhuma decisão normativa criada, alterada ou reaberta; nenhuma permissão nova; catálogo de ações (25) e whitelist inalterados; `auditoria.consultada` **não** criada; zero drift de persistência; zero dependências. Revisão independente aprovada com ressalvas; por decisão de Bruno Menezes Noronha (17/09/2026) `justificativa` é **omitida** da resposta e o contrato local (path, limite 20/50, cursor keyset — §7.6.2) é **aceito**. **`P-BACK-01` permanece EM ANDAMENTO**; `L-06` ABERTA / BLOQUEADA; AUT-005 não tocada.
@@ -3892,6 +3893,75 @@ Registro **exclusivamente factual** (`CFG-POST1`), no precedente `MEDIR → REGI
 - **Validações:** nenhuma CI foi executada sobre os commits de integração `6ee19f2` e `02cc93d` (`gh run list --commit` vazio para ambos); as baterias de §6-W.4 e §6-X e as runs acima referem-se aos HEADs das PRs. A equivalência com a `main` decorre da identidade de árvore medida, não de execução sobre o merge.
 - **Estados vivos:** `CFG-001A` e `CFG-001B` **INTEGRADAS**. A limitação de §6-W.5 "provisionamento sem fatia atribuída" foi **superada** pela integração de `CFG-001B`. Seguem vigentes as demais limitações de §6-W.5 e §6-X.4; logotipo e duração padrão (`D-CFG-07`) **FUTURO DO MVP**; `CFG-002`..`CFG-005` **NÃO INICIADOS**; inclusão da clínica em `provisionar` **não autorizada** (`D-CFG-12`).
 
+## 6-Y. `CFG-003` — Catálogo de serviços
+
+**Estado: IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA (`agent/cfg-003-catalogo-servicos`, a partir de `main` = `72f53fd`) — NÃO INTEGRADA.** Implementação autorizada por Bruno Menezes Noronha em 17/09/2026. Decisões normativas: `docs/14` §3.11 (`D-CFG-22`..`D-CFG-33`, homologadas a partir do pacote `CFG-PREP3`, inclusive a alteração estrutural de banco de `D-CFG-23`). Auditoria: `docs/09` §13.6. Nenhuma decisão criada, alterada ou reaberta; nenhuma permissão, ação de auditoria, chave de `contexto` ou dependência nova.
+
+### 6-Y.1 Componentes
+
+- **Persistência:** migration `20260917120000_servico_catalogo_invariantes` — `ux_servico_clinica_nome` (índice único sobre `(clinica_id, lower(btrim(nome)))`, `D-CFG-22`), `ck_servico_duracao_positiva`, `ck_servico_preco_nao_negativo` e `ck_servico_situacao` (`ativo = (inativado_em IS NULL)`) (`D-CFG-23`). `schema.golden.sql` regerado por reconstrução limpa (`schema:golden:update`); `schema.prisma` recebeu **apenas comentário** documentando os objetos (não representáveis na PSL; `migrate diff` exit 0). `protected-objects.json` **inalterado**, no precedente de `ux_clinica_linha_unica` (§6-W.1): a proteção é o golden (Guarda 3) e a prova de integração das restrições. O inventário fixo de `verify:from-scratch` (26 CHECKs) também não foi ampliado.
+- **`apps/api/src/servicos/`:** `ServicosModule` (importa `AuthzModule` e `AuditModule`); `ServicosController` (`GET /servicos`, `GET /servicos/:servicoId`, `POST /servicos`, `PUT /servicos/:servicoId`, `PATCH /servicos/:servicoId/situacao`, todas sob `@RequerPermissao("clinica.configurar")`; `ProtecaoCsrfGuard` só nas três mutações, avaliada antes da sessão; GETs com `Cache-Control: no-store`; **sem DELETE**); `ServicosService` (transação única por operação; `clinica_id` resolvido pela linha única; `SELECT ... FOR UPDATE` na linha do serviço em `PUT`/`PATCH`; no-op decidido sob o lock, sem `UPDATE` e sem evento; preço lido como `preco_referencia::text` e comparado como string canônica; `23505` **somente** de `ux_servico_clinica_nome` → `SERVICO_DUPLICADO`, via `identificarViolacao` de `@techlab-fisio/database`; `configuracao.alterada` com `alvo_tipo = servico`, `contexto` vazio); `servicos.dto.ts` (validação pura: corpo estrito, nome 1–200 code points após `trim` sem caractere de controle C0/C1 em qualquer posição, duração inteira 1..1440 sem coerção, preço por `ehDecimalMonetarioCanonico`, filtro `ativo=true|false` com rejeição de parâmetro desconhecido ou repetido); `FiltroErroServicos` (filtro de controller, mesmo desenho de `FiltroErroClinica`).
+- **Registro:** `AppModule` importa `ServicosModule`. As listas fechadas de rotas em `openapi.spec.ts`, `auth.module.integration.spec.ts` e `verify-openapi-runtime.mjs` passam a incluir as três rotas de `/servicos`, com status declarados por operação e prova de ausência de `DELETE`.
+
+### 6-Y.2 Critérios de aceite × prova
+
+| CA | Prova | Status |
+| --- | --- | --- |
+| CA-SRV-01 criação ativa, 6 campos, 1 evento sem valores | integração | **OK** |
+| CA-SRV-02..04 nome, duração e preço inválidos → 400 | unitário (`servicos-dto.spec.ts`) + integração | **OK** |
+| CA-SRV-05 nome equivalente (caixa, espaços, inativo) → 409 | integração | **OK** |
+| CA-SRV-06 sem clínica → 404 `CLINICA_NAO_CONFIGURADA` | integração | **OK** |
+| CA-SRV-07 ordem canônica e filtro `ativo` | unitário + integração | **OK** |
+| CA-SRV-08 GET por id: 200/404/400 | integração | **OK** |
+| CA-SRV-09 edição efetiva auditada; no-op sem `UPDATE` (xmin) e sem evento | integração | **OK** |
+| CA-SRV-10/11 inativação e reativação auditadas; repetição idempotente | integração | **OK** |
+| CA-SRV-12 `profissional_servico` e `pacote` referenciando o serviço intactos | integração | **OK** |
+| CA-SRV-13 preço não reescreve cobrança | por construção — CFG-003 não lê nem escreve `cobranca` (nenhuma consulta a outra tabela além de `clinica` e `servico`) | **OK** |
+| CA-SRV-14 401 / 403 sem evento / CSRF / GET sem CSRF / usuário inativado pela AUT-005 → 401 | integração | **OK** |
+| CA-SRV-15 corpo estrito (chave extra/ausente, tipos, `ativo` no PUT) | unitário + integração | **OK** |
+| CA-SRV-16 falha da auditoria → 500 e rollback conjunto (POST, PUT, PATCH) | integração (sabotagem do `AuditWriter`) | **OK** |
+| CA-SRV-17 lock real e leitura sob lock; criações equivalentes concorrentes → 201 + 409; PUT × PATCH serializados | integração | **OK** |
+| CA-SRV-18 nenhum valor no evento | integração | **OK** |
+| CA-SRV-19 OpenAPI × runtime (rotas, status, CSRF, sem DELETE) | `openapi.spec.ts` + `verify:openapi-runtime` | **OK** |
+| `D-CFG-23` banco rejeita duração ≤ 0, preço negativo, situação incoerente e nome equivalente | integração (SQL direto como `tlf_app`) | **OK** |
+
+### 6-Y.3 Mutation challenges (aplicados, observados e revertidos)
+
+Executados um a um contra a suíte `servicos-catalogo.integration.spec.ts` em PostgreSQL 18 descartável; o arquivo original foi restaurado após cada execução.
+
+| # | Mutação | Resultado |
+| --- | --- | --- |
+| M1 | remover `FOR UPDATE` | **DETECTADA** (leitura sob lock) |
+| M2 | auditar o no-op do `PUT` | **DETECTADA** (no-op xmin/evento; leitura sob lock) |
+| M3 | não traduzir o `23505` do índice em `409` | **DETECTADA** (4 cenários de duplicidade) |
+| M4 | aceitar preço `number` | **DETECTADA** |
+| M5 | aceitar duração zero | **DETECTADA** |
+| M6 | inativar sem gravar `inativado_em` | **DETECTADA** (a `ck_servico_situacao` rejeita; 5 testes) |
+| M7 | remover CSRF do `POST` | **DETECTADA** |
+| M8 | remover `@RequerPermissao` da listagem | **DETECTADA** (401, 403, usuário inativado) |
+| M9 | ignorar o filtro `ativo` | **DETECTADA** |
+| M10 | comparar preço como número | **DETECTADA** |
+
+### 6-Y.4 Baterias medidas (17/09/2026, host Windows)
+
+- `pnpm run typecheck` (monorepo): **verde**.
+- `pnpm run lint:migrations` (Guarda 1): **OK**, 12 migrations, 37 objetos protegidos.
+- `pnpm run verify:from-scratch`: **OK** — 12/12 migrations, catálogo inventariado OK (inventário inalterado); integração de `packages/database` **10 suites · 87 passed**.
+- `pnpm run schema:verify` (Guarda 3 + `migrate diff`): **OK**, dump idêntico ao golden e exit 0.
+- `pnpm run build` e `verify:openapi-runtime` sobre `dist/`: **36 verificações OK**.
+- `pnpm run test:api`: **39 suites · 1133 passed** (inclui `servicos-dto.spec.ts`).
+- `pnpm run verify:api-integration`: **18 suites · 614 passed · 2 skipped** (inclui `servicos-catalogo.integration.spec.ts`, **70 testes**).
+- Correção durante a medição: a primeira bateria integral falhou em uma asserção do próprio teste (`CA-SRV-01` procurava a substring `"45"`, que pode ocorrer em UUID gerado); a asserção passou a usar apenas valores que não colidem com hexadecimal. Nenhum código de produção mudou.
+
+### 6-Y.5 Limitações declaradas
+
+- **Atualização perdida** entre administradores concorrentes não é detectada (`D-CFG-29`, aceita).
+- **Estado anterior** (inclusive preço anterior) não é preservado na trilha (`docs/09` §13.6, aceita).
+- **Erros do body parser** (JSON malformado, `null`, `413`) nascem antes do roteamento: status correto, corpo padrão da plataforma (mesmo limite de §6-W.5).
+- **Unicidade e collation:** `lower()` segue a collation do banco; equivalência além de caixa simples e espaços de borda (acentos, formas Unicode) **não** é normalizada, como decidido.
+- **`docs/07` §10.1/§10.2** ainda não lista as novas restrições — alinhamento pendente para depois da integração (`docs/14` §3.11.2).
+- Leitura do catálogo por outros papéis, uso em agenda/pacotes e duração sobrescrevível permanecem nas fatias futuras (`D-CFG-30`, `D-CFG-33`).
+
 ## 7. Auditoria — `P-BACK-01`
 
 ### 7.1 Estado
@@ -4408,11 +4478,13 @@ Sujeitas a autorização própria, nesta ordem provável:
 18. ~~**`P-2.3D-10` — listagem administrativa das sessões ativas de um usuário (`D-2.3D-22`)**~~ — **CONCLUÍDA / INTEGRADA NA `main` em 17/09/2026** (PR [#64](https://github.com/BrunoMNoronha/techlab-fisio/pull/64), merge `bc6a763`; §6-V). Correções da revisão automatizada pós-merge em §6-V.4.
 19. ~~**`PBACK-AUD-08` / AUD-004 — consulta da trilha de auditoria**~~ — **CONCLUÍDA / INTEGRADA NA `main` em 17/09/2026** (PR [#63](https://github.com/BrunoMNoronha/techlab-fisio/pull/63), merge commit `27012ff82f58aa4bca9d6f5f2b264662359b839d`, CI runs `35191204044` e `35191207118`) (§7.6, §7.6.7). `GET /auditoria/eventos` sob `auditoria.ler`; `justificativa` omitida. **`P-BACK-01` permanece EM ANDAMENTO.**
 20. ~~**`CFG-001A` e `CFG-001B` — dados e provisionamento da clínica única**~~ — **CONCLUÍDAS / INTEGRADAS NA `main` em 17/09/2026** (PR [#65](https://github.com/BrunoMNoronha/techlab-fisio/pull/65), commit `6ee19f27afc5d7c55667ef910536baa924ecc990`; PR [#69](https://github.com/BrunoMNoronha/techlab-fisio/pull/69), merge commit `02cc93d5770003775d3417b1d2ee08a874675d30`) (§6-W, §6-X, §6-X.5). Logotipo, duração padrão e `CFG-002`..`CFG-005` seguem pendentes.
+21. **`CFG-003` — catálogo de serviços** — **IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA — NÃO INTEGRADA** (§6-Y). Pendente: revisão e integração; após integrar, alinhar `docs/07` §10.1/§10.2.
 
 ## 11. Histórico de revisões
 
 | REV. | Data | Conteúdo |
 | --- | --- | --- |
+| **56** | **17/09/2026** | **`CFG-003` — CATÁLOGO DE SERVIÇOS IMPLEMENTADO E MEDIDO EM BRANCH PRÓPRIA — NÃO INTEGRADO** (§6-Y). Migration de unicidade do nome e CHECKs de `servico`; `GET/POST /servicos`, `GET/PUT /servicos/:servicoId`, `PATCH /servicos/:servicoId/situacao`; test:api 1133 passed; integração da API 18 suites · 614 passed · 2 skipped; 10 mutation challenges detectados. Nenhuma decisão, permissão, ação, chave ou dependência nova. |
 | **55** | **17/09/2026** | **REGISTRO PÓS-INTEGRAÇÃO DE `CFG-001A` (PR [#65](https://github.com/BrunoMNoronha/techlab-fisio/pull/65), COMMIT `6ee19f2`) E `CFG-001B` (PR [#69](https://github.com/BrunoMNoronha/techlab-fisio/pull/69), MERGE `02cc93d`) NA `main`** (§6-X.5). Reconciliação **exclusivamente factual** (`CFG-POST1`); nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código, teste, schema, migration, contrato, dependência ou CI alterada. CI verde medida sobre os HEADs das PRs (`a8269a5`, `abb3a8a`), não sobre os commits de integração; árvores idênticas. Item 20 de §10 e cabeçalho atualizados; `docs/14` REV. 6. |
 | **54** | **17/09/2026** | **`CFG-001B` — PROVISIONAMENTO DA LINHA ÚNICA DE `clinica` IMPLEMENTADO E MEDIDO EM BRANCH PRÓPRIA — NÃO INTEGRADO** (§6-X). Subcomando `bootstrap-clinica`; `configuracao.alterada` com ator NULL e justificativa; reexecução idempotente; concorrência resolvida pela unicidade física; 4 mutation challenges detectados. Nenhuma migration, rota, permissão, ação de auditoria, chave de `contexto` ou dependência nova. |
 | **53** | **17/09/2026** | **REGISTRO PÓS-INTEGRAÇÃO DE `PBACK-AUD-08` / AUD-004 NA `main` (PR [#63](https://github.com/BrunoMNoronha/techlab-fisio/pull/63), MERGE `27012ff`)** (§7.6.7). Registro **exclusivamente factual**; nenhuma decisão normativa criada, alterada ou reaberta; nenhuma linha de código, teste, schema, migration, contrato, dependência ou CI alterada. Merge commit **`27012ff82f58aa4bca9d6f5f2b264662359b839d`** (merge commit, sem squash/rebase), 17/09/2026 06:55:47Z, árvore idêntica ao HEAD validado `6111662`; CI verde (runs `35191204044` e `35191207118`); integração completa local 16 suítes · 522 passed · 2 skipped. Nova §7.6.7, item 19 de §10, estados vivos e cabeçalho atualizados. `P-BACK-01` EM ANDAMENTO; `L-06` ABERTA / BLOQUEADA. |

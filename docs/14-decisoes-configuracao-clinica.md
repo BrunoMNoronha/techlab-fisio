@@ -305,10 +305,10 @@ Registro de fronteira; **nenhum** destes módulos é implementado ou decidido aq
 | Exceções e feriados do horário de funcionamento (`D-CFG-19`) | **FUTURO DO MVP** |
 | Aplicação de RN-014 e reavaliação da troca de fuso (`D-CFG-20`, `D-CFG-08`) | **PENDENTE DA FATIA DE AGENDA** |
 | CFG-002 | **DECIDIDO, NÃO IMPLEMENTADO** |
-| `P-CFG-04` — implementação de `CFG-003` (`D-CFG-22`..`D-CFG-33`: migration de unicidade e CHECKs de `servico`, rotas `/servicos`, testes) | **DECIDIDA — IMPLEMENTAÇÃO NÃO AUTORIZADA** por este registro |
+| `P-CFG-04` — implementação de `CFG-003` (`D-CFG-22`..`D-CFG-33`: migration de unicidade e CHECKs de `servico`, rotas `/servicos`, testes) | **IMPLEMENTADA E MEDIDA EM BRANCH PRÓPRIA (`agent/cfg-003-catalogo-servicos`) — NÃO INTEGRADA** (`docs/10` §6-Y); implementação autorizada por Bruno Menezes Noronha em 17/09/2026 |
 | Alinhamento de `docs/07` §10.1/§10.2 às restrições de `D-CFG-23` | **PENDENTE** — após integração da migration |
 | Leitura do catálogo de serviços por outros papéis; pacote/agendamento com serviço inativo; duração sobrescrevível (`D-CFG-30`, `D-CFG-33`) | **PENDENTE DAS FATIAS DE AGENDA E PACOTES** |
-| CFG-003 | **DECIDIDO, NÃO IMPLEMENTADO** |
+| CFG-003 | **IMPLEMENTADO EM BRANCH PRÓPRIA — NÃO INTEGRADO** (`docs/10` §6-Y) |
 | CFG-004, CFG-005 | **NÃO INICIADOS** |
 | Inclusão da clínica no subcomando `provisionar` (`D-CFG-12`) | **NÃO AUTORIZADA** — reavaliação futura possível |
 | Alinhamento de `docs/07` (afirmava restrição então inexistente) | **RESOLVIDO** — migration `20260917060000_clinica_linha_unica` (`ux_clinica_linha_unica`) integrada na `main` pela PR #65 |
@@ -317,6 +317,7 @@ Registro de fronteira; **nenhum** destes módulos é implementado ou decidido aq
 
 | REV. | Data | Descrição |
 | --- | --- | --- |
+| **9** | 17/09/2026 | Atualização factual de §5: `P-CFG-04` (`CFG-003`) implementada e medida em branch própria (`docs/10` §6-Y), após autorização de implementação por Bruno Menezes Noronha. Nenhuma decisão criada, alterada ou reaberta. |
 | **8** | 17/09/2026 | Acréscimo de `D-CFG-22`..`D-CFG-33` (§3.11) — catálogo de serviços (`CFG-003`) —, homologadas por Bruno Menezes Noronha a partir do pacote `CFG-PREP3` (`DS-01`..`DS-12`), incluindo a autorização expressa da futura migration de unicidade do nome e CHECKs de `servico`. §5 atualizada. Integrada após `CFG-002` (REV. 7, PR #72), cujas `D-CFG-13`..`D-CFG-21` e §3.10 são preservadas. Nenhuma decisão anterior alterada; nenhum código, schema ou migration alterado. |
 | **7** | 17/09/2026 | Acréscimo de `D-CFG-13`..`D-CFG-21` (§3.10) — horário de funcionamento (`CFG-002`) —, homologadas por Bruno Menezes Noronha a partir do pacote `CFG-PREP2` (opções recomendadas, inclusive 0 = domingo e limite de 4 janelas/dia). Inclui leitura homologada de `docs/09` §13.6 (alvo `clinica`). §5 atualizada. Nenhuma decisão anterior alterada; nenhum código alterado. |
 | **6** | 17/09/2026 | Reconciliação factual pós-integração (`CFG-POST1`) de §5: `P-CFG-01` integrada pela PR #65 (`6ee19f2`) e `P-CFG-02` integrado pela PR #69 (`02cc93d`); alinhamento de `docs/07` resolvido; restrição de `provisionar` (`D-CFG-12`) explicitada como pendência. Os registros das REV. 2 e 5 permanecem como histórico. Nenhuma decisão normativa criada, alterada ou reaberta. |
