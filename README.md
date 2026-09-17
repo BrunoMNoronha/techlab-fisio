@@ -132,7 +132,7 @@ O script de verificação (`scripts/verify-web-integration.mjs`) executa 24 veri
 
 ### E2E Playwright na CI (`CI-E2E0`)
 
-A suíte `FRONT-E2E0` ([`apps/web/e2e/smoke.spec.ts`](apps/web/e2e/smoke.spec.ts) — 3 testes: `/`, `/login`, 404) é obrigatória no job `integracao`, depois do build:
+A suíte `FRONT-E2E0` ([`apps/web/e2e/smoke.spec.ts`](apps/web/e2e/smoke.spec.ts) — 3 testes: `/`, `/login`, 404) é obrigatória no job `integracao` (disparado por `push` em `agent/**`, `pull_request` para `main` e manualmente), depois do build:
 
 1. `pnpm --filter @techlab-fisio/web exec playwright install --with-deps chromium` (Chromium é o único browser da suíte);
 2. `pnpm --filter @techlab-fisio/web run test:e2e` — o `webServer` do [`playwright.config.ts`](apps/web/playwright.config.ts) executa `next start` do build de produção em `127.0.0.1:3100` (readiness pela própria URL, timeout 120 s, `reuseExistingServer: false`), `retries: 0`, `forbidOnly` sob `CI`. Qualquer teste falho encerra o `playwright test` com exit code ≠ 0 e reprova o job;
