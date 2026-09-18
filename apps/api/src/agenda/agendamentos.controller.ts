@@ -383,7 +383,16 @@ export class AgendamentosController {
     status: 404,
     description:
       "Inexistente ou fora do escopo (AGENDAMENTO_NAO_ENCONTRADO) ou clínica não provisionada (CLINICA_NAO_CONFIGURADA).",
-    type: ErroAgendamentoDto,
+    schema: {
+      type: "object",
+      required: ["erro"],
+      properties: {
+        erro: {
+          type: "string",
+          enum: ["AGENDAMENTO_NAO_ENCONTRADO", "CLINICA_NAO_CONFIGURADA"],
+        },
+      },
+    },
   })
   @ApiResponse({ status: 409, description: "Transição não admitida (TRANSICAO_INVALIDA).", type: ErroAgendamentoDto })
   @ApiResponse({ status: 413, description: "Corpo de requisição acima do limite permitido.", type: ErroAgendamentoDto })
@@ -432,7 +441,16 @@ export class AgendamentosController {
     status: 404,
     description:
       "Inexistente ou fora do escopo (AGENDAMENTO_NAO_ENCONTRADO) ou clínica não provisionada (CLINICA_NAO_CONFIGURADA).",
-    type: ErroAgendamentoDto,
+    schema: {
+      type: "object",
+      required: ["erro"],
+      properties: {
+        erro: {
+          type: "string",
+          enum: ["AGENDAMENTO_NAO_ENCONTRADO", "CLINICA_NAO_CONFIGURADA"],
+        },
+      },
+    },
   })
   @ApiResponse({ status: 409, description: "Transição não admitida (TRANSICAO_INVALIDA).", type: ErroAgendamentoDto })
   @ApiResponse({ status: 413, description: "Corpo de requisição acima do limite permitido.", type: ErroAgendamentoDto })
