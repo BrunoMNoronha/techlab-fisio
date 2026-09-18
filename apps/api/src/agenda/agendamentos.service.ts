@@ -67,17 +67,16 @@ import {
 } from "./agenda.escopo.js";
 import type { EscopoAgenda } from "./agenda.escopo.js";
 import {
+  avaliarCheckIn,
+  avaliarFalta,
   avaliarConfirmacao,
   estadoAposRemarcacao,
-  permiteCheckIn,
   permiteCancelamento,
-  permiteFalta,
   permiteRemarcacao,
   type EstadoAgendamento,
   type OperacaoHistorico,
 } from "./agenda.estados.js";
 import type { DadosCriacaoValidados, FiltroAgenda, IntervaloValidado } from "./agenda.dto.js";
-import { paraInstanteLocal } from "./horario-funcionamento.regra.js";
 import { VerificadorDisponibilidadeProfissional } from "./verificador-disponibilidade-profissional.js";
 import { VerificadorHorarioFuncionamento } from "./verificador-horario-funcionamento.js";
 
@@ -415,10 +414,13 @@ export class AgendamentosService {
     return this.database.transacao(async (tx) => {
       const { escopo } = await this.#abrirMutacao(tx, comando, PERMISSAO_AGENDA_CHECKIN);
       const atual = await this.#lerSobLock(tx, comando.agendamentoId, escopo);
-      if (!permiteCheckIn(atual.estado)) throw new ErroAgendamento("TRANSICAO_INVALIDA");
-
-      const fusoHorario = await this.#fusoDaClinica(tx);
-      this.#exigirJanelaCheckIn({ inicio: atual.inicio, agora: new Date(), fusoHorario });
+      const desfecho = avaliarCheckIn({
+        estado: atual.estado,
+        inicio: atual.inicio,
+        agora: new Date(),
+        fusoHorario: await this.#fusoDaClinica(tx, atual.id),
+      });
+      if (desfecho !== "ADMITE") throw new ErroAgendamento(desfecho);
 
       await tx.$executeRaw`
         UPDATE agendamento SET estado = 'AGUARDANDO' WHERE id = ${atual.id}::uuid
@@ -451,10 +453,13 @@ export class AgendamentosService {
     return this.database.transacao(async (tx) => {
       const { escopo } = await this.#abrirMutacao(tx, comando, PERMISSAO_AGENDA_FALTA);
       const atual = await this.#lerSobLock(tx, comando.agendamentoId, escopo);
-      if (!permiteFalta(atual.estado)) throw new ErroAgendamento("TRANSICAO_INVALIDA");
-
-      const fusoHorario = await this.#fusoDaClinica(tx);
-      this.#exigirJanelaFalta({ inicio: atual.inicio, agora: new Date(), fusoHorario });
+      const desfecho = avaliarFalta({
+        estado: atual.estado,
+        inicio: atual.inicio,
+        agora: new Date(),
+        fusoHorario: await this.#fusoDaClinica(tx, atual.id),
+      });
+      if (desfecho !== "ADMITE") throw new ErroAgendamento(desfecho);
 
       await tx.$executeRaw`
         UPDATE agendamento SET estado = 'FALTA' WHERE id = ${atual.id}::uuid
@@ -696,39 +701,20 @@ export class AgendamentosService {
     if (inicio.getTime() < Date.now()) throw new ErroAgendamento("AGENDAMENTO_NO_PASSADO");
   }
 
-  async #fusoDaClinica(tx: TransacaoPersistencia): Promise<string> {
+  async #fusoDaClinica(
+    tx: TransacaoPersistencia,
+    agendamentoId: string,
+  ): Promise<string> {
     const clinicas = await tx.$queryRaw<Array<{ fuso_horario: string }>>`
-      SELECT fuso_horario FROM clinica
+      SELECT c.fuso_horario
+        FROM agendamento a
+        JOIN servico s ON s.id = a.servico_id
+        JOIN clinica c ON c.id = s.clinica_id
+       WHERE a.id = ${agendamentoId}::uuid
     `;
     const [clinica] = clinicas;
     if (clinica === undefined) throw new ErroClinica("CLINICA_NAO_CONFIGURADA");
-    if (clinicas.length > 1) {
-      throw new Error("Invariante de clínica única violada: mais de uma linha em clinica.");
-    }
     return clinica.fuso_horario;
-  }
-
-  #exigirJanelaCheckIn(entrada: {
-    inicio: Date;
-    agora: Date;
-    fusoHorario: string;
-  }): void {
-    const { inicio, agora, fusoHorario } = entrada;
-    if (paraInstanteLocal(inicio, fusoHorario).data !== paraInstanteLocal(agora, fusoHorario).data) {
-      throw new ErroAgendamento("FORA_DA_JANELA_TEMPORAL");
-    }
-  }
-
-  #exigirJanelaFalta(entrada: { inicio: Date; agora: Date; fusoHorario: string }): void {
-    const { inicio, agora, fusoHorario } = entrada;
-    const localInicio = paraInstanteLocal(inicio, fusoHorario);
-    const localAgora = paraInstanteLocal(agora, fusoHorario);
-    const depoisDoInicio =
-      localAgora.data > localInicio.data ||
-      (localAgora.data === localInicio.data && localAgora.msDoDia > localInicio.msDoDia);
-    if (!depoisDoInicio) {
-      throw new ErroAgendamento("FORA_DA_JANELA_TEMPORAL");
-    }
   }
 
   async #exigirPacienteElegivel(tx: TransacaoPersistencia, pacienteId: string): Promise<void> {

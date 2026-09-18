@@ -8,6 +8,8 @@
 import { describe, expect, it } from "@jest/globals";
 
 import {
+  avaliarCheckIn,
+  avaliarFalta,
   avaliarConfirmacao,
   estadoAposRemarcacao,
   ESTADOS_TERMINAIS,
@@ -42,6 +44,7 @@ const TODOS: readonly EstadoAgendamento[] = [
 
 const PROPRIO = "0191f5a0-0000-7000-8000-0000000000b2";
 const OUTRO = "0191f5a0-0000-7000-8000-0000000000b3";
+const FUSO = "America/Sao_Paulo";
 
 describe("D-AGD-09 — catálogo fechado de operações do histórico", () => {
   it("declara as oito operações e AGD-A usa somente as quatro primeiras", () => {
@@ -93,6 +96,60 @@ describe("D-AGD-06 / D-AGD-07 — origens de remarcação e cancelamento", () =>
         expect(permiteCheckIn(estado)).toBe(admitido);
         expect(permiteFalta(estado)).toBe(admitido);
       }
+    });
+
+    it("check-in exige estado admitido e mesma data civil local do início", () => {
+      expect(
+        avaliarCheckIn({
+          estado: "AGENDADO",
+          inicio: new Date("2026-09-18T15:00:00.000Z"),
+          agora: new Date("2026-09-18T05:00:00.000Z"),
+          fusoHorario: FUSO,
+        }),
+      ).toBe("ADMITE");
+      expect(
+        avaliarCheckIn({
+          estado: "AGENDADO",
+          inicio: new Date("2026-09-18T15:00:00.000Z"),
+          agora: new Date("2026-09-18T02:59:59.000Z"),
+          fusoHorario: FUSO,
+        }),
+      ).toBe("FORA_DA_JANELA_TEMPORAL");
+      expect(
+        avaliarCheckIn({
+          estado: "AGUARDANDO",
+          inicio: new Date("2026-09-18T15:00:00.000Z"),
+          agora: new Date("2026-09-18T15:00:00.000Z"),
+          fusoHorario: FUSO,
+        }),
+      ).toBe("TRANSICAO_INVALIDA");
+    });
+
+    it("falta exige estado admitido e instante estritamente posterior ao início local", () => {
+      expect(
+        avaliarFalta({
+          estado: "CONFIRMADO",
+          inicio: new Date("2026-09-18T15:00:00.000Z"),
+          agora: new Date("2026-09-18T15:00:00.001Z"),
+          fusoHorario: FUSO,
+        }),
+      ).toBe("ADMITE");
+      expect(
+        avaliarFalta({
+          estado: "CONFIRMADO",
+          inicio: new Date("2026-09-18T15:00:00.000Z"),
+          agora: new Date("2026-09-18T15:00:00.000Z"),
+          fusoHorario: FUSO,
+        }),
+      ).toBe("FORA_DA_JANELA_TEMPORAL");
+      expect(
+        avaliarFalta({
+          estado: "AGUARDANDO",
+          inicio: new Date("2026-09-18T15:00:00.000Z"),
+          agora: new Date("2026-09-18T16:00:00.000Z"),
+          fusoHorario: FUSO,
+        }),
+      ).toBe("TRANSICAO_INVALIDA");
     });
   });
 

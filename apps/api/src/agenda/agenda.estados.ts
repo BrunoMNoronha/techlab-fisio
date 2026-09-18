@@ -1,6 +1,6 @@
 // TechLab Fisio — máquina de estados do agendamento e catálogo de operações do
-// histórico (`docs/15` D-AGD-02, D-AGD-06, D-AGD-07, D-AGD-09; `docs/05` §3;
-// RN-020).
+// histórico (`docs/15` D-AGD-02, D-AGD-03, D-AGD-06, D-AGD-07, D-AGD-09;
+// `docs/05` §3; RN-020).
 //
 // Funções PURAS, sem I/O — a decisão de transição é testável sem banco e é a
 // MESMA que o serviço aplica sob `SELECT ... FOR UPDATE`.
@@ -11,6 +11,8 @@
 //
 // `AGUARDANDO -> CANCELADO` NÃO é oferecido (P-AGD-02, homologada): não há
 // permissão excepcional nem coluna de justificativa (FA-03).
+
+import { paraInstanteLocal } from "./horario-funcionamento.regra.js";
 
 /** Os sete estados de `estado_agendamento` (`docs/03` §5.1). */
 export type EstadoAgendamento =
@@ -88,6 +90,7 @@ const ORIGENS_FALTA: ReadonlySet<EstadoAgendamento> = new Set<EstadoAgendamento>
  *   - qualquer outro ...... `409 TRANSICAO_INVALIDA`, sem mutação.
  */
 export type DesfechoConfirmacao = "TRANSICIONA" | "NO_OP" | "INVALIDA";
+export type DesfechoMutacaoAgenda = "ADMITE" | "TRANSICAO_INVALIDA" | "FORA_DA_JANELA_TEMPORAL";
 
 export function avaliarConfirmacao(estado: EstadoAgendamento): DesfechoConfirmacao {
   if (ORIGENS_CONFIRMACAO.has(estado)) return "TRANSICIONA";
@@ -113,6 +116,35 @@ export function permiteCheckIn(estado: EstadoAgendamento): boolean {
 /** `true` sse falta é admitida a partir deste estado (AGD-B). */
 export function permiteFalta(estado: EstadoAgendamento): boolean {
   return ORIGENS_FALTA.has(estado);
+}
+
+export function avaliarCheckIn(entrada: {
+  readonly estado: EstadoAgendamento;
+  readonly inicio: Date;
+  readonly agora: Date;
+  readonly fusoHorario: string;
+}): DesfechoMutacaoAgenda {
+  const { estado, inicio, agora, fusoHorario } = entrada;
+  if (!permiteCheckIn(estado)) return "TRANSICAO_INVALIDA";
+  return paraInstanteLocal(inicio, fusoHorario).data === paraInstanteLocal(agora, fusoHorario).data
+    ? "ADMITE"
+    : "FORA_DA_JANELA_TEMPORAL";
+}
+
+export function avaliarFalta(entrada: {
+  readonly estado: EstadoAgendamento;
+  readonly inicio: Date;
+  readonly agora: Date;
+  readonly fusoHorario: string;
+}): DesfechoMutacaoAgenda {
+  const { estado, inicio, agora, fusoHorario } = entrada;
+  if (!permiteFalta(estado)) return "TRANSICAO_INVALIDA";
+  const localInicio = paraInstanteLocal(inicio, fusoHorario);
+  const localAgora = paraInstanteLocal(agora, fusoHorario);
+  const depoisDoInicio =
+    localAgora.data > localInicio.data ||
+    (localAgora.data === localInicio.data && localAgora.msDoDia > localInicio.msDoDia);
+  return depoisDoInicio ? "ADMITE" : "FORA_DA_JANELA_TEMPORAL";
 }
 
 /**
