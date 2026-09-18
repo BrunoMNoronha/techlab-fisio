@@ -20,6 +20,7 @@ import { ApiProperty } from "@nestjs/swagger";
 
 import { analisarInstante } from "../audit/audit-query.dto.js";
 import { ehUuidValido } from "../auth/usuarios.dto.js";
+import type { Validacao } from "./agenda.dto.js";
 
 /**
  * Limites dimensionais e temporais de bloqueios de agenda (docs/19 D-AGDC-03, D-AGDC-04, D-AGDC-07).
@@ -191,9 +192,7 @@ export class ListarBloqueiosRespostaDto {
 // Tipos e Helpers de Validação Pura
 // ---------------------------------------------------------------------------
 
-export type Validacao<T> =
-  | { readonly valido: true; readonly valor: T }
-  | { readonly valido: false };
+export type { Validacao };
 
 const INVALIDO: Validacao<never> = Object.freeze({ valido: false });
 
@@ -357,7 +356,8 @@ const CHAVES_CONSULTA_PERMITIDAS: ReadonlySet<string> = new Set([
 export interface ConsultaBloqueiosValidada {
   readonly de: Date;
   readonly ate: Date;
-  readonly profissionalId?: string;
+  /** `null` quando o cliente não restringiu a um profissional (mesma forma de `FiltroAgenda`). */
+  readonly profissionalId: string | null;
 }
 
 /**
@@ -411,7 +411,7 @@ export function validarConsultaBloqueios(valor: unknown): Validacao<ConsultaBloq
     return INVALIDO;
   }
 
-  let profissionalId: string | undefined = undefined;
+  let profissionalId: string | null = null;
   if (Object.prototype.hasOwnProperty.call(valor, "profissionalId")) {
     const profissionalIdBruto = valor["profissionalId"];
     if (typeof profissionalIdBruto !== "string" || !ehUuidValido(profissionalIdBruto)) {
@@ -425,7 +425,7 @@ export function validarConsultaBloqueios(valor: unknown): Validacao<ConsultaBloq
     valor: {
       de,
       ate,
-      ...(profissionalId !== undefined ? { profissionalId } : {}),
+      profissionalId,
     },
   };
 }

@@ -5,6 +5,7 @@
 // consulta com janela de 7 dias e guardas contra implementação indevida.
 
 import { describe, expect, it } from "@jest/globals";
+import { HttpException, type ArgumentsHost } from "@nestjs/common";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,6 +17,7 @@ import {
   validarConsultaBloqueios,
   validarCriacaoBloqueio,
 } from "../src/agenda/agenda-bloqueios.dto.js";
+import { FiltroErroAgenda } from "../src/agenda/erro-agenda.filter.js";
 
 const UUID_VALIDO = "00000000-0000-7000-8000-000000000001";
 const UUID_VALIDO_2 = "0191f5a0-0000-7000-8000-0000000000b2";
@@ -445,7 +447,7 @@ describe("8.6 Consulta de bloqueios (validarConsultaBloqueios / D-AGDC-07)", () 
     if (res.valido) {
       expect(res.valor.de.toISOString()).toBe("2028-10-15T03:00:00.000Z");
       expect(res.valor.ate.toISOString()).toBe("2028-10-22T03:00:00.000Z");
-      expect(res.valor.profissionalId).toBeUndefined();
+      expect(res.valor.profissionalId).toBeNull();
     }
   });
 
@@ -605,5 +607,33 @@ describe("8.7 Guardas contra implementação indevida e conformidade pura", () =
     const res501 = validarCriacaoBloqueio(corpoBase({ motivo: com501 }));
     // 501 é estritamente rejeitado (false), jamais truncado para 500
     expect(res501.valido).toBe(false);
+  });
+});
+
+describe("FiltroErroAgenda — compatibilidade com ERRO_BLOQUEIO (D-AGDC-13)", () => {
+  function capturar(excecao: unknown): { status: number; corpo: unknown } {
+    const saida = { status: 0, corpo: undefined as unknown };
+    const resposta = {
+      status(codigo: number) {
+        saida.status = codigo;
+        return resposta;
+      },
+      json(corpo: unknown) {
+        saida.corpo = corpo;
+        return corpo;
+      },
+    };
+    const host = {
+      switchToHttp: () => ({ getResponse: () => resposta }),
+    } as unknown as ArgumentsHost;
+    new FiltroErroAgenda().catch(excecao, host);
+    return saida;
+  }
+
+  it.each(Object.values(ERRO_BLOQUEIO))("preserva 422 %s sem reescrever o código", (codigo) => {
+    expect(capturar(new HttpException({ erro: codigo }, 422))).toEqual({
+      status: 422,
+      corpo: { erro: codigo },
+    });
   });
 });

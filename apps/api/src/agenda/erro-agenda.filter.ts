@@ -33,6 +33,7 @@ import { randomUUID } from "node:crypto";
 import { ERRO } from "../auth/auth.dto.js";
 import { ERRO_AUTORIZACAO } from "../authz/erro-autorizacao.js";
 import { ERRO_CLINICA } from "../clinica/clinica.dto.js";
+import { ERRO_BLOQUEIO } from "./agenda-bloqueios.dto.js";
 import { ERRO_AGENDAMENTO } from "./agenda.dto.js";
 import { ERRO_AGENDA } from "./verificador-horario-funcionamento.js";
 
@@ -42,6 +43,7 @@ const CODIGOS_CONHECIDOS: ReadonlySet<string> = new Set([
   ...Object.values(ERRO_CLINICA),
   ...Object.values(ERRO_AGENDA),
   ...Object.values(ERRO_AGENDAMENTO),
+  ...Object.values(ERRO_BLOQUEIO),
 ]);
 
 interface RespostaEscrevivel {
