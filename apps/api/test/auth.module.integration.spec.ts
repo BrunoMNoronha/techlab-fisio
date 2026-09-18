@@ -242,7 +242,7 @@ describe("AuthModule — fronteira da F1+F2+F3 preservada", () => {
     expect(imports ?? []).toEqual([DatabaseModule, AuditModule]);
   });
 
-  it("as rotas expostas pela aplicação são SÓ as da F3, F6, P-2.3D-07, AUT-005, P-2.3D-10, CFG-001A, CFG-002, AUD-004, CFG-003, CFG-004, CFG-005, PAC-A e PRO-A", () => {
+  it("as rotas expostas pela aplicação são SÓ as da F3, F6, P-2.3D-07, AUT-005, P-2.3D-10, CFG-001A, CFG-002, AUD-004, CFG-003, CFG-004, CFG-005, PAC-A, PRO-A e AGD-B", () => {
     // Prova de fronteira contra o ROUTER real, e não contra metadados: se um
     // endpoint de F4+ (agenda, refresh)
     // entrar acidentalmente no `AppModule`, esta asserção falha.
@@ -262,8 +262,10 @@ describe("AuthModule — fronteira da F1+F2+F3 preservada", () => {
       "/agenda/opcoes",
       "/agendamentos",
       "/agendamentos/{agendamentoId}",
+      "/agendamentos/{agendamentoId}/check-in",
       "/agendamentos/{agendamentoId}/cancelamento",
       "/agendamentos/{agendamentoId}/confirmacao",
+      "/agendamentos/{agendamentoId}/falta",
       "/agendamentos/{agendamentoId}/remarcacao",
       "/auditoria/eventos",
       "/auth/login",

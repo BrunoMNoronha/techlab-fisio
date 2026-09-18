@@ -149,8 +149,10 @@ try {
         "/agenda/opcoes",
         "/agendamentos",
         "/agendamentos/{agendamentoId}",
+        "/agendamentos/{agendamentoId}/check-in",
         "/agendamentos/{agendamentoId}/cancelamento",
         "/agendamentos/{agendamentoId}/confirmacao",
+        "/agendamentos/{agendamentoId}/falta",
         "/agendamentos/{agendamentoId}/remarcacao",
         "/auditoria/eventos",
         "/auth/login",
@@ -427,14 +429,16 @@ try {
     `metodos=${metodosDisponibilidade}`,
   );
 
-  // AGD-A — agenda (docs/15 D-AGD-05, D-AGD-13, D-AGD-14). Sem DELETE, sem PUT
+  // AGD-A/AGD-B — agenda (docs/15 D-AGD-05, D-AGD-13, D-AGD-14). Sem DELETE, sem PUT
   // e sem PATCH: agendamento nunca é removido (RN-017) e toda transição é POST
   // em sub-recurso próprio.
   for (const [caminho, metodo, esperado] of [
     ["/agendamentos", "get", "200,400,401,403,500"],
     ["/agendamentos", "post", "201,400,401,403,404,409,413,422,500"],
     ["/agendamentos/{agendamentoId}", "get", "200,400,401,403,404,500"],
+    ["/agendamentos/{agendamentoId}/check-in", "post", "200,400,401,403,404,409,413,422,500"],
     ["/agendamentos/{agendamentoId}/confirmacao", "post", "200,400,401,403,404,409,413,500"],
+    ["/agendamentos/{agendamentoId}/falta", "post", "200,400,401,403,404,409,413,422,500"],
     ["/agendamentos/{agendamentoId}/remarcacao", "post", "200,400,401,403,404,409,413,422,500"],
     ["/agendamentos/{agendamentoId}/cancelamento", "post", "200,400,401,403,404,409,413,422,500"],
     ["/agenda/opcoes", "get", "200,401,403,404,500"],
@@ -450,7 +454,9 @@ try {
       "/agenda/opcoes",
       "/agendamentos",
       "/agendamentos/{agendamentoId}",
+      "/agendamentos/{agendamentoId}/check-in",
       "/agendamentos/{agendamentoId}/confirmacao",
+      "/agendamentos/{agendamentoId}/falta",
       "/agendamentos/{agendamentoId}/remarcacao",
       "/agendamentos/{agendamentoId}/cancelamento",
     ].every(
@@ -480,6 +486,25 @@ try {
     opcaoServico === "duracaoMin,id,nome",
     `propriedades=${opcaoServico}`,
   );
+  for (const caminho of ["/agendamentos/{agendamentoId}/check-in", "/agendamentos/{agendamentoId}/falta"]) {
+    const parametroId = (documento.paths[caminho]?.post?.parameters ?? []).find(
+      (p) => p?.in === "path" && p?.name === "agendamentoId",
+    );
+    conferir(
+      `${caminho} documenta agendamentoId como UUID obrigatório`,
+      parametroId?.required === true && parametroId?.schema?.format === "uuid",
+      `parametro=${JSON.stringify(parametroId ?? null)}`,
+    );
+
+    const schema = documento.paths[caminho]?.post?.requestBody?.content?.["application/json"]?.schema;
+    conferir(
+      `${caminho} documenta corpo estrito vazio`,
+      schema?.type === "object" &&
+        schema?.additionalProperties === false &&
+        JSON.stringify(schema?.properties ?? {}) === "{}",
+      `schema=${JSON.stringify(schema ?? null)}`,
+    );
+  }
 
   const statusLogin = Object.keys(documento.paths["/auth/login"]?.post?.responses ?? {})
     .sort()

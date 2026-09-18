@@ -14,9 +14,9 @@
 // SÓ da sessão.
 //
 // **SEM `DELETE`** — agendamento nunca é removido (RN-017; `historico_agendamento`
-// é append-only). **SEM rotas de AGD-B/C/D/E**: não há check-in, falta,
-// bloqueio, pacote, início nem conclusão de atendimento nesta fatia, e o corpo
-// da criação não aceita `modalidade` nem `pacoteId`.
+// é append-only). **NESTE CONTROLLER** não há bloqueio, pacote, início nem
+// conclusão de atendimento; o corpo da criação não aceita `modalidade` nem
+// `pacoteId`.
 //
 // Erros normalizados para `{ erro }` por `FiltroErroAgenda`.
 
