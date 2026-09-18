@@ -1,4 +1,4 @@
-// TechLab Fisio — módulo da agenda (M5, fatias AGD-A/AGD-B; `docs/15`).
+// TechLab Fisio — módulo da agenda (M5, fatia AGD-A; `docs/15` D-AGD-01).
 //
 // Este é o CONSUMIDOR que faltava aos dois verificadores já entregues por
 // CFG-002 e PRO-003: `VerificadorHorarioFuncionamento` e
@@ -16,9 +16,11 @@
 // `ProtecaoCsrfGuard` é provida no injetor do módulo do controller, como nos
 // demais módulos com mutação.
 //
-// O QUE ESTE MÓDULO NÃO CONTÉM, e nenhuma linha dele prepara: criação ou
-// remoção de bloqueio (AGD-C), modalidade `PACOTE` e `reserva_sessao` (AGD-D),
-// início e conclusão de atendimento (AGD-E),
+// AGD-A e AGD-B já estão materializadas neste módulo.
+//
+// O QUE ESTE MÓDULO NÃO CONTÉM, e nenhuma linha dele prepara: criação ou remoção
+// de bloqueio (AGD-C), modalidade `PACOTE` e
+// `reserva_sessao` (AGD-D), início e conclusão de atendimento (AGD-E),
 // recorrência, notificações, lista de espera, agendamento público e sugestão
 // automática de horários (`D-AGD-17`, TLF-BASE §13).
 

@@ -128,7 +128,7 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
       "/agendamentos",
       "/agendamentos/{agendamentoId}",
       "/agendamentos/{agendamentoId}/cancelamento",
-      "/agendamentos/{agendamentoId}/checkin",
+      "/agendamentos/{agendamentoId}/check-in",
       "/agendamentos/{agendamentoId}/confirmacao",
       "/agendamentos/{agendamentoId}/falta",
       "/agendamentos/{agendamentoId}/remarcacao",
@@ -165,13 +165,15 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
     ]);
     // PAC-A (`docs/17` D-PAC-02) autorizou /pacientes: o termo saiu desta lista por
     // DECISÃO, e a igualdade exata acima continua barrando qualquer outra rota.
-    // AGD-A/AGD-B (`docs/15`) autorizaram /agendamentos e /agenda/opcoes:
-    // "agenda" saiu desta lista pela mesma razão, e os termos de AGD-C/AGD-D/
-    // AGD-E entraram no lugar — a fatia seguinte não pode vazar por descuido.
+    // AGD-A (`docs/15` D-AGD-05, D-AGD-13) autorizou /agendamentos e
+    // /agenda/opcoes: "agenda" saiu desta lista pela mesma razão, e os termos de
+    // AGD-B/AGD-C/AGD-D/AGD-E entraram no lugar — a fatia seguinte não pode
+    // vazar por descuido.
     for (const proibido of [
       "papeis",
       "permissoes",
       "refresh",
+      "checkin",
       "bloqueio",
       "pacotes",
       "atendimento",
@@ -1084,7 +1086,9 @@ describe("AGD-A — contratos da agenda (docs/15)", () => {
     ["/agendamentos", "get", ["200", "400", "401", "403", "500"]],
     ["/agendamentos", "post", ["201", "400", "401", "403", "404", "409", "413", "422", "500"]],
     ["/agendamentos/{agendamentoId}", "get", ["200", "400", "401", "403", "404", "500"]],
+    ["/agendamentos/{agendamentoId}/check-in", "post", ["200", "400", "401", "403", "404", "409", "413", "422", "500"]],
     ["/agendamentos/{agendamentoId}/confirmacao", "post", ["200", "400", "401", "403", "404", "409", "413", "500"]],
+    ["/agendamentos/{agendamentoId}/falta", "post", ["200", "400", "401", "403", "404", "409", "413", "422", "500"]],
     ["/agendamentos/{agendamentoId}/remarcacao", "post", ["200", "400", "401", "403", "404", "409", "413", "422", "500"]],
     ["/agendamentos/{agendamentoId}/cancelamento", "post", ["200", "400", "401", "403", "404", "409", "413", "422", "500"]],
     ["/agenda/opcoes", "get", ["200", "401", "403", "404", "500"]],
@@ -1101,7 +1105,9 @@ describe("AGD-A — contratos da agenda (docs/15)", () => {
       "/agenda/opcoes",
       "/agendamentos",
       "/agendamentos/{agendamentoId}",
+      "/agendamentos/{agendamentoId}/check-in",
       "/agendamentos/{agendamentoId}/confirmacao",
+      "/agendamentos/{agendamentoId}/falta",
       "/agendamentos/{agendamentoId}/remarcacao",
       "/agendamentos/{agendamentoId}/cancelamento",
     ]) {
