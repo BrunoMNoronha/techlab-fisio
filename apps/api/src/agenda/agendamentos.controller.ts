@@ -379,7 +379,12 @@ export class AgendamentosController {
   @ApiResponse({ status: 400, description: "Identificador ou payload inválidos.", type: ErroAgendamentoDto })
   @ApiResponse({ status: 401, description: "Sessão ausente ou inválida.", type: ErroAgendamentoDto })
   @ApiResponse({ status: 403, description: "Sem a permissão agenda.checkin ou falha na validação CSRF.", type: ErroAgendamentoDto })
-  @ApiResponse({ status: 404, description: "Inexistente, fora do escopo ou clínica não provisionada.", type: ErroAgendamentoDto })
+  @ApiResponse({
+    status: 404,
+    description:
+      "Inexistente ou fora do escopo (AGENDAMENTO_NAO_ENCONTRADO) ou clínica não provisionada (CLINICA_NAO_CONFIGURADA).",
+    type: ErroAgendamentoDto,
+  })
   @ApiResponse({ status: 409, description: "Transição não admitida (TRANSICAO_INVALIDA).", type: ErroAgendamentoDto })
   @ApiResponse({ status: 413, description: "Corpo de requisição acima do limite permitido.", type: ErroAgendamentoDto })
   @ApiResponse({ status: 422, description: "Fora da janela temporal (FORA_DA_JANELA_TEMPORAL).", type: ErroAgendamentoDto })
@@ -423,7 +428,12 @@ export class AgendamentosController {
   @ApiResponse({ status: 400, description: "Identificador ou payload inválidos.", type: ErroAgendamentoDto })
   @ApiResponse({ status: 401, description: "Sessão ausente ou inválida.", type: ErroAgendamentoDto })
   @ApiResponse({ status: 403, description: "Sem a permissão agenda.falta ou falha na validação CSRF.", type: ErroAgendamentoDto })
-  @ApiResponse({ status: 404, description: "Inexistente, fora do escopo ou clínica não provisionada.", type: ErroAgendamentoDto })
+  @ApiResponse({
+    status: 404,
+    description:
+      "Inexistente ou fora do escopo (AGENDAMENTO_NAO_ENCONTRADO) ou clínica não provisionada (CLINICA_NAO_CONFIGURADA).",
+    type: ErroAgendamentoDto,
+  })
   @ApiResponse({ status: 409, description: "Transição não admitida (TRANSICAO_INVALIDA).", type: ErroAgendamentoDto })
   @ApiResponse({ status: 413, description: "Corpo de requisição acima do limite permitido.", type: ErroAgendamentoDto })
   @ApiResponse({ status: 422, description: "Fora da janela temporal (FORA_DA_JANELA_TEMPORAL).", type: ErroAgendamentoDto })
