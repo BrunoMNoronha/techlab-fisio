@@ -137,14 +137,9 @@ export function avaliarFalta(entrada: {
   readonly agora: Date;
   readonly fusoHorario: string;
 }): DesfechoMutacaoAgenda {
-  const { estado, inicio, agora, fusoHorario } = entrada;
+  const { estado, inicio, agora } = entrada;
   if (!permiteFalta(estado)) return "TRANSICAO_INVALIDA";
-  const localInicio = paraInstanteLocal(inicio, fusoHorario);
-  const localAgora = paraInstanteLocal(agora, fusoHorario);
-  const depoisDoInicio =
-    localAgora.data > localInicio.data ||
-    (localAgora.data === localInicio.data && localAgora.msDoDia > localInicio.msDoDia);
-  return depoisDoInicio ? "ADMITE" : "FORA_DA_JANELA_TEMPORAL";
+  return agora.getTime() > inicio.getTime() ? "ADMITE" : "FORA_DA_JANELA_TEMPORAL";
 }
 
 /**

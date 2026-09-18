@@ -168,6 +168,17 @@ describe("D-AGD-06 / D-AGD-07 — origens de remarcação e cancelamento", () =>
         }),
       ).toBe("ADMITE");
     });
+
+    it("falta compara instantes reais quando o horário de verão repete a hora local", () => {
+      expect(
+        avaliarFalta({
+          estado: "CONFIRMADO",
+          inicio: new Date("2026-11-01T05:30:00.000Z"),
+          agora: new Date("2026-11-01T06:15:00.000Z"),
+          fusoHorario: NY,
+        }),
+      ).toBe("ADMITE");
+    });
   });
 
   it("`AGUARDANDO -> CANCELADO` NÃO é oferecido em AGD-A (P-AGD-02)", () => {
