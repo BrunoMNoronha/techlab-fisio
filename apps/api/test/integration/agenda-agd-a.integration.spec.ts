@@ -15,7 +15,7 @@
 import { randomUUID } from "node:crypto";
 
 import { Test } from "@nestjs/testing";
-import { afterAll, beforeAll, describe, expect, it, jest } from "@jest/globals";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import type { INestApplication } from "@nestjs/common";
 import type { TestingModule } from "@nestjs/testing";
 
@@ -168,13 +168,14 @@ type Metodo = "GET" | "POST";
 async function requisitar(
   metodo: Metodo,
   caminho: string,
-  opcoes: { cookie?: string; corpo?: unknown; csrf?: boolean } = {},
+  opcoes: { cookie?: string; corpo?: unknown; csrf?: boolean; cabecalhos?: Record<string, string> } = {},
 ): Promise<RespostaHttp> {
   const headers: Record<string, string> = {
     "sec-fetch-site": "same-origin",
     "sec-fetch-mode": "cors",
     "sec-fetch-dest": "empty",
     ...(opcoes.cookie ? { cookie: opcoes.cookie } : {}),
+    ...(opcoes.cabecalhos ?? {}),
   };
   const mutacao = metodo !== "GET";
   if (mutacao) {
@@ -282,6 +283,15 @@ async function darPapelSemPermissao(usuarioId: string, codigoPapel: string): Pro
 async function cookieDe(usuarioId: string): Promise<string> {
   const emitida = await sessoes.emitir({ usuarioId });
   return `${politicaCookie.nome}=${emitida.token}`;
+}
+
+async function sessaoDe(usuarioId: string): Promise<{ cookie: string; token: string; sessaoId: string }> {
+  const emitida = await sessoes.emitir({ usuarioId });
+  return {
+    sessaoId: emitida.sessaoId,
+    token: emitida.token,
+    cookie: `${politicaCookie.nome}=${emitida.token}`,
+  };
 }
 
 async function ator(codigoPapel: string, permissao = "agenda.gerenciar"): Promise<{ id: string; cookie: string }> {
@@ -440,6 +450,7 @@ interface LinhaHistorico {
   fim_novo: Date | null;
   ator_usuario_id: string;
   motivo_cancelamento_id: string | null;
+  ocorrido_em: Date;
 }
 
 async function historicos(): Promise<LinhaHistorico[]> {
@@ -447,7 +458,7 @@ async function historicos(): Promise<LinhaHistorico[]> {
     tx.$queryRaw<LinhaHistorico[]>`
       SELECT id, agendamento_id, operacao, estado_anterior::text AS estado_anterior,
              estado_novo::text AS estado_novo, inicio_anterior, fim_anterior, inicio_novo, fim_novo,
-             ator_usuario_id, motivo_cancelamento_id
+             ator_usuario_id, motivo_cancelamento_id, ocorrido_em
         FROM historico_agendamento ORDER BY ocorrido_em, id`,
   );
 }
@@ -474,6 +485,24 @@ async function eventos(): Promise<LinhaEvento[]> {
 
 async function eventosDaAgenda(): Promise<LinhaEvento[]> {
   return (await eventos()).filter((e) => e.acao.startsWith("agendamento."));
+}
+
+/** Ajuste sintético atômico: preserva intervalo válido mesmo ao trocar o dia. */
+async function ajustarAgendamento(
+  agendamentoId: string,
+  patch: { estado?: string; inicio?: Date; fim?: Date },
+): Promise<void> {
+  await database.transacao(async (tx) => {
+    const inicio = patch.inicio ?? null;
+    const fim = patch.fim ?? (inicio === null ? null : new Date(inicio.getTime() + 50 * 60_000));
+    await tx.$executeRaw`
+      UPDATE agendamento
+         SET estado = COALESCE(${patch.estado ?? null}::estado_agendamento, estado),
+             inicio = COALESCE(${inicio}::timestamptz, inicio),
+             fim = COALESCE(${fim}::timestamptz, fim)
+       WHERE id = ${agendamentoId}::uuid
+    `;
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -1952,4 +1981,445 @@ describe("Fronteira da fatia (D-AGD-01, D-AGD-17)", () => {
     expect(res.status).toBe(404);
     expect(await agendamentos()).toHaveLength(1);
   });
+});
+
+// ---------------------------------------------------------------------------
+// AGD-B — check-in e falta
+// ---------------------------------------------------------------------------
+
+describe("AGD-B — estados, tempo, segurança, histórico e concorrência", () => {
+  // Só Date é congelado; rede, PostgreSQL e timers continuam reais.
+  beforeEach(() => {
+    jest.useFakeTimers({
+      now: instante(partesLocais(new Date()).data, "12:00"),
+      doNotFake: ["hrtime", "nextTick", "performance", "queueMicrotask", "setImmediate",
+        "clearImmediate", "setInterval", "clearInterval", "setTimeout", "clearTimeout"],
+    });
+  });
+  afterEach(() => { jest.useRealTimers(); });
+
+  async function checkin(
+    agendamentoId: string,
+    cookie: string,
+    opcoes: { corpo?: unknown; csrf?: boolean; cabecalhos?: Record<string, string> } = {},
+  ): Promise<RespostaHttp> {
+    return requisitar("POST", `${AGENDAMENTOS}/${agendamentoId}/check-in`, {
+      cookie,
+      corpo: opcoes.corpo ?? {},
+      csrf: opcoes.csrf,
+      cabecalhos: opcoes.cabecalhos,
+    });
+  }
+
+  async function falta(
+    agendamentoId: string,
+    cookie: string,
+    opcoes: { corpo?: unknown; csrf?: boolean; cabecalhos?: Record<string, string> } = {},
+  ): Promise<RespostaHttp> {
+    return requisitar("POST", `${AGENDAMENTOS}/${agendamentoId}/falta`, {
+      cookie,
+      corpo: opcoes.corpo ?? {},
+      csrf: opcoes.csrf,
+      cabecalhos: opcoes.cabecalhos,
+    });
+  }
+
+  it("check-in: AGENDADO e CONFIRMADO são aceitos; histórico exato e zero auditoria", async () => {
+    const c = await montarCenario();
+    const operador = await ator("RECEPCIONISTA", "agenda.checkin");
+    const hoje = partesLocais(new Date()).data;
+    const agendado = await criar(c);
+    await ajustarAgendamento(agendado.id, { inicio: instante(hoje, "08:00") });
+    const confirmado = await criar(
+      c,
+      {
+        inicio: iso(SEGUNDA, "09:00"),
+        fim: iso(SEGUNDA, "09:50"),
+        pacienteId: c.paciente2Id,
+        profissionalId: c.profissional2Id,
+      },
+      c.admin.cookie,
+    );
+    await requisitar("POST", `${AGENDAMENTOS}/${confirmado.id}/confirmacao`, { cookie: c.admin.cookie, corpo: {} });
+
+    await ajustarAgendamento(confirmado.id, { inicio: instante(hoje, "09:00") });
+    const um = await checkin(agendado.id, operador.cookie);
+    const dois = await checkin(confirmado.id, operador.cookie);
+    expect(um.status).toBe(200);
+    expect(dois.status).toBe(200);
+    expect(um.body.estado).toBe("AGUARDANDO");
+    expect(dois.body.estado).toBe("AGUARDANDO");
+
+    const hist = await historicos();
+    const checkins = hist.filter((h) => h.operacao === "CHECKIN");
+    expect(checkins).toHaveLength(2);
+    expect(checkins.map((h) => h.estado_anterior).sort()).toEqual(["AGENDADO", "CONFIRMADO"]);
+    for (const linha of checkins) {
+      expect(linha.estado_novo).toBe("AGUARDANDO");
+      expect(linha.ator_usuario_id).toBe(operador.id);
+      expect(linha.ocorrido_em).toEqual(new Date());
+      expect(linha.inicio_anterior).toBeNull();
+      expect(linha.inicio_novo).toBeNull();
+      expect(linha.fim_anterior).toBeNull();
+      expect(linha.fim_novo).toBeNull();
+      expect(linha.motivo_cancelamento_id).toBeNull();
+    }
+    expect(await eventosDaAgenda()).toHaveLength(2);
+  });
+
+  it("falta: AGENDADO e CONFIRMADO aceitos somente depois do início; sem auditoria adicional", async () => {
+    const c = await montarCenario();
+    const operador = await ator("ADMINISTRADOR", "agenda.falta");
+    const um = await criar(c, { inicio: iso(SEGUNDA, "10:00"), fim: iso(SEGUNDA, "10:50") });
+    const dois = await criar(c, {
+      inicio: iso(SEGUNDA, "11:00"),
+      fim: iso(SEGUNDA, "11:50"),
+      pacienteId: c.paciente2Id,
+      profissionalId: c.profissional2Id,
+    });
+    await requisitar("POST", `${AGENDAMENTOS}/${dois.id}/confirmacao`, { cookie: c.admin.cookie, corpo: {} });
+    await ajustarAgendamento(um.id, {
+      inicio: new Date(Date.now() - 120_000),
+      fim: new Date(Date.now() + 2_880_000),
+    });
+    await ajustarAgendamento(dois.id, {
+      inicio: new Date(Date.now() - 120_000),
+      fim: new Date(Date.now() + 2_880_000),
+    });
+
+    const r1 = await falta(um.id, operador.cookie);
+    const r2 = await falta(dois.id, operador.cookie);
+    expect(r1.status).toBe(200);
+    expect(r2.status).toBe(200);
+    expect(r1.body.estado).toBe("FALTA");
+    expect(r2.body.estado).toBe("FALTA");
+
+    const linhas = (await historicos()).filter((h) => h.operacao === "FALTA");
+    expect(linhas).toHaveLength(2);
+    expect(linhas.map((h) => h.estado_anterior).sort()).toEqual(["AGENDADO", "CONFIRMADO"]);
+    for (const linha of linhas) {
+      expect(linha.estado_novo).toBe("FALTA");
+      expect(linha.ator_usuario_id).toBe(operador.id);
+    }
+    expect(await eventosDaAgenda()).toHaveLength(2);
+  });
+
+  it("check-in repetido, AGUARDANDO->FALTA e estados terminais retornam 409 TRANSICAO_INVALIDA", async () => {
+    const c = await montarCenario();
+    const checkinOp = await ator("RECEPCIONISTA", "agenda.checkin");
+    const faltaOp = await ator("ADMINISTRADOR", "agenda.falta");
+    const hoje = partesLocais(new Date()).data;
+    const alvo = await criar(c);
+    await ajustarAgendamento(alvo.id, { inicio: instante(hoje, "08:00") });
+
+    const primeiro = await checkin(alvo.id, checkinOp.cookie);
+    const repetido = await checkin(alvo.id, checkinOp.cookie);
+    const aguardandoFalta = await falta(alvo.id, faltaOp.cookie);
+    expect(primeiro.status).toBe(200);
+    expect(repetido.status).toBe(409);
+    expect(aguardandoFalta.status).toBe(409);
+    expect(repetido.body).toEqual({ erro: ERRO_AGENDAMENTO.TRANSICAO_INVALIDA });
+    expect(aguardandoFalta.body).toEqual({ erro: ERRO_AGENDAMENTO.TRANSICAO_INVALIDA });
+
+    for (const [indice, estado] of (["EM_ATENDIMENTO", "CONCLUIDO", "FALTA", "CANCELADO"] as const).entries()) {
+      const hora = String(8 + indice).padStart(2, "0");
+      const extra = await criar(c, {
+        pacienteId: c.paciente2Id,
+        inicio: iso(SEGUNDA, `${hora}:00`),
+        fim: iso(SEGUNDA, `${hora}:50`),
+      });
+      if (estado === "CANCELADO") {
+        const cancelado = await requisitar("POST", `${AGENDAMENTOS}/${extra.id}/cancelamento`, {
+          cookie: c.admin.cookie, corpo: { motivoCancelamentoId: c.motivoId },
+        });
+        expect(cancelado.status).toBe(200);
+      } else {
+        await ajustarAgendamento(extra.id, { estado });
+      }
+      const rc = await checkin(extra.id, checkinOp.cookie);
+      const rf = await falta(extra.id, faltaOp.cookie);
+      expect(rc.status).toBe(409);
+      expect(rf.status).toBe(409);
+      expect(rc.body).toEqual({ erro: ERRO_AGENDAMENTO.TRANSICAO_INVALIDA });
+      expect(rf.body).toEqual({ erro: ERRO_AGENDAMENTO.TRANSICAO_INVALIDA });
+    }
+    // Uma aceitação inicial e nenhuma auditoria AGD-B.
+    expect((await historicos()).filter((h) => h.operacao === "CHECKIN")).toHaveLength(1);
+    expect((await historicos()).filter((h) => h.operacao === "FALTA")).toHaveLength(0);
+    expect(await eventosDaAgenda()).toHaveLength(6);
+  });
+
+  it("quando estado e tempo são inválidos ao mesmo tempo, prevalece 409 TRANSICAO_INVALIDA", async () => {
+    const c = await montarCenario();
+    const faltaOp = await ator("ADMINISTRADOR", "agenda.falta");
+    const alvo = await criar(c);
+    await ajustarAgendamento(alvo.id, {
+      estado: "AGUARDANDO",
+      inicio: new Date(Date.now() + 10 * 60_000),
+    });
+    const res = await falta(alvo.id, faltaOp.cookie);
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ erro: ERRO_AGENDAMENTO.TRANSICAO_INVALIDA });
+    expect((await historicos()).map((h) => h.operacao)).toEqual(["CRIADO"]);
+    expect(await eventosDaAgenda()).toHaveLength(1);
+  });
+
+  it("check-in compara data civil local no fuso da clínica (não a data UTC)", async () => {
+    const c = await montarCenario();
+    const op = await ator("RECEPCIONISTA", "agenda.checkin");
+    const agora = new Date();
+    const dataLocalAtual = partesLocais(agora).data;
+    const diaUtcAtual = agora.toISOString().slice(0, 10);
+
+    const candidatoMesmoLocal = [instante(dataLocalAtual, "00:30"), instante(dataLocalAtual, "23:30")].find(
+      (d) => d.toISOString().slice(0, 10) !== diaUtcAtual,
+    );
+    if (candidatoMesmoLocal === undefined) throw new Error("Falha ao montar cenário UTC/local.");
+    const mesmoDiaLocalUtcDiferente = await criar(c, { inicio: iso(SEGUNDA, "08:00"), fim: iso(SEGUNDA, "08:50") });
+    await ajustarAgendamento(mesmoDiaLocalUtcDiferente.id, { inicio: candidatoMesmoLocal });
+    const ok = await checkin(mesmoDiaLocalUtcDiferente.id, op.cookie);
+    expect(ok.status).toBe(200);
+
+    const candidatoMesmoUtcLocalDiferente = [
+      new Date(`${diaUtcAtual}T02:00:00.000Z`),
+      new Date(`${diaUtcAtual}T04:00:00.000Z`),
+    ].find((d) => partesLocais(d).data !== dataLocalAtual);
+    if (candidatoMesmoUtcLocalDiferente === undefined) throw new Error("Falha ao montar cenário de fronteira local.");
+    const diaLocalDiferenteUtcProximo = await criar(c, {
+      pacienteId: c.paciente2Id,
+      profissionalId: c.profissional2Id,
+      inicio: iso(SEGUNDA, "09:00"),
+      fim: iso(SEGUNDA, "09:50"),
+    });
+    await ajustarAgendamento(diaLocalDiferenteUtcProximo.id, { inicio: candidatoMesmoUtcLocalDiferente });
+    const invalido = await checkin(diaLocalDiferenteUtcProximo.id, op.cookie);
+    expect(invalido.status).toBe(422);
+    expect(invalido.body).toEqual({ erro: ERRO_AGENDAMENTO.FORA_DA_JANELA_TEMPORAL });
+    expect((await historicos()).filter((h) => h.agendamento_id === diaLocalDiferenteUtcProximo.id)).toHaveLength(1);
+    expect(await eventosDaAgenda()).toHaveLength(2);
+  });
+
+  it("falta: antes do início rejeita e depois do início aceita (sem janela artificial)", async () => {
+    const c = await montarCenario();
+    const op = await ator("ADMINISTRADOR", "agenda.falta");
+    const alvo = await criar(c);
+
+    await ajustarAgendamento(alvo.id, { inicio: new Date(Date.now() + 60_000) });
+    const antes = await falta(alvo.id, op.cookie);
+    expect(antes.status).toBe(422);
+    expect(antes.body).toEqual({ erro: ERRO_AGENDAMENTO.FORA_DA_JANELA_TEMPORAL });
+    expect(await historicos()).toHaveLength(1);
+    expect(await eventosDaAgenda()).toHaveLength(1);
+
+    await ajustarAgendamento(alvo.id, { inicio: new Date() });
+    const exato = await falta(alvo.id, op.cookie);
+    expect(exato.status).toBe(422);
+    expect(exato.body).toEqual({ erro: ERRO_AGENDAMENTO.FORA_DA_JANELA_TEMPORAL });
+    expect(await historicos()).toHaveLength(1);
+    expect(await eventosDaAgenda()).toHaveLength(1);
+
+    await ajustarAgendamento(alvo.id, { inicio: new Date(Date.now() - 1) });
+    const depois = await falta(alvo.id, op.cookie);
+    expect(depois.status).toBe(200);
+  });
+
+  it.each([-1, 1])("check-in fora do dia local: deslocamento %i retorna 422 sem mutação", async (dias) => {
+    const c = await montarCenario();
+    const op = await ator("RECEPCIONISTA", "agenda.checkin");
+    const alvo = await criar(c);
+    await ajustarAgendamento(alvo.id, { inicio: new Date(Date.now() + dias * 86_400_000) });
+    const antes = await agendamentos();
+    const res = await checkin(alvo.id, op.cookie);
+    expect(res.status).toBe(422);
+    expect(res.body).toEqual({ erro: ERRO_AGENDAMENTO.FORA_DA_JANELA_TEMPORAL });
+    expect(await agendamentos()).toEqual(antes);
+    expect(await historicos()).toHaveLength(1);
+    expect(await eventosDaAgenda()).toHaveLength(1);
+  });
+
+  it.each(["agenda.checkin", "agenda.falta"] as const)(
+    "escopo usa a permissão efetiva %s, sem herdar alcance de agenda.gerenciar",
+    async (permissao) => {
+      const c = await montarCenario();
+      const usuario = await criarUsuario("escopo-isolado");
+      await darPermissaoPorPapel(usuario, "RECEPCIONISTA", "agenda.gerenciar");
+      await darPermissaoPorPapel(usuario, "FISIOTERAPEUTA", permissao);
+      const sessao = await sessaoDe(usuario);
+      await database.transacao(async (tx) => {
+        await tx.profissional.update({ where: { id: c.profissionalId }, data: { usuarioId: usuario } });
+      });
+      const proprio = await criar(c);
+      const alheio = await criar(c, { pacienteId: c.paciente2Id, profissionalId: c.profissional2Id });
+      for (const alvo of [proprio, alheio]) {
+        await ajustarAgendamento(alvo.id, { inicio: new Date(Date.now() - 60_000) });
+      }
+      const operar = permissao === "agenda.checkin" ? checkin : falta;
+      const negado = await operar(alheio.id, sessao.cookie);
+      expect(negado.status).toBe(404);
+      expect(negado.body).toEqual({ erro: ERRO_AGENDAMENTO.AGENDAMENTO_NAO_ENCONTRADO });
+      expect(await historicos()).toHaveLength(2);
+      expect((await operar(proprio.id, sessao.cookie)).status).toBe(200);
+      expect(await historicos()).toHaveLength(3);
+      expect(await eventosDaAgenda()).toHaveLength(2);
+    },
+  );
+
+  it("RBAC e escopo: permissões isoladas, próprio x alheio (404) e fail-closed sem vínculo", async () => {
+    const c = await montarCenario();
+    const soCheckin = await ator(`ROLE_SO_CHECKIN_${randomUUID().slice(0, 8)}`, "agenda.checkin");
+    const soFalta = await ator(`ROLE_SO_FALTA_${randomUUID().slice(0, 8)}`, "agenda.falta");
+    const fisioUsuario = await criarUsuario("fisio-own");
+    await darPermissaoPorPapel(fisioUsuario, "FISIOTERAPEUTA", "agenda.checkin");
+    const fisioSessao = await sessaoDe(fisioUsuario);
+    const semVinculoUsuario = await criarUsuario("sem-vinculo");
+    await darPermissaoPorPapel(semVinculoUsuario, "FISIOTERAPEUTA", "agenda.checkin");
+    const semVinculo = await sessaoDe(semVinculoUsuario);
+
+    await database.transacao(async (tx) => {
+      await tx.profissional.update({ where: { id: c.profissionalId }, data: { usuarioId: fisioUsuario } });
+    });
+
+    const proprio = await criar(c);
+    const alheio = await criar(c, {
+      pacienteId: c.paciente2Id,
+      profissionalId: c.profissional2Id,
+      inicio: iso(SEGUNDA, "10:00"),
+      fim: iso(SEGUNDA, "10:50"),
+    });
+    await ajustarAgendamento(proprio.id, { inicio: new Date(Date.now() - 60_000), fim: new Date(Date.now() + 3_540_000) });
+    await ajustarAgendamento(alheio.id, { inicio: new Date(Date.now() - 60_000), fim: new Date(Date.now() + 3_540_000) });
+
+    const checkinSemPermissao = await checkin(proprio.id, soFalta.cookie);
+    const faltaSemPermissao = await falta(proprio.id, soCheckin.cookie);
+    expect(checkinSemPermissao.status).toBe(403);
+    expect(faltaSemPermissao.status).toBe(403);
+    expect(checkinSemPermissao.body).toEqual({ erro: ERRO_AUTORIZACAO.ACESSO_NEGADO });
+    expect(faltaSemPermissao.body).toEqual({ erro: ERRO_AUTORIZACAO.ACESSO_NEGADO });
+
+    const proprioOk = await checkin(proprio.id, fisioSessao.cookie);
+    const alheio404 = await checkin(alheio.id, fisioSessao.cookie);
+    const semVinculo404 = await checkin(proprio.id, semVinculo.cookie);
+    expect(proprioOk.status).toBe(200);
+    expect(alheio404.status).toBe(404);
+    expect(semVinculo404.status).toBe(404);
+    expect(alheio404.body).toEqual({ erro: ERRO_AGENDAMENTO.AGENDAMENTO_NAO_ENCONTRADO });
+    expect(semVinculo404.body).toEqual({ erro: ERRO_AGENDAMENTO.AGENDAMENTO_NAO_ENCONTRADO });
+  });
+
+  it.each(["agenda.checkin", "agenda.falta"] as const)("sessão ausente/expirada/revogada e CSRF ausente/inválido seguem precedentes (%s)", async (permissao) => {
+    const operar = permissao === "agenda.checkin" ? checkin : falta;
+    const c = await montarCenario();
+    const op = await ator("ADMINISTRADOR", permissao);
+    const alvo = await criar(c);
+
+    const semSessao = await operar(alvo.id, "");
+    expect(semSessao.status).toBe(401);
+    expect(semSessao.body).toEqual({ erro: ERRO.SESSAO_INVALIDA });
+
+    const expirada = await sessaoDe(op.id);
+    await database.transacao(async (tx) => {
+      await tx.$executeRaw`
+        UPDATE sessao_autenticacao
+           SET estado = 'EXPIRADA', encerrada_em = now()
+         WHERE id = ${expirada.sessaoId}::uuid
+      `;
+    });
+    const r = await operar(alvo.id, expirada.cookie);
+    expect(r.status).toBe(401);
+    expect(r.body).toEqual({ erro: ERRO.SESSAO_INVALIDA });
+
+    const revogada = await sessaoDe(op.id);
+    await sessoes.revogar(revogada.token);
+    const rRevogada = await operar(alvo.id, revogada.cookie);
+    expect(rRevogada.status).toBe(401);
+    expect(rRevogada.body).toEqual({ erro: ERRO.SESSAO_INVALIDA });
+
+    const semCsrf = await operar(alvo.id, op.cookie, { csrf: false });
+    const csrfInvalido = await operar(alvo.id, op.cookie, {
+      cabecalhos: { "sec-fetch-site": "cross-site" },
+    });
+    expect(semCsrf.status).toBe(403);
+    expect(csrfInvalido.status).toBe(403);
+    expect(semCsrf.body).toEqual({ erro: ERRO.REQUISICAO_NAO_AUTORIZADA });
+    expect(csrfInvalido.body).toEqual({ erro: ERRO.REQUISICAO_NAO_AUTORIZADA });
+    expect(await historicos()).toHaveLength(1);
+    expect(await eventosDaAgenda()).toHaveLength(1);
+  });
+
+  it.each(["agenda.checkin", "agenda.falta"] as const)("payload inválido: UUID inválido, corpo extra, corpo não-objeto e payload acima do limite (%s)", async (permissao) => {
+    const operar = permissao === "agenda.checkin" ? checkin : falta;
+    const c = await montarCenario();
+    const op = await ator("ADMINISTRADOR", permissao);
+    const alvo = await criar(c);
+
+    const uuidInvalido = await operar("invalido", op.cookie);
+    const corpoExtra = await operar(alvo.id, op.cookie, { corpo: { extra: true } });
+    const corpoNaoObjeto = await operar(alvo.id, op.cookie, { corpo: "[]" });
+    const grande = await requisitar("POST", `${AGENDAMENTOS}/${alvo.id}/${permissao === "agenda.checkin" ? "check-in" : "falta"}`, {
+      cookie: op.cookie,
+      corpo: `{"x":"${"a".repeat(1_100_000)}"}`,
+    });
+    expect(uuidInvalido.status).toBe(400);
+    expect(corpoExtra.status).toBe(400);
+    expect(corpoNaoObjeto.status).toBe(400);
+    expect(grande.status).toBe(413);
+    expect(uuidInvalido.body).toEqual({ erro: ERRO.REQUISICAO_INVALIDA });
+    expect(corpoExtra.body).toEqual({ erro: ERRO.REQUISICAO_INVALIDA });
+    expect(corpoNaoObjeto.body).toEqual({ erro: ERRO.REQUISICAO_INVALIDA });
+    expect(await historicos()).toHaveLength(1);
+    expect(await eventosDaAgenda()).toHaveLength(1);
+  });
+
+  it.each([
+    ["checkin x checkin", "checkin", "checkin"],
+    ["falta x falta", "falta", "falta"],
+    ["checkin x falta", "checkin", "falta"],
+  ] as const)(
+    "concorrência determinística %s aceita exatamente uma mutação",
+    async (_rotulo, opA, opB) => {
+      const c = await montarCenario();
+      const checkinOp = await ator("ADMINISTRADOR", "agenda.checkin");
+      const faltaOp = await ator("ADMINISTRADOR", "agenda.falta");
+      const alvo = await criar(c);
+      await ajustarAgendamento(alvo.id, {
+        estado: "AGENDADO",
+        inicio: new Date(Date.now() - 60_000),
+        fim: new Date(Date.now() + 3_540_000),
+      });
+
+      let primeira!: Promise<RespostaHttp>;
+      let segunda!: Promise<RespostaHttp>;
+      await database.transacao(async (tx) => {
+        await tx.$queryRaw`SELECT id FROM agendamento WHERE id = ${alvo.id}::uuid FOR UPDATE`;
+        primeira = opA === "checkin" ? checkin(alvo.id, checkinOp.cookie) : falta(alvo.id, faltaOp.cookie);
+        segunda = opB === "checkin" ? checkin(alvo.id, checkinOp.cookie) : falta(alvo.id, faltaOp.cookie);
+        // Libera o lock apenas quando AS DUAS requisições estiverem esperando
+        // no PostgreSQL, provando sobreposição real (não apenas Promise.all).
+        let bloqueadas = 0;
+        for (let tentativa = 0; tentativa < 100; tentativa++) {
+          await tx.$queryRaw`SELECT pg_stat_clear_snapshot()::text`;
+          const linhas = await tx.$queryRaw<Array<{ total: number }>>`
+            SELECT count(*)::int AS total FROM pg_stat_activity
+             WHERE datname = current_database() AND usename = current_user
+               AND pid <> pg_backend_pid() AND wait_event_type = 'Lock'
+               AND query LIKE '%FROM agendamento%'
+          `;
+          bloqueadas = linhas[0]?.total ?? 0;
+          if (bloqueadas === 2) break;
+          await new Promise((resolve) => setTimeout(resolve, 20));
+        }
+        expect(bloqueadas).toBe(2);
+      });
+
+      const [a, b] = await Promise.all([primeira, segunda]);
+      const status = [a.status, b.status].sort();
+      expect(status).toEqual([200, 409]);
+      const perdedor = a.status === 409 ? a : b;
+      expect(perdedor.body).toEqual({ erro: ERRO_AGENDAMENTO.TRANSICAO_INVALIDA });
+      const hist = (await historicos()).filter((h) => h.agendamento_id === alvo.id);
+      const agdB = hist.filter((h) => h.operacao === "CHECKIN" || h.operacao === "FALTA");
+      expect(agdB).toHaveLength(1);
+      expect(await eventosDaAgenda()).toHaveLength(1);
+    },
+  );
 });
