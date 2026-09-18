@@ -168,13 +168,14 @@ type Metodo = "GET" | "POST";
 async function requisitar(
   metodo: Metodo,
   caminho: string,
-  opcoes: { cookie?: string; corpo?: unknown; csrf?: boolean } = {},
+  opcoes: { cookie?: string; corpo?: unknown; csrf?: boolean; cabecalhos?: Record<string, string> } = {},
 ): Promise<RespostaHttp> {
   const headers: Record<string, string> = {
     "sec-fetch-site": "same-origin",
     "sec-fetch-mode": "cors",
     "sec-fetch-dest": "empty",
     ...(opcoes.cookie ? { cookie: opcoes.cookie } : {}),
+    ...(opcoes.cabecalhos ?? {}),
   };
   const mutacao = metodo !== "GET";
   if (mutacao) {
@@ -278,6 +279,15 @@ async function darPapelSemPermissao(usuarioId: string, codigoPapel: string): Pro
 async function cookieDe(usuarioId: string): Promise<string> {
   const emitida = await sessoes.emitir({ usuarioId });
   return `${politicaCookie.nome}=${emitida.token}`;
+}
+
+async function sessaoDe(usuarioId: string): Promise<{ cookie: string; token: string; sessaoId: string }> {
+  const emitida = await sessoes.emitir({ usuarioId });
+  return {
+    sessaoId: emitida.sessaoId,
+    token: emitida.token,
+    cookie: `${politicaCookie.nome}=${emitida.token}`,
+  };
 }
 
 async function ator(codigoPapel: string, permissao = "agenda.gerenciar"): Promise<{ id: string; cookie: string }> {
@@ -455,6 +465,46 @@ async function eventos(): Promise<LinhaEvento[]> {
 
 async function eventosDaAgenda(): Promise<LinhaEvento[]> {
   return (await eventos()).filter((e) => e.acao.startsWith("agendamento."));
+}
+
+async function ajustarAgendamento(
+  agendamentoId: string,
+  patch: { estado?: string; inicio?: Date; fim?: Date; profissionalId?: string },
+): Promise<void> {
+  if (
+    patch.estado === undefined &&
+    patch.inicio === undefined &&
+    patch.fim === undefined &&
+    patch.profissionalId === undefined
+  ) {
+    return;
+  }
+  await database.transacao(async (tx) => {
+    if (patch.estado !== undefined) {
+      await tx.$executeRaw`
+        UPDATE agendamento SET estado = ${patch.estado}::estado_agendamento
+         WHERE id = ${agendamentoId}::uuid
+      `;
+    }
+    if (patch.inicio !== undefined) {
+      await tx.$executeRaw`
+        UPDATE agendamento SET inicio = ${patch.inicio}
+         WHERE id = ${agendamentoId}::uuid
+      `;
+    }
+    if (patch.fim !== undefined) {
+      await tx.$executeRaw`
+        UPDATE agendamento SET fim = ${patch.fim}
+         WHERE id = ${agendamentoId}::uuid
+      `;
+    }
+    if (patch.profissionalId !== undefined) {
+      await tx.$executeRaw`
+        UPDATE agendamento SET profissional_id = ${patch.profissionalId}::uuid
+         WHERE id = ${agendamentoId}::uuid
+      `;
+    }
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -1696,12 +1746,10 @@ describe("Atomicidade da transação (D-AGD-09, D-AGD-10)", () => {
 // ---------------------------------------------------------------------------
 
 describe("Fronteira da fatia (D-AGD-01, D-AGD-17)", () => {
-  it("nenhuma rota de check-in, falta, bloqueio, pacote, início ou conclusão responde", async () => {
+  it("nenhuma rota de bloqueio, pacote, início ou conclusão responde", async () => {
     const c = await montarCenario();
     const criado = await criar(c);
     for (const caminho of [
-      `${AGENDAMENTOS}/${criado.id}/checkin`,
-      `${AGENDAMENTOS}/${criado.id}/falta`,
       `${AGENDAMENTOS}/${criado.id}/atendimento`,
       "/bloqueios",
       "/agenda/bloqueios",
@@ -1721,4 +1769,342 @@ describe("Fronteira da fatia (D-AGD-01, D-AGD-17)", () => {
     expect(res.status).toBe(404);
     expect(await agendamentos()).toHaveLength(1);
   });
+});
+
+// ---------------------------------------------------------------------------
+// AGD-B — check-in e falta
+// ---------------------------------------------------------------------------
+
+describe("AGD-B — estados, tempo, segurança, histórico e concorrência", () => {
+  async function checkin(
+    agendamentoId: string,
+    cookie: string,
+    opcoes: { corpo?: unknown; csrf?: boolean; cabecalhos?: Record<string, string> } = {},
+  ): Promise<RespostaHttp> {
+    return requisitar("POST", `${AGENDAMENTOS}/${agendamentoId}/checkin`, {
+      cookie,
+      corpo: opcoes.corpo ?? {},
+      csrf: opcoes.csrf,
+      cabecalhos: opcoes.cabecalhos,
+    });
+  }
+
+  async function falta(
+    agendamentoId: string,
+    cookie: string,
+    opcoes: { corpo?: unknown; csrf?: boolean; cabecalhos?: Record<string, string> } = {},
+  ): Promise<RespostaHttp> {
+    return requisitar("POST", `${AGENDAMENTOS}/${agendamentoId}/falta`, {
+      cookie,
+      corpo: opcoes.corpo ?? {},
+      csrf: opcoes.csrf,
+      cabecalhos: opcoes.cabecalhos,
+    });
+  }
+
+  it("check-in: AGENDADO e CONFIRMADO são aceitos; histórico exato e zero auditoria", async () => {
+    const c = await montarCenario();
+    const operador = await ator("RECEPCIONISTA", "agenda.checkin");
+    const hoje = partesLocais(new Date()).data;
+    const agendado = await criar(c, { inicio: iso(hoje, "08:00"), fim: iso(hoje, "08:50") });
+    const confirmado = await criar(
+      c,
+      {
+        inicio: iso(hoje, "09:00"),
+        fim: iso(hoje, "09:50"),
+        pacienteId: c.paciente2Id,
+        profissionalId: c.profissional2Id,
+      },
+      c.admin.cookie,
+    );
+    await requisitar("POST", `${AGENDAMENTOS}/${confirmado.id}/confirmacao`, { cookie: c.admin.cookie, corpo: {} });
+
+    const um = await checkin(agendado.id, operador.cookie);
+    const dois = await checkin(confirmado.id, operador.cookie);
+    expect(um.status).toBe(200);
+    expect(dois.status).toBe(200);
+    expect(um.body.estado).toBe("AGUARDANDO");
+    expect(dois.body.estado).toBe("AGUARDANDO");
+
+    const hist = await historicos();
+    const checkins = hist.filter((h) => h.operacao === "CHECKIN");
+    expect(checkins).toHaveLength(2);
+    for (const linha of checkins) {
+      expect(linha.estado_novo).toBe("AGUARDANDO");
+      expect(linha.ator_usuario_id).toBe(operador.id);
+    }
+    expect(await eventosDaAgenda()).toHaveLength(2);
+  });
+
+  it("falta: AGENDADO e CONFIRMADO aceitos somente depois do início; sem auditoria adicional", async () => {
+    const c = await montarCenario();
+    const operador = await ator("ADMINISTRADOR", "agenda.falta");
+    const um = await criar(c, { inicio: iso(SEGUNDA, "10:00"), fim: iso(SEGUNDA, "10:50") });
+    const dois = await criar(c, {
+      inicio: iso(SEGUNDA, "11:00"),
+      fim: iso(SEGUNDA, "11:50"),
+      pacienteId: c.paciente2Id,
+      profissionalId: c.profissional2Id,
+    });
+    await requisitar("POST", `${AGENDAMENTOS}/${dois.id}/confirmacao`, { cookie: c.admin.cookie, corpo: {} });
+    await ajustarAgendamento(um.id, {
+      inicio: new Date(Date.now() - 120_000),
+      fim: new Date(Date.now() + 2_880_000),
+    });
+    await ajustarAgendamento(dois.id, {
+      inicio: new Date(Date.now() - 120_000),
+      fim: new Date(Date.now() + 2_880_000),
+    });
+
+    const r1 = await falta(um.id, operador.cookie);
+    const r2 = await falta(dois.id, operador.cookie);
+    expect(r1.status).toBe(200);
+    expect(r2.status).toBe(200);
+    expect(r1.body.estado).toBe("FALTA");
+    expect(r2.body.estado).toBe("FALTA");
+
+    const linhas = (await historicos()).filter((h) => h.operacao === "FALTA");
+    expect(linhas).toHaveLength(2);
+    for (const linha of linhas) {
+      expect(linha.estado_novo).toBe("FALTA");
+      expect(linha.ator_usuario_id).toBe(operador.id);
+    }
+    expect(await eventosDaAgenda()).toHaveLength(2);
+  });
+
+  it("check-in repetido, AGUARDANDO->FALTA e estados terminais retornam 409 TRANSICAO_INVALIDA", async () => {
+    const c = await montarCenario();
+    const checkinOp = await ator("RECEPCIONISTA", "agenda.checkin");
+    const faltaOp = await ator("ADMINISTRADOR", "agenda.falta");
+    const hoje = partesLocais(new Date()).data;
+    const alvo = await criar(c, { inicio: iso(hoje, "08:00"), fim: iso(hoje, "08:50") });
+
+    const primeiro = await checkin(alvo.id, checkinOp.cookie);
+    const repetido = await checkin(alvo.id, checkinOp.cookie);
+    const aguardandoFalta = await falta(alvo.id, faltaOp.cookie);
+    expect(primeiro.status).toBe(200);
+    expect(repetido.status).toBe(409);
+    expect(aguardandoFalta.status).toBe(409);
+    expect(repetido.body).toEqual({ erro: ERRO_AGENDAMENTO.TRANSICAO_INVALIDA });
+    expect(aguardandoFalta.body).toEqual({ erro: ERRO_AGENDAMENTO.TRANSICAO_INVALIDA });
+
+    for (const [indice, estado] of (["EM_ATENDIMENTO", "CONCLUIDO", "FALTA", "CANCELADO"] as const).entries()) {
+      const hora = String(9 + indice).padStart(2, "0");
+      const extra = await criar(c, {
+        pacienteId: c.paciente2Id,
+        inicio: iso(SEGUNDA, `${hora}:00`),
+        fim: iso(SEGUNDA, `${hora}:50`),
+      });
+      await ajustarAgendamento(extra.id, { estado });
+      const rc = await checkin(extra.id, checkinOp.cookie);
+      const rf = await falta(extra.id, faltaOp.cookie);
+      expect(rc.status).toBe(409);
+      expect(rf.status).toBe(409);
+      expect(rc.body).toEqual({ erro: ERRO_AGENDAMENTO.TRANSICAO_INVALIDA });
+      expect(rf.body).toEqual({ erro: ERRO_AGENDAMENTO.TRANSICAO_INVALIDA });
+    }
+    // Uma aceitação inicial e nenhuma auditoria AGD-B.
+    expect((await historicos()).filter((h) => h.operacao === "CHECKIN")).toHaveLength(1);
+    expect((await historicos()).filter((h) => h.operacao === "FALTA")).toHaveLength(0);
+    expect(await eventosDaAgenda()).toHaveLength(5);
+  });
+
+  it("quando estado e tempo são inválidos ao mesmo tempo, prevalece 409 TRANSICAO_INVALIDA", async () => {
+    const c = await montarCenario();
+    const faltaOp = await ator("ADMINISTRADOR", "agenda.falta");
+    const alvo = await criar(c);
+    await ajustarAgendamento(alvo.id, {
+      estado: "AGUARDANDO",
+      inicio: new Date(Date.now() + 10 * 60_000),
+    });
+    const res = await falta(alvo.id, faltaOp.cookie);
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ erro: ERRO_AGENDAMENTO.TRANSICAO_INVALIDA });
+    expect((await historicos()).map((h) => h.operacao)).toEqual(["CRIADO"]);
+    expect(await eventosDaAgenda()).toHaveLength(1);
+  });
+
+  it("check-in compara data civil local no fuso da clínica (não a data UTC)", async () => {
+    const c = await montarCenario();
+    const op = await ator("RECEPCIONISTA", "agenda.checkin");
+    const agora = new Date();
+    const dataLocalAtual = partesLocais(agora).data;
+    const diaUtcAtual = agora.toISOString().slice(0, 10);
+
+    const candidatoMesmoLocal = [instante(dataLocalAtual, "00:30"), instante(dataLocalAtual, "23:30")].find(
+      (d) => d.toISOString().slice(0, 10) !== diaUtcAtual,
+    );
+    if (candidatoMesmoLocal === undefined) throw new Error("Falha ao montar cenário UTC/local.");
+    const mesmoDiaLocalUtcDiferente = await criar(c, { inicio: iso(SEGUNDA, "08:00"), fim: iso(SEGUNDA, "08:50") });
+    await ajustarAgendamento(mesmoDiaLocalUtcDiferente.id, { inicio: candidatoMesmoLocal });
+    const ok = await checkin(mesmoDiaLocalUtcDiferente.id, op.cookie);
+    expect(ok.status).toBe(200);
+
+    const candidatoMesmoUtcLocalDiferente = [
+      new Date(`${diaUtcAtual}T02:00:00.000Z`),
+      new Date(`${diaUtcAtual}T04:00:00.000Z`),
+    ].find((d) => partesLocais(d).data !== dataLocalAtual);
+    if (candidatoMesmoUtcLocalDiferente === undefined) throw new Error("Falha ao montar cenário de fronteira local.");
+    const diaLocalDiferenteUtcProximo = await criar(c, {
+      pacienteId: c.paciente2Id,
+      profissionalId: c.profissional2Id,
+      inicio: iso(SEGUNDA, "09:00"),
+      fim: iso(SEGUNDA, "09:50"),
+    });
+    await ajustarAgendamento(diaLocalDiferenteUtcProximo.id, { inicio: candidatoMesmoUtcLocalDiferente });
+    const invalido = await checkin(diaLocalDiferenteUtcProximo.id, op.cookie);
+    expect(invalido.status).toBe(409);
+    expect(invalido.body).toEqual({ erro: ERRO_AGENDAMENTO.TRANSICAO_INVALIDA });
+  });
+
+  it("falta: antes do início rejeita e depois do início aceita (sem janela artificial)", async () => {
+    const c = await montarCenario();
+    const op = await ator("ADMINISTRADOR", "agenda.falta");
+    const alvo = await criar(c);
+
+    await ajustarAgendamento(alvo.id, { inicio: new Date(Date.now() + 60_000) });
+    const antes = await falta(alvo.id, op.cookie);
+    expect(antes.status).toBe(409);
+
+    await ajustarAgendamento(alvo.id, { inicio: new Date(Date.now() - 1) });
+    const depois = await falta(alvo.id, op.cookie);
+    expect(depois.status).toBe(200);
+  });
+
+  it("RBAC e escopo: permissões isoladas, próprio x alheio (404) e fail-closed sem vínculo", async () => {
+    const c = await montarCenario();
+    const soCheckin = await ator(`ROLE_SO_CHECKIN_${randomUUID().slice(0, 8)}`, "agenda.checkin");
+    const soFalta = await ator(`ROLE_SO_FALTA_${randomUUID().slice(0, 8)}`, "agenda.falta");
+    const fisioUsuario = await criarUsuario("fisio-own");
+    await darPermissaoPorPapel(fisioUsuario, "FISIOTERAPEUTA", "agenda.checkin");
+    const fisioSessao = await sessaoDe(fisioUsuario);
+    const semVinculoUsuario = await criarUsuario("sem-vinculo");
+    await darPermissaoPorPapel(semVinculoUsuario, "FISIOTERAPEUTA", "agenda.checkin");
+    const semVinculo = await sessaoDe(semVinculoUsuario);
+
+    await database.transacao(async (tx) => {
+      await tx.profissional.update({ where: { id: c.profissionalId }, data: { usuarioId: fisioUsuario } });
+    });
+
+    const proprio = await criar(c);
+    const alheio = await criar(c, {
+      pacienteId: c.paciente2Id,
+      profissionalId: c.profissional2Id,
+      inicio: iso(SEGUNDA, "10:00"),
+      fim: iso(SEGUNDA, "10:50"),
+    });
+    await ajustarAgendamento(proprio.id, { inicio: new Date(Date.now() - 60_000), fim: new Date(Date.now() + 3_540_000) });
+    await ajustarAgendamento(alheio.id, { inicio: new Date(Date.now() - 60_000), fim: new Date(Date.now() + 3_540_000) });
+
+    const checkinSemPermissao = await checkin(proprio.id, soFalta.cookie);
+    const faltaSemPermissao = await falta(proprio.id, soCheckin.cookie);
+    expect(checkinSemPermissao.status).toBe(403);
+    expect(faltaSemPermissao.status).toBe(403);
+    expect(checkinSemPermissao.body).toEqual({ erro: ERRO_AUTORIZACAO.ACESSO_NEGADO });
+    expect(faltaSemPermissao.body).toEqual({ erro: ERRO_AUTORIZACAO.ACESSO_NEGADO });
+
+    const proprioOk = await checkin(proprio.id, fisioSessao.cookie);
+    const alheio404 = await checkin(alheio.id, fisioSessao.cookie);
+    const semVinculo404 = await checkin(proprio.id, semVinculo.cookie);
+    expect(proprioOk.status).toBe(200);
+    expect(alheio404.status).toBe(404);
+    expect(semVinculo404.status).toBe(404);
+    expect(alheio404.body).toEqual({ erro: ERRO_AGENDAMENTO.AGENDAMENTO_NAO_ENCONTRADO });
+    expect(semVinculo404.body).toEqual({ erro: ERRO_AGENDAMENTO.AGENDAMENTO_NAO_ENCONTRADO });
+  });
+
+  it("sessão ausente/expirada/revogada e CSRF ausente/inválido seguem precedentes", async () => {
+    const c = await montarCenario();
+    const op = await ator("ADMINISTRADOR", "agenda.checkin");
+    const alvo = await criar(c);
+
+    const semSessao = await checkin(alvo.id, "");
+    expect(semSessao.status).toBe(401);
+    expect(semSessao.body).toEqual({ erro: ERRO.SESSAO_INVALIDA });
+
+    const expirada = await sessaoDe(op.id);
+    await database.transacao(async (tx) => {
+      await tx.$executeRaw`
+        UPDATE sessao_autenticacao
+           SET estado = 'EXPIRADA', encerrada_em = now()
+         WHERE id = ${expirada.sessaoId}::uuid
+      `;
+    });
+    const r = await checkin(alvo.id, expirada.cookie);
+    expect(r.status).toBe(401);
+    expect(r.body).toEqual({ erro: ERRO.SESSAO_INVALIDA });
+
+    const revogada = await sessaoDe(op.id);
+    await sessoes.revogar(revogada.token);
+    const rRevogada = await checkin(alvo.id, revogada.cookie);
+    expect(rRevogada.status).toBe(401);
+    expect(rRevogada.body).toEqual({ erro: ERRO.SESSAO_INVALIDA });
+
+    const semCsrf = await checkin(alvo.id, op.cookie, { csrf: false });
+    const csrfInvalido = await checkin(alvo.id, op.cookie, {
+      cabecalhos: { "sec-fetch-site": "cross-site" },
+    });
+    expect(semCsrf.status).toBe(403);
+    expect(csrfInvalido.status).toBe(403);
+    expect(semCsrf.body).toEqual({ erro: ERRO.REQUISICAO_NAO_AUTORIZADA });
+    expect(csrfInvalido.body).toEqual({ erro: ERRO.REQUISICAO_NAO_AUTORIZADA });
+  });
+
+  it("payload inválido: UUID inválido, corpo extra, corpo não-objeto e payload acima do limite", async () => {
+    const c = await montarCenario();
+    const op = await ator("ADMINISTRADOR", "agenda.checkin");
+    const alvo = await criar(c);
+
+    const uuidInvalido = await checkin("invalido", op.cookie);
+    const corpoExtra = await checkin(alvo.id, op.cookie, { corpo: { extra: true } });
+    const corpoNaoObjeto = await checkin(alvo.id, op.cookie, { corpo: "[]" });
+    const grande = await requisitar("POST", `${AGENDAMENTOS}/${alvo.id}/checkin`, {
+      cookie: op.cookie,
+      corpo: `{"x":"${"a".repeat(1_100_000)}"}`,
+    });
+    expect(uuidInvalido.status).toBe(400);
+    expect(corpoExtra.status).toBe(400);
+    expect(corpoNaoObjeto.status).toBe(400);
+    expect(grande.status).toBe(413);
+    expect(uuidInvalido.body).toEqual({ erro: ERRO.REQUISICAO_INVALIDA });
+    expect(corpoExtra.body).toEqual({ erro: ERRO.REQUISICAO_INVALIDA });
+    expect(corpoNaoObjeto.body).toEqual({ erro: ERRO.REQUISICAO_INVALIDA });
+  });
+
+  it.each([
+    ["checkin x checkin", "checkin", "checkin"],
+    ["falta x falta", "falta", "falta"],
+    ["checkin x falta", "checkin", "falta"],
+  ] as const)(
+    "concorrência determinística %s aceita exatamente uma mutação",
+    async (_rotulo, opA, opB) => {
+      const c = await montarCenario();
+      const checkinOp = await ator("ADMINISTRADOR", "agenda.checkin");
+      const faltaOp = await ator("ADMINISTRADOR", "agenda.falta");
+      const alvo = await criar(c);
+      await ajustarAgendamento(alvo.id, {
+        estado: "AGENDADO",
+        inicio: new Date(Date.now() - 60_000),
+        fim: new Date(Date.now() + 3_540_000),
+      });
+
+      let primeira!: Promise<RespostaHttp>;
+      let segunda!: Promise<RespostaHttp>;
+      await database.transacao(async (tx) => {
+        await tx.$queryRaw`SELECT id FROM agendamento WHERE id = ${alvo.id}::uuid FOR UPDATE`;
+        primeira = opA === "checkin" ? checkin(alvo.id, checkinOp.cookie) : falta(alvo.id, faltaOp.cookie);
+        segunda = opB === "checkin" ? checkin(alvo.id, checkinOp.cookie) : falta(alvo.id, faltaOp.cookie);
+      });
+
+      const [a, b] = await Promise.all([primeira, segunda]);
+      const status = [a.status, b.status].sort();
+      expect(status).toEqual([200, 409]);
+      const perdedor = a.status === 409 ? a : b;
+      expect(perdedor.body).toEqual({ erro: ERRO_AGENDAMENTO.TRANSICAO_INVALIDA });
+      const hist = (await historicos()).filter((h) => h.agendamento_id === alvo.id);
+      const agdB = hist.filter((h) => h.operacao === "CHECKIN" || h.operacao === "FALTA");
+      expect(agdB).toHaveLength(1);
+      expect(await eventosDaAgenda()).toHaveLength(1);
+    },
+  );
 });

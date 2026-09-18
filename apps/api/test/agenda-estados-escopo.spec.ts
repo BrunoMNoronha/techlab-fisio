@@ -13,7 +13,9 @@ import {
   ESTADOS_TERMINAIS,
   OPERACOES_AGD_A,
   OPERACOES_HISTORICO,
+  permiteCheckin,
   permiteCancelamento,
+  permiteFalta,
   permiteRemarcacao,
   type EstadoAgendamento,
 } from "../src/agenda/agenda.estados.js";
@@ -22,6 +24,8 @@ import {
   escopoAlcanca,
   PAPEIS_ESCOPO_OPERACIONAL,
   PERMISSAO_AGENDA,
+  PERMISSAO_AGENDA_CHECKIN,
+  PERMISSAO_AGENDA_FALTA,
   restricaoDaLeitura,
   type EscopoAgenda,
 } from "../src/agenda/agenda.escopo.js";
@@ -38,6 +42,8 @@ const TODOS: readonly EstadoAgendamento[] = [
 
 const PROPRIO = "0191f5a0-0000-7000-8000-0000000000b2";
 const OUTRO = "0191f5a0-0000-7000-8000-0000000000b3";
+const FUSO = "America/Sao_Paulo";
+const INICIO = new Date("2027-01-04T11:00:00.000Z"); // 08:00 local
 
 describe("D-AGD-09 — catálogo fechado de operações do histórico", () => {
   it("declara as oito operações e AGD-A usa somente as quatro primeiras", () => {
@@ -82,6 +88,24 @@ describe("D-AGD-06 / D-AGD-07 — origens de remarcação e cancelamento", () =>
     }
   });
 
+  describe("D-AGD-03 — check-in e falta", () => {
+    it("check-in só é admitido em AGENDADO/CONFIRMADO e no mesmo dia civil local", () => {
+      expect(permiteCheckin("AGENDADO", INICIO, new Date("2027-01-04T23:00:00.000Z"), FUSO)).toBe(true);
+      expect(permiteCheckin("CONFIRMADO", INICIO, new Date("2027-01-04T11:05:00.000Z"), FUSO)).toBe(true);
+      // UTC diferente, data local igual (2027-01-03 local às 00:30 e 23:30).
+      expect(permiteCheckin("AGENDADO", new Date("2027-01-03T03:30:00.000Z"), new Date("2027-01-04T02:30:00.000Z"), FUSO)).toBe(true);
+      expect(permiteCheckin("AGENDADO", INICIO, new Date("2027-01-05T03:00:00.000Z"), FUSO)).toBe(false);
+      expect(permiteCheckin("AGUARDANDO", INICIO, new Date("2027-01-04T12:00:00.000Z"), FUSO)).toBe(false);
+    });
+
+    it("falta só é admitida em AGENDADO/CONFIRMADO quando agora > início", () => {
+      expect(permiteFalta("AGENDADO", INICIO, new Date("2027-01-04T11:00:00.000Z"))).toBe(false);
+      expect(permiteFalta("AGENDADO", INICIO, new Date("2027-01-04T11:00:00.001Z"))).toBe(true);
+      expect(permiteFalta("CONFIRMADO", INICIO, new Date("2027-01-04T12:00:00.000Z"))).toBe(true);
+      expect(permiteFalta("AGUARDANDO", INICIO, new Date("2027-01-04T12:00:00.000Z"))).toBe(false);
+    });
+  });
+
   it("`AGUARDANDO -> CANCELADO` NÃO é oferecido em AGD-A (P-AGD-02)", () => {
     expect(permiteCancelamento("AGUARDANDO")).toBe(false);
   });
@@ -99,6 +123,8 @@ describe("D-AGD-12 — escopo operacional × próprio", () => {
 
   it("materializa a regra sobre a permissão homologada, sem criar permissão nova", () => {
     expect(PERMISSAO_AGENDA).toBe("agenda.gerenciar");
+    expect(PERMISSAO_AGENDA_CHECKIN).toBe("agenda.checkin");
+    expect(PERMISSAO_AGENDA_FALTA).toBe("agenda.falta");
     expect([...PAPEIS_ESCOPO_OPERACIONAL].sort()).toEqual(["ADMINISTRADOR", "RECEPCIONISTA"]);
   });
 

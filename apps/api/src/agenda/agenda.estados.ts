@@ -14,6 +14,8 @@
 // `AGUARDANDO -> CANCELADO` NÃO é oferecido (P-AGD-02, homologada): não há
 // permissão excepcional nem coluna de justificativa (FA-03).
 
+import { paraInstanteLocal } from "./horario-funcionamento.regra.js";
+
 /** Os sete estados de `estado_agendamento` (`docs/03` §5.1). */
 export type EstadoAgendamento =
   | "AGENDADO"
@@ -73,6 +75,14 @@ const ORIGENS_CANCELAMENTO: ReadonlySet<EstadoAgendamento> = new Set<EstadoAgend
   "AGENDADO",
   "CONFIRMADO",
 ]);
+const ORIGENS_CHECKIN: ReadonlySet<EstadoAgendamento> = new Set<EstadoAgendamento>([
+  "AGENDADO",
+  "CONFIRMADO",
+]);
+const ORIGENS_FALTA: ReadonlySet<EstadoAgendamento> = new Set<EstadoAgendamento>([
+  "AGENDADO",
+  "CONFIRMADO",
+]);
 
 /**
  * Desfecho de uma confirmação (D-AGD-02):
@@ -106,4 +116,33 @@ export function permiteCancelamento(estado: EstadoAgendamento): boolean {
  */
 export function estadoAposRemarcacao(estado: EstadoAgendamento): EstadoAgendamento {
   return estado === "CONFIRMADO" ? "AGENDADO" : estado;
+}
+
+/**
+ * `true` sse o check-in é admitido para o estado/instante informados
+ * (D-AGD-03, D-AGD-09).
+ *
+ * Ordem deliberada: valida estado ANTES da regra temporal para preservar
+ * `409 TRANSICAO_INVALIDA` quando ambos forem inválidos.
+ */
+export function permiteCheckin(
+  estado: EstadoAgendamento,
+  inicio: Date,
+  agora: Date,
+  fusoHorario: string,
+): boolean {
+  if (!ORIGENS_CHECKIN.has(estado)) return false;
+  return paraInstanteLocal(inicio, fusoHorario).data === paraInstanteLocal(agora, fusoHorario).data;
+}
+
+/**
+ * `true` sse falta é admitida para o estado/instante informados (D-AGD-03,
+ * D-AGD-09).
+ *
+ * Ordem deliberada: valida estado ANTES da regra temporal para preservar
+ * `409 TRANSICAO_INVALIDA` quando ambos forem inválidos.
+ */
+export function permiteFalta(estado: EstadoAgendamento, inicio: Date, agora: Date): boolean {
+  if (!ORIGENS_FALTA.has(estado)) return false;
+  return agora.getTime() > inicio.getTime();
 }

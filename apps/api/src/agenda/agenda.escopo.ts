@@ -52,8 +52,12 @@ export const PAPEIS_ESCOPO_OPERACIONAL: readonly string[] = Object.freeze([
   "RECEPCIONISTA",
 ]);
 
-/** Permissão única de AGD-A (D-AGD-12 — nenhuma permissão nova). */
+/** Permissão de leitura/criação/remarcação/cancelamento da agenda (AGD-A). */
 export const PERMISSAO_AGENDA = "agenda.gerenciar";
+/** Permissão de check-in (AGD-B). */
+export const PERMISSAO_AGENDA_CHECKIN = "agenda.checkin";
+/** Permissão de registro de falta (AGD-B). */
+export const PERMISSAO_AGENDA_FALTA = "agenda.falta";
 
 export type EscopoAgenda =
   /** Todos os agendamentos da clínica. */
@@ -71,7 +75,11 @@ export class EscopoAgendaService {
    * que decide o filtro da consulta e a autorização da criação, sem janela
    * entre uma e outra.
    */
-  async resolver(tx: TransacaoPersistencia, usuarioId: string): Promise<EscopoAgenda> {
+  async resolver(
+    tx: TransacaoPersistencia,
+    usuarioId: string,
+    permissao: string = PERMISSAO_AGENDA,
+  ): Promise<EscopoAgenda> {
     const papeis = await tx.$queryRaw<Array<{ codigo: string }>>`
       SELECT DISTINCT p.codigo
         FROM usuario_papel up
@@ -79,7 +87,7 @@ export class EscopoAgendaService {
         JOIN papel_permissao pp ON pp.papel_id = p.id
         JOIN permissao perm ON perm.id = pp.permissao_id
        WHERE up.usuario_id = ${usuarioId}::uuid
-         AND perm.codigo = ${PERMISSAO_AGENDA}
+         AND perm.codigo = ${permissao}
     `;
     const concedentes = new Set(papeis.map((linha) => linha.codigo));
     if (PAPEIS_ESCOPO_OPERACIONAL.some((codigo) => concedentes.has(codigo))) {
