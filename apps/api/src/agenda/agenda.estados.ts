@@ -13,6 +13,16 @@
 //
 // `AGUARDANDO -> CANCELADO` NÃO é oferecido (P-AGD-02, homologada): não há
 // permissão excepcional nem coluna de justificativa (FA-03).
+//
+// AGD-B acrescenta duas decisões PURAS e sem relógio global, derivadas da
+// máquina homologada (D-AGD-02) e das regras temporais (D-AGD-03):
+//   - check-in: `AGENDADO|CONFIRMADO -> AGUARDANDO`, somente na mesma data civil
+//     local do `inicio` (D-AGD-03);
+//   - falta: `AGENDADO|CONFIRMADO -> FALTA`, somente após o `inicio`
+//     estritamente (`agora > inicio`) (D-AGD-03).
+// Em ambas, a origem é validada ANTES da janela temporal.
+
+import { paraInstanteLocal } from "./horario-funcionamento.regra.js";
 
 /** Os sete estados de `estado_agendamento` (`docs/03` §5.1). */
 export type EstadoAgendamento =
@@ -73,6 +83,7 @@ const ORIGENS_CANCELAMENTO: ReadonlySet<EstadoAgendamento> = new Set<EstadoAgend
   "AGENDADO",
   "CONFIRMADO",
 ]);
+const ORIGENS_CHECKIN_E_FALTA: ReadonlySet<EstadoAgendamento> = new Set<EstadoAgendamento>(["AGENDADO", "CONFIRMADO"]);
 
 /**
  * Desfecho de uma confirmação (D-AGD-02):
@@ -106,4 +117,47 @@ export function permiteCancelamento(estado: EstadoAgendamento): boolean {
  */
 export function estadoAposRemarcacao(estado: EstadoAgendamento): EstadoAgendamento {
   return estado === "CONFIRMADO" ? "AGENDADO" : estado;
+}
+
+export type MotivoRejeicaoCheckInOuFalta = "TRANSICAO_INVALIDA" | "FORA_DA_JANELA_TEMPORAL";
+
+export type DesfechoCheckIn =
+  | { readonly permitido: true; readonly estadoNovo: "AGUARDANDO" }
+  | { readonly permitido: false; readonly motivo: MotivoRejeicaoCheckInOuFalta };
+
+export type DesfechoFalta =
+  | { readonly permitido: true; readonly estadoNovo: "FALTA" }
+  | { readonly permitido: false; readonly motivo: MotivoRejeicaoCheckInOuFalta };
+
+/**
+ * Check-in (AGD-B; D-AGD-02 para a máquina, D-AGD-03 para a janela temporal):
+ *   - `AGENDADO|CONFIRMADO` ............. transição efetiva para `AGUARDANDO`;
+ *   - qualquer outra origem ............. `TRANSICAO_INVALIDA`;
+ *   - origem válida fora da data local .. `FORA_DA_JANELA_TEMPORAL`.
+ */
+export function avaliarCheckIn(
+  estado: EstadoAgendamento,
+  inicio: Date,
+  agora: Date,
+  fusoHorario: string,
+): DesfechoCheckIn {
+  if (!ORIGENS_CHECKIN_E_FALTA.has(estado)) return { permitido: false, motivo: "TRANSICAO_INVALIDA" };
+
+  const dataAgora = paraInstanteLocal(agora, fusoHorario).data;
+  const dataInicio = paraInstanteLocal(inicio, fusoHorario).data;
+  if (dataAgora !== dataInicio) return { permitido: false, motivo: "FORA_DA_JANELA_TEMPORAL" };
+
+  return { permitido: true, estadoNovo: "AGUARDANDO" };
+}
+
+/**
+ * Falta (AGD-B; D-AGD-02 para a máquina, D-AGD-03 para a janela temporal):
+ *   - `AGENDADO|CONFIRMADO` ... transição efetiva para `FALTA`;
+ *   - qualquer outra origem ... `TRANSICAO_INVALIDA`;
+ *   - `agora <= inicio` ....... `FORA_DA_JANELA_TEMPORAL`.
+ */
+export function avaliarFalta(estado: EstadoAgendamento, inicio: Date, agora: Date): DesfechoFalta {
+  if (!ORIGENS_CHECKIN_E_FALTA.has(estado)) return { permitido: false, motivo: "TRANSICAO_INVALIDA" };
+  if (agora.getTime() <= inicio.getTime()) return { permitido: false, motivo: "FORA_DA_JANELA_TEMPORAL" };
+  return { permitido: true, estadoNovo: "FALTA" };
 }
