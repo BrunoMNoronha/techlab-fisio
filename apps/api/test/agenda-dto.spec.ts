@@ -12,8 +12,10 @@ import {
   analisarInstanteAgendamento,
   LIMITES_AGENDA,
   validarCorpoCancelamento,
+  validarCorpoCheckIn,
   validarCorpoConfirmacao,
   validarCorpoCriacao,
+  validarCorpoFalta,
   validarCorpoRemarcacao,
   validarFiltroAgenda,
   validarIntervalo,
@@ -123,6 +125,24 @@ describe("validarCorpoConfirmacao — corpo exato `{}`", () => {
     expect(validarCorpoConfirmacao({ estado: "CONFIRMADO" }).valido).toBe(false);
     expect(validarCorpoConfirmacao(null).valido).toBe(false);
     expect(validarCorpoConfirmacao([]).valido).toBe(false);
+  });
+
+  describe("validarCorpoCheckIn — corpo exato `{}`", () => {
+    it("aceita somente o objeto vazio", () => {
+      expect(validarCorpoCheckIn({}).valido).toBe(true);
+      expect(validarCorpoCheckIn({ estado: "AGUARDANDO" }).valido).toBe(false);
+      expect(validarCorpoCheckIn(null).valido).toBe(false);
+      expect(validarCorpoCheckIn([]).valido).toBe(false);
+    });
+  });
+
+  describe("validarCorpoFalta — corpo exato `{}`", () => {
+    it("aceita somente o objeto vazio", () => {
+      expect(validarCorpoFalta({}).valido).toBe(true);
+      expect(validarCorpoFalta({ estado: "FALTA" }).valido).toBe(false);
+      expect(validarCorpoFalta(null).valido).toBe(false);
+      expect(validarCorpoFalta([]).valido).toBe(false);
+    });
   });
 });
 

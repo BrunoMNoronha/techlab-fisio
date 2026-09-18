@@ -4,7 +4,7 @@
 > **Projeto:** TechLab Fisio
 > **Frente:** Agenda (módulo M5 — Scheduling)
 > **Status:** **HOMOLOGADO — `D-AGD-01`..`D-AGD-17` APROVADAS INTEGRALMENTE CONFORME AS RECOMENDAÇÕES POR BRUNO MENEZES NORONHA EM 17/09/2026** (TLF-BASE-V1 §15, item 1), inclusive as decisões **[ESCOLHA]** `P-AGD-01`..`P-AGD-12` e a **alteração estrutural de banco** de `D-AGD-07` (CHECK de coerência do cancelamento). As marcas **[DERIVADA]**/**[ESCOLHA]** permanecem como registro da origem de cada decisão.
-> **Implementação de AGD-A: AUTORIZADA E EXECUTADA** por Bruno Menezes Noronha em 17/09/2026 — autorização expressa e específica da fatia **AGD-A** e da migration estrutural de `D-AGD-07`. A materialização está registrada em §8 e em `docs/10` §6-AI. **AGD-B, AGD-C, AGD-D e AGD-E permanecem sem autorização de implementação.** Nenhuma decisão foi criada, alterada ou reaberta pela implementação.
+> **Implementação de AGD-A e AGD-B: AUTORIZADA E EXECUTADA** — AGD-A (17/09/2026) e AGD-B (18/09/2026), com materialização registrada em `docs/10` (§6-AI e seção vigente de AGD-B). **AGD-C, AGD-D e AGD-E permanecem sem autorização de implementação.** Nenhuma decisão `D-AGD-*`/`P-AGD-*` foi criada, alterada ou reaberta pela implementação.
 > *(Registro histórico, preservado: até a REV. 5 este cabeçalho declarava que a homologação autorizava a materialização documental e **não** a implementação de runtime, schema ou migration. Essa era a situação então vigente; a autorização acima a substitui apenas quanto a AGD-A.)*
 > **Data:** 17 de setembro de 2026
 > **Base medida:** workspace local sobre `bd772a3` (branch local, sem publicação), incluindo o componente local de RN-014 (`apps/api/src/agenda/`, `docs/14` §5).
@@ -235,13 +235,14 @@ As decisões **[DERIVADAS]** (`D-AGD-08`, `D-AGD-10`, `D-AGD-11`, `D-AGD-15`, `D
 | Decisões mínimas de pacientes (PAC) e profissionais (PRO-001, PRO-004) para AGD-A | **PAC: HOMOLOGADO** — `docs/17` REV. 2 (fatia PAC-A, implementada — `docs/10` §6-AC); **PRO-001/PRO-004: HOMOLOGADO** — `docs/18` (`D-PRO1-01`..`D-PRO1-10`; fatia PRO-A implementada — `docs/10` §6-AD); ambas **publicadas na `main`** pela PR [#89](https://github.com/BrunoMNoronha/techlab-fisio/pull/89) (merge `4b2e2c0`) — pré-requisitos de AGD-A **satisfeitos**. *(Correção factual da REV. 6: até a REV. 5 esta linha dizia "integradas na branch local `integration/local-fase4`, não publicadas na `main`", o que era verdade na data daquela medição.)* |
 | Implementação de CFG-005 (`P-CFG-06`) | **IMPLEMENTADA** (autorizada por Bruno Menezes Noronha em 17/09/2026; `docs/10` §6-AB) — **publicada na `main`** pela PR [#89](https://github.com/BrunoMNoronha/techlab-fisio/pull/89) (merge `4b2e2c0`) — pré-requisito operacional do cancelamento (`D-AGD-07`) **satisfeito**. *(Correção factual da REV. 6, mesma razão da linha anterior.)* |
 | Implementação de AGD-A (rotas, T-01 avulso, histórico, auditoria, escopo, `GET /agenda/opcoes`) e migration do CHECK de `D-AGD-07` | **AUTORIZADA E IMPLEMENTADA** em 17/09/2026 (autorização expressa de Bruno Menezes Noronha) — branch local `agent/agd-a-agenda-core`, **não publicada**; materialização em §8 e `docs/10` §6-AI |
-| AGD-B, AGD-C, AGD-D | **DECIDIDOS NO NÍVEL DESTE PACOTE** — detalhamento na respectiva fatia; implementação não autorizada |
+| AGD-B | **IMPLEMENTADA** (check-in e falta), sem ampliação de máquina de estados nem de catálogo de auditoria |
+| AGD-C, AGD-D | **DECIDIDOS NO NÍVEL DESTE PACOTE** — detalhamento na respectiva fatia; implementação não autorizada |
 | AGD-E (iniciar/concluir), permissão correspondente, P2.2-05 e `AGUARDANDO → CANCELADO` | **FORA DESTE PACOTE** (`D-AGD-02`, `D-AGD-17`) |
 | Remoção de bloqueio (`D-AGD-16`) | **PACOTE PRÓPRIO FUTURO** |
 | Remarcação que torna pacote inelegível; serviço inativado com agendamento por pacote (`D-AGD-15`) | **PENDENTE DA FATIA AGD-D** |
 
 
-## 6. Matriz de testes de aceite (AGD-A)
+## 6. Matriz de testes de aceite (AGD-A + AGD-B)
 
 | ID | Cenário | Esperado |
 | --- | --- | --- |
@@ -264,6 +265,7 @@ As decisões **[DERIVADAS]** (`D-AGD-08`, `D-AGD-10`, `D-AGD-11`, `D-AGD-15`, `D
 | TA-17 | Gestor; não autenticado; sem CSRF | `403`; `401`; `403 REQUISICAO_NAO_AUTORIZADA` — sem evento |
 | TA-18 | Consulta com intervalo > 7 dias ou invertido | `400` |
 | TA-19 | `GET /agenda/opcoes` | só ativos, sem preço |
+| TA-20 | Check-in e falta (`AGENDADO`/`CONFIRMADO`) | `200`; histórico `CHECKIN`/`FALTA`; sem auditoria |
 
 ## 8. Registro de materialização de AGD-A (REV. 6, 17/09/2026)
 
@@ -271,7 +273,7 @@ As decisões **[DERIVADAS]** (`D-AGD-08`, `D-AGD-10`, `D-AGD-11`, `D-AGD-15`, `D
 
 ### 8.1 Autorização e fronteira
 
-Bruno Menezes Noronha autorizou expressamente, em 17/09/2026, a implementação da fatia **AGD-A** e da **migration estrutural** prevista em `D-AGD-07`. A autorização é específica: **AGD-B, AGD-C, AGD-D e AGD-E não foram autorizadas** e nenhuma rota, coluna, permissão ou ação de auditoria delas foi criada. `P2.2-05` **não** foi implementada genericamente — o escopo continua derivado do código do papel, exatamente como `D-AGD-12` decidiu e com a mesma limitação declarada.
+Bruno Menezes Noronha autorizou expressamente a implementação das fatias **AGD-A** (17/09/2026) e **AGD-B** (18/09/2026), mantendo a fronteira de decisões homologadas neste pacote. AGD-B foi materializada com check-in/falta, histórico append-only e sem novas ações de auditoria. **AGD-C, AGD-D e AGD-E não foram autorizadas**. `P2.2-05` **não** foi implementada genericamente — o escopo continua derivado do código do papel, exatamente como `D-AGD-12` decidiu e com a mesma limitação declarada.
 
 Trabalho feito em branch e worktree dedicados (`agent/agd-a-agenda-core`), a partir de `origin/main` = `4b2e2c0`. **Sem push, PR, merge ou deploy.**
 
@@ -293,7 +295,7 @@ Trabalho feito em branch e worktree dedicados (`agent/agd-a-agenda-core`), a par
 | `D-AGD-12` | `EscopoAgendaService` — operacional (Administrador/Recepcionista que **concedam** a permissão) × próprio (demais, fail-closed) |
 | `D-AGD-13` | `GET /agenda/opcoes` com o contrato exato, só ativos, sem preço |
 | `D-AGD-14` | `[de, ate)` de no máximo 7 dias, intersecção, todos os estados, ordem `inicio, id`, sem paginação, `no-store` |
-| `D-AGD-15` / `D-AGD-17` | Nada de `PACOTE`, `reserva_sessao`, check-in, falta, bloqueio, início ou conclusão |
+| `D-AGD-15` / `D-AGD-17` | Nada de `PACOTE`, `reserva_sessao`, bloqueio, início ou conclusão |
 
 ### 8.3 Correlação histórico × auditoria — decisão local declarada
 

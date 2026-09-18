@@ -1,3 +1,5 @@
+import { paraInstanteLocal } from "./horario-funcionamento.regra.js";
+
 // TechLab Fisio — máquina de estados do agendamento e catálogo de operações do
 // histórico (`docs/15` D-AGD-02, D-AGD-06, D-AGD-07, D-AGD-09; `docs/05` §3;
 // RN-020).
@@ -5,11 +7,9 @@
 // Funções PURAS, sem I/O — a decisão de transição é testável sem banco e é a
 // MESMA que o serviço aplica sob `SELECT ... FOR UPDATE`.
 //
-// FRONTEIRA DESTA FATIA: AGD-A opera confirmação, remarcação e cancelamento.
-// `AGUARDANDO` (check-in), `FALTA`, `EM_ATENDIMENTO` e `CONCLUIDO` pertencem a
-// AGD-B e AGD-E e NÃO são alcançáveis por nenhuma rota desta fatia — a tabela
-// de transições abaixo declara a máquina completa de `docs/05` §3 apenas para
-// que os estados terminais sejam reconhecidos corretamente na rejeição.
+// FRONTEIRA DESTA FATIA: AGD-A + AGD-B operam confirmação, remarcação,
+// cancelamento, check-in e falta. `EM_ATENDIMENTO` e `CONCLUIDO` pertencem à
+// AGD-E e não são alcançáveis pelas rotas atuais.
 //
 // `AGUARDANDO -> CANCELADO` NÃO é oferecido (P-AGD-02, homologada): não há
 // permissão excepcional nem coluna de justificativa (FA-03).
@@ -61,6 +61,12 @@ export const OPERACOES_AGD_A: readonly OperacaoHistorico[] = Object.freeze([
   "CANCELADO",
 ]);
 
+/** As duas operações de AGD-B (check-in e falta). */
+export const OPERACOES_AGD_B: readonly OperacaoHistorico[] = Object.freeze([
+  "CHECKIN",
+  "FALTA",
+]);
+
 /** Estados a partir dos quais a confirmação é admitida (D-AGD-02). */
 const ORIGENS_CONFIRMACAO: ReadonlySet<EstadoAgendamento> = new Set<EstadoAgendamento>(["AGENDADO"]);
 
@@ -70,6 +76,14 @@ const ORIGENS_REMARCACAO: ReadonlySet<EstadoAgendamento> = new Set<EstadoAgendam
   "CONFIRMADO",
 ]);
 const ORIGENS_CANCELAMENTO: ReadonlySet<EstadoAgendamento> = new Set<EstadoAgendamento>([
+  "AGENDADO",
+  "CONFIRMADO",
+]);
+const ORIGENS_CHECKIN: ReadonlySet<EstadoAgendamento> = new Set<EstadoAgendamento>([
+  "AGENDADO",
+  "CONFIRMADO",
+]);
+const ORIGENS_FALTA: ReadonlySet<EstadoAgendamento> = new Set<EstadoAgendamento>([
   "AGENDADO",
   "CONFIRMADO",
 ]);
@@ -106,4 +120,44 @@ export function permiteCancelamento(estado: EstadoAgendamento): boolean {
  */
 export function estadoAposRemarcacao(estado: EstadoAgendamento): EstadoAgendamento {
   return estado === "CONFIRMADO" ? "AGENDADO" : estado;
+}
+
+/** `true` sse check-in é admitido a partir deste estado (AGD-B). */
+export function permiteCheckIn(estado: EstadoAgendamento): boolean {
+  return ORIGENS_CHECKIN.has(estado);
+}
+
+/** `true` sse falta é admitida a partir deste estado (AGD-B). */
+export function permiteFalta(estado: EstadoAgendamento): boolean {
+  return ORIGENS_FALTA.has(estado);
+}
+
+/** Estado resultante de um check-in efetivo (AGD-B). */
+export function estadoAposCheckIn(): EstadoAgendamento {
+  return "AGUARDANDO";
+}
+
+/** Estado resultante de um registro de falta efetivo (AGD-B). */
+export function estadoAposFalta(): EstadoAgendamento {
+  return "FALTA";
+}
+
+/**
+ * `true` sse check-in está na janela temporal homologada de AGD-B:
+ * `agora` e `inicio` na mesma data civil local, no fuso IANA da clínica.
+ */
+export function checkInNaJanelaTemporal(
+  inicio: Date,
+  agora: Date,
+  fusoHorario: string,
+): boolean {
+  return paraInstanteLocal(inicio, fusoHorario).data === paraInstanteLocal(agora, fusoHorario).data;
+}
+
+/**
+ * `true` sse falta está na janela temporal homologada de AGD-B:
+ * estritamente após o início (`agora > inicio`).
+ */
+export function faltaNaJanelaTemporal(inicio: Date, agora: Date): boolean {
+  return agora.getTime() > inicio.getTime();
 }

@@ -70,6 +70,8 @@ export const ERRO_AGENDAMENTO = Object.freeze({
   SERVICO_NAO_HABILITADO: "SERVICO_NAO_HABILITADO",
   /** `422` — D-AGD-07: motivo inexistente, inativo ou catálogo sem ativos. */
   MOTIVO_CANCELAMENTO_INELEGIVEL: "MOTIVO_CANCELAMENTO_INELEGIVEL",
+  /** `422` — AGD-B: operação fora da janela temporal homologada. */
+  FORA_DA_JANELA_TEMPORAL: "FORA_DA_JANELA_TEMPORAL",
   /** `409` — D-AGD-02: transição fora da máquina de estados. */
   TRANSICAO_INVALIDA: "TRANSICAO_INVALIDA",
   /** `409` — RN-015.2: sobreposição com `bloqueio_agenda`. */
@@ -123,6 +125,10 @@ export class CriarAgendamentoRequisicaoDto {
 
 /** Corpo de `POST /agendamentos/:agendamentoId/confirmacao` — objeto vazio. */
 export class ConfirmarAgendamentoRequisicaoDto {}
+/** Corpo de `POST /agendamentos/:agendamentoId/check-in` — objeto vazio. */
+export class CheckInAgendamentoRequisicaoDto {}
+/** Corpo de `POST /agendamentos/:agendamentoId/falta` — objeto vazio. */
+export class RegistrarFaltaAgendamentoRequisicaoDto {}
 
 export class RemarcarAgendamentoRequisicaoDto {
   @ApiProperty({ description: `Novo início. ${DESCRICAO_INSTANTE}`, example: "2026-10-02T13:00:00Z" })
@@ -343,9 +349,24 @@ export function validarCorpoCriacao(corpo: unknown): Validacao<DadosCriacaoValid
 }
 
 /** Corpo de `POST /agendamentos/:agendamentoId/confirmacao` — exatamente `{}`. */
-export function validarCorpoConfirmacao(corpo: unknown): Validacao<Record<string, never>> {
+function validarCorpoVazio(corpo: unknown): Validacao<Record<string, never>> {
   if (!ehObjetoPlano(corpo) || Object.keys(corpo).length !== 0) return INVALIDO;
   return { valido: true, valor: {} };
+}
+
+/** Corpo de `POST /agendamentos/:agendamentoId/confirmacao` — exatamente `{}`. */
+export function validarCorpoConfirmacao(corpo: unknown): Validacao<Record<string, never>> {
+  return validarCorpoVazio(corpo);
+}
+
+/** Corpo de `POST /agendamentos/:agendamentoId/check-in` — exatamente `{}`. */
+export function validarCorpoCheckIn(corpo: unknown): Validacao<Record<string, never>> {
+  return validarCorpoVazio(corpo);
+}
+
+/** Corpo de `POST /agendamentos/:agendamentoId/falta` — exatamente `{}`. */
+export function validarCorpoFalta(corpo: unknown): Validacao<Record<string, never>> {
+  return validarCorpoVazio(corpo);
 }
 
 /** Corpo de `POST /agendamentos/:agendamentoId/remarcacao` (D-AGD-06). */

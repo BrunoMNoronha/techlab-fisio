@@ -4,19 +4,21 @@
 //   - GET  /agendamentos/:agendamentoId                    — consulta individual;
 //   - POST /agendamentos                                   — criação AVULSO (T-01);
 //   - POST /agendamentos/:agendamentoId/confirmacao        — AGENDADO -> CONFIRMADO;
+//   - POST /agendamentos/:agendamentoId/check-in           — AGENDADO|CONFIRMADO -> AGUARDANDO;
+//   - POST /agendamentos/:agendamentoId/falta              — AGENDADO|CONFIRMADO -> FALTA;
 //   - POST /agendamentos/:agendamentoId/remarcacao         — novo intervalo (D-AGD-06);
 //   - POST /agendamentos/:agendamentoId/cancelamento       — com motivo padronizado (D-AGD-07).
 //
-// Todas exigem `agenda.gerenciar` (D-AGD-12) — **nenhuma permissão nova**. Os
+// Cada rota exige a permissão homologada da operação (`agenda.gerenciar`,
+// `agenda.checkin` ou `agenda.falta`) e **nenhuma permissão nova**. Os
 // GETs são métodos seguros, sem CSRF e com `Cache-Control: no-store`; as
 // mutações usam `ProtecaoCsrfGuard` declarada ABAIXO de `@RequerPermissao` (a
 // CSRF roda antes da sessão, mesma ordem dos demais controllers). O ator vem
 // SÓ da sessão.
 //
 // **SEM `DELETE`** — agendamento nunca é removido (RN-017; `historico_agendamento`
-// é append-only). **SEM rotas de AGD-B/C/D/E**: não há check-in, falta,
-// bloqueio, pacote, início nem conclusão de atendimento nesta fatia, e o corpo
-// da criação não aceita `modalidade` nem `pacoteId`.
+// é append-only). Permanecem fora da fatia: bloqueio, pacote, início e conclusão
+// de atendimento, e o corpo da criação não aceita `modalidade` nem `pacoteId`.
 //
 // Erros normalizados para `{ erro }` por `FiltroErroAgenda`.
 
@@ -63,14 +65,18 @@ import { NOME_ESQUEMA_SESSAO } from "../openapi/documento-openapi.js";
 import {
   AgendamentoRespostaDto,
   CancelarAgendamentoRequisicaoDto,
+  CheckInAgendamentoRequisicaoDto,
   ConfirmarAgendamentoRequisicaoDto,
   CriarAgendamentoRequisicaoDto,
   ErroAgendamentoDto,
   ERRO_AGENDAMENTO,
+  RegistrarFaltaAgendamentoRequisicaoDto,
   RemarcarAgendamentoRequisicaoDto,
   validarCorpoCancelamento,
+  validarCorpoCheckIn,
   validarCorpoConfirmacao,
   validarCorpoCriacao,
+  validarCorpoFalta,
   validarCorpoRemarcacao,
   validarFiltroAgenda,
 } from "./agenda.dto.js";
@@ -143,6 +149,10 @@ function traduzirErro(erro: unknown): never {
       case "MOTIVO_CANCELAMENTO_INELEGIVEL":
         throw new UnprocessableEntityException({
           erro: ERRO_AGENDAMENTO.MOTIVO_CANCELAMENTO_INELEGIVEL,
+        });
+      case "FORA_DA_JANELA_TEMPORAL":
+        throw new UnprocessableEntityException({
+          erro: ERRO_AGENDAMENTO.FORA_DA_JANELA_TEMPORAL,
         });
       case "TRANSICAO_INVALIDA":
         throw new ConflictException({ erro: ERRO_AGENDAMENTO.TRANSICAO_INVALIDA });
@@ -341,6 +351,94 @@ export class AgendamentosController {
     }
     try {
       const resultado = await this.agendamentos.confirmar({
+        atorUsuarioId: contexto.usuarioId,
+        agendamentoId,
+      });
+      return paraResposta(resultado.agendamento);
+    } catch (erro) {
+      traduzirErro(erro);
+    }
+  }
+
+  @Post(":agendamentoId/check-in")
+  @HttpCode(HttpStatus.OK)
+  @RequerPermissao("agenda.checkin")
+  @UseGuards(ProtecaoCsrfGuard)
+  @ApiCookieAuth(NOME_ESQUEMA_SESSAO)
+  @ApiHeader(CABECALHO_CSRF)
+  @ApiOperation({
+    summary: "Registra check-in (AGD-B).",
+    description:
+      "Exige agenda.checkin. Corpo exato {}. Permitido em AGENDADO e CONFIRMADO, com transição " +
+      "para AGUARDANDO. Estado inválido é rejeitado com 409 antes da regra temporal; fora da " +
+      "janela temporal retorna 422 FORA_DA_JANELA_TEMPORAL. Grava histórico CHECKIN e não emite " +
+      "evento de auditoria.",
+  })
+  @ApiParam(PARAMETRO_AGENDAMENTO_ID)
+  @ApiResponse({ status: 200, description: "Estado vigente após a operação.", type: AgendamentoRespostaDto })
+  @ApiResponse({ status: 400, description: "Identificador ou payload inválidos.", type: ErroAgendamentoDto })
+  @ApiResponse({ status: 401, description: "Sessão ausente ou inválida.", type: ErroAgendamentoDto })
+  @ApiResponse({ status: 403, description: "Sem a permissão agenda.checkin ou falha na validação CSRF.", type: ErroAgendamentoDto })
+  @ApiResponse({ status: 404, description: "Inexistente, fora do escopo ou clínica não provisionada.", type: ErroAgendamentoDto })
+  @ApiResponse({ status: 409, description: "Transição não admitida (TRANSICAO_INVALIDA).", type: ErroAgendamentoDto })
+  @ApiResponse({ status: 413, description: "Corpo de requisição acima do limite permitido.", type: ErroAgendamentoDto })
+  @ApiResponse({ status: 422, description: "Fora da janela temporal (FORA_DA_JANELA_TEMPORAL).", type: ErroAgendamentoDto })
+  @ApiResponse({ status: 500, description: "Falha técnica inesperada.", type: ErroAgendamentoDto })
+  async checkIn(
+    @Param("agendamentoId") agendamentoId: string,
+    @Body() corpo: CheckInAgendamentoRequisicaoDto,
+    @UsuarioAutenticado() contexto: ContextoAutenticado,
+  ): Promise<AgendamentoRespostaDto> {
+    exigirAgendamentoId(agendamentoId);
+    if (!validarCorpoCheckIn(corpo).valido) {
+      throw new BadRequestException({ erro: ERRO.REQUISICAO_INVALIDA });
+    }
+    try {
+      const resultado = await this.agendamentos.checkIn({
+        atorUsuarioId: contexto.usuarioId,
+        agendamentoId,
+      });
+      return paraResposta(resultado.agendamento);
+    } catch (erro) {
+      traduzirErro(erro);
+    }
+  }
+
+  @Post(":agendamentoId/falta")
+  @HttpCode(HttpStatus.OK)
+  @RequerPermissao("agenda.falta")
+  @UseGuards(ProtecaoCsrfGuard)
+  @ApiCookieAuth(NOME_ESQUEMA_SESSAO)
+  @ApiHeader(CABECALHO_CSRF)
+  @ApiOperation({
+    summary: "Registra falta (AGD-B).",
+    description:
+      "Exige agenda.falta. Corpo exato {}. Permitido em AGENDADO e CONFIRMADO, com transição " +
+      "para FALTA. Estado inválido é rejeitado com 409 antes da regra temporal; fora da janela " +
+      "temporal retorna 422 FORA_DA_JANELA_TEMPORAL. Grava histórico FALTA e não emite evento " +
+      "de auditoria.",
+  })
+  @ApiParam(PARAMETRO_AGENDAMENTO_ID)
+  @ApiResponse({ status: 200, description: "Estado vigente após a operação.", type: AgendamentoRespostaDto })
+  @ApiResponse({ status: 400, description: "Identificador ou payload inválidos.", type: ErroAgendamentoDto })
+  @ApiResponse({ status: 401, description: "Sessão ausente ou inválida.", type: ErroAgendamentoDto })
+  @ApiResponse({ status: 403, description: "Sem a permissão agenda.falta ou falha na validação CSRF.", type: ErroAgendamentoDto })
+  @ApiResponse({ status: 404, description: "Inexistente, fora do escopo ou clínica não provisionada.", type: ErroAgendamentoDto })
+  @ApiResponse({ status: 409, description: "Transição não admitida (TRANSICAO_INVALIDA).", type: ErroAgendamentoDto })
+  @ApiResponse({ status: 413, description: "Corpo de requisição acima do limite permitido.", type: ErroAgendamentoDto })
+  @ApiResponse({ status: 422, description: "Fora da janela temporal (FORA_DA_JANELA_TEMPORAL).", type: ErroAgendamentoDto })
+  @ApiResponse({ status: 500, description: "Falha técnica inesperada.", type: ErroAgendamentoDto })
+  async registrarFalta(
+    @Param("agendamentoId") agendamentoId: string,
+    @Body() corpo: RegistrarFaltaAgendamentoRequisicaoDto,
+    @UsuarioAutenticado() contexto: ContextoAutenticado,
+  ): Promise<AgendamentoRespostaDto> {
+    exigirAgendamentoId(agendamentoId);
+    if (!validarCorpoFalta(corpo).valido) {
+      throw new BadRequestException({ erro: ERRO.REQUISICAO_INVALIDA });
+    }
+    try {
+      const resultado = await this.agendamentos.registrarFalta({
         atorUsuarioId: contexto.usuarioId,
         agendamentoId,
       });

@@ -1,4 +1,4 @@
-// TechLab Fisio — serviço da fatia AGD-A (`docs/15` D-AGD-02..D-AGD-14;
+// TechLab Fisio — serviço da agenda (AGD-A + AGD-B; `docs/15` D-AGD-02..D-AGD-14;
 // `docs/07` §17.4 T-01, §24).
 //
 // Materializa:
@@ -55,13 +55,26 @@ import {
 } from "@techlab-fisio/database";
 
 import { AuditWriter } from "../audit/audit-writer.js";
+import { ErroClinica } from "../clinica/clinica.service.js";
 import { DatabaseService } from "../database/database.service.js";
-import { EscopoAgendaService, escopoAlcanca, restricaoDaLeitura } from "./agenda.escopo.js";
+import {
+  EscopoAgendaService,
+  PERMISSAO_AGENDA_CHECKIN,
+  PERMISSAO_AGENDA_FALTA,
+  escopoAlcanca,
+  restricaoDaLeitura,
+} from "./agenda.escopo.js";
 import type { EscopoAgenda } from "./agenda.escopo.js";
 import {
   avaliarConfirmacao,
+  checkInNaJanelaTemporal,
+  estadoAposCheckIn,
+  estadoAposFalta,
   estadoAposRemarcacao,
+  faltaNaJanelaTemporal,
+  permiteCheckIn,
   permiteCancelamento,
+  permiteFalta,
   permiteRemarcacao,
   type EstadoAgendamento,
   type OperacaoHistorico,
@@ -82,6 +95,7 @@ export type MotivoRejeicaoAgendamento =
   | "SERVICO_INELEGIVEL"
   | "SERVICO_NAO_HABILITADO"
   | "MOTIVO_CANCELAMENTO_INELEGIVEL"
+  | "FORA_DA_JANELA_TEMPORAL"
   | "TRANSICAO_INVALIDA"
   | "CONFLITO_BLOQUEIO"
   | "CONFLITO_PROFISSIONAL"
@@ -471,6 +485,93 @@ export class AgendamentosService {
   }
 
   // -------------------------------------------------------------------------
+  // Check-in (AGD-B)
+  // -------------------------------------------------------------------------
+
+  async checkIn(comando: {
+    atorUsuarioId: string;
+    agendamentoId: string;
+  }): Promise<ResultadoMutacaoAgendamento> {
+    const correlacaoId = randomUUID();
+    return this.database.transacao(async (tx) => {
+      const { escopo } = await this.#abrirMutacao(tx, comando, PERMISSAO_AGENDA_CHECKIN);
+      const atual = await this.#lerSobLock(tx, comando.agendamentoId, escopo);
+      if (!permiteCheckIn(atual.estado)) throw new ErroAgendamento("TRANSICAO_INVALIDA");
+
+      const agora = new Date();
+      const fusoHorario = await this.#exigirFusoHorarioClinica(tx);
+      if (!checkInNaJanelaTemporal(atual.inicio, agora, fusoHorario)) {
+        throw new ErroAgendamento("FORA_DA_JANELA_TEMPORAL");
+      }
+
+      const estadoNovo = estadoAposCheckIn();
+      await tx.$executeRaw`
+        UPDATE agendamento
+           SET estado = ${estadoNovo}::estado_agendamento
+         WHERE id = ${atual.id}::uuid
+      `;
+      await this.#registrarHistorico(tx, {
+        correlacaoId,
+        agendamentoId: atual.id,
+        operacao: "CHECKIN",
+        atorUsuarioId: comando.atorUsuarioId,
+        ocorridoEm: agora,
+        estadoAnterior: atual.estado,
+        estadoNovo,
+        inicioAnterior: null,
+        fimAnterior: null,
+        inicioNovo: null,
+        fimNovo: null,
+        motivoCancelamentoId: null,
+      });
+      return { agendamento: await this.#exigirProjecao(tx, atual.id), mutacaoExecutada: true };
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Falta (AGD-B)
+  // -------------------------------------------------------------------------
+
+  async registrarFalta(comando: {
+    atorUsuarioId: string;
+    agendamentoId: string;
+  }): Promise<ResultadoMutacaoAgendamento> {
+    const correlacaoId = randomUUID();
+    return this.database.transacao(async (tx) => {
+      const { escopo } = await this.#abrirMutacao(tx, comando, PERMISSAO_AGENDA_FALTA);
+      const atual = await this.#lerSobLock(tx, comando.agendamentoId, escopo);
+      if (!permiteFalta(atual.estado)) throw new ErroAgendamento("TRANSICAO_INVALIDA");
+
+      const agora = new Date();
+      if (!faltaNaJanelaTemporal(atual.inicio, agora)) {
+        throw new ErroAgendamento("FORA_DA_JANELA_TEMPORAL");
+      }
+
+      const estadoNovo = estadoAposFalta();
+      await tx.$executeRaw`
+        UPDATE agendamento
+           SET estado = ${estadoNovo}::estado_agendamento
+         WHERE id = ${atual.id}::uuid
+      `;
+      await this.#registrarHistorico(tx, {
+        correlacaoId,
+        agendamentoId: atual.id,
+        operacao: "FALTA",
+        atorUsuarioId: comando.atorUsuarioId,
+        ocorridoEm: agora,
+        estadoAnterior: atual.estado,
+        estadoNovo,
+        inicioAnterior: null,
+        fimAnterior: null,
+        inicioNovo: null,
+        fimNovo: null,
+        motivoCancelamentoId: null,
+      });
+      return { agendamento: await this.#exigirProjecao(tx, atual.id), mutacaoExecutada: true };
+    });
+  }
+
+  // -------------------------------------------------------------------------
   // Cancelamento (D-AGD-07)
   // -------------------------------------------------------------------------
 
@@ -543,8 +644,20 @@ export class AgendamentosService {
   async #abrirMutacao(
     tx: TransacaoPersistencia,
     comando: { atorUsuarioId: string },
+    permissaoExigida?: string,
   ): Promise<{ escopo: EscopoAgenda }> {
-    return { escopo: await this.escopos.resolver(tx, comando.atorUsuarioId) };
+    return {
+      escopo: await this.escopos.resolver(tx, comando.atorUsuarioId, permissaoExigida),
+    };
+  }
+
+  async #exigirFusoHorarioClinica(tx: TransacaoPersistencia): Promise<string> {
+    const clinicas = await tx.$queryRaw<Array<{ fuso_horario: string }>>`SELECT fuso_horario FROM clinica`;
+    const clinica = clinicas[0];
+    if (clinica === undefined) {
+      throw new ErroClinica("CLINICA_NAO_CONFIGURADA");
+    }
+    return clinica.fuso_horario;
   }
 
   /**

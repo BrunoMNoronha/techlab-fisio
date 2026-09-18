@@ -9,17 +9,26 @@ import { describe, expect, it } from "@jest/globals";
 
 import {
   avaliarConfirmacao,
+  checkInNaJanelaTemporal,
+  estadoAposCheckIn,
+  estadoAposFalta,
   estadoAposRemarcacao,
   ESTADOS_TERMINAIS,
   OPERACOES_AGD_A,
+  OPERACOES_AGD_B,
   OPERACOES_HISTORICO,
+  faltaNaJanelaTemporal,
+  permiteCheckIn,
   permiteCancelamento,
+  permiteFalta,
   permiteRemarcacao,
   type EstadoAgendamento,
 } from "../src/agenda/agenda.estados.js";
 import { PAPEIS, ehCodigoPapel } from "../src/provisionamento/catalogo-rbac.js";
 import {
   escopoAlcanca,
+  PERMISSAO_AGENDA_CHECKIN,
+  PERMISSAO_AGENDA_FALTA,
   PAPEIS_ESCOPO_OPERACIONAL,
   PERMISSAO_AGENDA,
   restricaoDaLeitura,
@@ -52,6 +61,7 @@ describe("D-AGD-09 — catálogo fechado de operações do histórico", () => {
       "CONCLUIDO",
     ]);
     expect([...OPERACOES_AGD_A]).toEqual(["CRIADO", "CONFIRMADO", "REMARCADO", "CANCELADO"]);
+    expect([...OPERACOES_AGD_B]).toEqual(["CHECKIN", "FALTA"]);
   });
 });
 
@@ -82,6 +92,36 @@ describe("D-AGD-06 / D-AGD-07 — origens de remarcação e cancelamento", () =>
     }
   });
 
+  describe("AGD-B — check-in e falta", () => {
+    it("check-in e falta são admitidos somente em AGENDADO e CONFIRMADO", () => {
+      for (const estado of TODOS) {
+        const admitido = estado === "AGENDADO" || estado === "CONFIRMADO";
+        expect(permiteCheckIn(estado)).toBe(admitido);
+        expect(permiteFalta(estado)).toBe(admitido);
+      }
+    });
+
+    it("check-in efetivo vai para AGUARDANDO e falta efetiva vai para FALTA", () => {
+      expect(estadoAposCheckIn()).toBe("AGUARDANDO");
+      expect(estadoAposFalta()).toBe("FALTA");
+    });
+
+    it("check-in aceita somente a mesma data civil local no fuso da clínica", () => {
+      const inicio = new Date("2026-10-05T12:00:00.000Z"); // 09:00 local (America/Sao_Paulo)
+      const mesmoDia = new Date("2026-10-05T21:30:00.000Z"); // 18:30 local
+      const outroDia = new Date("2026-10-06T03:00:00.000Z"); // 00:00 local do dia seguinte
+      expect(checkInNaJanelaTemporal(inicio, mesmoDia, "America/Sao_Paulo")).toBe(true);
+      expect(checkInNaJanelaTemporal(inicio, outroDia, "America/Sao_Paulo")).toBe(false);
+    });
+
+    it("falta exige agora > inicio (igualdade e anterior são proibidos)", () => {
+      const inicio = new Date("2026-10-05T12:00:00.000Z");
+      expect(faltaNaJanelaTemporal(inicio, new Date("2026-10-05T12:00:00.000Z"))).toBe(false);
+      expect(faltaNaJanelaTemporal(inicio, new Date("2026-10-05T11:59:59.999Z"))).toBe(false);
+      expect(faltaNaJanelaTemporal(inicio, new Date("2026-10-05T12:00:00.001Z"))).toBe(true);
+    });
+  });
+
   it("`AGUARDANDO -> CANCELADO` NÃO é oferecido em AGD-A (P-AGD-02)", () => {
     expect(permiteCancelamento("AGUARDANDO")).toBe(false);
   });
@@ -99,6 +139,8 @@ describe("D-AGD-12 — escopo operacional × próprio", () => {
 
   it("materializa a regra sobre a permissão homologada, sem criar permissão nova", () => {
     expect(PERMISSAO_AGENDA).toBe("agenda.gerenciar");
+    expect(PERMISSAO_AGENDA_CHECKIN).toBe("agenda.checkin");
+    expect(PERMISSAO_AGENDA_FALTA).toBe("agenda.falta");
     expect([...PAPEIS_ESCOPO_OPERACIONAL].sort()).toEqual(["ADMINISTRADOR", "RECEPCIONISTA"]);
   });
 
