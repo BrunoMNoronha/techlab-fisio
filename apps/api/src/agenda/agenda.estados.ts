@@ -14,7 +14,8 @@
 // `AGUARDANDO -> CANCELADO` NÃO é oferecido (P-AGD-02, homologada): não há
 // permissão excepcional nem coluna de justificativa (FA-03).
 //
-// AGD-B acrescenta duas decisões PURAS e sem relógio global:
+// AGD-B acrescenta duas decisões PURAS e sem relógio global, derivadas da
+// máquina homologada (D-AGD-02) e das regras temporais (D-AGD-03):
 //   - check-in: `AGENDADO|CONFIRMADO -> AGUARDANDO`, somente na mesma data civil
 //     local do `inicio` (D-AGD-03);
 //   - falta: `AGENDADO|CONFIRMADO -> FALTA`, somente após o `inicio`
@@ -129,7 +130,7 @@ export type DesfechoFalta =
   | { readonly permitido: false; readonly motivo: MotivoRejeicaoCheckInOuFalta };
 
 /**
- * Check-in (AGD-B, D-AGD-02, D-AGD-03):
+ * Check-in (AGD-B; D-AGD-02 para a máquina, D-AGD-03 para a janela temporal):
  *   - `AGENDADO|CONFIRMADO` ............. transição efetiva para `AGUARDANDO`;
  *   - qualquer outra origem ............. `TRANSICAO_INVALIDA`;
  *   - origem válida fora da data local .. `FORA_DA_JANELA_TEMPORAL`.
@@ -150,7 +151,7 @@ export function avaliarCheckIn(
 }
 
 /**
- * Falta (AGD-B, D-AGD-02, D-AGD-03):
+ * Falta (AGD-B; D-AGD-02 para a máquina, D-AGD-03 para a janela temporal):
  *   - `AGENDADO|CONFIRMADO` ... transição efetiva para `FALTA`;
  *   - qualquer outra origem ... `TRANSICAO_INVALIDA`;
  *   - `agora <= inicio` ....... `FORA_DA_JANELA_TEMPORAL`.
