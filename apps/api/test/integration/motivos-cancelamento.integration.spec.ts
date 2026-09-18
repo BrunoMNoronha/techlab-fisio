@@ -224,8 +224,15 @@ async function erroSql(sql: (tx: any) => Promise<unknown>): Promise<string> {
 
 /**
  * Agendamento sintético (AVULSO) — base mínima para referenciar um motivo.
- * `motivoNoAgendamento = false` cria o agendamento SEM motivo; o chamador pode
+ * `motivoNoAgendamento = null` cria o agendamento SEM motivo; o chamador pode
  * então referenciar o motivo só no histórico (D-CFG-50).
+ *
+ * ATUALIZADO POR AGD-A (`docs/15` D-AGD-07, migration
+ * `20260917230000_agendamento_cancelamento_coerente`): o estado `CANCELADO`
+ * passou a exigir FISICAMENTE `motivo_cancelamento_id`, `cancelado_em` e
+ * `cancelado_por_usuario_id` juntos. A fixture preenche os três quando o estado
+ * pedido é `CANCELADO`; nenhum cenário de CFG-005 muda de sentido com isso —
+ * todos continuam medindo o que mediam.
  */
 async function criarAgendamento(opcoes: {
   atorId: string;
@@ -256,6 +263,9 @@ async function criarAgendamento(opcoes: {
         estado: opcoes.estado ?? "CANCELADO",
         modalidade: "AVULSO",
         motivoCancelamentoId: opcoes.motivoNoAgendamento,
+        ...((opcoes.estado ?? "CANCELADO") === "CANCELADO"
+          ? { canceladoEm: new Date("2026-09-30T12:00:00Z"), canceladoPorUsuarioId: opcoes.atorId }
+          : {}),
         criadoPorUsuarioId: opcoes.atorId,
       },
       select: { id: true },
@@ -928,7 +938,11 @@ describe("CFG-005 — atomicidade, concorrência e invariantes físicas (D-CFG-4
       lockAdquirido();
       await barreira;
       await tx.$executeRaw`
-        UPDATE agendamento SET estado = 'CANCELADO', motivo_cancelamento_id = ${criado.id}::uuid
+        UPDATE agendamento
+           SET estado = 'CANCELADO',
+               motivo_cancelamento_id = ${criado.id}::uuid,
+               cancelado_em = now(),
+               cancelado_por_usuario_id = ${admin.id}::uuid
          WHERE id = ${agendamentoId}::uuid`;
     });
     await adquirido;
@@ -991,10 +1005,49 @@ describe("CFG-005 — atomicidade, concorrência e invariantes físicas (D-CFG-4
     expect(incoerente).toContain("ck_motivo_cancelamento_situacao");
   });
 
-  it("D-CFG-51: nenhuma restrição nova em agendamento — cancelado sem motivo continua aceito pelo banco", async () => {
+  // D-CFG-51 ("nenhuma restrição nova em agendamento") foi SUPERADA por
+  // `docs/15` D-AGD-07, que a resolve expressamente e autoriza o CHECK de
+  // coerência do cancelamento. O teste original — que afirmava que um
+  // agendamento CANCELADO sem motivo continuava aceito pelo banco — deixou de
+  // descrever o estado vigente e foi substituído pela medição da restrição que
+  // passou a valer. Nenhuma decisão de CFG-005 foi reaberta: a de CFG-005
+  // registrava o estado de então, e a decisão posterior da agenda o alterou.
+  it("D-AGD-07 (supera D-CFG-51): o banco rejeita CANCELADO sem motivo, sem instante ou sem ator", async () => {
     const clinicaId = await provisionarClinica();
     const admin = await administrador();
-    const agendamentoId = await criarAgendamento({ atorId: admin.id, clinicaId, motivoNoAgendamento: null, estado: "CANCELADO" });
-    expect(agendamentoId).toMatch(/^[0-9a-f-]{36}$/);
+    const motivo = await criarViaApi(admin.cookie, "Motivo para cancelar");
+
+    // Cancelamento coerente é aceito.
+    const coerente = await criarAgendamento({
+      atorId: admin.id,
+      clinicaId,
+      motivoNoAgendamento: motivo.id,
+      estado: "CANCELADO",
+    });
+    expect(coerente).toMatch(/^[0-9a-f-]{36}$/);
+
+    // Sem motivo -> rejeitado pela CHECK.
+    await expect(
+      criarAgendamento({ atorId: admin.id, clinicaId, motivoNoAgendamento: null, estado: "CANCELADO" }),
+    ).rejects.toThrow();
+
+    // Um agendamento AGENDADO não pode carregar o TRIO de cancelamento — a
+    // equivalência da CHECK vale nos dois sentidos.
+    const agendado = await criarAgendamento({
+      atorId: admin.id,
+      clinicaId,
+      motivoNoAgendamento: null,
+      estado: "AGENDADO",
+    });
+    await expect(
+      database.transacao(
+        (tx) => tx.$executeRaw`
+          UPDATE agendamento
+             SET motivo_cancelamento_id = ${motivo.id}::uuid,
+                 cancelado_em = now(),
+                 cancelado_por_usuario_id = ${admin.id}::uuid
+           WHERE id = ${agendado}::uuid`,
+      ),
+    ).rejects.toThrow();
   });
 });

@@ -196,6 +196,7 @@ CREATE TABLE public.agendamento (
     criado_por_usuario_id uuid NOT NULL,
     criado_em timestamp(6) with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     atualizado_em timestamp(6) with time zone NOT NULL,
+    CONSTRAINT ck_agendamento_cancelamento_coerente CHECK (((estado = 'CANCELADO'::public.estado_agendamento) = ((motivo_cancelamento_id IS NOT NULL) AND (cancelado_em IS NOT NULL) AND (cancelado_por_usuario_id IS NOT NULL)))),
     CONSTRAINT ck_agendamento_intervalo CHECK ((fim > inicio)),
     CONSTRAINT ck_agendamento_modalidade_pacote CHECK ((((modalidade = 'PACOTE'::public.modalidade_agendamento) AND (pacote_id IS NOT NULL)) OR ((modalidade = 'AVULSO'::public.modalidade_agendamento) AND (pacote_id IS NULL))))
 );

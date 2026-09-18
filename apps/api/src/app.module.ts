@@ -9,6 +9,12 @@
 // nascem aqui. `AuthModule` (Etapa 2.3D-B / F1) é registrado como fatia
 // técnica INTERNA — só a fronteira de credenciais, sem controller nem rota.
 //
+// Fatia AGD-A (`docs/15` D-AGD-01, autorizada por Bruno Menezes Noronha em
+// 17/09/2026): `AgendaModule` entra como módulo funcional do M5 e publica as
+// seis rotas de `/agendamentos` mais `GET /agenda/opcoes`. Ele é o consumidor
+// dos verificadores de RN-014 que CFG-002 e PRO-003 deixaram prontos e sem
+// registro. Nenhuma rota de AGD-B, AGD-C, AGD-D ou AGD-E nasce aqui.
+//
 // Etapa 2.3D-B / F4: `AuthzModule` entra como módulo SEM CONTROLLER. Ele
 // registra o mecanismo de autorização RBAC (`D-2.3D-09`) no grafo real, para
 // que seus providers sejam os mesmos singletons que a aplicação usaria — e
@@ -17,6 +23,7 @@
 
 import { Module } from "@nestjs/common";
 
+import { AgendaModule } from "./agenda/agenda.module.js";
 import { AuditModule } from "./audit/audit.module.js";
 import { AuditoriaConsultaModule } from "./audit/auditoria-consulta.module.js";
 import { AuthModule } from "./auth/auth.module.js";
@@ -52,6 +59,7 @@ import { UsuariosModule } from "./auth/usuarios.module.js";
     FormasPagamentoModule,
     MotivosCancelamentoModule,
     PacientesModule,
+    AgendaModule,
   ],
 })
 export class AppModule {}
