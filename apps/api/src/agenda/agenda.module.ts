@@ -16,11 +16,13 @@
 // `ProtecaoCsrfGuard` é provida no injetor do módulo do controller, como nos
 // demais módulos com mutação.
 //
-// O QUE ESTE MÓDULO NÃO EXPÕE por HTTP nesta fatia: criação ou remoção de
-// bloqueio (AGD-C), modalidade `PACOTE` e `reserva_sessao` (AGD-D), início e
-// conclusão de atendimento (AGD-E), recorrência, notificações, lista de espera,
-// agendamento público e sugestão automática de horários (`D-AGD-17`,
-// TLF-BASE §13).
+// AGD-A e AGD-B já estão materializadas neste módulo.
+//
+// O QUE ESTE MÓDULO NÃO CONTÉM, e nenhuma linha dele prepara: criação ou remoção
+// de bloqueio (AGD-C), modalidade `PACOTE` e
+// `reserva_sessao` (AGD-D), início e conclusão de atendimento (AGD-E),
+// recorrência, notificações, lista de espera, agendamento público e sugestão
+// automática de horários (`D-AGD-17`, TLF-BASE §13).
 
 import { Module } from "@nestjs/common";
 

@@ -301,3 +301,49 @@ describe("D-AGD-12 — escopo operacional × próprio", () => {
     expect(restricaoDaLeitura(semVinculo, OUTRO)).toEqual({ tipo: "VAZIO" });
   });
 });
+
+describe("AGD-B — origens de check-in e falta", () => {
+  it("check-in e falta são admitidos somente em `AGENDADO` e `CONFIRMADO`", () => {
+    for (const estado of TODOS) {
+      const admitido = estado === "AGENDADO" || estado === "CONFIRMADO";
+      expect(permiteCheckin(estado)).toBe(admitido);
+      expect(permiteFalta(estado)).toBe(admitido);
+    }
+  });
+
+  it("check-in exige estado admitido e mesma data civil local do início", () => {
+    expect(
+      avaliarCheckIn("AGENDADO", new Date("2026-09-18T15:00:00.000Z"), new Date("2026-09-18T05:00:00.000Z"), SP),
+    ).toMatchObject({ permitido: true });
+    expect(
+      avaliarCheckIn("AGENDADO", new Date("2026-09-18T15:00:00.000Z"), new Date("2026-09-18T02:59:59.000Z"), SP),
+    ).toEqual({ permitido: false, motivo: "FORA_DA_JANELA_TEMPORAL" });
+    expect(
+      avaliarCheckIn("AGUARDANDO", new Date("2026-09-18T15:00:00.000Z"), new Date("2026-09-18T15:00:00.000Z"), SP),
+    ).toEqual({ permitido: false, motivo: "TRANSICAO_INVALIDA" });
+    expect(
+      avaliarCheckIn("CONFIRMADO", new Date("2026-11-01T03:30:00.000Z"), new Date("2026-11-01T05:30:00.000Z"), "America/New_York"),
+    ).toEqual({ permitido: false, motivo: "FORA_DA_JANELA_TEMPORAL" });
+  });
+
+  it("falta exige estado admitido e instante estritamente posterior ao início local", () => {
+    expect(
+      avaliarFalta("CONFIRMADO", new Date("2026-09-18T15:00:00.000Z"), new Date("2026-09-18T15:00:00.001Z")),
+    ).toMatchObject({ permitido: true });
+    expect(
+      avaliarFalta("CONFIRMADO", new Date("2026-09-18T15:00:00.000Z"), new Date("2026-09-18T15:00:00.000Z")),
+    ).toEqual({ permitido: false, motivo: "FORA_DA_JANELA_TEMPORAL" });
+    expect(
+      avaliarFalta("AGUARDANDO", new Date("2026-09-18T15:00:00.000Z"), new Date("2026-09-18T16:00:00.000Z")),
+    ).toEqual({ permitido: false, motivo: "TRANSICAO_INVALIDA" });
+    expect(
+      avaliarFalta("AGENDADO", new Date("2026-11-01T03:30:00.000Z"), new Date("2026-11-01T05:30:00.000Z")),
+    ).toMatchObject({ permitido: true });
+  });
+
+  it("falta compara instantes reais quando o horário de verão repete a hora local", () => {
+    expect(
+      avaliarFalta("CONFIRMADO", new Date("2026-11-01T05:30:00.000Z"), new Date("2026-11-01T06:15:00.000Z")),
+    ).toMatchObject({ permitido: true });
+  });
+});
