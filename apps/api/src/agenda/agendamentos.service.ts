@@ -566,7 +566,7 @@ export class AgendamentosService {
       if (!permiteCheckin(atual.estado)) throw new ErroAgendamento("TRANSICAO_INVALIDA");
 
       const agora = new Date();
-      const fusoHorario = await this.#exigirFusoHorarioClinica(tx);
+      const fusoHorario = await this.#exigirFusoHorarioDoAgendamento(tx, atual.servico_id);
       if (!checkinNaJanelaTemporal(atual.inicio, agora, fusoHorario)) {
         throw new ErroAgendamento("FORA_DA_JANELA_TEMPORAL");
       }
@@ -727,13 +727,19 @@ export class AgendamentosService {
     if (linhas[0]?.ativo !== true) throw new ErroAgendamento("SERVICO_INELEGIVEL");
   }
 
-  async #exigirFusoHorarioClinica(tx: TransacaoPersistencia): Promise<string> {
+  async #exigirFusoHorarioDoAgendamento(
+    tx: TransacaoPersistencia,
+    servicoId: string,
+  ): Promise<string> {
     const clinicas = await tx.$queryRaw<Array<{ fuso_horario: string }>>`
-      SELECT fuso_horario FROM clinica
+      SELECT c.fuso_horario
+        FROM servico s
+        JOIN clinica c ON c.id = s.clinica_id
+       WHERE s.id = ${servicoId}::uuid
     `;
     const clinica = clinicas[0];
-    if (clinica === undefined || clinicas.length > 1) {
-      throw new Error("Invariante de clínica única violada: leitura do fuso horário indisponível.");
+    if (clinica === undefined || clinicas.length !== 1) {
+      throw new Error("Invariante de clínica por serviço violada: leitura do fuso horário indisponível.");
     }
     return clinica.fuso_horario;
   }
