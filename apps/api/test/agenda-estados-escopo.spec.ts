@@ -8,7 +8,9 @@
 import { describe, expect, it } from "@jest/globals";
 
 import {
+  avaliarCheckIn,
   avaliarConfirmacao,
+  avaliarFalta,
   estadoAposRemarcacao,
   ESTADOS_TERMINAIS,
   OPERACOES_AGD_A,
@@ -38,6 +40,8 @@ const TODOS: readonly EstadoAgendamento[] = [
 
 const PROPRIO = "0191f5a0-0000-7000-8000-0000000000b2";
 const OUTRO = "0191f5a0-0000-7000-8000-0000000000b3";
+const SP = "America/Sao_Paulo";
+const utc = (iso: string) => new Date(iso);
 
 describe("D-AGD-09 — catálogo fechado de operações do histórico", () => {
   it("declara as oito operações e AGD-A usa somente as quatro primeiras", () => {
@@ -89,6 +93,101 @@ describe("D-AGD-06 / D-AGD-07 — origens de remarcação e cancelamento", () =>
   it("remarcar um `CONFIRMADO` o devolve a `AGENDADO`; `AGENDADO` permanece", () => {
     expect(estadoAposRemarcacao("CONFIRMADO")).toBe("AGENDADO");
     expect(estadoAposRemarcacao("AGENDADO")).toBe("AGENDADO");
+  });
+});
+
+describe("D-AGD-02 / D-AGD-03 — check-in e falta", () => {
+  const inicio = utc("2026-09-22T01:30:00Z");
+
+  it("exercita os sete estados oficiais nas duas operações", () => {
+    for (const estado of TODOS) {
+      const admitido = estado === "AGENDADO" || estado === "CONFIRMADO";
+      expect(avaliarCheckIn(estado, inicio, utc("2026-09-21T23:00:00Z"), SP)).toEqual(
+        admitido
+          ? { permitido: true, estadoNovo: "AGUARDANDO" }
+          : { permitido: false, motivo: "TRANSICAO_INVALIDA" },
+      );
+      expect(avaliarFalta(estado, inicio, utc("2026-09-22T01:30:00.001Z"))).toEqual(
+        admitido ? { permitido: true, estadoNovo: "FALTA" } : { permitido: false, motivo: "TRANSICAO_INVALIDA" },
+      );
+    }
+  });
+
+  it("avalia a origem antes da janela temporal, inclusive no check-in repetido e em `AGUARDANDO -> FALTA`", () => {
+    expect(avaliarCheckIn("AGUARDANDO", inicio, utc("2026-09-22T03:15:00Z"), SP)).toEqual({
+      permitido: false,
+      motivo: "TRANSICAO_INVALIDA",
+    });
+    expect(avaliarFalta("AGUARDANDO", inicio, utc("2026-09-21T23:00:00Z"))).toEqual({
+      permitido: false,
+      motivo: "TRANSICAO_INVALIDA",
+    });
+  });
+
+  it("aceita check-in na mesma data civil local, mesmo com datas UTC diferentes", () => {
+    expect(avaliarCheckIn("AGENDADO", inicio, utc("2026-09-21T23:00:00Z"), SP)).toEqual({
+      permitido: true,
+      estadoNovo: "AGUARDANDO",
+    });
+    expect(avaliarCheckIn("CONFIRMADO", inicio, utc("2026-09-22T02:59:59Z"), SP)).toEqual({
+      permitido: true,
+      estadoNovo: "AGUARDANDO",
+    });
+  });
+
+  it("rejeita check-in em dia civil local anterior ou seguinte, sem janela artificial", () => {
+    expect(avaliarCheckIn("AGENDADO", inicio, utc("2026-09-21T02:59:59Z"), SP)).toEqual({
+      permitido: false,
+      motivo: "FORA_DA_JANELA_TEMPORAL",
+    });
+    expect(avaliarCheckIn("AGENDADO", inicio, utc("2026-09-22T03:00:00Z"), SP)).toEqual({
+      permitido: false,
+      motivo: "FORA_DA_JANELA_TEMPORAL",
+    });
+  });
+
+  it("respeita a fronteira de meia-noite local em fuso IANA não-UTC", () => {
+    const inicioNovaYork = utc("2026-03-09T03:30:00Z");
+    expect(avaliarCheckIn("AGENDADO", inicioNovaYork, utc("2026-03-09T03:45:00Z"), "America/New_York")).toEqual({
+      permitido: true,
+      estadoNovo: "AGUARDANDO",
+    });
+    expect(avaliarCheckIn("AGENDADO", inicioNovaYork, utc("2026-03-09T04:15:00Z"), "America/New_York")).toEqual({
+      permitido: false,
+      motivo: "FORA_DA_JANELA_TEMPORAL",
+    });
+  });
+
+  it("falta rejeita antes e exatamente no início, aceitando somente depois", () => {
+    expect(avaliarFalta("AGENDADO", inicio, utc("2026-09-22T01:29:59.999Z"))).toEqual({
+      permitido: false,
+      motivo: "FORA_DA_JANELA_TEMPORAL",
+    });
+    expect(avaliarFalta("AGENDADO", inicio, utc("2026-09-22T01:30:00Z"))).toEqual({
+      permitido: false,
+      motivo: "FORA_DA_JANELA_TEMPORAL",
+    });
+    expect(avaliarFalta("AGENDADO", inicio, utc("2026-09-22T01:30:00.001Z"))).toEqual({
+      permitido: true,
+      estadoNovo: "FALTA",
+    });
+  });
+
+  it("o `agora` informado controla integralmente o resultado", () => {
+    expect(avaliarCheckIn("AGENDADO", inicio, utc("2026-09-21T23:00:00Z"), SP).permitido).toBe(true);
+    expect(avaliarCheckIn("AGENDADO", inicio, utc("2026-09-22T03:15:00Z"), SP)).toEqual({
+      permitido: false,
+      motivo: "FORA_DA_JANELA_TEMPORAL",
+    });
+
+    expect(avaliarFalta("CONFIRMADO", inicio, utc("2026-09-22T01:29:59.999Z"))).toEqual({
+      permitido: false,
+      motivo: "FORA_DA_JANELA_TEMPORAL",
+    });
+    expect(avaliarFalta("CONFIRMADO", inicio, utc("2026-09-22T01:30:00.001Z"))).toEqual({
+      permitido: true,
+      estadoNovo: "FALTA",
+    });
   });
 });
 
