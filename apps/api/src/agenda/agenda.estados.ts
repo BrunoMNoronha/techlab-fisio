@@ -5,14 +5,14 @@
 // Funções PURAS, sem I/O — a decisão de transição é testável sem banco e é a
 // MESMA que o serviço aplica sob `SELECT ... FOR UPDATE`.
 //
-// FRONTEIRA DESTA FATIA: AGD-A opera confirmação, remarcação e cancelamento.
-// `AGUARDANDO` (check-in), `FALTA`, `EM_ATENDIMENTO` e `CONCLUIDO` pertencem a
-// AGD-B e AGD-E e NÃO são alcançáveis por nenhuma rota desta fatia — a tabela
-// de transições abaixo declara a máquina completa de `docs/05` §3 apenas para
-// que os estados terminais sejam reconhecidos corretamente na rejeição.
+// AGD-A opera confirmação, remarcação e cancelamento; AGD-B opera check-in e
+// falta. A tabela abaixo declara a máquina completa de `docs/05` §3 para que os
+// estados terminais sejam reconhecidos corretamente na rejeição.
 //
 // `AGUARDANDO -> CANCELADO` NÃO é oferecido (P-AGD-02, homologada): não há
 // permissão excepcional nem coluna de justificativa (FA-03).
+
+import { paraInstanteLocal } from "./horario-funcionamento.regra.js";
 
 /** Os sete estados de `estado_agendamento` (`docs/03` §5.1). */
 export type EstadoAgendamento =
@@ -36,9 +36,9 @@ export const ESTADOS_TERMINAIS: ReadonlySet<EstadoAgendamento> = new Set<EstadoA
  * `text` porque AGD-009 não enumera operações (`docs/07` §11.1); o conjunto
  * fechado vive aqui, na aplicação.
  *
- * AGD-A usa os QUATRO primeiros. `CHECKIN`, `FALTA`, `INICIADO` e `CONCLUIDO`
- * pertencem a AGD-B e AGD-E e são declarados para que o catálogo permaneça
- * único — nenhuma rota desta fatia os escreve.
+ * AGD-A usa os QUATRO primeiros. `CHECKIN` e `FALTA` são escritos por AGD-B.
+ * `INICIADO` e `CONCLUIDO` pertencem a AGD-E e permanecem declarados para que o
+ * catálogo permaneça único.
  */
 export const OPERACOES_HISTORICO = Object.freeze([
   "CRIADO",
@@ -73,6 +73,14 @@ const ORIGENS_CANCELAMENTO: ReadonlySet<EstadoAgendamento> = new Set<EstadoAgend
   "AGENDADO",
   "CONFIRMADO",
 ]);
+const ORIGENS_CHECKIN: ReadonlySet<EstadoAgendamento> = new Set<EstadoAgendamento>([
+  "AGENDADO",
+  "CONFIRMADO",
+]);
+const ORIGENS_FALTA: ReadonlySet<EstadoAgendamento> = new Set<EstadoAgendamento>([
+  "AGENDADO",
+  "CONFIRMADO",
+]);
 
 /**
  * Desfecho de uma confirmação (D-AGD-02):
@@ -97,6 +105,33 @@ export function permiteRemarcacao(estado: EstadoAgendamento): boolean {
 /** `true` sse o cancelamento é admitido a partir deste estado (D-AGD-07). */
 export function permiteCancelamento(estado: EstadoAgendamento): boolean {
   return ORIGENS_CANCELAMENTO.has(estado);
+}
+
+/** `true` sse o check-in é admitido a partir deste estado (D-AGD-02). */
+export function permiteCheckin(estado: EstadoAgendamento): boolean {
+  return ORIGENS_CHECKIN.has(estado);
+}
+
+/** `true` sse a falta é admitida a partir deste estado (D-AGD-02). */
+export function permiteFalta(estado: EstadoAgendamento): boolean {
+  return ORIGENS_FALTA.has(estado);
+}
+
+/**
+ * D-AGD-03 — check-in somente na mesma data civil local do `inicio`, no fuso da
+ * clínica.
+ */
+export function checkinNaJanelaTemporal(
+  inicio: Date,
+  agora: Date,
+  fusoHorario: string,
+): boolean {
+  return paraInstanteLocal(inicio, fusoHorario).data === paraInstanteLocal(agora, fusoHorario).data;
+}
+
+/** D-AGD-03 — falta somente após o `inicio` estritamente. */
+export function faltaNaJanelaTemporal(inicio: Date, agora: Date): boolean {
+  return agora.getTime() > inicio.getTime();
 }
 
 /**
