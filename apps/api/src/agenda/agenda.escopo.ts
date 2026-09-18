@@ -33,7 +33,7 @@ import { Injectable } from "@nestjs/common";
 import type { TransacaoPersistencia } from "@techlab-fisio/database";
 
 /**
- * Códigos de papel que, quando concedem `agenda.gerenciar`, dão escopo
+ * Códigos de papel que, quando concedem a permissão de agenda da operação, dão escopo
  * operacional (`docs/04` §3; D-AGD-12).
  *
  * POR QUE OS LITERAIS SÃO REPETIDOS AQUI, e não importados de
@@ -52,8 +52,12 @@ export const PAPEIS_ESCOPO_OPERACIONAL: readonly string[] = Object.freeze([
   "RECEPCIONISTA",
 ]);
 
-/** Permissão única de AGD-A (D-AGD-12 — nenhuma permissão nova). */
-export const PERMISSAO_AGENDA = "agenda.gerenciar";
+/** Permissão de gestão de AGD-A (D-AGD-12 — nenhuma permissão nova). */
+export const PERMISSAO_AGENDA_GERENCIAR = "agenda.gerenciar";
+/** Permissão de check-in de AGD-B (D-AGD-12 — nenhuma permissão nova). */
+export const PERMISSAO_AGENDA_CHECKIN = "agenda.checkin";
+/** Permissão de falta de AGD-B (D-AGD-12 — nenhuma permissão nova). */
+export const PERMISSAO_AGENDA_FALTA = "agenda.falta";
 
 export type EscopoAgenda =
   /** Todos os agendamentos da clínica. */
@@ -71,7 +75,11 @@ export class EscopoAgendaService {
    * que decide o filtro da consulta e a autorização da criação, sem janela
    * entre uma e outra.
    */
-  async resolver(tx: TransacaoPersistencia, usuarioId: string): Promise<EscopoAgenda> {
+  async resolver(
+    tx: TransacaoPersistencia,
+    usuarioId: string,
+    permissaoAgenda: string = PERMISSAO_AGENDA_GERENCIAR,
+  ): Promise<EscopoAgenda> {
     const papeis = await tx.$queryRaw<Array<{ codigo: string }>>`
       SELECT DISTINCT p.codigo
         FROM usuario_papel up
@@ -79,7 +87,7 @@ export class EscopoAgendaService {
         JOIN papel_permissao pp ON pp.papel_id = p.id
         JOIN permissao perm ON perm.id = pp.permissao_id
        WHERE up.usuario_id = ${usuarioId}::uuid
-         AND perm.codigo = ${PERMISSAO_AGENDA}
+         AND perm.codigo = ${permissaoAgenda}
     `;
     const concedentes = new Set(papeis.map((linha) => linha.codigo));
     if (PAPEIS_ESCOPO_OPERACIONAL.some((codigo) => concedentes.has(codigo))) {

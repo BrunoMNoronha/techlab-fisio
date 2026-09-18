@@ -13,15 +13,19 @@ import {
   ESTADOS_TERMINAIS,
   OPERACOES_AGD_A,
   OPERACOES_HISTORICO,
+  permiteCheckIn,
   permiteCancelamento,
+  permiteFalta,
   permiteRemarcacao,
   type EstadoAgendamento,
 } from "../src/agenda/agenda.estados.js";
 import { PAPEIS, ehCodigoPapel } from "../src/provisionamento/catalogo-rbac.js";
 import {
   escopoAlcanca,
+  PERMISSAO_AGENDA_CHECKIN,
+  PERMISSAO_AGENDA_FALTA,
+  PERMISSAO_AGENDA_GERENCIAR,
   PAPEIS_ESCOPO_OPERACIONAL,
-  PERMISSAO_AGENDA,
   restricaoDaLeitura,
   type EscopoAgenda,
 } from "../src/agenda/agenda.escopo.js";
@@ -82,6 +86,16 @@ describe("D-AGD-06 / D-AGD-07 — origens de remarcação e cancelamento", () =>
     }
   });
 
+  describe("AGD-B — origens de check-in e falta", () => {
+    it("check-in e falta são admitidos somente em `AGENDADO` e `CONFIRMADO`", () => {
+      for (const estado of TODOS) {
+        const admitido = estado === "AGENDADO" || estado === "CONFIRMADO";
+        expect(permiteCheckIn(estado)).toBe(admitido);
+        expect(permiteFalta(estado)).toBe(admitido);
+      }
+    });
+  });
+
   it("`AGUARDANDO -> CANCELADO` NÃO é oferecido em AGD-A (P-AGD-02)", () => {
     expect(permiteCancelamento("AGUARDANDO")).toBe(false);
   });
@@ -98,7 +112,9 @@ describe("D-AGD-12 — escopo operacional × próprio", () => {
   const semVinculo: EscopoAgenda = { tipo: "PROPRIO", profissionalId: null };
 
   it("materializa a regra sobre a permissão homologada, sem criar permissão nova", () => {
-    expect(PERMISSAO_AGENDA).toBe("agenda.gerenciar");
+    expect(PERMISSAO_AGENDA_GERENCIAR).toBe("agenda.gerenciar");
+    expect(PERMISSAO_AGENDA_CHECKIN).toBe("agenda.checkin");
+    expect(PERMISSAO_AGENDA_FALTA).toBe("agenda.falta");
     expect([...PAPEIS_ESCOPO_OPERACIONAL].sort()).toEqual(["ADMINISTRADOR", "RECEPCIONISTA"]);
   });
 

@@ -1,5 +1,5 @@
-// TechLab Fisio — integração contra PostgreSQL REAL da fatia AGD-A
-// (`docs/15` §6, matriz `TA-01`..`TA-19`).
+// TechLab Fisio — integração contra PostgreSQL REAL das fatias AGD-A/AGD-B
+// (`docs/15` §6).
 //
 // Runtime exclusivamente `tlf_app`; HTTP real via `app.listen(0)`; limpeza por
 // TRUNCATE entre testes (setup-db.ts). Dados 100% sintéticos (TLF-BASE §10):
@@ -381,6 +381,21 @@ async function criar(
   const res = await requisitar("POST", AGENDAMENTOS, { cookie, corpo: corpoCriacao(c, opcoes) });
   expect(res.status).toBe(201);
   return res.body;
+}
+
+async function ajustarHorarioAgendamento(
+  agendamentoId: string,
+  inicio: Date,
+  fim: Date,
+): Promise<void> {
+  await database.transacao(async (tx) => {
+    await tx.$executeRaw`
+      UPDATE agendamento
+         SET inicio = ${inicio},
+             fim = ${fim}
+       WHERE id = ${agendamentoId}::uuid
+    `;
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -1179,6 +1194,185 @@ describe("TA-14 — cancelamento com motivo padronizado (D-AGD-07)", () => {
 });
 
 // ---------------------------------------------------------------------------
+// AGD-B — check-in e falta
+// ---------------------------------------------------------------------------
+
+describe("AGD-B — check-in e falta", () => {
+  async function fisioterapeutaVinculadoAgdB(
+    profissionalId: string,
+    permissao: "agenda.checkin" | "agenda.falta",
+  ): Promise<{ id: string; cookie: string }> {
+    const id = await criarUsuario("fisio-agd-b");
+    await darPermissaoPorPapel(id, "FISIOTERAPEUTA", permissao);
+    await database.transacao(async (tx) => {
+      await tx.$executeRaw`UPDATE profissional SET usuario_id = ${id}::uuid WHERE id = ${profissionalId}::uuid`;
+    });
+    return { id, cookie: await cookieDe(id) };
+  }
+
+  it("check-in válido → 200 AGUARDANDO, histórico CHECKIN e sem auditoria nova", async () => {
+    const c = await montarCenario();
+    const criado = await criar(c);
+    const agora = new Date();
+    await ajustarHorarioAgendamento(
+      criado.id,
+      new Date(agora.getTime() - 30 * 60_000),
+      new Date(agora.getTime() + 20 * 60_000),
+    );
+
+    const antesEventos = (await eventosDaAgenda()).length;
+    const res = await requisitar("POST", `${AGENDAMENTOS}/${criado.id}/check-in`, {
+      cookie: c.admin.cookie,
+      corpo: {},
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.estado).toBe("AGUARDANDO");
+    expect((await agendamentos())[0]?.estado).toBe("AGUARDANDO");
+    expect((await historicos()).map((h) => h.operacao)).toEqual(["CRIADO", "CHECKIN"]);
+    expect(await eventosDaAgenda()).toHaveLength(antesEventos);
+  });
+
+  it("falta válida (após início) → 200 FALTA, histórico FALTA e sem auditoria nova", async () => {
+    const c = await montarCenario();
+    const criado = await criar(c);
+    const agora = new Date();
+    await ajustarHorarioAgendamento(
+      criado.id,
+      new Date(agora.getTime() - 2 * 60 * 60_000),
+      new Date(agora.getTime() - 70 * 60_000),
+    );
+
+    const antesEventos = (await eventosDaAgenda()).length;
+    const res = await requisitar("POST", `${AGENDAMENTOS}/${criado.id}/falta`, {
+      cookie: c.admin.cookie,
+      corpo: {},
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.estado).toBe("FALTA");
+    expect((await agendamentos())[0]?.estado).toBe("FALTA");
+    expect((await historicos()).map((h) => h.operacao)).toEqual(["CRIADO", "FALTA"]);
+    expect(await eventosDaAgenda()).toHaveLength(antesEventos);
+  });
+
+  it("permissões são independentes: check-in não concede falta e vice-versa", async () => {
+    const c = await montarCenario();
+    const criadoCheckIn = await criar(c);
+    const criadoFalta = await criar(c, { inicio: iso(SEGUNDA, "10:00"), fim: iso(SEGUNDA, "10:50") });
+    const agora = new Date();
+    await ajustarHorarioAgendamento(
+      criadoCheckIn.id,
+      new Date(agora.getTime() - 15 * 60_000),
+      new Date(agora.getTime() + 35 * 60_000),
+    );
+    await ajustarHorarioAgendamento(
+      criadoFalta.id,
+      new Date(agora.getTime() - 2 * 60 * 60_000),
+      new Date(agora.getTime() - 90 * 60_000),
+    );
+
+    const recepcaoCheckIn = await ator("RECEPCIONISTA", "agenda.checkin");
+    const recepcaoFalta = await ator("RECEPCIONISTA", "agenda.falta");
+
+    const checkInOk = await requisitar("POST", `${AGENDAMENTOS}/${criadoCheckIn.id}/check-in`, {
+      cookie: recepcaoCheckIn.cookie,
+      corpo: {},
+    });
+    expect(checkInOk.status).toBe(200);
+
+    const faltaNegada = await requisitar("POST", `${AGENDAMENTOS}/${criadoCheckIn.id}/falta`, {
+      cookie: recepcaoCheckIn.cookie,
+      corpo: {},
+    });
+    expect(faltaNegada.status).toBe(403);
+    expect(faltaNegada.body).toEqual({ erro: ERRO_AUTORIZACAO.ACESSO_NEGADO });
+
+    const faltaOk = await requisitar("POST", `${AGENDAMENTOS}/${criadoFalta.id}/falta`, {
+      cookie: recepcaoFalta.cookie,
+      corpo: {},
+    });
+    expect(faltaOk.status).toBe(200);
+
+    const checkInNegado = await requisitar("POST", `${AGENDAMENTOS}/${criadoFalta.id}/check-in`, {
+      cookie: recepcaoFalta.cookie,
+      corpo: {},
+    });
+    expect(checkInNegado.status).toBe(403);
+    expect(checkInNegado.body).toEqual({ erro: ERRO_AUTORIZACAO.ACESSO_NEGADO });
+  });
+
+  it("fora da janela temporal retorna 422 FORA_DA_JANELA_TEMPORAL", async () => {
+    const c = await montarCenario();
+    const agendamentoCheckIn = await criar(c);
+    const agendamentoFalta = await criar(c, { inicio: iso(SEGUNDA, "10:00"), fim: iso(SEGUNDA, "10:50") });
+
+    const checkIn = await requisitar("POST", `${AGENDAMENTOS}/${agendamentoCheckIn.id}/check-in`, {
+      cookie: c.admin.cookie,
+      corpo: {},
+    });
+    expect(checkIn.status).toBe(422);
+    expect(checkIn.body).toEqual({ erro: ERRO_AGENDAMENTO.FORA_DA_JANELA_TEMPORAL });
+
+    const falta = await requisitar("POST", `${AGENDAMENTOS}/${agendamentoFalta.id}/falta`, {
+      cookie: c.admin.cookie,
+      corpo: {},
+    });
+    expect(falta.status).toBe(422);
+    expect(falta.body).toEqual({ erro: ERRO_AGENDAMENTO.FORA_DA_JANELA_TEMPORAL });
+  });
+
+  it("validação de entrada: UUID inválido e corpo não-{} retornam 400", async () => {
+    const c = await montarCenario();
+    for (const [caminho, corpo] of [
+      [`${AGENDAMENTOS}/nao-e-uuid/check-in`, {}],
+      [`${AGENDAMENTOS}/nao-e-uuid/falta`, {}],
+      [`${AGENDAMENTOS}/${ID_INEXISTENTE}/check-in`, { extra: true }],
+      [`${AGENDAMENTOS}/${ID_INEXISTENTE}/falta`, null],
+      [`${AGENDAMENTOS}/${ID_INEXISTENTE}/check-in`, []],
+    ] as Array<[string, unknown]>) {
+      const res = await requisitar("POST", caminho, { cookie: c.admin.cookie, corpo });
+      expect(res.status).toBe(400);
+      expect(res.body).toEqual({ erro: ERRO.REQUISICAO_INVALIDA });
+    }
+  });
+
+  it("escopo próprio não revela existência: recurso alheio retorna 404 AGENDAMENTO_NAO_ENCONTRADO", async () => {
+    const c = await montarCenario();
+    const proprio = await criar(c);
+    const alheio = await criar(c, {
+      inicio: iso(SEGUNDA, "10:00"),
+      fim: iso(SEGUNDA, "10:50"),
+      profissionalId: c.profissional2Id,
+      pacienteId: c.paciente2Id,
+    });
+    const fisio = await fisioterapeutaVinculadoAgdB(c.profissionalId, "agenda.checkin");
+    const agora = new Date();
+    await ajustarHorarioAgendamento(
+      proprio.id,
+      new Date(agora.getTime() - 20 * 60_000),
+      new Date(agora.getTime() + 30 * 60_000),
+    );
+    await ajustarHorarioAgendamento(
+      alheio.id,
+      new Date(agora.getTime() - 20 * 60_000),
+      new Date(agora.getTime() + 30 * 60_000),
+    );
+
+    const foraDoEscopo = await requisitar("POST", `${AGENDAMENTOS}/${alheio.id}/check-in`, {
+      cookie: fisio.cookie,
+      corpo: {},
+    });
+    expect(foraDoEscopo.status).toBe(404);
+    expect(foraDoEscopo.body).toEqual({ erro: ERRO_AGENDAMENTO.AGENDAMENTO_NAO_ENCONTRADO });
+
+    const proprioOk = await requisitar("POST", `${AGENDAMENTOS}/${proprio.id}/check-in`, {
+      cookie: fisio.cookie,
+      corpo: {},
+    });
+    expect(proprioOk.status).toBe(200);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // TA-15 — estados terminais
 // ---------------------------------------------------------------------------
 
@@ -1400,6 +1594,8 @@ describe("TA-17 — autenticação, autorização e CSRF", () => {
       ["GET", "/agenda/opcoes"],
       ["POST", AGENDAMENTOS],
       ["POST", `${AGENDAMENTOS}/${criado.id}/confirmacao`],
+      ["POST", `${AGENDAMENTOS}/${criado.id}/check-in`],
+      ["POST", `${AGENDAMENTOS}/${criado.id}/falta`],
       ["POST", `${AGENDAMENTOS}/${criado.id}/remarcacao`],
       ["POST", `${AGENDAMENTOS}/${criado.id}/cancelamento`],
     ];
@@ -1437,6 +1633,8 @@ describe("TA-17 — autenticação, autorização e CSRF", () => {
     for (const [caminho, corpo] of [
       [AGENDAMENTOS, corpoCriacao(c, { inicio: iso(SEGUNDA, "10:30"), fim: iso(SEGUNDA, "11:00") })],
       [`${AGENDAMENTOS}/${criado.id}/confirmacao`, {}],
+      [`${AGENDAMENTOS}/${criado.id}/check-in`, {}],
+      [`${AGENDAMENTOS}/${criado.id}/falta`, {}],
       [`${AGENDAMENTOS}/${criado.id}/remarcacao`, { inicio: iso(SEGUNDA, "10:30"), fim: iso(SEGUNDA, "11:30") }],
       [`${AGENDAMENTOS}/${criado.id}/cancelamento`, { motivoCancelamentoId: c.motivoId }],
     ] as Array<[string, Record<string, unknown>]>) {
@@ -1466,6 +1664,15 @@ describe("TA-17 — autenticação, autorização e CSRF", () => {
     const res = await requisitar("GET", `${AGENDAMENTOS}/nao-e-uuid`, { cookie: c.admin.cookie });
     expect(res.status).toBe(400);
     expect(res.body).toEqual({ erro: ERRO.REQUISICAO_INVALIDA });
+  });
+
+  it("payload acima do limite do parser retorna 413 antes de sessão/permissão/CSRF", async () => {
+    const corpoGigante = `{ "x": "${"a".repeat(2_000_000)}" }`;
+    const res = await requisitar("POST", `${AGENDAMENTOS}/${ID_INEXISTENTE}/check-in`, {
+      corpo: corpoGigante,
+      csrf: false,
+    });
+    expect(res.status).toBe(413);
   });
 });
 
@@ -1696,12 +1903,10 @@ describe("Atomicidade da transação (D-AGD-09, D-AGD-10)", () => {
 // ---------------------------------------------------------------------------
 
 describe("Fronteira da fatia (D-AGD-01, D-AGD-17)", () => {
-  it("nenhuma rota de check-in, falta, bloqueio, pacote, início ou conclusão responde", async () => {
+  it("nenhuma rota de bloqueio, pacote, início ou conclusão responde", async () => {
     const c = await montarCenario();
     const criado = await criar(c);
     for (const caminho of [
-      `${AGENDAMENTOS}/${criado.id}/checkin`,
-      `${AGENDAMENTOS}/${criado.id}/falta`,
       `${AGENDAMENTOS}/${criado.id}/atendimento`,
       "/bloqueios",
       "/agenda/bloqueios",

@@ -5,11 +5,9 @@
 // Funções PURAS, sem I/O — a decisão de transição é testável sem banco e é a
 // MESMA que o serviço aplica sob `SELECT ... FOR UPDATE`.
 //
-// FRONTEIRA DESTA FATIA: AGD-A opera confirmação, remarcação e cancelamento.
-// `AGUARDANDO` (check-in), `FALTA`, `EM_ATENDIMENTO` e `CONCLUIDO` pertencem a
-// AGD-B e AGD-E e NÃO são alcançáveis por nenhuma rota desta fatia — a tabela
-// de transições abaixo declara a máquina completa de `docs/05` §3 apenas para
-// que os estados terminais sejam reconhecidos corretamente na rejeição.
+// AGD-A opera confirmação, remarcação e cancelamento.
+// AGD-B opera check-in e falta.
+// `EM_ATENDIMENTO` e `CONCLUIDO` pertencem à AGD-E.
 //
 // `AGUARDANDO -> CANCELADO` NÃO é oferecido (P-AGD-02, homologada): não há
 // permissão excepcional nem coluna de justificativa (FA-03).
@@ -73,6 +71,14 @@ const ORIGENS_CANCELAMENTO: ReadonlySet<EstadoAgendamento> = new Set<EstadoAgend
   "AGENDADO",
   "CONFIRMADO",
 ]);
+const ORIGENS_CHECKIN: ReadonlySet<EstadoAgendamento> = new Set<EstadoAgendamento>([
+  "AGENDADO",
+  "CONFIRMADO",
+]);
+const ORIGENS_FALTA: ReadonlySet<EstadoAgendamento> = new Set<EstadoAgendamento>([
+  "AGENDADO",
+  "CONFIRMADO",
+]);
 
 /**
  * Desfecho de uma confirmação (D-AGD-02):
@@ -97,6 +103,16 @@ export function permiteRemarcacao(estado: EstadoAgendamento): boolean {
 /** `true` sse o cancelamento é admitido a partir deste estado (D-AGD-07). */
 export function permiteCancelamento(estado: EstadoAgendamento): boolean {
   return ORIGENS_CANCELAMENTO.has(estado);
+}
+
+/** `true` sse check-in é admitido a partir deste estado (AGD-B). */
+export function permiteCheckIn(estado: EstadoAgendamento): boolean {
+  return ORIGENS_CHECKIN.has(estado);
+}
+
+/** `true` sse falta é admitida a partir deste estado (AGD-B). */
+export function permiteFalta(estado: EstadoAgendamento): boolean {
+  return ORIGENS_FALTA.has(estado);
 }
 
 /**
