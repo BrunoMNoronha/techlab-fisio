@@ -36,9 +36,9 @@ export const ESTADOS_TERMINAIS: ReadonlySet<EstadoAgendamento> = new Set<EstadoA
  * `text` porque AGD-009 não enumera operações (`docs/07` §11.1); o conjunto
  * fechado vive aqui, na aplicação.
  *
- * AGD-A usa os QUATRO primeiros. `CHECKIN`, `FALTA`, `INICIADO` e `CONCLUIDO`
- * pertencem a AGD-B e AGD-E e são declarados para que o catálogo permaneça
- * único — nenhuma rota desta fatia os escreve.
+ * AGD-A usa os QUATRO primeiros. `CHECKIN` e `FALTA` pertencem a AGD-B;
+ * `INICIADO` e `CONCLUIDO`, a AGD-E. O catálogo permanece único para todas as
+ * fatias que escrevem histórico.
  */
 export const OPERACOES_HISTORICO = Object.freeze([
   "CRIADO",

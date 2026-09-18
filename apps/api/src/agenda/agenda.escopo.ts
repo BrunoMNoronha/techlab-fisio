@@ -2,10 +2,11 @@
 // materializa a célula `C` de `docs/04` §4 para o módulo M5, que FA-09 registra
 // como não materializada pelo RBAC).
 //
-// A `PermissoesGuard` decide SE o ator possui `agenda.gerenciar`. Este
-// componente decide SOBRE QUE agendamentos essa permissão vale — e essa é a
-// única pergunta que ele responde. Ele NÃO concede, NÃO amplia e NÃO substitui
-// a permissão: um ator sem `agenda.gerenciar` nunca chega até aqui.
+// A `PermissoesGuard` decide SE o ator possui a permissão da operação
+// (`agenda.gerenciar`, `agenda.checkin` ou `agenda.falta`). Este componente
+// decide SOBRE QUE agendamentos essa permissão vale — e essa é a única
+// pergunta que ele responde. Ele NÃO concede, NÃO amplia e NÃO substitui a
+// permissão: um ator sem a permissão exigida nunca chega até aqui.
 //
 // REGRA HOMOLOGADA (D-AGD-12), literal:
 //   - ator com papel `ADMINISTRADOR` ou `RECEPCIONISTA` **que conceda a
@@ -16,9 +17,9 @@
 //   - papel customizado sem esses códigos -> PRÓPRIO, fail-closed.
 //
 // Por isso a consulta não pergunta "quais papéis o usuário tem", e sim "quais
-// papéis do usuário CONCEDEM `agenda.gerenciar`": um Fisioterapeuta que também
-// seja Recepcionista por um papel que não conceda a permissão não deve ganhar
-// escopo operacional por associação.
+// papéis do usuário CONCEDEM a permissão da operação": um Fisioterapeuta que
+// também seja Recepcionista por um papel que não conceda aquela permissão não
+// deve ganhar escopo operacional por associação.
 //
 // LIMITE DECLARADO (o mesmo de D-AGD-12): o escopo é derivado do CÓDIGO do
 // papel enquanto `P2.2-05` não define o mecanismo geral de escopo relacional.

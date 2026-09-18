@@ -45,6 +45,7 @@ const TODOS: readonly EstadoAgendamento[] = [
 const PROPRIO = "0191f5a0-0000-7000-8000-0000000000b2";
 const OUTRO = "0191f5a0-0000-7000-8000-0000000000b3";
 const FUSO = "America/Sao_Paulo";
+const NY = "America/New_York";
 
 describe("D-AGD-09 — catálogo fechado de operações do histórico", () => {
   it("declara as oito operações e AGD-A usa somente as quatro primeiras", () => {
@@ -123,6 +124,14 @@ describe("D-AGD-06 / D-AGD-07 — origens de remarcação e cancelamento", () =>
           fusoHorario: FUSO,
         }),
       ).toBe("TRANSICAO_INVALIDA");
+      expect(
+        avaliarCheckIn({
+          estado: "CONFIRMADO",
+          inicio: new Date("2026-11-01T03:30:00.000Z"),
+          agora: new Date("2026-11-01T05:30:00.000Z"),
+          fusoHorario: NY,
+        }),
+      ).toBe("FORA_DA_JANELA_TEMPORAL");
     });
 
     it("falta exige estado admitido e instante estritamente posterior ao início local", () => {
@@ -150,6 +159,14 @@ describe("D-AGD-06 / D-AGD-07 — origens de remarcação e cancelamento", () =>
           fusoHorario: FUSO,
         }),
       ).toBe("TRANSICAO_INVALIDA");
+      expect(
+        avaliarFalta({
+          estado: "AGENDADO",
+          inicio: new Date("2026-11-01T03:30:00.000Z"),
+          agora: new Date("2026-11-01T05:30:00.000Z"),
+          fusoHorario: NY,
+        }),
+      ).toBe("ADMITE");
     });
   });
 
