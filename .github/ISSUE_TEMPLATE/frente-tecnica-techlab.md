@@ -2,7 +2,7 @@
 name: Frente técnica TechLab Fisio
 about: Especificar implementação, revisão ou validação com escopo, dependências e critérios verificáveis
 title: "[ÁREA] "
-labels: enhancement
+labels: ""
 assignees: ""
 ---
 
