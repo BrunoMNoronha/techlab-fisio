@@ -143,7 +143,7 @@ try {
 
   const caminhos = Object.keys(documento.paths ?? {}).sort();
   conferir(
-    "rotas da F3, F6, P-2.3D-07, P-2.3D-08, AUT-005, P-2.3D-10, CFG-001A, CFG-002, AUD-004, CFG-003, CFG-004, CFG-005, PAC-A e PRO-A presentes e nenhuma outra vazou",
+    "rotas da F3, F6, P-2.3D-07, P-2.3D-08, AUT-005, P-2.3D-10, CFG-001A, CFG-002, AUD-004, CFG-003, CFG-004, CFG-005, PAC-A, PRO-A e AGD-B presentes e nenhuma outra vazou",
     JSON.stringify(caminhos) ===
       JSON.stringify([
         "/agenda/opcoes",
@@ -429,7 +429,7 @@ try {
     `metodos=${metodosDisponibilidade}`,
   );
 
-  // AGD-A — agenda (docs/15 D-AGD-05, D-AGD-13, D-AGD-14). Sem DELETE, sem PUT
+  // AGD-A/AGD-B — agenda (docs/15 D-AGD-05, D-AGD-13, D-AGD-14). Sem DELETE, sem PUT
   // e sem PATCH: agendamento nunca é removido (RN-017) e toda transição é POST
   // em sub-recurso próprio.
   for (const [caminho, metodo, esperado] of [
@@ -486,6 +486,26 @@ try {
     opcaoServico === "duracaoMin,id,nome",
     `propriedades=${opcaoServico}`,
   );
+
+  for (const caminho of ["/agendamentos/{agendamentoId}/check-in", "/agendamentos/{agendamentoId}/falta"]) {
+    const parametroId = (documento.paths[caminho]?.post?.parameters ?? []).find(
+      (p) => p?.in === "path" && p?.name === "agendamentoId",
+    );
+    conferir(
+      `${caminho} documenta agendamentoId como UUID obrigatório`,
+      parametroId?.required === true && parametroId?.schema?.format === "uuid",
+      `parametro=${JSON.stringify(parametroId ?? null)}`,
+    );
+
+    const schema = documento.paths[caminho]?.post?.requestBody?.content?.["application/json"]?.schema;
+    conferir(
+      `${caminho} documenta corpo estrito vazio`,
+      schema?.type === "object" &&
+        schema?.additionalProperties === false &&
+        JSON.stringify(schema?.properties ?? {}) === "{}",
+      `schema=${JSON.stringify(schema ?? null)}`,
+    );
+  }
 
   const statusLogin = Object.keys(documento.paths["/auth/login"]?.post?.responses ?? {})
     .sort()

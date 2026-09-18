@@ -42,6 +42,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import {
+  ApiBody,
   ApiCookieAuth,
   ApiHeader,
   ApiOperation,
@@ -373,6 +374,10 @@ export class AgendamentosController {
       "regra temporal da data civil local do início (fuso da clínica). Não emite auditoria.",
   })
   @ApiParam(PARAMETRO_AGENDAMENTO_ID)
+  @ApiBody({
+    description: "Corpo estrito vazio.",
+    schema: { type: "object", properties: {}, additionalProperties: false },
+  })
   @ApiResponse({ status: 200, description: "Estado vigente após a operação.", type: AgendamentoRespostaDto })
   @ApiResponse({ status: 400, description: "Identificador ou payload inválidos.", type: ErroAgendamentoDto })
   @ApiResponse({ status: 401, description: "Sessão ausente ou inválida.", type: ErroAgendamentoDto })
@@ -416,6 +421,10 @@ export class AgendamentosController {
       "Não emite auditoria.",
   })
   @ApiParam(PARAMETRO_AGENDAMENTO_ID)
+  @ApiBody({
+    description: "Corpo estrito vazio.",
+    schema: { type: "object", properties: {}, additionalProperties: false },
+  })
   @ApiResponse({ status: 200, description: "Estado vigente após a operação.", type: AgendamentoRespostaDto })
   @ApiResponse({ status: 400, description: "Identificador ou payload inválidos.", type: ErroAgendamentoDto })
   @ApiResponse({ status: 401, description: "Sessão ausente ou inválida.", type: ErroAgendamentoDto })
