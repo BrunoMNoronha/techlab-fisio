@@ -392,7 +392,7 @@ export class AgendamentosController {
       throw new BadRequestException({ erro: ERRO.REQUISICAO_INVALIDA });
     }
     try {
-      const resultado = await this.agendamentos.checkIn({
+      const resultado = await this.agendamentos.checkin({
         atorUsuarioId: contexto.usuarioId,
         agendamentoId,
       });
@@ -435,7 +435,7 @@ export class AgendamentosController {
       throw new BadRequestException({ erro: ERRO.REQUISICAO_INVALIDA });
     }
     try {
-      const resultado = await this.agendamentos.registrarFalta({
+      const resultado = await this.agendamentos.falta({
         atorUsuarioId: contexto.usuarioId,
         agendamentoId,
       });

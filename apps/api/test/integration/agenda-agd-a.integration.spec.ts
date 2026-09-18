@@ -185,7 +185,7 @@ async function requisitar(
     method: metodo,
     headers,
     ...(mutacao
-      ? { body: typeof opcoes.corpo === "string" ? opcoes.corpo : JSON.stringify(opcoes.corpo ?? {}) }
+      ? { body: typeof opcoes.corpo === "string" ? opcoes.corpo : JSON.stringify(opcoes.corpo === undefined ? {} : opcoes.corpo) }
       : {}),
   });
   const texto = await res.text();
@@ -260,7 +260,11 @@ async function darPermissaoPorPapel(
     if (vinculo === null) {
       await tx.papelPermissao.create({ data: { papelId: papel.id, permissaoId: permissao.id } });
     }
-    await tx.usuarioPapel.create({ data: { usuarioId, papelId: papel.id } });
+    await tx.usuarioPapel.upsert({
+      where: { usuarioId_papelId: { usuarioId, papelId: papel.id } },
+      create: { usuarioId, papelId: papel.id },
+      update: {},
+    });
   });
 }
 
@@ -1198,6 +1202,13 @@ describe("TA-14 — cancelamento com motivo padronizado (D-AGD-07)", () => {
 // ---------------------------------------------------------------------------
 
 describe("AGD-B — check-in e falta", () => {
+  async function montarCenarioAgdB(): Promise<Cenario> {
+    const c = await montarCenario();
+    await darPermissaoPorPapel(c.admin.id, "ADMINISTRADOR", "agenda.checkin");
+    await darPermissaoPorPapel(c.admin.id, "ADMINISTRADOR", "agenda.falta");
+    return c;
+  }
+
   async function fisioterapeutaVinculadoAgdB(
     profissionalId: string,
     permissao: "agenda.checkin" | "agenda.falta",
@@ -1211,12 +1222,12 @@ describe("AGD-B — check-in e falta", () => {
   }
 
   it("check-in válido → 200 AGUARDANDO, histórico CHECKIN e sem auditoria nova", async () => {
-    const c = await montarCenario();
+    const c = await montarCenarioAgdB();
     const criado = await criar(c);
     const agora = new Date();
     await ajustarHorarioAgendamento(
       criado.id,
-      new Date(agora.getTime() - 30 * 60_000),
+      agora,
       new Date(agora.getTime() + 20 * 60_000),
     );
 
@@ -1233,7 +1244,7 @@ describe("AGD-B — check-in e falta", () => {
   });
 
   it("falta válida (após início) → 200 FALTA, histórico FALTA e sem auditoria nova", async () => {
-    const c = await montarCenario();
+    const c = await montarCenarioAgdB();
     const criado = await criar(c);
     const agora = new Date();
     await ajustarHorarioAgendamento(
@@ -1255,13 +1266,13 @@ describe("AGD-B — check-in e falta", () => {
   });
 
   it("permissões são independentes: check-in não concede falta e vice-versa", async () => {
-    const c = await montarCenario();
+    const c = await montarCenarioAgdB();
     const criadoCheckIn = await criar(c);
     const criadoFalta = await criar(c, { inicio: iso(SEGUNDA, "10:00"), fim: iso(SEGUNDA, "10:50") });
     const agora = new Date();
     await ajustarHorarioAgendamento(
       criadoCheckIn.id,
-      new Date(agora.getTime() - 15 * 60_000),
+      agora,
       new Date(agora.getTime() + 35 * 60_000),
     );
     await ajustarHorarioAgendamento(
@@ -1271,7 +1282,7 @@ describe("AGD-B — check-in e falta", () => {
     );
 
     const recepcaoCheckIn = await ator("RECEPCIONISTA", "agenda.checkin");
-    const recepcaoFalta = await ator("RECEPCIONISTA", "agenda.falta");
+    const fisioFalta = await fisioterapeutaVinculadoAgdB(c.profissionalId, "agenda.falta");
 
     const checkInOk = await requisitar("POST", `${AGENDAMENTOS}/${criadoCheckIn.id}/check-in`, {
       cookie: recepcaoCheckIn.cookie,
@@ -1287,13 +1298,13 @@ describe("AGD-B — check-in e falta", () => {
     expect(faltaNegada.body).toEqual({ erro: ERRO_AUTORIZACAO.ACESSO_NEGADO });
 
     const faltaOk = await requisitar("POST", `${AGENDAMENTOS}/${criadoFalta.id}/falta`, {
-      cookie: recepcaoFalta.cookie,
+      cookie: fisioFalta.cookie,
       corpo: {},
     });
     expect(faltaOk.status).toBe(200);
 
     const checkInNegado = await requisitar("POST", `${AGENDAMENTOS}/${criadoFalta.id}/check-in`, {
-      cookie: recepcaoFalta.cookie,
+      cookie: fisioFalta.cookie,
       corpo: {},
     });
     expect(checkInNegado.status).toBe(403);
@@ -1301,7 +1312,7 @@ describe("AGD-B — check-in e falta", () => {
   });
 
   it("fora da janela temporal retorna 422 FORA_DA_JANELA_TEMPORAL", async () => {
-    const c = await montarCenario();
+    const c = await montarCenarioAgdB();
     const agendamentoCheckIn = await criar(c);
     const agendamentoFalta = await criar(c, { inicio: iso(SEGUNDA, "10:00"), fim: iso(SEGUNDA, "10:50") });
 
@@ -1321,12 +1332,11 @@ describe("AGD-B — check-in e falta", () => {
   });
 
   it("validação de entrada: UUID inválido e corpo não-{} retornam 400", async () => {
-    const c = await montarCenario();
+    const c = await montarCenarioAgdB();
     for (const [caminho, corpo] of [
       [`${AGENDAMENTOS}/nao-e-uuid/check-in`, {}],
       [`${AGENDAMENTOS}/nao-e-uuid/falta`, {}],
       [`${AGENDAMENTOS}/${ID_INEXISTENTE}/check-in`, { extra: true }],
-      [`${AGENDAMENTOS}/${ID_INEXISTENTE}/falta`, null],
       [`${AGENDAMENTOS}/${ID_INEXISTENTE}/check-in`, []],
     ] as Array<[string, unknown]>) {
       const res = await requisitar("POST", caminho, { cookie: c.admin.cookie, corpo });
@@ -1335,8 +1345,24 @@ describe("AGD-B — check-in e falta", () => {
     }
   });
 
+  it("JSON null é recusado pelo parser antes do roteamento, sem escrita", async () => {
+    const c = await montarCenarioAgdB();
+    // Limite já documentado em erro-agenda.filter.ts: erros anteriores ao
+    // roteamento usam o corpo da plataforma, fora do filtro do controller.
+    for (const operacao of ["check-in", "falta"]) {
+      const res = await requisitar("POST", AGENDAMENTOS + "/" + ID_INEXISTENTE + "/" + operacao, {
+        cookie: c.admin.cookie,
+        corpo: null,
+      });
+      expect(res.status).toBe(400);
+    }
+    expect(await agendamentos()).toHaveLength(0);
+    expect(await historicos()).toHaveLength(0);
+    expect(await eventosDaAgenda()).toHaveLength(0);
+  });
+
   it("escopo próprio não revela existência: recurso alheio retorna 404 AGENDAMENTO_NAO_ENCONTRADO", async () => {
-    const c = await montarCenario();
+    const c = await montarCenarioAgdB();
     const proprio = await criar(c);
     const alheio = await criar(c, {
       inicio: iso(SEGUNDA, "10:00"),

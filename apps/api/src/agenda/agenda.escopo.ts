@@ -2,11 +2,10 @@
 // materializa a célula `C` de `docs/04` §4 para o módulo M5, que FA-09 registra
 // como não materializada pelo RBAC).
 //
-// A `PermissoesGuard` decide SE o ator possui a permissão da operação
-// (`agenda.gerenciar`, `agenda.checkin` ou `agenda.falta`). Este componente
-// decide SOBRE QUE agendamentos essa permissão vale — e essa é a única
-// pergunta que ele responde. Ele NÃO concede, NÃO amplia e NÃO substitui a
-// permissão: um ator sem a permissão exigida nunca chega até aqui.
+// A `PermissoesGuard` decide SE o ator possui a permissão da operação. Este
+// componente decide SOBRE QUE agendamentos essa permissão vale — e essa é a
+// única pergunta que ele responde. Ele NÃO concede, NÃO amplia e NÃO substitui
+// a permissão: um ator sem a permissão efetiva nunca chega até aqui.
 //
 // REGRA HOMOLOGADA (D-AGD-12), literal:
 //   - ator com papel `ADMINISTRADOR` ou `RECEPCIONISTA` **que conceda a
@@ -17,8 +16,8 @@
 //   - papel customizado sem esses códigos -> PRÓPRIO, fail-closed.
 //
 // Por isso a consulta não pergunta "quais papéis o usuário tem", e sim "quais
-// papéis do usuário CONCEDEM a permissão da operação": um Fisioterapeuta que
-// também seja Recepcionista por um papel que não conceda aquela permissão não
+// papéis do usuário CONCEDEM a permissão efetiva da operação": um Fisioterapeuta
+// que também seja Recepcionista por um papel que não conceda a permissão não
 // deve ganhar escopo operacional por associação.
 //
 // LIMITE DECLARADO (o mesmo de D-AGD-12): o escopo é derivado do CÓDIGO do
@@ -32,9 +31,10 @@
 import { Injectable } from "@nestjs/common";
 
 import type { TransacaoPersistencia } from "@techlab-fisio/database";
+import type { Permissao } from "../authz/permissoes.catalogo.js";
 
 /**
- * Códigos de papel que, quando concedem a permissão de agenda da operação, dão escopo
+ * Códigos de papel que, quando concedem `agenda.gerenciar`, dão escopo
  * operacional (`docs/04` §3; D-AGD-12).
  *
  * POR QUE OS LITERAIS SÃO REPETIDOS AQUI, e não importados de
@@ -53,12 +53,15 @@ export const PAPEIS_ESCOPO_OPERACIONAL: readonly string[] = Object.freeze([
   "RECEPCIONISTA",
 ]);
 
-/** Permissão de gestão de AGD-A (D-AGD-12 — nenhuma permissão nova). */
+/** Permissão de AGD-A (D-AGD-12). */
 export const PERMISSAO_AGENDA_GERENCIAR = "agenda.gerenciar";
-/** Permissão de check-in de AGD-B (D-AGD-12 — nenhuma permissão nova). */
 export const PERMISSAO_AGENDA_CHECKIN = "agenda.checkin";
-/** Permissão de falta de AGD-B (D-AGD-12 — nenhuma permissão nova). */
 export const PERMISSAO_AGENDA_FALTA = "agenda.falta";
+/**
+ * Alias de compatibilidade para consumidores de AGD-A que ainda importam o
+ * nome anterior.
+ */
+export const PERMISSAO_AGENDA = PERMISSAO_AGENDA_GERENCIAR;
 
 export type EscopoAgenda =
   /** Todos os agendamentos da clínica. */
@@ -79,7 +82,7 @@ export class EscopoAgendaService {
   async resolver(
     tx: TransacaoPersistencia,
     usuarioId: string,
-    permissaoAgenda: string = PERMISSAO_AGENDA_GERENCIAR,
+    permissao: Permissao = PERMISSAO_AGENDA_GERENCIAR,
   ): Promise<EscopoAgenda> {
     const papeis = await tx.$queryRaw<Array<{ codigo: string }>>`
       SELECT DISTINCT p.codigo
@@ -88,7 +91,7 @@ export class EscopoAgendaService {
         JOIN papel_permissao pp ON pp.papel_id = p.id
         JOIN permissao perm ON perm.id = pp.permissao_id
        WHERE up.usuario_id = ${usuarioId}::uuid
-         AND perm.codigo = ${permissaoAgenda}
+         AND perm.codigo = ${permissao}
     `;
     const concedentes = new Set(papeis.map((linha) => linha.codigo));
     if (PAPEIS_ESCOPO_OPERACIONAL.some((codigo) => concedentes.has(codigo))) {
