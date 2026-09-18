@@ -412,7 +412,8 @@ export class AgendamentosController {
     summary: "Registra falta de um agendamento (AGD-B).",
     description:
       "Exige agenda.falta. Corpo exato {}. Admite origem AGENDADO/CONFIRMADO e aplica a " +
-      "regra temporal de somente após o início. Não emite auditoria.",
+      "regra temporal de somente após o início (no instante exato do início ainda rejeita). " +
+      "Não emite auditoria.",
   })
   @ApiParam(PARAMETRO_AGENDAMENTO_ID)
   @ApiResponse({ status: 200, description: "Estado vigente após a operação.", type: AgendamentoRespostaDto })

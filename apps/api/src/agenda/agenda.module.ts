@@ -16,6 +16,8 @@
 // `ProtecaoCsrfGuard` é provida no injetor do módulo do controller, como nos
 // demais módulos com mutação.
 //
+// AGD-A e AGD-B já estão materializadas neste módulo.
+//
 // O QUE ESTE MÓDULO NÃO CONTÉM, e nenhuma linha dele prepara: criação ou remoção
 // de bloqueio (AGD-C), modalidade `PACOTE` e
 // `reserva_sessao` (AGD-D), início e conclusão de atendimento (AGD-E),

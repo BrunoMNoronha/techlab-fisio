@@ -453,7 +453,8 @@ export class AgendamentosService {
       const atual = await this.#lerSobLock(tx, comando.agendamentoId, escopo);
       if (!permiteFalta(atual.estado)) throw new ErroAgendamento("TRANSICAO_INVALIDA");
 
-      this.#exigirJanelaFalta({ inicio: atual.inicio, agora: new Date() });
+      const fusoHorario = await this.#fusoDaClinica(tx);
+      this.#exigirJanelaFalta({ inicio: atual.inicio, agora: new Date(), fusoHorario });
 
       await tx.$executeRaw`
         UPDATE agendamento SET estado = 'FALTA' WHERE id = ${atual.id}::uuid
@@ -718,9 +719,14 @@ export class AgendamentosService {
     }
   }
 
-  #exigirJanelaFalta(entrada: { inicio: Date; agora: Date }): void {
-    const { inicio, agora } = entrada;
-    if (agora.getTime() <= inicio.getTime()) {
+  #exigirJanelaFalta(entrada: { inicio: Date; agora: Date; fusoHorario: string }): void {
+    const { inicio, agora, fusoHorario } = entrada;
+    const localInicio = paraInstanteLocal(inicio, fusoHorario);
+    const localAgora = paraInstanteLocal(agora, fusoHorario);
+    const depoisDoInicio =
+      localAgora.data > localInicio.data ||
+      (localAgora.data === localInicio.data && localAgora.msDoDia > localInicio.msDoDia);
+    if (!depoisDoInicio) {
       throw new ErroAgendamento("FORA_DA_JANELA_TEMPORAL");
     }
   }
