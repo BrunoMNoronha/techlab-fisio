@@ -72,6 +72,8 @@ export const ERRO_AGENDAMENTO = Object.freeze({
   MOTIVO_CANCELAMENTO_INELEGIVEL: "MOTIVO_CANCELAMENTO_INELEGIVEL",
   /** `409` — D-AGD-02: transição fora da máquina de estados. */
   TRANSICAO_INVALIDA: "TRANSICAO_INVALIDA",
+  /** `422` — D-AGD-03: check-in/falta fora da janela temporal permitida. */
+  FORA_DA_JANELA_TEMPORAL: "FORA_DA_JANELA_TEMPORAL",
   /** `409` — RN-015.2: sobreposição com `bloqueio_agenda`. */
   CONFLITO_BLOQUEIO: "CONFLITO_BLOQUEIO",
   /** `409` — RN-015.1: `ex_agendamento_profissional`. */
@@ -123,6 +125,10 @@ export class CriarAgendamentoRequisicaoDto {
 
 /** Corpo de `POST /agendamentos/:agendamentoId/confirmacao` — objeto vazio. */
 export class ConfirmarAgendamentoRequisicaoDto {}
+/** Corpo de `POST /agendamentos/:agendamentoId/check-in` — objeto vazio. */
+export class CheckInAgendamentoRequisicaoDto {}
+/** Corpo de `POST /agendamentos/:agendamentoId/falta` — objeto vazio. */
+export class FaltaAgendamentoRequisicaoDto {}
 
 export class RemarcarAgendamentoRequisicaoDto {
   @ApiProperty({ description: `Novo início. ${DESCRICAO_INSTANTE}`, example: "2026-10-02T13:00:00Z" })
@@ -346,6 +352,11 @@ export function validarCorpoCriacao(corpo: unknown): Validacao<DadosCriacaoValid
 export function validarCorpoConfirmacao(corpo: unknown): Validacao<Record<string, never>> {
   if (!ehObjetoPlano(corpo) || Object.keys(corpo).length !== 0) return INVALIDO;
   return { valido: true, valor: {} };
+}
+
+/** Corpo de mutações sem payload semântico: exatamente `{}`. */
+export function validarCorpoVazio(corpo: unknown): Validacao<Record<string, never>> {
+  return validarCorpoConfirmacao(corpo);
 }
 
 /** Corpo de `POST /agendamentos/:agendamentoId/remarcacao` (D-AGD-06). */

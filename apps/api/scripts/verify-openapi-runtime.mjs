@@ -143,14 +143,14 @@ try {
 
   const caminhos = Object.keys(documento.paths ?? {}).sort();
   conferir(
-    "rotas da F3, F6, P-2.3D-07, P-2.3D-08, AUT-005, P-2.3D-10, CFG-001A, CFG-002, AUD-004, CFG-003, CFG-004, CFG-005, PAC-A e PRO-A presentes e nenhuma outra vazou",
+    "rotas da F3, F6, P-2.3D-07, P-2.3D-08, AUT-005, P-2.3D-10, CFG-001A, CFG-002, AUD-004, CFG-003, CFG-004, CFG-005, PAC-A, PRO-A e AGD-B presentes e nenhuma outra vazou",
     JSON.stringify(caminhos) ===
       JSON.stringify([
         "/agenda/opcoes",
         "/agendamentos",
         "/agendamentos/{agendamentoId}",
-        "/agendamentos/{agendamentoId}/check-in",
         "/agendamentos/{agendamentoId}/cancelamento",
+        "/agendamentos/{agendamentoId}/check-in",
         "/agendamentos/{agendamentoId}/confirmacao",
         "/agendamentos/{agendamentoId}/falta",
         "/agendamentos/{agendamentoId}/remarcacao",
@@ -486,6 +486,7 @@ try {
     opcaoServico === "duracaoMin,id,nome",
     `propriedades=${opcaoServico}`,
   );
+
   for (const caminho of ["/agendamentos/{agendamentoId}/check-in", "/agendamentos/{agendamentoId}/falta"]) {
     const parametroId = (documento.paths[caminho]?.post?.parameters ?? []).find(
       (p) => p?.in === "path" && p?.name === "agendamentoId",

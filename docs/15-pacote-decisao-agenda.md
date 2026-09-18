@@ -3,11 +3,11 @@
 > **Documento:** `docs/15-pacote-decisao-agenda.md`
 > **Projeto:** TechLab Fisio
 > **Frente:** Agenda (módulo M5 — Scheduling)
-> **Status:** **HOMOLOGADO — `D-AGD-01`..`D-AGD-17` APROVADAS INTEGRALMENTE CONFORME AS RECOMENDAÇÕES POR BRUNO MENEZES NORONHA EM 17/09/2026** (`TECHLAB_FISIO_BASE_IMUTAVEL_V2.md`), inclusive as decisões **[ESCOLHA]** `P-AGD-01`..`P-AGD-12` e a **alteração estrutural de banco** de `D-AGD-07` (CHECK de coerência do cancelamento). As marcas **[DERIVADA]**/**[ESCOLHA]** permanecem como registro da origem de cada decisão.
-> **Implementação de AGD-A:** integrada na `main` pela PR [#90](https://github.com/BrunoMNoronha/techlab-fisio/pull/90), merge `ec688866af4934817730947607d6e4491459c1ed`. **AGD-B** foi autorizada pela issue [#91](https://github.com/BrunoMNoronha/techlab-fisio/issues/91); a declaração de implementação/validação local permanece condicionada à existência das evidências das issues [#92](https://github.com/BrunoMNoronha/techlab-fisio/issues/92), [#97](https://github.com/BrunoMNoronha/techlab-fisio/issues/97), [#95](https://github.com/BrunoMNoronha/techlab-fisio/issues/95) e [#93](https://github.com/BrunoMNoronha/techlab-fisio/issues/93). Nenhuma decisão foi criada, alterada ou reaberta por este registro factual.
+> **Status:** **HOMOLOGADO — `D-AGD-01`..`D-AGD-17` APROVADAS INTEGRALMENTE CONFORME AS RECOMENDAÇÕES POR BRUNO MENEZES NORONHA EM 17/09/2026** (`TECHLAB_FISIO_BASE_IMUTAVEL_V2.md`), inclusive as decisões **[ESCOLHA]** `P-AGD-01`..`P-AGD-12` e a alteração estrutural de `D-AGD-07`. As marcas **[DERIVADA]**/**[ESCOLHA]** permanecem como registro da origem; esta revisão factual não cria nem reabre decisão.
+> **Estado de implementação/publicação:** AGD-A integrada pela PR [#90](https://github.com/BrunoMNoronha/techlab-fisio/pull/90), merge `ec688866af4934817730947607d6e4491459c1ed`. AGD-B autorizada pela issue #91 e integrada na `main` pela PR [#99](https://github.com/BrunoMNoronha/techlab-fisio/pull/99), merge `ab6c60143d7195cfaf43fd809119ded7ec4ad54b`, com evidências concluídas nas issues #92, #97, #95, #93 e #94. O PR #103 realiza a sincronização OpenAPI/documental da issue #96. AGD-C, AGD-D e AGD-E permanecem fora desta autorização.
 > *(Registro histórico, preservado: até a REV. 5 este cabeçalho declarava que a homologação autorizava a materialização documental e **não** a implementação de runtime, schema ou migration. Essa era a situação então vigente; a autorização acima a substitui apenas quanto a AGD-A.)*
 > **Data:** 18 de setembro de 2026
-> **Base medida:** `HEAD` local `5cd0724183559171f0b851daf4e95a649e2545e1` (`copilot/sync-openapi-verifiers-docs`), com `origin/main` em `ec688866af4934817730947607d6e4491459c1ed`.
+> **Base medida:** `main` em `ab6c60143d7195cfaf43fd809119ded7ec4ad54b`, que já contém AGD-B pelo merge da PR #99; branch `copilot/sync-openapi-verifiers-docs` reconciliada com essa base para a revisão factual/OpenAPI da issue #96.
 > **Natureza:** registro normativo das decisões da agenda, originado do pacote de análise `AGD-PREP0`. **Nenhum código, schema, migration ou teste alterado.** Nenhuma implementação é autorizada por este documento.
 > **Por que um documento próprio:** precedente de decisões por frente (`docs/09`, `docs/12`, `docs/13`, `docs/14`); a agenda é o módulo M5, distinto da configuração da clínica (M2).
 
@@ -15,7 +15,7 @@
 
 ## 1. Fontes
 
-- `TECHLAB_FISIO_BASE_IMUTAVEL_V2.md` — **fonte fundamental vigente, não alterada**.
+- `TECHLAB_FISIO_BASE_IMUTAVEL_V2.md` — **fonte fundamental vigente, não alterada**. A V1 permanece apenas como referência histórica quando explicitamente identificada.
 - `docs/02` AGD-001..AGD-009, PRO-003..PRO-005, PKG-003/004, §14, §17, §18.
 - `docs/03` RN-013..RN-020, RN-071, D-02, D-06, D-07.
 - `docs/04` §2 (escopos), §4 (matriz), §5.4; `apps/api/src/provisionamento/catalogo-rbac.ts`.
@@ -235,7 +235,7 @@ As decisões **[DERIVADAS]** (`D-AGD-08`, `D-AGD-10`, `D-AGD-11`, `D-AGD-15`, `D
 | Decisões mínimas de pacientes (PAC) e profissionais (PRO-001, PRO-004) para AGD-A | **PAC: HOMOLOGADO** — `docs/17` REV. 2 (fatia PAC-A, implementada — `docs/10` §6-AC); **PRO-001/PRO-004: HOMOLOGADO** — `docs/18` (`D-PRO1-01`..`D-PRO1-10`; fatia PRO-A implementada — `docs/10` §6-AD); ambas **publicadas na `main`** pela PR [#89](https://github.com/BrunoMNoronha/techlab-fisio/pull/89) (merge `4b2e2c0`) — pré-requisitos de AGD-A **satisfeitos**. *(Correção factual da REV. 6: até a REV. 5 esta linha dizia "integradas na branch local `integration/local-fase4`, não publicadas na `main`", o que era verdade na data daquela medição.)* |
 | Implementação de CFG-005 (`P-CFG-06`) | **IMPLEMENTADA** (autorizada por Bruno Menezes Noronha em 17/09/2026; `docs/10` §6-AB) — **publicada na `main`** pela PR [#89](https://github.com/BrunoMNoronha/techlab-fisio/pull/89) (merge `4b2e2c0`) — pré-requisito operacional do cancelamento (`D-AGD-07`) **satisfeito**. *(Correção factual da REV. 6, mesma razão da linha anterior.)* |
 | Implementação de AGD-A (rotas, T-01 avulso, histórico, auditoria, escopo, `GET /agenda/opcoes`) e migration do CHECK de `D-AGD-07` | **INTEGRADA NA `main`** pela PR [#90](https://github.com/BrunoMNoronha/techlab-fisio/pull/90), merge `ec688866af4934817730947607d6e4491459c1ed`; materialização em §8 e `docs/10` §6-AI |
-| AGD-B | **AUTORIZADA** pela issue [#91](https://github.com/BrunoMNoronha/techlab-fisio/issues/91). Declaração de implementação/validação local condicionada às evidências das issues #92, #97, #95 e #93 |
+| AGD-B | **INTEGRADA NA `main`** pela PR [#99](https://github.com/BrunoMNoronha/techlab-fisio/pull/99), merge `ab6c60143d7195cfaf43fd809119ded7ec4ad54b`; evidências #92/#97/#95/#93/#94 concluídas; sincronização OpenAPI/documental da #96 no PR #103 |
 | AGD-C, AGD-D | **DECIDIDOS NO NÍVEL DESTE PACOTE** — detalhamento na respectiva fatia; implementação não autorizada |
 | AGD-E (iniciar/concluir), permissão correspondente, P2.2-05 e `AGUARDANDO → CANCELADO` | **FORA DESTE PACOTE** (`D-AGD-02`, `D-AGD-17`) |
 | Remoção de bloqueio (`D-AGD-16`) | **PACOTE PRÓPRIO FUTURO** |
@@ -266,15 +266,15 @@ As decisões **[DERIVADAS]** (`D-AGD-08`, `D-AGD-10`, `D-AGD-11`, `D-AGD-15`, `D
 | TA-18 | Consulta com intervalo > 7 dias ou invertido | `400` |
 | TA-19 | `GET /agenda/opcoes` | só ativos, sem preço |
 
-## 8. Registro de materialização de AGD-A e sincronização factual pós-integração (REV. 7, 18/09/2026)
+## 8. Registro de materialização de AGD-A e estado factual da AGD-B (REV. 7, 18/09/2026)
 
-> **Natureza desta seção:** registro **posterior** e **factual** do que foi implementado. Ela **não** altera, reinterpreta nem reabre `D-AGD-01`..`D-AGD-17` ou `P-AGD-01`..`P-AGD-12`: §§1–6 permanecem exatamente como homologadas. O detalhamento técnico vive em `docs/10` §6-AI.
+> **Natureza desta seção:** registro **posterior** e **factual** do que foi implementado/publicado. Ela **não** altera, reinterpreta nem reabre `D-AGD-01`..`D-AGD-17` ou `P-AGD-01`..`P-AGD-12`; as atualizações de §5.2 são exclusivamente de estado factual. O detalhamento técnico vive em `docs/10` §6-AI.
 
 ### 8.1 Autorização, integração e fronteira
 
-Bruno Menezes Noronha autorizou expressamente, em 17/09/2026, a implementação da fatia **AGD-A** e da **migration estrutural** prevista em `D-AGD-07`; essa fatia foi integrada na `main` pela PR [#90](https://github.com/BrunoMNoronha/techlab-fisio/pull/90), merge `ec688866af4934817730947607d6e4491459c1ed`. A issue [#91](https://github.com/BrunoMNoronha/techlab-fisio/issues/91) autorizou a AGD-B; AGD-C/AGD-D/AGD-E e `P2.2-05` permanecem fora da autorização desta revisão factual.
+AGD-A foi autorizada e depois integrada na `main` pela PR #90 (`ec688866af4934817730947607d6e4491459c1ed`). A issue #91 autorizou a fatia **AGD-B** estritamente para check-in e falta; as issues #92, #97, #95, #93 e #94 foram concluídas, e a implementação/provas chegaram à `main` pela PR #99 (`ab6c60143d7195cfaf43fd809119ded7ec4ad54b`). O PR #103 reconcilia a superfície OpenAPI e os registros factuais da issue #96. **AGD-C, AGD-D e AGD-E permanecem não autorizadas nesta frente**; `P2.2-05` não é ampliada por esta revisão.
 
-Este registro foi medido no `HEAD` local `5cd0724`; o fato de integração de AGD-A foi confirmado no histórico da `main` (`ec688866af4934817730947607d6e4491459c1ed`).
+O registro histórico da branch `agent/agd-a-agenda-core` permanece válido para a REV. 6; o estado atual medido é `main` com AGD-A e AGD-B integradas pelos merges #90 e #99, respectivamente.
 
 ### 8.2 Decisões materializadas
 
@@ -294,7 +294,7 @@ Este registro foi medido no `HEAD` local `5cd0724`; o fato de integração de AG
 | `D-AGD-12` | `EscopoAgendaService` — operacional (Administrador/Recepcionista que **concedam** a permissão) × próprio (demais, fail-closed) |
 | `D-AGD-13` | `GET /agenda/opcoes` com o contrato exato, só ativos, sem preço |
 | `D-AGD-14` | `[de, ate)` de no máximo 7 dias, intersecção, todos os estados, ordem `inicio, id`, sem paginação, `no-store` |
-| `D-AGD-15` / `D-AGD-17` | Nada de `PACOTE`, `reserva_sessao`, bloqueio, início ou conclusão |
+| `D-AGD-15` / `D-AGD-17` | Nada de `PACOTE`, `reserva_sessao`, bloqueio, início ou conclusão; check-in e falta pertencem à AGD-B já integrada |
 
 ### 8.3 Correlação histórico × auditoria — decisão local declarada
 
@@ -311,11 +311,18 @@ Todos os dezenove cenários estão cobertos por teste automatizado; `TA-09` é p
 - **CHECK de `D-AGD-07`**: a expressão homologada compara a **conjunção** dos três campos, de modo que um resíduo parcial em agendamento não cancelado não é rejeitado pelo banco. Nenhum caminho da aplicação o produz; o limite está registrado em teste de efeito e em `docs/07` §10.2 (nota da REV. 2.6).
 - **`protected-objects.json` não foi ampliado** (fora do escopo autorizado): a nova CHECK fica coberta pelo golden (Guarda 3) e pelo teste de efeito (Guarda 2), no mesmo precedente de `CFG-003`, `CFG-004`, `CFG-005`, `PAC-A`, `PRO-A` e `PRO-003`.
 
+
+### 8.6 Estado factual da AGD-B
+
+A AGD-B materializa apenas `POST /agendamentos/:agendamentoId/check-in` e `POST /agendamentos/:agendamentoId/falta`, usando as permissões existentes `agenda.checkin` e `agenda.falta`. As origens válidas são `AGENDADO` e `CONFIRMADO`; check-in leva a `AGUARDANDO`, falta leva a `FALTA`. Estado inválido prevalece como `409 TRANSICAO_INVALIDA`; com estado válido, violação temporal retorna `422 FORA_DA_JANELA_TEMPORAL`. Check-in exige mesma data civil no fuso IANA da clínica; falta exige `agora > inicio`.
+
+Cada operação resolve o escopo pela permissão efetiva, lê sob `SELECT ... FOR UPDATE`, captura o instante uma única vez após validar o estado e grava atualização + exatamente uma linha `CHECKIN`/`FALTA` no histórico na mesma transação. Não há evento de auditoria. As provas integradas pelo PR #99 cobrem as três corridas concorrentes obrigatórias e 11/11 mutation challenges, sem migration, alteração de schema/golden, dependência, permissão ou ação de auditoria nova.
+
 ## 7. Histórico de revisões
 
 | REV. | Data | Descrição |
 | --- | --- | --- |
-| **7** | 18/09/2026 | Sincronização factual pós-AGD-A/AGD-B: cabeçalho e §5.2 deixam de afirmar AGD-A como "branch local, não publicada" e passam a registrar integração na `main` pela PR [#90](https://github.com/BrunoMNoronha/techlab-fisio/pull/90), merge `ec688866af4934817730947607d6e4491459c1ed`; referências normativas ativas atualizadas para `TECHLAB_FISIO_BASE_IMUTAVEL_V2.md`; AGD-B marcada como autorizada pela issue [#91](https://github.com/BrunoMNoronha/techlab-fisio/issues/91), com implementação/validação local condicionada às evidências #92/#97/#95/#93. Nenhuma decisão `D-AGD-*` ou `P-AGD-*` foi criada, alterada ou reaberta. |
+| **7** | 18/09/2026 | Sincronização factual pós-AGD-A/AGD-B: Base ativa passa a V2; AGD-A registrada como integrada pela PR #90 (`ec688866`); AGD-B registrada como autorizada pela #91 e integrada pela PR #99 (`ab6c601`), com #92/#97/#95/#93/#94 concluídas; superfície limitada a check-in/falta, sem AGD-C/D/E; PR #103 assume a sincronização OpenAPI/documental da #96. Nenhuma decisão `D-AGD-*`/`P-AGD-*`, migration, schema, permissão, auditoria ou dependência criada/alterada. |
 | **6** | 17/09/2026 | **Registro de materialização de AGD-A** (§8), após autorização expressa e específica de Bruno Menezes Noronha para implementar a fatia AGD-A e a migration estrutural de `D-AGD-07`. Cabeçalho e §5.2 atualizados: a implementação de AGD-A passa de `DECIDIDO — IMPLEMENTAÇÃO NÃO AUTORIZADA` para `AUTORIZADA E IMPLEMENTADA` (branch local, não publicada). Correções **factuais** em §5.2, com registro da correção: CFG-005, PAC-A, PRO-A e PRO-003 deixaram de estar "não publicadas na `main`" — todas foram publicadas pela PR [#89](https://github.com/BrunoMNoronha/techlab-fisio/pull/89) (merge `4b2e2c0`). **Nenhuma decisão `D-AGD-*` ou `P-AGD-*` criada, alterada ou reaberta; §§1–6 preservadas byte a byte.** AGD-B, AGD-C, AGD-D e AGD-E seguem sem autorização de implementação. |
 | **5** | 17/09/2026 | Alinhamento editorial `D-INTEG-02` (Bruno Menezes Noronha), na integração local das quatro frentes: §5.2 deixa de afirmar que a implementação de CFG-005 não está autorizada (autorizada e implementada — `docs/10` §6-AB) e registra PRO-001/PRO-004 homologados em `docs/18` com a fatia PRO-A implementada; FA-05 recebe nota de que descreve a base medida. Nenhuma decisão `D-AGD-*` criada, alterada ou reaberta; AGD-A..AGD-D seguem sem autorização de implementação. |
 | **4** | 17/09/2026 | Atualização factual de §5.2: pacote mínimo de pacientes homologado (`docs/17` REV. 2); PRO-001/PRO-004 em preparação em outra branch/sessão. Nenhuma decisão alterada. |

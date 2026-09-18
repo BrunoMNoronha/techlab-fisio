@@ -127,8 +127,8 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
       "/agenda/opcoes",
       "/agendamentos",
       "/agendamentos/{agendamentoId}",
-      "/agendamentos/{agendamentoId}/check-in",
       "/agendamentos/{agendamentoId}/cancelamento",
+      "/agendamentos/{agendamentoId}/check-in",
       "/agendamentos/{agendamentoId}/confirmacao",
       "/agendamentos/{agendamentoId}/falta",
       "/agendamentos/{agendamentoId}/remarcacao",
@@ -166,8 +166,8 @@ describe("D-2.3D-11 — rotas da F3 presentes", () => {
     // PAC-A (`docs/17` D-PAC-02) autorizou /pacientes: o termo saiu desta lista por
     // DECISÃO, e a igualdade exata acima continua barrando qualquer outra rota.
     // AGD-A/AGD-B (`docs/15` D-AGD-05, D-AGD-13) autorizou /agendamentos,
-    // /agenda/opcoes, /check-in e /falta: os termos proibidos continuam
-    // guardando vazamentos de AGD-C/AGD-D/AGD-E.
+    // /agenda/opcoes, /check-in e /falta. A igualdade exata acima mantém a
+    // fronteira e os termos abaixo continuam barrando AGD-C/AGD-D/AGD-E.
     for (const proibido of [
       "papeis",
       "permissoes",
