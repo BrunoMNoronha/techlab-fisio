@@ -1,4 +1,4 @@
-// TechLab Fisio — serviço da fatia AGD-A (`docs/15` D-AGD-02..D-AGD-14;
+// TechLab Fisio — serviço da agenda (`docs/15` D-AGD-02..D-AGD-14;
 // `docs/07` §17.4 T-01, §24).
 //
 // Materializa:
@@ -18,12 +18,13 @@
 //     mesma transação; no-op, rejeição e negação não escrevem linha alguma;
 //   - D-AGD-10: UM evento por criação, remarcação e cancelamento efetivos, com
 //     `contexto` VAZIO e o MESMO `correlacao_id` da linha de histórico; a
-//     confirmação fica SÓ no histórico;
+//     confirmação, check-in e falta ficam SÓ no histórico;
 //   - D-AGD-11: exclusion constraints decidem o conflito temporal na gravação;
 //     confirmação, remarcação e cancelamento leem a linha sob
 //     `SELECT ... FOR UPDATE` antes de avaliar o estado; ordem de locks
 //     `agendamento -> motivo (FOR SHARE)`. Sem coluna de versão e sem
-//     `If-Match` (D-AGD-08);
+//     `If-Match` (D-AGD-08). Check-in e falta também aplicam `FOR UPDATE`,
+//     avaliação de estado sob lock e atualização+histórico na mesma transação;
 //   - D-AGD-12: o escopo do ator decide o que a leitura enxerga, o que a
 //     mutação por id alcança e para quem a criação é permitida;
 //   - D-AGD-14: a consulta devolve os agendamentos que INTERSECTAM `[de, ate)`,
@@ -56,12 +57,24 @@ import {
 
 import { AuditWriter } from "../audit/audit-writer.js";
 import { DatabaseService } from "../database/database.service.js";
-import { EscopoAgendaService, escopoAlcanca, restricaoDaLeitura } from "./agenda.escopo.js";
+import {
+  EscopoAgendaService,
+  PERMISSAO_AGENDA_CHECKIN,
+  PERMISSAO_AGENDA_FALTA,
+  PERMISSAO_AGENDA_GERENCIAR,
+  escopoAlcanca,
+  restricaoDaLeitura,
+} from "./agenda.escopo.js";
 import type { EscopoAgenda } from "./agenda.escopo.js";
+import type { Permissao } from "../authz/permissoes.catalogo.js";
 import {
   avaliarConfirmacao,
+  checkinNaJanelaTemporal,
+  faltaNaJanelaTemporal,
   estadoAposRemarcacao,
   permiteCancelamento,
+  permiteCheckin,
+  permiteFalta,
   permiteRemarcacao,
   type EstadoAgendamento,
   type OperacaoHistorico,
@@ -82,6 +95,7 @@ export type MotivoRejeicaoAgendamento =
   | "SERVICO_INELEGIVEL"
   | "SERVICO_NAO_HABILITADO"
   | "MOTIVO_CANCELAMENTO_INELEGIVEL"
+  | "FORA_DA_JANELA_TEMPORAL"
   | "TRANSICAO_INVALIDA"
   | "CONFLITO_BLOQUEIO"
   | "CONFLITO_PROFISSIONAL"
@@ -211,7 +225,7 @@ export class AgendamentosService {
     filtro: FiltroAgenda;
   }): Promise<DadosAgendamento[]> {
     return this.database.transacao(async (tx) => {
-      const escopo = await this.escopos.resolver(tx, comando.atorUsuarioId);
+      const escopo = await this.escopos.resolver(tx, comando.atorUsuarioId, PERMISSAO_AGENDA_GERENCIAR);
       const restricao = restricaoDaLeitura(escopo, comando.filtro.profissionalId);
       if (restricao.tipo === "VAZIO") return [];
 
@@ -255,7 +269,7 @@ export class AgendamentosService {
     agendamentoId: string;
   }): Promise<DadosAgendamento> {
     return this.database.transacao(async (tx) => {
-      const escopo = await this.escopos.resolver(tx, comando.atorUsuarioId);
+      const escopo = await this.escopos.resolver(tx, comando.atorUsuarioId, PERMISSAO_AGENDA_GERENCIAR);
       const agendamento = await this.#lerProjecao(tx, comando.agendamentoId);
       if (agendamento === null || !escopoAlcanca(escopo, agendamento.profissional.id)) {
         throw new ErroAgendamento("AGENDAMENTO_NAO_ENCONTRADO");
@@ -279,7 +293,11 @@ export class AgendamentosService {
       this.database.transacao(async (tx) => {
         // Passo 1 (parte de escopo) — a permissão já foi decidida pelas guards;
         // aqui decide-se PARA QUEM a criação é permitida (D-AGD-12).
-        const escopo = await this.escopos.resolver(tx, comando.atorUsuarioId);
+        const escopo = await this.escopos.resolver(
+          tx,
+          comando.atorUsuarioId,
+          PERMISSAO_AGENDA_GERENCIAR,
+        );
         if (!escopoAlcanca(escopo, dados.profissionalId)) {
           throw new ErroAgendamento("ACESSO_NEGADO");
         }
@@ -352,7 +370,7 @@ export class AgendamentosService {
     const correlacaoId = randomUUID();
 
     return this.database.transacao(async (tx) => {
-      const { escopo } = await this.#abrirMutacao(tx, comando);
+      const { escopo } = await this.#abrirMutacao(tx, comando, PERMISSAO_AGENDA_GERENCIAR);
       const atual = await this.#lerSobLock(tx, comando.agendamentoId, escopo);
 
       const desfecho = avaliarConfirmacao(atual.estado);
@@ -404,7 +422,7 @@ export class AgendamentosService {
 
     return comConflitoTraduzido(
       this.database.transacao(async (tx) => {
-        const { escopo } = await this.#abrirMutacao(tx, comando);
+        const { escopo } = await this.#abrirMutacao(tx, comando, PERMISSAO_AGENDA_GERENCIAR);
         const atual = await this.#lerSobLock(tx, comando.agendamentoId, escopo);
 
         if (!permiteRemarcacao(atual.estado)) throw new ErroAgendamento("TRANSICAO_INVALIDA");
@@ -482,7 +500,7 @@ export class AgendamentosService {
     const correlacaoId = randomUUID();
 
     return this.database.transacao(async (tx) => {
-      const { escopo } = await this.#abrirMutacao(tx, comando);
+      const { escopo } = await this.#abrirMutacao(tx, comando, PERMISSAO_AGENDA_GERENCIAR);
       // Ordem de locks homologada (D-AGD-11): `agendamento` -> `motivo`.
       const atual = await this.#lerSobLock(tx, comando.agendamentoId, escopo);
       if (!permiteCancelamento(atual.estado)) throw new ErroAgendamento("TRANSICAO_INVALIDA");
@@ -536,6 +554,83 @@ export class AgendamentosService {
     });
   }
 
+  async checkin(comando: {
+    atorUsuarioId: string;
+    agendamentoId: string;
+  }): Promise<ResultadoMutacaoAgendamento> {
+    const correlacaoId = randomUUID();
+
+    return this.database.transacao(async (tx) => {
+      const { escopo } = await this.#abrirMutacao(tx, comando, PERMISSAO_AGENDA_CHECKIN);
+      const atual = await this.#lerSobLock(tx, comando.agendamentoId, escopo);
+      if (!permiteCheckin(atual.estado)) throw new ErroAgendamento("TRANSICAO_INVALIDA");
+
+      const agora = new Date();
+      const fusoHorario = await this.#exigirFusoHorarioDoAgendamento(tx, atual.servico_id);
+      if (!checkinNaJanelaTemporal(atual.inicio, agora, fusoHorario)) {
+        throw new ErroAgendamento("FORA_DA_JANELA_TEMPORAL");
+      }
+
+      await tx.$executeRaw`
+        UPDATE agendamento SET estado = 'AGUARDANDO' WHERE id = ${atual.id}::uuid
+      `;
+      await this.#registrarHistorico(tx, {
+        correlacaoId,
+        agendamentoId: atual.id,
+        operacao: "CHECKIN",
+        atorUsuarioId: comando.atorUsuarioId,
+        ocorridoEm: agora,
+        estadoAnterior: atual.estado,
+        estadoNovo: "AGUARDANDO",
+        inicioAnterior: null,
+        fimAnterior: null,
+        inicioNovo: null,
+        fimNovo: null,
+        motivoCancelamentoId: null,
+      });
+
+      return { agendamento: await this.#exigirProjecao(tx, atual.id), mutacaoExecutada: true };
+    });
+  }
+
+  async falta(comando: {
+    atorUsuarioId: string;
+    agendamentoId: string;
+  }): Promise<ResultadoMutacaoAgendamento> {
+    const correlacaoId = randomUUID();
+
+    return this.database.transacao(async (tx) => {
+      const { escopo } = await this.#abrirMutacao(tx, comando, PERMISSAO_AGENDA_FALTA);
+      const atual = await this.#lerSobLock(tx, comando.agendamentoId, escopo);
+      if (!permiteFalta(atual.estado)) throw new ErroAgendamento("TRANSICAO_INVALIDA");
+
+      const agora = new Date();
+      if (!faltaNaJanelaTemporal(atual.inicio, agora)) {
+        throw new ErroAgendamento("FORA_DA_JANELA_TEMPORAL");
+      }
+
+      await tx.$executeRaw`
+        UPDATE agendamento SET estado = 'FALTA' WHERE id = ${atual.id}::uuid
+      `;
+      await this.#registrarHistorico(tx, {
+        correlacaoId,
+        agendamentoId: atual.id,
+        operacao: "FALTA",
+        atorUsuarioId: comando.atorUsuarioId,
+        ocorridoEm: agora,
+        estadoAnterior: atual.estado,
+        estadoNovo: "FALTA",
+        inicioAnterior: null,
+        fimAnterior: null,
+        inicioNovo: null,
+        fimNovo: null,
+        motivoCancelamentoId: null,
+      });
+
+      return { agendamento: await this.#exigirProjecao(tx, atual.id), mutacaoExecutada: true };
+    });
+  }
+
   // -------------------------------------------------------------------------
   // Internos
   // -------------------------------------------------------------------------
@@ -543,8 +638,9 @@ export class AgendamentosService {
   async #abrirMutacao(
     tx: TransacaoPersistencia,
     comando: { atorUsuarioId: string },
+    permissao: Permissao = PERMISSAO_AGENDA_GERENCIAR,
   ): Promise<{ escopo: EscopoAgenda }> {
-    return { escopo: await this.escopos.resolver(tx, comando.atorUsuarioId) };
+    return { escopo: await this.escopos.resolver(tx, comando.atorUsuarioId, permissao) };
   }
 
   /**
@@ -629,6 +725,23 @@ export class AgendamentosService {
       SELECT ativo FROM servico WHERE id = ${servicoId}::uuid
     `;
     if (linhas[0]?.ativo !== true) throw new ErroAgendamento("SERVICO_INELEGIVEL");
+  }
+
+  async #exigirFusoHorarioDoAgendamento(
+    tx: TransacaoPersistencia,
+    servicoId: string,
+  ): Promise<string> {
+    const clinicas = await tx.$queryRaw<Array<{ fuso_horario: string }>>`
+      SELECT c.fuso_horario
+        FROM servico s
+        JOIN clinica c ON c.id = s.clinica_id
+       WHERE s.id = ${servicoId}::uuid
+    `;
+    const clinica = clinicas[0];
+    if (clinica === undefined || clinicas.length !== 1) {
+      throw new Error("Invariante de clínica por serviço violada: leitura do fuso horário indisponível.");
+    }
+    return clinica.fuso_horario;
   }
 
   /** PRO-004: a EXISTÊNCIA da linha de `profissional_servico` é a habilitação. */
