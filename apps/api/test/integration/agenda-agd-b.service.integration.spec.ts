@@ -407,9 +407,9 @@ describe("AGD-B — check-in/falta transacionais no serviço", () => {
     const falhas = [r1, r2].filter((r) => r.status === "rejected");
     expect(sucessos).toHaveLength(1);
     expect(falhas).toHaveLength(1);
-    expect((falhas[0] as PromiseRejectedResult).reason).toMatchObject<Partial<ErroAgendamento>>({
+    expect((falhas[0] as PromiseRejectedResult).reason).toMatchObject({
       motivo: "TRANSICAO_INVALIDA",
-    });
+    } as Partial<ErroAgendamento>);
 
     const historico = await historicosDoAgendamento(agendamentoId);
     expect(historico).toHaveLength(1);
@@ -438,9 +438,9 @@ describe("AGD-B — check-in/falta transacionais no serviço", () => {
     const falhas = [r1, r2].filter((r) => r.status === "rejected");
     expect(sucessos).toHaveLength(1);
     expect(falhas).toHaveLength(1);
-    expect((falhas[0] as PromiseRejectedResult).reason).toMatchObject<Partial<ErroAgendamento>>({
+    expect((falhas[0] as PromiseRejectedResult).reason).toMatchObject({
       motivo: "TRANSICAO_INVALIDA",
-    });
+    } as Partial<ErroAgendamento>);
 
     const historico = await historicosDoAgendamento(agendamentoId);
     expect(historico).toHaveLength(1);
@@ -471,9 +471,9 @@ describe("AGD-B — check-in/falta transacionais no serviço", () => {
     const falhas = [r1, r2].filter((r) => r.status === "rejected");
     expect(sucessos).toHaveLength(1);
     expect(falhas).toHaveLength(1);
-    expect((falhas[0] as PromiseRejectedResult).reason).toMatchObject<Partial<ErroAgendamento>>({
+    expect((falhas[0] as PromiseRejectedResult).reason).toMatchObject({
       motivo: "TRANSICAO_INVALIDA",
-    });
+    } as Partial<ErroAgendamento>);
 
     const historico = await historicosDoAgendamento(agendamentoId);
     expect(historico).toHaveLength(1);
